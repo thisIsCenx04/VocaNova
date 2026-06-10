@@ -20,36 +20,58 @@ VocaNova is a vocabulary learning and testing system for SEP490. The repository 
    dotnet restore
    ```
 
-2. Update local configuration in `src/VocaNova.API/appsettings.json` or user secrets:
+2. Create a local `.env` file from the example:
 
-   - `ConnectionStrings:DefaultConnection`
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Update local configuration:
+
+   In `.env`:
+
+   - `MYSQL_CONNECTION_STRING`
+   - `MYSQL_SERVER_VERSION`
+
+   In `src/VocaNova.API/appsettings.json` or user secrets:
+
    - `JwtSettings:SecretKey`
    - `Redis:Configuration`
    - `AiGrading:*`
 
-3. Build the solution:
+4. Build the solution:
 
    ```bash
    dotnet build
    ```
 
-4. Run the API:
+5. Run the API:
 
    ```bash
    dotnet run --project src/VocaNova.API
    ```
 
-5. Run the dashboard:
+6. Run the dashboard:
 
    ```bash
    dotnet run --project src/VocaNova.Dashboard
    ```
 
-6. Run tests:
+7. Run tests:
 
    ```bash
    dotnet test
    ```
+
+## Database Scaffold
+
+The database is MySQL/MariaDB from XAMPP. Connection details are read from the repository root `.env` file, which is ignored by Git.
+
+Run the scaffold script after the XAMPP MySQL service is running and the `vocanova` schema exists:
+
+```powershell
+.\scripts\scaffold-mysql.ps1
+```
 
 ## Git Workflow
 
