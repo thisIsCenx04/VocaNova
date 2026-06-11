@@ -1,7 +1,4 @@
-using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using VocaNova.API.Common.Constants;
 
@@ -25,6 +22,7 @@ public static class JwtAuthenticationExtensions
         jwtSettings.Validate();
 
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
+        services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
         services
             .AddAuthentication(options =>
@@ -35,12 +33,12 @@ public static class JwtAuthenticationExtensions
             .AddJwtBearer(options =>
             {
                 options.MapInboundClaims = false;
-                options.TokenValidationParameters = CreateTokenValidationParameters(jwtSettings);
+                options.TokenValidationParameters = JwtTokenValidationParametersFactory.Create(jwtSettings);
                 options.Events = new JwtBearerEvents
                 {
                     OnTokenValidated = context =>
                     {
-                        AddUserIdClaimFromSubject(context.Principal);
+                        JwtClaimsPrincipalHelper.AddUserIdClaimFromSubject(context.Principal);
                         return Task.CompletedTask;
                     },
                 };
@@ -97,41 +95,5 @@ public static class JwtAuthenticationExtensions
         });
 
         return services;
-    }
-
-    private static TokenValidationParameters CreateTokenValidationParameters(JwtSettings jwtSettings)
-    {
-        return new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = jwtSettings.Issuer,
-            ValidateAudience = true,
-            ValidAudience = jwtSettings.Audience,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero,
-            NameClaimType = "user_id",
-            RoleClaimType = "role",
-        };
-    }
-
-    private static void AddUserIdClaimFromSubject(ClaimsPrincipal? principal)
-    {
-        if (principal?.Identity is not ClaimsIdentity identity)
-        {
-            return;
-        }
-
-        if (identity.HasClaim(claim => claim.Type == "user_id"))
-        {
-            return;
-        }
-
-        var subject = identity.FindFirst("sub")?.Value;
-        if (!string.IsNullOrWhiteSpace(subject))
-        {
-            identity.AddClaim(new Claim("user_id", subject));
-        }
     }
 }

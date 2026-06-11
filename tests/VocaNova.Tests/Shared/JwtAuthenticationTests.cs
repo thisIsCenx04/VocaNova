@@ -29,6 +29,7 @@ public class JwtAuthenticationTests
 
         authOptions.DefaultAuthenticateScheme.Should().Be(JwtBearerDefaults.AuthenticationScheme);
         authOptions.DefaultChallengeScheme.Should().Be(JwtBearerDefaults.AuthenticationScheme);
+        provider.GetService<IJwtTokenService>().Should().BeOfType<JwtTokenService>();
 
         jwtOptions.MapInboundClaims.Should().BeFalse();
         jwtOptions.TokenValidationParameters.ValidIssuer.Should().Be("VocaNova.Tests");

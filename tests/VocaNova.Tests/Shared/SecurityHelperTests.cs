@@ -36,6 +36,14 @@ public class SecurityHelperTests
     }
 
     [Fact]
+    public void PasswordHelper_Verify_Should_Return_False_For_Invalid_Hash()
+    {
+        var isValid = PasswordHelper.Verify("Password1!", "not-a-bcrypt-hash");
+
+        isValid.Should().BeFalse();
+    }
+
+    [Fact]
     public void TokenHelper_HashSha256_Should_Return_Lowercase_Hex_Hash()
     {
         var hash = TokenHelper.HashSha256("refresh-token");
