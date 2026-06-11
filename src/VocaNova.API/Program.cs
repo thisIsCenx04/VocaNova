@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using VocaNova.API.Common.Responses;
 using VocaNova.API.Infrastructure.Configuration;
 using VocaNova.API.Infrastructure.Persistence;
+using VocaNova.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,9 +18,12 @@ builder.Services.AddDbContext<VocaNovaDbContext>(options =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -28,7 +33,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "VocaNova.API" }))
+app.MapControllers();
+
+app.MapGet("/health", () => Results.Ok(ApiResponseFormatter.Success(new { status = "ok", service = "VocaNova.API" })))
     .WithName("HealthCheck")
     .WithOpenApi();
 
