@@ -24,6 +24,7 @@ public class ConstantsTests
         AnswerMethod.All.Should().BeEquivalentTo(new[] { "multiple_choice", "exact_typing", "ai_typing" });
         AddMethod.All.Should().BeEquivalentTo(new[] { "manual", "search", "random_topic", "random_synonym", "random_antonym" });
         UserStatus.All.Should().BeEquivalentTo(new[] { "active", "locked", "deleted" });
+        UserRole.All.Should().BeEquivalentTo(new[] { "admin", "super_admin", "user" });
         AudioStatus.All.Should().BeEquivalentTo(new[] { "pending", "uploaded", "tts_generated", "missing", "deleted" });
     }
 
