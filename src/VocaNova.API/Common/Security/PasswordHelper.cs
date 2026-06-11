@@ -21,6 +21,21 @@ public static class PasswordHelper
             return false;
         }
 
-        return global::BCrypt.Net.BCrypt.Verify(password, hash);
+        try
+        {
+            return global::BCrypt.Net.BCrypt.Verify(password, hash);
+        }
+        catch (global::BCrypt.Net.BcryptAuthenticationException)
+        {
+            return false;
+        }
+        catch (global::BCrypt.Net.HashInformationException)
+        {
+            return false;
+        }
+        catch (global::BCrypt.Net.SaltParseException)
+        {
+            return false;
+        }
     }
 }
