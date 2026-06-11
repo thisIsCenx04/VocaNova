@@ -1,3 +1,5 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Responses;
 using VocaNova.API.Infrastructure.Configuration;
@@ -19,6 +21,8 @@ builder.Services.AddDbContext<VocaNovaDbContext>(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();

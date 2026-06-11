@@ -17,6 +17,7 @@ public class ConstantsTests
     [Fact]
     public void Enum_Constant_Sets_Should_Contain_All_Defined_Values()
     {
+        CefrLevel.All.Should().BeEquivalentTo(new[] { "A1", "A2", "B1", "B2", "C1", "C2" });
         TestMode.All.Should().BeEquivalentTo(new[] { "standard", "timed", "challenge", "elimination" });
         ScopeType.Values.Should().BeEquivalentTo(new[] { "all", "date_range", "start_date", "end_date" });
         WordOrder.All.Should().BeEquivalentTo(new[] { "newest", "oldest", "random" });
