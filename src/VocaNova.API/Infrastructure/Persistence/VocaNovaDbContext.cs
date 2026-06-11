@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using VocaNova.API.Common.Constants;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
 namespace VocaNova.API.Infrastructure.Persistence;
@@ -79,8 +80,31 @@ public partial class VocaNovaDbContext : DbContext
             .HasCharSet("utf8mb4");
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(VocaNovaDbContext).Assembly);
+        ConfigureSoftDeleteFilters(modelBuilder);
 
         OnModelCreatingPartial(modelBuilder);
+    }
+
+    private static void ConfigureSoftDeleteFilters(ModelBuilder modelBuilder)
+    {
+        // Soft-delete filters:
+        // Only tables with a DB-backed soft-delete column are filtered here.
+        // Current schema uses status == 'deleted' for:
+        // UserList, UserListWord, Topic, Word, WordAudioAsset.
+        modelBuilder.Entity<UserList>()
+            .HasQueryFilter(entity => entity.Status != UserStatus.Deleted);
+
+        modelBuilder.Entity<UserListWord>()
+            .HasQueryFilter(entity => entity.Status != UserStatus.Deleted);
+
+        modelBuilder.Entity<Topic>()
+            .HasQueryFilter(entity => entity.Status != UserStatus.Deleted);
+
+        modelBuilder.Entity<Word>()
+            .HasQueryFilter(entity => entity.Status != UserStatus.Deleted);
+
+        modelBuilder.Entity<WordAudioAsset>()
+            .HasQueryFilter(entity => entity.Status != AudioStatus.Deleted);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
