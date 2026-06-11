@@ -2,6 +2,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Responses;
+using VocaNova.API.Infrastructure.Auditing;
 using VocaNova.API.Infrastructure.Configuration;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Middleware;
@@ -23,6 +24,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddSingleton<IAuditLogQueue, AuditLogQueue>();
+builder.Services.AddHostedService<AuditLogBackgroundService>();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
@@ -36,6 +39,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseMiddleware<AuditLogMiddleware>();
 
 app.MapControllers();
 
