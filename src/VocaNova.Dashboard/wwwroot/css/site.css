@@ -1,22 +1,352 @@
+:root {
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --ink: #19202a;
+  --muted: #667085;
+  --line: #d9dee8;
+  --nav: #111827;
+  --nav-soft: #202b3d;
+  --accent: #0f766e;
+  --accent-strong: #115e59;
+  --danger: #b42318;
+  --shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+}
+
 html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
+  font-size: 15px;
   min-height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+  min-height: 100vh;
+  margin: 0;
+  color: var(--ink);
+  background: var(--bg);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+a {
+  color: inherit;
+}
+
+.btn-primary {
+  --bs-btn-bg: var(--accent);
+  --bs-btn-border-color: var(--accent);
+  --bs-btn-hover-bg: var(--accent-strong);
+  --bs-btn-hover-border-color: var(--accent-strong);
+}
+
+.form-control {
+  min-height: 44px;
+  border-color: var(--line);
+  border-radius: 8px;
+}
+
+.form-control:focus,
+.btn:focus,
+.icon-button:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem rgba(15, 118, 110, 0.18);
+  outline: none;
+}
+
+.auth-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(37, 99, 235, 0.08)),
+    var(--bg);
+}
+
+.login-panel {
+  width: min(100%, 420px);
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.login-brand,
+.sidebar-brand,
+.account-summary {
+  display: flex;
+  align-items: center;
+}
+
+.login-brand {
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.login-brand h1 {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.login-brand p {
+  margin: 2px 0 0;
+  color: var(--muted);
+}
+
+.brand-mark {
+  display: inline-grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--accent);
+  font-weight: 800;
+}
+
+.login-form {
+  display: grid;
+  gap: 18px;
+}
+
+.form-field {
+  display: grid;
+  gap: 7px;
+}
+
+.form-field label {
+  color: #344054;
+  font-weight: 600;
+}
+
+.app-shell {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 260px minmax(0, 1fr);
+}
+
+.sidebar-toggle {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 20px 16px;
+  color: #f8fafc;
+  background: var(--nav);
+}
+
+.sidebar-brand {
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 8px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 800;
+}
+
+.sidebar-nav {
+  display: grid;
+  gap: 6px;
+  padding-top: 18px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #d4d9e3;
+  text-decoration: none;
+}
+
+.sidebar-link:hover,
+.sidebar-link:focus-visible {
+  color: #fff;
+  background: var(--nav-soft);
+}
+
+.sidebar-link svg,
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.content-shell {
+  display: grid;
+  min-width: 0;
+  grid-template-rows: 68px minmax(0, 1fr);
+}
+
+.topbar {
+  position: sticky;
+  z-index: 5;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+}
+
+.icon-button {
+  display: inline-grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #344054;
+  background: #fff;
+  cursor: pointer;
+}
+
+.account-summary {
+  gap: 10px;
+}
+
+.account-summary img,
+.account-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+}
+
+.account-summary img {
+  object-fit: cover;
+}
+
+.account-avatar {
+  display: inline-grid;
+  place-items: center;
+  color: #fff;
+  background: #2563eb;
+  font-weight: 700;
+}
+
+.account-name,
+.account-role {
+  display: block;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-name {
+  font-weight: 700;
+}
+
+.account-role {
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-transform: capitalize;
+}
+
+.main-content {
+  min-width: 0;
+  padding: 28px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--accent);
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.empty-state {
+  max-width: 720px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.empty-state h2 {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+}
+
+.empty-state p {
+  margin: 0;
+  color: var(--muted);
+}
+
+@media (min-width: 901px) {
+  .topbar > .icon-button {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: fixed;
+    z-index: 20;
+    inset: 0 auto 0 0;
+    width: min(82vw, 280px);
+    transform: translateX(-100%);
+    transition: transform 160ms ease;
+  }
+
+  .sidebar-toggle:checked ~ .sidebar {
+    transform: translateX(0);
+  }
+
+  .content-shell {
+    grid-template-rows: 64px minmax(0, 1fr);
+  }
+
+  .topbar {
+    justify-content: space-between;
+    padding: 0 16px;
+  }
+
+  .main-content {
+    padding: 20px 16px;
+  }
+
+  .account-name,
+  .account-role {
+    max-width: 120px;
+  }
+}
+
+@media (max-width: 520px) {
+  .login-panel {
+    padding: 24px;
+  }
+
+  .account-summary > div {
+    display: none;
+  }
 }
