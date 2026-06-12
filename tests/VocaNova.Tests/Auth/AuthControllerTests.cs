@@ -210,5 +210,19 @@ public class AuthControllerTests
         {
             return Task.FromResult(_profileResult);
         }
+
+        public Task<Result<OtpSendResponse>> SendOtpAsync(
+            OtpSendRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Result<OtpSendResponse>.Ok(new OtpSendResponse(300)));
+        }
+
+        public Task<Result<OtpVerifyResponse>> VerifyOtpAsync(
+            OtpVerifyRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Result<OtpVerifyResponse>.Ok(new OtpVerifyResponse(true)));
+        }
     }
 }

@@ -113,6 +113,36 @@ public sealed class AuthController : ControllerBase
         return this.OkResult(result.Value, "Logged out successfully.");
     }
 
+    [AllowAnonymous]
+    [HttpPost("otp/send")]
+    public async Task<IActionResult> SendOtp(
+        [FromBody] OtpSendRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _authService.SendOtpAsync(request, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value!, "OTP sent successfully.");
+    }
+
+    [AllowAnonymous]
+    [HttpPost("otp/verify")]
+    public async Task<IActionResult> VerifyOtp(
+        [FromBody] OtpVerifyRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _authService.VerifyOtpAsync(request, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value!, "OTP verified successfully.");
+    }
+
     [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> GetMe(CancellationToken cancellationToken)

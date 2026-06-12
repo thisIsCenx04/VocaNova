@@ -192,6 +192,42 @@ public sealed class AuthRepository : IAuthRepository
             cancellationToken);
     }
 
+    public Task<OtpVerification?> FindLatestOtpByPhoneAsync(
+        string phone,
+        CancellationToken cancellationToken = default)
+    {
+        return _dbContext.OtpVerifications
+            .Where(otp => otp.Phone == phone && otp.Status == OtpStatus.Active)
+            .OrderByDescending(otp => otp.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public Task<OtpVerification?> FindLatestOtpByPhoneSinceAsync(
+        string phone,
+        DateTime createdSince,
+        CancellationToken cancellationToken = default)
+    {
+        return _dbContext.OtpVerifications
+            .Where(otp => otp.Phone == phone && otp.CreatedAt >= createdSince)
+            .OrderByDescending(otp => otp.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<OtpVerification> CreateOtpAsync(
+        OtpVerification otpVerification,
+        CancellationToken cancellationToken = default)
+    {
+        _dbContext.OtpVerifications.Add(otpVerification);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return otpVerification;
+    }
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        return _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<bool> RevokeTokenAsync(
         string tokenHash,
         DateTime revokedAt,

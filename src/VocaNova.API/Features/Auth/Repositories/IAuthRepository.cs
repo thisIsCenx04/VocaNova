@@ -61,6 +61,21 @@ public interface IAuthRepository
 
     Task<bool> ActiveLearningPurposeExistsAsync(uint learningPurposeId, CancellationToken cancellationToken = default);
 
+    Task<OtpVerification?> FindLatestOtpByPhoneAsync(
+        string phone,
+        CancellationToken cancellationToken = default);
+
+    Task<OtpVerification?> FindLatestOtpByPhoneSinceAsync(
+        string phone,
+        DateTime createdSince,
+        CancellationToken cancellationToken = default);
+
+    Task<OtpVerification> CreateOtpAsync(
+        OtpVerification otpVerification,
+        CancellationToken cancellationToken = default);
+
+    Task SaveChangesAsync(CancellationToken cancellationToken = default);
+
     Task<bool> RevokeTokenAsync(
         string tokenHash,
         DateTime revokedAt,

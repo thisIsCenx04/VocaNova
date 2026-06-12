@@ -46,4 +46,12 @@ public interface IAuthService
         uint userId,
         UpdateLearningProfileRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<Result<OtpSendResponse>> SendOtpAsync(
+        OtpSendRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<OtpVerifyResponse>> VerifyOtpAsync(
+        OtpVerifyRequest request,
+        CancellationToken cancellationToken = default);
 }

@@ -54,4 +54,9 @@ public sealed class Result<T>
     {
         return new Result<T>(false, default, error, StatusCodes.Status403Forbidden);
     }
+
+    public static Result<T> TooManyRequests(string error = "Too many requests.")
+    {
+        return new Result<T>(false, default, error, StatusCodes.Status429TooManyRequests);
+    }
 }
