@@ -230,6 +230,56 @@ public sealed class AuthService : IAuthService
         return Result<TokenResponse>.Ok(tokenResponse);
     }
 
+    public async Task<Result<TokenResponse>> RefreshTokenAsync(
+        RefreshTokenRequest request,
+        string? deviceInfo = null,
+        string? ipAddress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var tokenHash = TokenHelper.HashSha256(request.RefreshToken!);
+        var refreshToken = await _authRepository.FindRefreshTokenByHashAsync(tokenHash, cancellationToken);
+        if (refreshToken is null)
+        {
+            return Result<TokenResponse>.Unauthorized("Invalid refresh token.");
+        }
+
+        if (refreshToken.RevokedAt is not null)
+        {
+            return Result<TokenResponse>.Unauthorized("Refresh token has been revoked.");
+        }
+
+        var now = DateTime.UtcNow;
+        if (refreshToken.ExpiresAt <= now)
+        {
+            return Result<TokenResponse>.Unauthorized("Refresh token has expired.");
+        }
+
+        if (refreshToken.User.Status == UserStatus.Locked)
+        {
+            return Result<TokenResponse>.Forbidden("User account is locked.");
+        }
+
+        if (refreshToken.User.Status == UserStatus.Deleted)
+        {
+            return Result<TokenResponse>.Unauthorized("Invalid refresh token.");
+        }
+
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        await _authRepository.RevokeRefreshTokenAsync(refreshToken, now, cancellationToken);
+        var tokenResponse = await CreateAndStoreTokenResponseAsync(
+            refreshToken.User,
+            refreshToken.User.Role.RoleName,
+            now,
+            deviceInfo,
+            ipAddress,
+            cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+
+        return Result<TokenResponse>.Ok(tokenResponse);
+    }
+
     private async Task<Result<TokenResponse>> SignInUserAsync(
         User user,
         string? deviceInfo,
