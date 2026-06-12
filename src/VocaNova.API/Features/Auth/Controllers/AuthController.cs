@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using VocaNova.API.Common.Extensions;
 using VocaNova.API.Common.Results;
 using VocaNova.API.Features.Auth.DTOs;
 using VocaNova.API.Features.Auth.Services;
+using VocaNova.API.Infrastructure.RateLimiting;
 
 namespace VocaNova.API.Features.Auth.Controllers;
 
@@ -12,10 +14,17 @@ namespace VocaNova.API.Features.Auth.Controllers;
 public sealed class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IAuthRateLimiter? _authRateLimiter;
+    private readonly RateLimitSettings _rateLimitSettings;
 
-    public AuthController(IAuthService authService)
+    public AuthController(
+        IAuthService authService,
+        IAuthRateLimiter? authRateLimiter = null,
+        IOptions<RateLimitSettings>? rateLimitSettings = null)
     {
         _authService = authService;
+        _authRateLimiter = authRateLimiter;
+        _rateLimitSettings = rateLimitSettings?.Value ?? new RateLimitSettings();
     }
 
     [AllowAnonymous]
@@ -44,6 +53,15 @@ public sealed class AuthController : ControllerBase
         [FromBody] LoginRequest request,
         CancellationToken cancellationToken)
     {
+        var rateLimitResult = CheckRateLimit(
+            "auth:login",
+            _rateLimitSettings.LoginPerMinutePerIp);
+        if (!rateLimitResult.IsAllowed)
+        {
+            SetRetryAfterHeader(rateLimitResult);
+            return this.ErrorResult(Result<TokenResponse>.TooManyRequests("Login rate limit exceeded."));
+        }
+
         var result = await _authService.LoginAsync(
             request,
             Request.Headers.UserAgent.ToString(),
@@ -119,6 +137,15 @@ public sealed class AuthController : ControllerBase
         [FromBody] OtpSendRequest request,
         CancellationToken cancellationToken)
     {
+        var rateLimitResult = CheckRateLimit(
+            "auth:otp:send",
+            _rateLimitSettings.OtpPerMinutePerIp);
+        if (!rateLimitResult.IsAllowed)
+        {
+            SetRetryAfterHeader(rateLimitResult);
+            return this.ErrorResult(Result<OtpSendResponse>.TooManyRequests("OTP IP rate limit exceeded."));
+        }
+
         var result = await _authService.SendOtpAsync(request, cancellationToken);
         if (!result.IsSuccess)
         {
@@ -235,5 +262,25 @@ public sealed class AuthController : ControllerBase
     {
         var userIdClaim = User.FindFirst("user_id")?.Value;
         return uint.TryParse(userIdClaim, out userId);
+    }
+
+    private AuthRateLimitResult CheckRateLimit(string policyName, int permitLimit)
+    {
+        if (_authRateLimiter is null)
+        {
+            return new AuthRateLimitResult(true, 0);
+        }
+
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return _authRateLimiter.TryAcquire(
+            $"{policyName}:{ipAddress}",
+            permitLimit,
+            TimeSpan.FromSeconds(_rateLimitSettings.RetryAfterSeconds));
+    }
+
+    private void SetRetryAfterHeader(AuthRateLimitResult rateLimitResult)
+    {
+        Response.Headers["Retry-After"] = rateLimitResult.RetryAfterSeconds.ToString(
+            System.Globalization.CultureInfo.InvariantCulture);
     }
 }

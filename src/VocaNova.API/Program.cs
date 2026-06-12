@@ -38,6 +38,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection(RedisSettings.SectionName));
 builder.Services.AddSingleton<IUserProfileCache, RedisUserProfileCache>();
 builder.Services.Configure<RateLimitSettings>(builder.Configuration.GetSection(RateLimitSettings.SectionName));
+builder.Services.AddSingleton<IAuthRateLimiter, InMemoryAuthRateLimiter>();
 builder.Services.AddSingleton<IOtpCodeGenerator, RandomOtpCodeGenerator>();
 builder.Services.AddSingleton<ISmsProvider, ConsoleSmsProvider>();
 builder.Services.AddSingleton<IAuditLogQueue, AuditLogQueue>();
