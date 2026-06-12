@@ -89,4 +89,110 @@ public sealed class TopicService : ITopicService
 
         return Result<PagedResult<WordSummaryDto>>.Ok(result);
     }
+
+    public async Task<Result<TopicSummaryDto>> CreateAsync(
+        CreateTopicRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedRequest = NormalizeCreateTopicRequest(request);
+        if (await _topicRepository.TopicNameExistsAsync(normalizedRequest.TopicName!, cancellationToken: cancellationToken))
+        {
+            return Result<TopicSummaryDto>.Conflict("Topic already exists.");
+        }
+
+        var topic = await _topicRepository.CreateAsync(normalizedRequest, cancellationToken);
+        await RemoveTopicsCacheAsync(cancellationToken);
+
+        return Result<TopicSummaryDto>.Ok(topic);
+    }
+
+    public async Task<Result<TopicSummaryDto>> UpdateAsync(
+        uint topicId,
+        UpdateTopicRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedRequest = NormalizeUpdateTopicRequest(request);
+        if (await _topicRepository.TopicNameExistsAsync(normalizedRequest.TopicName!, topicId, cancellationToken))
+        {
+            return Result<TopicSummaryDto>.Conflict("Topic already exists.");
+        }
+
+        var topic = await _topicRepository.UpdateAsync(topicId, normalizedRequest, cancellationToken);
+        if (topic is null)
+        {
+            return Result<TopicSummaryDto>.NotFound("Topic not found.");
+        }
+
+        await RemoveTopicsCacheAsync(cancellationToken);
+
+        return Result<TopicSummaryDto>.Ok(topic);
+    }
+
+    public async Task<Result<bool>> SoftDeleteAsync(
+        uint topicId,
+        CancellationToken cancellationToken = default)
+    {
+        if (await _topicRepository.HasActiveWordsAsync(topicId, cancellationToken))
+        {
+            return Result<bool>.Conflict("Topic still has active words.");
+        }
+
+        var deleted = await _topicRepository.SetStatusAsync(topicId, UserStatus.Deleted, cancellationToken);
+        if (!deleted)
+        {
+            return Result<bool>.NotFound("Topic not found.");
+        }
+
+        await RemoveTopicsCacheAsync(cancellationToken);
+
+        return Result<bool>.Ok(true);
+    }
+
+    public async Task<Result<bool>> RestoreAsync(
+        uint topicId,
+        CancellationToken cancellationToken = default)
+    {
+        var restored = await _topicRepository.SetStatusAsync(topicId, UserStatus.Active, cancellationToken);
+        if (!restored)
+        {
+            return Result<bool>.NotFound("Topic not found.");
+        }
+
+        await RemoveTopicsCacheAsync(cancellationToken);
+
+        return Result<bool>.Ok(true);
+    }
+
+    private async Task RemoveTopicsCacheAsync(CancellationToken cancellationToken)
+    {
+        if (_topicCache is not null)
+        {
+            await _topicCache.RemoveTopicsAsync(cancellationToken);
+        }
+    }
+
+    private static CreateTopicRequest NormalizeCreateTopicRequest(CreateTopicRequest request)
+    {
+        return request with
+        {
+            TopicName = request.TopicName!.Trim(),
+            TopicNameVi = NormalizeNullable(request.TopicNameVi),
+            Icon = NormalizeNullable(request.Icon),
+        };
+    }
+
+    private static UpdateTopicRequest NormalizeUpdateTopicRequest(UpdateTopicRequest request)
+    {
+        return request with
+        {
+            TopicName = request.TopicName!.Trim(),
+            TopicNameVi = NormalizeNullable(request.TopicNameVi),
+            Icon = NormalizeNullable(request.Icon),
+        };
+    }
+
+    private static string? NormalizeNullable(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
 }

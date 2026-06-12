@@ -7,4 +7,25 @@ public interface ITopicRepository
     Task<IReadOnlyCollection<TopicSummaryDto>> GetTopicsAsync(CancellationToken cancellationToken = default);
 
     Task<bool> ExistsAsync(uint topicId, CancellationToken cancellationToken = default);
+
+    Task<bool> TopicNameExistsAsync(
+        string topicName,
+        uint? excludingTopicId = null,
+        CancellationToken cancellationToken = default);
+
+    Task<TopicSummaryDto> CreateAsync(
+        CreateTopicRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<TopicSummaryDto?> UpdateAsync(
+        uint topicId,
+        UpdateTopicRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> HasActiveWordsAsync(uint topicId, CancellationToken cancellationToken = default);
+
+    Task<bool> SetStatusAsync(
+        uint topicId,
+        string status,
+        CancellationToken cancellationToken = default);
 }

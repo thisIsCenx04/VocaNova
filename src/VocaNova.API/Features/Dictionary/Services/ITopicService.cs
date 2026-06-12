@@ -12,4 +12,21 @@ public interface ITopicService
         uint topicId,
         TopicWordsQuery query,
         CancellationToken cancellationToken = default);
+
+    Task<Result<TopicSummaryDto>> CreateAsync(
+        CreateTopicRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<TopicSummaryDto>> UpdateAsync(
+        uint topicId,
+        UpdateTopicRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<bool>> SoftDeleteAsync(
+        uint topicId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<bool>> RestoreAsync(
+        uint topicId,
+        CancellationToken cancellationToken = default);
 }

@@ -105,6 +105,17 @@ public sealed class RedisTopicCache : ITopicCache
         await database.StringSetAsync(GetKey(GetTopicWordsKey(topicId, page, limit)), payload, TopicWordsTtl);
     }
 
+    public async Task RemoveTopicsAsync(CancellationToken cancellationToken = default)
+    {
+        var database = await GetDatabaseAsync();
+        if (database is null)
+        {
+            return;
+        }
+
+        await database.KeyDeleteAsync(GetKey("topics"));
+    }
+
     private async Task<IDatabase?> GetDatabaseAsync()
     {
         var connection = await _connection.Value;
