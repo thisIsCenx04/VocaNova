@@ -10,6 +10,8 @@ public interface IAuthRepository
 
     Task<User?> FindByGoogleEmailAsync(string googleEmail, CancellationToken cancellationToken = default);
 
+    Task<User?> FindByIdAsync(uint userId, CancellationToken cancellationToken = default);
+
     Task<Role?> FindRoleByNameAsync(string roleName, CancellationToken cancellationToken = default);
 
     Task<User> CreateUserAsync(
@@ -31,6 +33,33 @@ public interface IAuthRepository
         RefreshToken refreshToken,
         DateTime revokedAt,
         CancellationToken cancellationToken = default);
+
+    Task UpdateUserProfileAsync(
+        User user,
+        string displayName,
+        string? avatarUrl,
+        DateTime updatedAt,
+        CancellationToken cancellationToken = default);
+
+    Task<UserLearningProfile> UpsertLearningProfileAsync(
+        User user,
+        uint? ageRangeId,
+        uint? regionId,
+        uint? occupationId,
+        uint? educationLevelId,
+        uint? learningPurposeId,
+        DateTime updatedAt,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> ActiveAgeRangeExistsAsync(uint ageRangeId, CancellationToken cancellationToken = default);
+
+    Task<bool> ActiveRegionExistsAsync(uint regionId, CancellationToken cancellationToken = default);
+
+    Task<bool> ActiveOccupationExistsAsync(uint occupationId, CancellationToken cancellationToken = default);
+
+    Task<bool> ActiveEducationLevelExistsAsync(uint educationLevelId, CancellationToken cancellationToken = default);
+
+    Task<bool> ActiveLearningPurposeExistsAsync(uint learningPurposeId, CancellationToken cancellationToken = default);
 
     Task<bool> RevokeTokenAsync(
         string tokenHash,

@@ -28,4 +28,22 @@ public interface IAuthService
         string? deviceInfo = null,
         string? ipAddress = null,
         CancellationToken cancellationToken = default);
+
+    Task<Result<bool>> LogoutAsync(
+        RefreshTokenRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<UserProfileDto>> GetProfileAsync(
+        uint userId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<UserProfileDto>> UpdateProfileAsync(
+        uint userId,
+        UpdateUserProfileRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<UserProfileDto>> UpdateLearningProfileAsync(
+        uint userId,
+        UpdateLearningProfileRequest request,
+        CancellationToken cancellationToken = default);
 }

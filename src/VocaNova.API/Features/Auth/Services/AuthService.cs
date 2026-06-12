@@ -6,6 +6,7 @@ using VocaNova.API.Common.Security;
 using VocaNova.API.Features.Auth.DTOs;
 using VocaNova.API.Features.Auth.Repositories;
 using VocaNova.API.Infrastructure.Authentication;
+using VocaNova.API.Infrastructure.Caching;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -17,6 +18,7 @@ public sealed class AuthService : IAuthService
     private readonly IAuthRepository _authRepository;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IGoogleTokenVerifier _googleTokenVerifier;
+    private readonly IUserProfileCache? _userProfileCache;
     private readonly JwtSettings _jwtSettings;
 
     public AuthService(
@@ -24,12 +26,14 @@ public sealed class AuthService : IAuthService
         IAuthRepository authRepository,
         IJwtTokenService jwtTokenService,
         IGoogleTokenVerifier googleTokenVerifier,
-        IOptions<JwtSettings> jwtSettings)
+        IOptions<JwtSettings> jwtSettings,
+        IUserProfileCache? userProfileCache = null)
     {
         _dbContext = dbContext;
         _authRepository = authRepository;
         _jwtTokenService = jwtTokenService;
         _googleTokenVerifier = googleTokenVerifier;
+        _userProfileCache = userProfileCache;
         _jwtSettings = jwtSettings.Value;
         _jwtSettings.Validate();
     }
@@ -280,6 +284,104 @@ public sealed class AuthService : IAuthService
         return Result<TokenResponse>.Ok(tokenResponse);
     }
 
+    public async Task<Result<bool>> LogoutAsync(
+        RefreshTokenRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.RefreshToken))
+        {
+            return Result<bool>.Unauthorized("Invalid refresh token.");
+        }
+
+        var tokenHash = TokenHelper.HashSha256(request.RefreshToken);
+        var revoked = await _authRepository.RevokeTokenAsync(tokenHash, DateTime.UtcNow, cancellationToken);
+        return revoked
+            ? Result<bool>.Ok(true)
+            : Result<bool>.Unauthorized("Invalid refresh token.");
+    }
+
+    public async Task<Result<UserProfileDto>> GetProfileAsync(
+        uint userId,
+        CancellationToken cancellationToken = default)
+    {
+        var cachedProfile = _userProfileCache is null
+            ? null
+            : await _userProfileCache.GetAsync(userId, cancellationToken);
+        if (cachedProfile is not null)
+        {
+            return Result<UserProfileDto>.Ok(cachedProfile);
+        }
+
+        var user = await _authRepository.FindByIdAsync(userId, cancellationToken);
+        if (user is null || user.Status == UserStatus.Deleted)
+        {
+            return Result<UserProfileDto>.Unauthorized("Invalid user.");
+        }
+
+        var profile = MapUserProfile(user);
+        if (_userProfileCache is not null)
+        {
+            await _userProfileCache.SetAsync(profile, cancellationToken);
+        }
+
+        return Result<UserProfileDto>.Ok(profile);
+    }
+
+    public async Task<Result<UserProfileDto>> UpdateProfileAsync(
+        uint userId,
+        UpdateUserProfileRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await _authRepository.FindByIdAsync(userId, cancellationToken);
+        if (user is null || user.Status == UserStatus.Deleted)
+        {
+            return Result<UserProfileDto>.Unauthorized("Invalid user.");
+        }
+
+        await _authRepository.UpdateUserProfileAsync(
+            user,
+            request.DisplayName!.Trim(),
+            string.IsNullOrWhiteSpace(request.AvatarUrl) ? null : request.AvatarUrl.Trim(),
+            DateTime.UtcNow,
+            cancellationToken);
+
+        await RemoveCachedProfileAsync(userId, cancellationToken);
+
+        return Result<UserProfileDto>.Ok(MapUserProfile(user));
+    }
+
+    public async Task<Result<UserProfileDto>> UpdateLearningProfileAsync(
+        uint userId,
+        UpdateLearningProfileRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var invalidReference = await GetInvalidLearningProfileReferenceAsync(request, cancellationToken);
+        if (invalidReference is not null)
+        {
+            return Result<UserProfileDto>.Fail($"{invalidReference} is invalid.");
+        }
+
+        var user = await _authRepository.FindByIdAsync(userId, cancellationToken);
+        if (user is null || user.Status == UserStatus.Deleted)
+        {
+            return Result<UserProfileDto>.Unauthorized("Invalid user.");
+        }
+
+        await _authRepository.UpsertLearningProfileAsync(
+            user,
+            request.AgeRangeId,
+            request.RegionId,
+            request.OccupationId,
+            request.EducationLevelId,
+            request.LearningPurposeId,
+            DateTime.UtcNow,
+            cancellationToken);
+
+        await RemoveCachedProfileAsync(userId, cancellationToken);
+
+        return Result<UserProfileDto>.Ok(MapUserProfile(user));
+    }
+
     private async Task<Result<TokenResponse>> SignInUserAsync(
         User user,
         string? deviceInfo,
@@ -345,5 +447,71 @@ public sealed class AuthService : IAuthService
         return !string.IsNullOrWhiteSpace(googleUser.Name)
             ? googleUser.Name
             : googleUser.Email ?? "Google User";
+    }
+
+    private async Task<string?> GetInvalidLearningProfileReferenceAsync(
+        UpdateLearningProfileRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (request.AgeRangeId.HasValue
+            && !await _authRepository.ActiveAgeRangeExistsAsync(request.AgeRangeId.Value, cancellationToken))
+        {
+            return nameof(UpdateLearningProfileRequest.AgeRangeId);
+        }
+
+        if (request.RegionId.HasValue
+            && !await _authRepository.ActiveRegionExistsAsync(request.RegionId.Value, cancellationToken))
+        {
+            return nameof(UpdateLearningProfileRequest.RegionId);
+        }
+
+        if (request.OccupationId.HasValue
+            && !await _authRepository.ActiveOccupationExistsAsync(request.OccupationId.Value, cancellationToken))
+        {
+            return nameof(UpdateLearningProfileRequest.OccupationId);
+        }
+
+        if (request.EducationLevelId.HasValue
+            && !await _authRepository.ActiveEducationLevelExistsAsync(request.EducationLevelId.Value, cancellationToken))
+        {
+            return nameof(UpdateLearningProfileRequest.EducationLevelId);
+        }
+
+        if (request.LearningPurposeId.HasValue
+            && !await _authRepository.ActiveLearningPurposeExistsAsync(request.LearningPurposeId.Value, cancellationToken))
+        {
+            return nameof(UpdateLearningProfileRequest.LearningPurposeId);
+        }
+
+        return null;
+    }
+
+    private async Task RemoveCachedProfileAsync(uint userId, CancellationToken cancellationToken)
+    {
+        if (_userProfileCache is not null)
+        {
+            await _userProfileCache.RemoveAsync(userId, cancellationToken);
+        }
+    }
+
+    private static UserProfileDto MapUserProfile(User user)
+    {
+        var learningProfile = user.UserLearningProfile is null
+            ? null
+            : new LearningProfileDto(
+                user.UserLearningProfile.AgeRangeId,
+                user.UserLearningProfile.RegionId,
+                user.UserLearningProfile.OccupationId,
+                user.UserLearningProfile.EducationLevelId,
+                user.UserLearningProfile.LearningPurposeId);
+
+        return new UserProfileDto(
+            user.UserId,
+            user.UserAuth?.Phone,
+            user.UserProfile?.FullName ?? string.Empty,
+            user.UserProfile?.AvatarUrl,
+            user.Role.RoleName,
+            user.Status,
+            learningProfile);
     }
 }
