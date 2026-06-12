@@ -22,4 +22,10 @@ public interface IAuthService
         string? deviceInfo = null,
         string? ipAddress = null,
         CancellationToken cancellationToken = default);
+
+    Task<Result<TokenResponse>> RefreshTokenAsync(
+        RefreshTokenRequest request,
+        string? deviceInfo = null,
+        string? ipAddress = null,
+        CancellationToken cancellationToken = default);
 }

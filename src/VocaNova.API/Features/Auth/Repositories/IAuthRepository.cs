@@ -23,6 +23,15 @@ public interface IAuthRepository
         RefreshToken refreshToken,
         CancellationToken cancellationToken = default);
 
+    Task<RefreshToken?> FindRefreshTokenByHashAsync(
+        string tokenHash,
+        CancellationToken cancellationToken = default);
+
+    Task RevokeRefreshTokenAsync(
+        RefreshToken refreshToken,
+        DateTime revokedAt,
+        CancellationToken cancellationToken = default);
+
     Task<bool> RevokeTokenAsync(
         string tokenHash,
         DateTime revokedAt,

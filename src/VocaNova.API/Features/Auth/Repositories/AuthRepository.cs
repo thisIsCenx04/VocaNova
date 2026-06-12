@@ -74,6 +74,25 @@ public sealed class AuthRepository : IAuthRepository
         return refreshToken;
     }
 
+    public Task<RefreshToken?> FindRefreshTokenByHashAsync(
+        string tokenHash,
+        CancellationToken cancellationToken = default)
+    {
+        return _dbContext.RefreshTokens
+            .Include(token => token.User)
+            .ThenInclude(user => user.Role)
+            .SingleOrDefaultAsync(token => token.TokenHash == tokenHash, cancellationToken);
+    }
+
+    public async Task RevokeRefreshTokenAsync(
+        RefreshToken refreshToken,
+        DateTime revokedAt,
+        CancellationToken cancellationToken = default)
+    {
+        refreshToken.RevokedAt = revokedAt;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<bool> RevokeTokenAsync(
         string tokenHash,
         DateTime revokedAt,

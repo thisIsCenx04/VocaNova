@@ -76,4 +76,24 @@ public sealed class AuthController : ControllerBase
 
         return this.OkResult(result.Value!, "Logged in successfully.");
     }
+
+    [AllowAnonymous]
+    [HttpPost("refresh")]
+    public async Task<IActionResult> RefreshToken(
+        [FromBody] RefreshTokenRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _authService.RefreshTokenAsync(
+            request,
+            Request.Headers.UserAgent.ToString(),
+            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value!, "Token refreshed successfully.");
+    }
 }

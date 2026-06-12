@@ -84,6 +84,21 @@ public class AuthControllerTests
         objectResult.Value.Should().BeAssignableTo<ApiResponse<TokenResponse>>();
     }
 
+    [Fact]
+    public async Task RefreshToken_Should_Return_200_When_Service_Succeeds()
+    {
+        var controller = CreateController(new StubAuthService(
+            Result<TokenResponse>.Ok(new TokenResponse("access-token", "refresh-token", 900))));
+
+        var result = await controller.RefreshToken(
+            new RefreshTokenRequest("refresh-token"),
+            CancellationToken.None);
+
+        var objectResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(StatusCodes.Status200OK);
+        objectResult.Value.Should().BeAssignableTo<ApiResponse<TokenResponse>>();
+    }
+
     private static AuthController CreateController(IAuthService authService)
     {
         return new AuthController(authService)
@@ -124,6 +139,15 @@ public class AuthControllerTests
 
         public Task<Result<TokenResponse>> GoogleLoginAsync(
             GoogleLoginRequest request,
+            string? deviceInfo = null,
+            string? ipAddress = null,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_result);
+        }
+
+        public Task<Result<TokenResponse>> RefreshTokenAsync(
+            RefreshTokenRequest request,
             string? deviceInfo = null,
             string? ipAddress = null,
             CancellationToken cancellationToken = default)
