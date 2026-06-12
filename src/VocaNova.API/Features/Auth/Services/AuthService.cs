@@ -7,8 +7,11 @@ using VocaNova.API.Features.Auth.DTOs;
 using VocaNova.API.Features.Auth.Repositories;
 using VocaNova.API.Infrastructure.Authentication;
 using VocaNova.API.Infrastructure.Caching;
+using VocaNova.API.Infrastructure.Otp;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
+using VocaNova.API.Infrastructure.RateLimiting;
+using VocaNova.API.Infrastructure.Sms;
 
 namespace VocaNova.API.Features.Auth.Services;
 
@@ -19,6 +22,9 @@ public sealed class AuthService : IAuthService
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IGoogleTokenVerifier _googleTokenVerifier;
     private readonly IUserProfileCache? _userProfileCache;
+    private readonly IOtpCodeGenerator _otpCodeGenerator;
+    private readonly ISmsProvider _smsProvider;
+    private readonly RateLimitSettings _rateLimitSettings;
     private readonly JwtSettings _jwtSettings;
 
     public AuthService(
@@ -27,13 +33,19 @@ public sealed class AuthService : IAuthService
         IJwtTokenService jwtTokenService,
         IGoogleTokenVerifier googleTokenVerifier,
         IOptions<JwtSettings> jwtSettings,
-        IUserProfileCache? userProfileCache = null)
+        IUserProfileCache? userProfileCache = null,
+        IOtpCodeGenerator? otpCodeGenerator = null,
+        ISmsProvider? smsProvider = null,
+        IOptions<RateLimitSettings>? rateLimitSettings = null)
     {
         _dbContext = dbContext;
         _authRepository = authRepository;
         _jwtTokenService = jwtTokenService;
         _googleTokenVerifier = googleTokenVerifier;
         _userProfileCache = userProfileCache;
+        _otpCodeGenerator = otpCodeGenerator ?? new RandomOtpCodeGenerator();
+        _smsProvider = smsProvider ?? NullSmsProvider.Instance;
+        _rateLimitSettings = rateLimitSettings?.Value ?? new RateLimitSettings();
         _jwtSettings = jwtSettings.Value;
         _jwtSettings.Validate();
     }
@@ -382,6 +394,85 @@ public sealed class AuthService : IAuthService
         return Result<UserProfileDto>.Ok(MapUserProfile(user));
     }
 
+    public async Task<Result<OtpSendResponse>> SendOtpAsync(
+        OtpSendRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var phone = request.Phone!.Trim();
+        var now = DateTime.UtcNow;
+        var rateLimitWindowStart = now.AddSeconds(-_rateLimitSettings.RetryAfterSeconds);
+        var recentOtp = await _authRepository.FindLatestOtpByPhoneSinceAsync(
+            phone,
+            rateLimitWindowStart,
+            cancellationToken);
+        if (recentOtp is not null)
+        {
+            return Result<OtpSendResponse>.TooManyRequests("OTP request rate limit exceeded.");
+        }
+
+        var user = await _authRepository.FindByPhoneAsync(phone, cancellationToken);
+        var otpCode = _otpCodeGenerator.Generate();
+
+        await _authRepository.CreateOtpAsync(
+            new OtpVerification
+            {
+                UserId = user?.UserId,
+                Phone = phone,
+                OtpCode = otpCode,
+                IsUsed = false,
+                Status = OtpStatus.Active,
+                VerifyAttemptCount = 0,
+                ExpiresAt = now.AddMinutes(AppSettings.OtpTtlMinutes),
+                CreatedAt = now,
+            },
+            cancellationToken);
+
+        await _smsProvider.SendOtpAsync(phone, otpCode, cancellationToken);
+
+        return Result<OtpSendResponse>.Ok(new OtpSendResponse(AppSettings.OtpTtlMinutes * 60));
+    }
+
+    public async Task<Result<OtpVerifyResponse>> VerifyOtpAsync(
+        OtpVerifyRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var phone = request.Phone!.Trim();
+        var otp = await _authRepository.FindLatestOtpByPhoneAsync(phone, cancellationToken);
+        if (otp is null)
+        {
+            return Result<OtpVerifyResponse>.Unauthorized("Invalid OTP.");
+        }
+
+        var now = DateTime.UtcNow;
+        if (otp.ExpiresAt <= now)
+        {
+            return Result<OtpVerifyResponse>.Unauthorized("OTP has expired.");
+        }
+
+        if (otp.IsUsed)
+        {
+            return Result<OtpVerifyResponse>.Conflict("OTP has already been used.");
+        }
+
+        if (otp.VerifyAttemptCount >= AppSettings.OtpMaxVerifyAttempts)
+        {
+            return Result<OtpVerifyResponse>.TooManyRequests("Maximum OTP verify attempts exceeded.");
+        }
+
+        otp.VerifyAttemptCount++;
+
+        if (otp.OtpCode != request.OtpCode)
+        {
+            await _authRepository.SaveChangesAsync(cancellationToken);
+            return Result<OtpVerifyResponse>.Unauthorized("Invalid OTP.");
+        }
+
+        otp.IsUsed = true;
+        await _authRepository.SaveChangesAsync(cancellationToken);
+
+        return Result<OtpVerifyResponse>.Ok(new OtpVerifyResponse(true));
+    }
+
     private async Task<Result<TokenResponse>> SignInUserAsync(
         User user,
         string? deviceInfo,
@@ -513,5 +604,19 @@ public sealed class AuthService : IAuthService
             user.Role.RoleName,
             user.Status,
             learningProfile);
+    }
+
+    private sealed class NullSmsProvider : ISmsProvider
+    {
+        public static readonly NullSmsProvider Instance = new();
+
+        private NullSmsProvider()
+        {
+        }
+
+        public Task SendOtpAsync(string phone, string otpCode, CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
     }
 }
