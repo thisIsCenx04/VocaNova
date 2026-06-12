@@ -224,5 +224,19 @@ public class AuthControllerTests
         {
             return Task.FromResult(Result<OtpVerifyResponse>.Ok(new OtpVerifyResponse(true)));
         }
+
+        public Task<Result<OtpSendResponse>> ForgotPasswordAsync(
+            ForgotPasswordRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Result<OtpSendResponse>.Ok(new OtpSendResponse(300)));
+        }
+
+        public Task<Result<bool>> ResetPasswordAsync(
+            ResetPasswordRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Result<bool>.Ok(true));
+        }
     }
 }

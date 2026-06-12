@@ -473,6 +473,77 @@ public sealed class AuthService : IAuthService
         return Result<OtpVerifyResponse>.Ok(new OtpVerifyResponse(true));
     }
 
+    public async Task<Result<OtpSendResponse>> ForgotPasswordAsync(
+        ForgotPasswordRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var phone = request.Phone!.Trim();
+        var user = await _authRepository.FindByPhoneAsync(phone, cancellationToken);
+        if (user is null || user.Status == UserStatus.Deleted)
+        {
+            return Result<OtpSendResponse>.NotFound("User not found.");
+        }
+
+        return await SendOtpAsync(new OtpSendRequest(phone, "reset"), cancellationToken);
+    }
+
+    public async Task<Result<bool>> ResetPasswordAsync(
+        ResetPasswordRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var phone = request.Phone!.Trim();
+        var user = await _authRepository.FindByPhoneAsync(phone, cancellationToken);
+        if (user?.UserAuth is null || user.Status == UserStatus.Deleted)
+        {
+            return Result<bool>.Unauthorized("Invalid phone or OTP.");
+        }
+
+        var otp = await _authRepository.FindLatestOtpByPhoneAsync(phone, cancellationToken);
+        if (otp is null)
+        {
+            return Result<bool>.Unauthorized("Invalid phone or OTP.");
+        }
+
+        var now = DateTime.UtcNow;
+        if (otp.ExpiresAt <= now)
+        {
+            return Result<bool>.Unauthorized("OTP has expired.");
+        }
+
+        if (otp.IsUsed)
+        {
+            return Result<bool>.Conflict("OTP has already been used.");
+        }
+
+        if (otp.VerifyAttemptCount >= AppSettings.OtpMaxVerifyAttempts)
+        {
+            return Result<bool>.TooManyRequests("Maximum OTP verify attempts exceeded.");
+        }
+
+        otp.VerifyAttemptCount++;
+
+        if (otp.OtpCode != request.OtpCode)
+        {
+            await _authRepository.SaveChangesAsync(cancellationToken);
+            return Result<bool>.Unauthorized("Invalid phone or OTP.");
+        }
+
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        await _authRepository.UpdatePasswordAsync(
+            user,
+            PasswordHelper.Hash(request.NewPassword!),
+            now,
+            cancellationToken);
+
+        otp.IsUsed = true;
+        await _authRepository.SaveChangesAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+
+        return Result<bool>.Ok(true);
+    }
+
     private async Task<Result<TokenResponse>> SignInUserAsync(
         User user,
         string? deviceInfo,
