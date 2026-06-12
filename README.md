@@ -1,9 +1,10 @@
 # VocaNova
 
-VocaNova is a vocabulary learning and testing system for SEP490. The repository is organized for three .NET projects in the first backend/dashboard milestone:
+VocaNova is a vocabulary learning and testing system for SEP490. The repository contains:
 
 - `src/VocaNova.API`: ASP.NET Core Web API.
 - `src/VocaNova.Dashboard`: ASP.NET Core MVC dashboard.
+- `src/VocaNova.Mobile`: Flutter mobile application.
 - `tests/VocaNova.Tests`: xUnit test project.
 
 ## Prerequisites
@@ -11,6 +12,7 @@ VocaNova is a vocabulary learning and testing system for SEP490. The repository 
 - .NET SDK 8.0 or newer.
 - PostgreSQL for the main database.
 - Redis for cache and rate-limit related features.
+- Flutter 3.38 or newer for the mobile application.
 
 ## Local Setup
 
@@ -61,6 +63,14 @@ VocaNova is a vocabulary learning and testing system for SEP490. The repository 
 
    ```bash
    dotnet test
+   ```
+
+8. Run the mobile application:
+
+   ```powershell
+   cd src/VocaNova.Mobile
+   flutter pub get
+   flutter run
    ```
 
 ## Database Scaffold
