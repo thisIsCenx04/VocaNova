@@ -13,4 +13,8 @@ public interface IWordRepository
         uint? topicId,
         bool? isPhrase,
         CancellationToken cancellationToken = default);
+
+    Task<WordDetailDto?> FindDetailAsync(
+        uint wordId,
+        CancellationToken cancellationToken = default);
 }

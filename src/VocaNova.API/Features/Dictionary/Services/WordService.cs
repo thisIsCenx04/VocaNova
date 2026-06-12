@@ -11,13 +11,16 @@ public sealed class WordService : IWordService
 {
     private readonly IWordRepository _wordRepository;
     private readonly IWordSearchCache? _wordSearchCache;
+    private readonly IWordDetailCache? _wordDetailCache;
 
     public WordService(
         IWordRepository wordRepository,
-        IWordSearchCache? wordSearchCache = null)
+        IWordSearchCache? wordSearchCache = null,
+        IWordDetailCache? wordDetailCache = null)
     {
         _wordRepository = wordRepository;
         _wordSearchCache = wordSearchCache;
+        _wordDetailCache = wordDetailCache;
     }
 
     public async Task<Result<PagedResult<WordSummaryDto>>> SearchAsync(
@@ -78,5 +81,37 @@ public sealed class WordService : IWordService
         }
 
         return Result<PagedResult<WordSummaryDto>>.Ok(result);
+    }
+
+    public async Task<Result<WordDetailDto>> GetByIdAsync(
+        uint wordId,
+        CancellationToken cancellationToken = default)
+    {
+        if (wordId == 0)
+        {
+            return Result<WordDetailDto>.NotFound("Word not found.");
+        }
+
+        if (_wordDetailCache is not null)
+        {
+            var cached = await _wordDetailCache.GetAsync(wordId, cancellationToken);
+            if (cached is not null)
+            {
+                return Result<WordDetailDto>.Ok(cached);
+            }
+        }
+
+        var word = await _wordRepository.FindDetailAsync(wordId, cancellationToken);
+        if (word is null)
+        {
+            return Result<WordDetailDto>.NotFound("Word not found.");
+        }
+
+        if (_wordDetailCache is not null)
+        {
+            await _wordDetailCache.SetAsync(word, cancellationToken);
+        }
+
+        return Result<WordDetailDto>.Ok(word);
     }
 }
