@@ -1,12 +1,15 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using System.Net;
 using System.Security.Claims;
 using VocaNova.API.Common.Responses;
 using VocaNova.API.Common.Results;
 using VocaNova.API.Features.Auth.Controllers;
 using VocaNova.API.Features.Auth.DTOs;
 using VocaNova.API.Features.Auth.Services;
+using VocaNova.API.Infrastructure.RateLimiting;
 
 namespace VocaNova.Tests.Auth;
 
@@ -71,6 +74,41 @@ public class AuthControllerTests
     }
 
     [Fact]
+    public async Task Login_Should_Return_429_With_RetryAfter_When_Ip_Rate_Limit_Is_Exceeded()
+    {
+        var authService = new StubAuthService(
+            Result<TokenResponse>.Ok(new TokenResponse("access-token", "refresh-token", 900)));
+        var controller = CreateController(
+            authService,
+            new InMemoryAuthRateLimiter(),
+            new RateLimitSettings
+            {
+                LoginPerMinutePerIp = 10,
+                OtpPerMinutePerIp = 1,
+                RetryAfterSeconds = 60,
+            });
+        controller.HttpContext.Connection.RemoteIpAddress = IPAddress.Parse("127.0.0.1");
+
+        for (var index = 0; index < 10; index++)
+        {
+            var allowedResult = await controller.Login(
+                new LoginRequest("0912345678", "Password1"),
+                CancellationToken.None);
+
+            allowedResult.Should().BeOfType<OkObjectResult>();
+        }
+
+        var blockedResult = await controller.Login(
+            new LoginRequest("0912345678", "Password1"),
+            CancellationToken.None);
+
+        var objectResult = blockedResult.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(StatusCodes.Status429TooManyRequests);
+        controller.Response.Headers["Retry-After"].ToString().Should().NotBeNullOrWhiteSpace();
+        authService.LoginCallCount.Should().Be(10);
+    }
+
+    [Fact]
     public async Task GoogleLogin_Should_Return_200_When_Service_Succeeds()
     {
         var controller = CreateController(new StubAuthService(
@@ -117,9 +155,42 @@ public class AuthControllerTests
         objectResult.Value.Should().BeAssignableTo<ApiResponse<UserProfileDto>>();
     }
 
-    private static AuthController CreateController(IAuthService authService)
+    [Fact]
+    public async Task SendOtp_Should_Return_429_With_RetryAfter_When_Ip_Rate_Limit_Is_Exceeded()
     {
-        return new AuthController(authService)
+        var controller = CreateController(
+            new StubAuthService(),
+            new InMemoryAuthRateLimiter(),
+            new RateLimitSettings
+            {
+                LoginPerMinutePerIp = 10,
+                OtpPerMinutePerIp = 1,
+                RetryAfterSeconds = 60,
+            });
+        controller.HttpContext.Connection.RemoteIpAddress = IPAddress.Parse("127.0.0.2");
+
+        var firstResult = await controller.SendOtp(
+            new OtpSendRequest("0912345678", "reset"),
+            CancellationToken.None);
+        var secondResult = await controller.SendOtp(
+            new OtpSendRequest("0912345678", "reset"),
+            CancellationToken.None);
+
+        firstResult.Should().BeOfType<OkObjectResult>();
+        var objectResult = secondResult.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(StatusCodes.Status429TooManyRequests);
+        controller.Response.Headers["Retry-After"].ToString().Should().NotBeNullOrWhiteSpace();
+    }
+
+    private static AuthController CreateController(
+        IAuthService authService,
+        IAuthRateLimiter? authRateLimiter = null,
+        RateLimitSettings? rateLimitSettings = null)
+    {
+        return new AuthController(
+            authService,
+            authRateLimiter,
+            Options.Create(rateLimitSettings ?? new RateLimitSettings()))
         {
             ControllerContext = new ControllerContext
             {
@@ -145,6 +216,8 @@ public class AuthControllerTests
             _logoutResult = logoutResult ?? Result<bool>.Ok(true);
         }
 
+        public int LoginCallCount { get; private set; }
+
         public Task<Result<TokenResponse>> RegisterAsync(
             RegisterRequest request,
             string? deviceInfo = null,
@@ -160,6 +233,7 @@ public class AuthControllerTests
             string? ipAddress = null,
             CancellationToken cancellationToken = default)
         {
+            LoginCallCount++;
             return Task.FromResult(_result);
         }
 
