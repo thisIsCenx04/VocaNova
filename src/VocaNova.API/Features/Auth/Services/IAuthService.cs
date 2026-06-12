@@ -54,4 +54,12 @@ public interface IAuthService
     Task<Result<OtpVerifyResponse>> VerifyOtpAsync(
         OtpVerifyRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<Result<OtpSendResponse>> ForgotPasswordAsync(
+        ForgotPasswordRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<bool>> ResetPasswordAsync(
+        ResetPasswordRequest request,
+        CancellationToken cancellationToken = default);
 }

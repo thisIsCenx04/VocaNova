@@ -223,6 +223,24 @@ public sealed class AuthRepository : IAuthRepository
         return otpVerification;
     }
 
+    public async Task UpdatePasswordAsync(
+        User user,
+        string passwordHash,
+        DateTime updatedAt,
+        CancellationToken cancellationToken = default)
+    {
+        if (user.UserAuth is null)
+        {
+            throw new InvalidOperationException("User auth is required to update password.");
+        }
+
+        user.UserAuth.PasswordHash = passwordHash;
+        user.UserAuth.UpdatedAt = updatedAt;
+        user.UpdatedAt = updatedAt;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return _dbContext.SaveChangesAsync(cancellationToken);

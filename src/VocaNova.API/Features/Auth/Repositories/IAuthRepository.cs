@@ -74,6 +74,12 @@ public interface IAuthRepository
         OtpVerification otpVerification,
         CancellationToken cancellationToken = default);
 
+    Task UpdatePasswordAsync(
+        User user,
+        string passwordHash,
+        DateTime updatedAt,
+        CancellationToken cancellationToken = default);
+
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 
     Task<bool> RevokeTokenAsync(
