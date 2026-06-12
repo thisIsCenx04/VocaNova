@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using VocaNova.API.Common.Constants;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -35,6 +36,12 @@ public sealed class AuthRepository : IAuthRepository
             .SingleOrDefaultAsync(
                 user => user.UserAuth != null && user.UserAuth.GoogleEmail == googleEmail,
                 cancellationToken);
+    }
+
+    public Task<User?> FindByIdAsync(uint userId, CancellationToken cancellationToken = default)
+    {
+        return UserAggregate()
+            .SingleOrDefaultAsync(user => user.UserId == userId, cancellationToken);
     }
 
     public Task<Role?> FindRoleByNameAsync(string roleName, CancellationToken cancellationToken = default)
@@ -91,6 +98,98 @@ public sealed class AuthRepository : IAuthRepository
     {
         refreshToken.RevokedAt = revokedAt;
         await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task UpdateUserProfileAsync(
+        User user,
+        string displayName,
+        string? avatarUrl,
+        DateTime updatedAt,
+        CancellationToken cancellationToken = default)
+    {
+        if (user.UserProfile is null)
+        {
+            user.UserProfile = new UserProfile
+            {
+                UserId = user.UserId,
+            };
+        }
+
+        user.UserProfile.FullName = displayName;
+        user.UserProfile.AvatarUrl = avatarUrl;
+        user.UserProfile.UpdatedAt = updatedAt;
+        user.UpdatedAt = updatedAt;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<UserLearningProfile> UpsertLearningProfileAsync(
+        User user,
+        uint? ageRangeId,
+        uint? regionId,
+        uint? occupationId,
+        uint? educationLevelId,
+        uint? learningPurposeId,
+        DateTime updatedAt,
+        CancellationToken cancellationToken = default)
+    {
+        if (user.UserLearningProfile is null)
+        {
+            user.UserLearningProfile = new UserLearningProfile
+            {
+                UserId = user.UserId,
+                CreatedAt = updatedAt,
+            };
+        }
+
+        user.UserLearningProfile.AgeRangeId = ageRangeId;
+        user.UserLearningProfile.RegionId = regionId;
+        user.UserLearningProfile.OccupationId = occupationId;
+        user.UserLearningProfile.EducationLevelId = educationLevelId;
+        user.UserLearningProfile.LearningPurposeId = learningPurposeId;
+        user.UserLearningProfile.UpdatedAt = updatedAt;
+        user.UpdatedAt = updatedAt;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return user.UserLearningProfile;
+    }
+
+    public Task<bool> ActiveAgeRangeExistsAsync(uint ageRangeId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.AgeRanges.AnyAsync(
+            ageRange => ageRange.AgeRangeId == ageRangeId && ageRange.Status == UserStatus.Active,
+            cancellationToken);
+    }
+
+    public Task<bool> ActiveRegionExistsAsync(uint regionId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Regions.AnyAsync(
+            region => region.RegionId == regionId && region.Status == UserStatus.Active,
+            cancellationToken);
+    }
+
+    public Task<bool> ActiveOccupationExistsAsync(uint occupationId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Occupations.AnyAsync(
+            occupation => occupation.OccupationId == occupationId && occupation.Status == UserStatus.Active,
+            cancellationToken);
+    }
+
+    public Task<bool> ActiveEducationLevelExistsAsync(uint educationLevelId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.EducationLevels.AnyAsync(
+            educationLevel => educationLevel.EducationLevelId == educationLevelId
+                && educationLevel.Status == UserStatus.Active,
+            cancellationToken);
+    }
+
+    public Task<bool> ActiveLearningPurposeExistsAsync(uint learningPurposeId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.LearningPurposes.AnyAsync(
+            learningPurpose => learningPurpose.LearningPurposeId == learningPurposeId
+                && learningPurpose.Status == UserStatus.Active,
+            cancellationToken);
     }
 
     public async Task<bool> RevokeTokenAsync(

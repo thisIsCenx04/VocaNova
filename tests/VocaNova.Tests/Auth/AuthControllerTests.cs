@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using VocaNova.API.Common.Responses;
 using VocaNova.API.Common.Results;
 using VocaNova.API.Features.Auth.Controllers;
@@ -99,6 +100,23 @@ public class AuthControllerTests
         objectResult.Value.Should().BeAssignableTo<ApiResponse<TokenResponse>>();
     }
 
+    [Fact]
+    public async Task GetMe_Should_Return_200_When_UserId_Claim_Is_Present()
+    {
+        var profile = new UserProfileDto(1, "0912345678", "Nguyen Van A", null, "user", "active", null);
+        var controller = CreateController(new StubAuthService(
+            profileResult: Result<UserProfileDto>.Ok(profile)));
+        controller.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(
+            new[] { new Claim("user_id", "1") },
+            "Test"));
+
+        var result = await controller.GetMe(CancellationToken.None);
+
+        var objectResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(StatusCodes.Status200OK);
+        objectResult.Value.Should().BeAssignableTo<ApiResponse<UserProfileDto>>();
+    }
+
     private static AuthController CreateController(IAuthService authService)
     {
         return new AuthController(authService)
@@ -113,10 +131,18 @@ public class AuthControllerTests
     private sealed class StubAuthService : IAuthService
     {
         private readonly Result<TokenResponse> _result;
+        private readonly Result<UserProfileDto> _profileResult;
+        private readonly Result<bool> _logoutResult;
 
-        public StubAuthService(Result<TokenResponse> result)
+        public StubAuthService(
+            Result<TokenResponse>? result = null,
+            Result<UserProfileDto>? profileResult = null,
+            Result<bool>? logoutResult = null)
         {
-            _result = result;
+            _result = result ?? Result<TokenResponse>.Ok(new TokenResponse("access-token", "refresh-token", 900));
+            _profileResult = profileResult ?? Result<UserProfileDto>.Ok(
+                new UserProfileDto(1, "0912345678", "Nguyen Van A", null, "user", "active", null));
+            _logoutResult = logoutResult ?? Result<bool>.Ok(true);
         }
 
         public Task<Result<TokenResponse>> RegisterAsync(
@@ -153,6 +179,36 @@ public class AuthControllerTests
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_result);
+        }
+
+        public Task<Result<bool>> LogoutAsync(
+            RefreshTokenRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_logoutResult);
+        }
+
+        public Task<Result<UserProfileDto>> GetProfileAsync(
+            uint userId,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_profileResult);
+        }
+
+        public Task<Result<UserProfileDto>> UpdateProfileAsync(
+            uint userId,
+            UpdateUserProfileRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_profileResult);
+        }
+
+        public Task<Result<UserProfileDto>> UpdateLearningProfileAsync(
+            uint userId,
+            UpdateLearningProfileRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_profileResult);
         }
     }
 }
