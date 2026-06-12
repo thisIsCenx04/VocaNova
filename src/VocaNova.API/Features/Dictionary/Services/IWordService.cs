@@ -22,6 +22,10 @@ public interface IWordService
         UpdateWordRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<Result<BulkImportResultDto>> ImportCsvAsync(
+        IFormFile file,
+        CancellationToken cancellationToken = default);
+
     Task<Result<bool>> SoftDeleteAsync(
         uint wordId,
         CancellationToken cancellationToken = default);

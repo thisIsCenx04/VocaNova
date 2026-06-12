@@ -53,6 +53,22 @@ public sealed class AdminWordsController : ControllerBase
         return this.OkResult(result.Value!, "Word updated successfully.");
     }
 
+    [HttpPost("import")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> Import(
+        [FromForm] IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        var result = await _wordService.ImportCsvAsync(file, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        HttpContext.Items[AuditLogHttpContextKeys.EntityType] = EntityType;
+        return this.OkResult(result.Value!, "Words imported successfully.");
+    }
+
     [Authorize(Policy = JwtAuthenticationExtensions.SuperAdminPolicy)]
     [HttpDelete("{id:uint}")]
     public async Task<IActionResult> SoftDelete(

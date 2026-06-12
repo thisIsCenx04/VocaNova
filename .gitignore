@@ -73,3 +73,7 @@ windows/flutter/generated_plugin_registrant.*
 *.p8
 *.p12
 *.mobileprovision
+
+
+VocaNova_Activity_History.md
+VocaNova_Feature_Breakdown.md

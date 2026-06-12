@@ -105,6 +105,17 @@ public sealed class WordRepository : IWordRepository
                 cancellationToken);
     }
 
+    public async Task<uint?> FindWordIdByKeyAsync(
+        string wordKey,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Words
+            .IgnoreQueryFilters()
+            .Where(word => word.WordKey == wordKey)
+            .Select(word => (uint?)word.WordId)
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<WordDetailDto> CreateAsync(
         CreateWordRequest request,
         string wordKey,
@@ -123,6 +134,43 @@ public sealed class WordRepository : IWordRepository
             Status = UserStatus.Active,
             CreatedAt = now,
             UpdatedAt = now,
+        };
+
+        _dbContext.Words.Add(word);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return (await FindDetailAsync(word.WordId, cancellationToken))!;
+    }
+
+    public async Task<WordDetailDto> CreateWithSenseAsync(
+        CreateWordRequest wordRequest,
+        string wordKey,
+        CreateSenseRequest senseRequest,
+        CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        var word = new Word
+        {
+            Word1 = wordRequest.Word!.Trim(),
+            WordKey = wordKey,
+            CefrLevel = NormalizeNullable(wordRequest.Cefr),
+            PhoneticUk = NormalizeNullable(wordRequest.PhoneticUk),
+            PhoneticUs = NormalizeNullable(wordRequest.PhoneticUs),
+            ImageUrl = NormalizeNullable(wordRequest.ImageUrl),
+            IsPhrase = wordRequest.IsPhrase,
+            Status = UserStatus.Active,
+            CreatedAt = now,
+            UpdatedAt = now,
+            WordSenses =
+            {
+                new WordSense
+                {
+                    SenseOrder = senseRequest.SenseOrder,
+                    WordClass = senseRequest.WordClass!.Trim(),
+                    EnglishDefinition = senseRequest.EnglishDefinition!.Trim(),
+                    VietnameseMeaning = NormalizeNullable(senseRequest.VietnameseMeaning),
+                },
+            },
         };
 
         _dbContext.Words.Add(word);
@@ -204,6 +252,42 @@ public sealed class WordRepository : IWordRepository
             VietnameseMeaning = NormalizeNullable(request.VietnameseMeaning),
         };
 
+        _dbContext.WordSenses.Add(sense);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return MapSense(sense);
+    }
+
+    public async Task<WordSenseDto?> CreateNextSenseAsync(
+        uint wordId,
+        string wordClass,
+        string englishDefinition,
+        string? vietnameseMeaning,
+        CancellationToken cancellationToken = default)
+    {
+        var word = await _dbContext.Words
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(entity => entity.WordId == wordId, cancellationToken);
+        if (word is null)
+        {
+            return null;
+        }
+
+        var nextOrder = await _dbContext.WordSenses
+            .Where(sense => sense.WordId == wordId)
+            .Select(sense => (int?)sense.SenseOrder)
+            .MaxAsync(cancellationToken) ?? 0;
+
+        var sense = new WordSense
+        {
+            WordId = wordId,
+            SenseOrder = nextOrder + 1,
+            WordClass = wordClass.Trim(),
+            EnglishDefinition = englishDefinition.Trim(),
+            VietnameseMeaning = NormalizeNullable(vietnameseMeaning),
+        };
+
+        word.UpdatedAt = DateTime.UtcNow;
         _dbContext.WordSenses.Add(sense);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
