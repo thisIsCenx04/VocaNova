@@ -1,0 +1,39 @@
+@model VocaNova.Dashboard.Models.Auth.LoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<section class="login-panel" aria-labelledby="login-title">
+    <div class="login-brand">
+        <span class="brand-mark">VN</span>
+        <div>
+            <h1 id="login-title">VocaNova Dashboard</h1>
+            <p>Admin console</p>
+        </div>
+    </div>
+
+    <form asp-action="Login" asp-controller="Auth" method="post" class="login-form">
+        @Html.AntiForgeryToken()
+        <input asp-for="ReturnUrl" type="hidden" />
+        <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+
+        <div class="form-field">
+            <label asp-for="Phone"></label>
+            <input asp-for="Phone" class="form-control" autocomplete="username" inputmode="tel" />
+            <span asp-validation-for="Phone" class="text-danger small"></span>
+        </div>
+
+        <div class="form-field">
+            <label asp-for="Password"></label>
+            <input asp-for="Password" class="form-control" autocomplete="current-password" />
+            <span asp-validation-for="Password" class="text-danger small"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Sign in</button>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
