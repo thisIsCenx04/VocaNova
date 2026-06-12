@@ -22,7 +22,9 @@ public static class JwtAuthenticationExtensions
         jwtSettings.Validate();
 
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
+        services.Configure<GoogleAuthSettings>(configuration.GetSection(GoogleAuthSettings.SectionName));
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        services.AddSingleton<IGoogleTokenVerifier, GoogleTokenVerifier>();
 
         services
             .AddAuthentication(options =>

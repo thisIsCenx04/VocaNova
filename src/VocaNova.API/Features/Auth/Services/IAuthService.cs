@@ -16,4 +16,10 @@ public interface IAuthService
         string? deviceInfo = null,
         string? ipAddress = null,
         CancellationToken cancellationToken = default);
+
+    Task<Result<TokenResponse>> GoogleLoginAsync(
+        GoogleLoginRequest request,
+        string? deviceInfo = null,
+        string? ipAddress = null,
+        CancellationToken cancellationToken = default);
 }

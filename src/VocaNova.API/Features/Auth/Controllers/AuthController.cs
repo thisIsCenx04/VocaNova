@@ -56,4 +56,24 @@ public sealed class AuthController : ControllerBase
 
         return this.OkResult(result.Value!, "Logged in successfully.");
     }
+
+    [AllowAnonymous]
+    [HttpPost("google")]
+    public async Task<IActionResult> GoogleLogin(
+        [FromBody] GoogleLoginRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _authService.GoogleLoginAsync(
+            request,
+            Request.Headers.UserAgent.ToString(),
+            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value!, "Logged in successfully.");
+    }
 }
