@@ -119,6 +119,7 @@ public class LoginFeatureTests
             dbContext,
             new AuthRepository(dbContext),
             CreateJwtTokenService(),
+            new FakeGoogleTokenVerifier(null),
             Options.Create(CreateJwtSettings()));
     }
 
@@ -172,5 +173,20 @@ public class LoginFeatureTests
         });
 
         await dbContext.SaveChangesAsync();
+    }
+
+    private sealed class FakeGoogleTokenVerifier : IGoogleTokenVerifier
+    {
+        private readonly GoogleUserInfo? _userInfo;
+
+        public FakeGoogleTokenVerifier(GoogleUserInfo? userInfo)
+        {
+            _userInfo = userInfo;
+        }
+
+        public Task<GoogleUserInfo?> VerifyAsync(string idToken, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_userInfo);
+        }
     }
 }

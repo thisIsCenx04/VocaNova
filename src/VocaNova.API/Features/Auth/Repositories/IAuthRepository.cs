@@ -8,6 +8,8 @@ public interface IAuthRepository
 
     Task<User?> FindByGoogleUidAsync(string googleUid, CancellationToken cancellationToken = default);
 
+    Task<User?> FindByGoogleEmailAsync(string googleEmail, CancellationToken cancellationToken = default);
+
     Task<Role?> FindRoleByNameAsync(string roleName, CancellationToken cancellationToken = default);
 
     Task<User> CreateUserAsync(

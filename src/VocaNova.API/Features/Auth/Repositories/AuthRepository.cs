@@ -29,6 +29,14 @@ public sealed class AuthRepository : IAuthRepository
                 cancellationToken);
     }
 
+    public Task<User?> FindByGoogleEmailAsync(string googleEmail, CancellationToken cancellationToken = default)
+    {
+        return UserAggregate()
+            .SingleOrDefaultAsync(
+                user => user.UserAuth != null && user.UserAuth.GoogleEmail == googleEmail,
+                cancellationToken);
+    }
+
     public Task<Role?> FindRoleByNameAsync(string roleName, CancellationToken cancellationToken = default)
     {
         return _dbContext.Roles
