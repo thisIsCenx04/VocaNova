@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:vocanova_mobile/core/network/interceptors/auth_interceptor.dart';
 import 'package:vocanova_mobile/core/network/interceptors/error_interceptor.dart';
+import 'package:vocanova_mobile/core/storage/secure_storage.dart';
 import 'package:vocanova_mobile/core/storage/token_storage.dart';
 
 class DioClient {
@@ -45,7 +46,7 @@ class DioClient {
 
   static final DioClient instance = DioClient._(
     baseUrl: defaultBaseUrl,
-    tokenStorage: FlutterSecureTokenStorage(),
+    tokenStorage: SecureStorage.instance,
   );
 
   late final Dio _dio;
