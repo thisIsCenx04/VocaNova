@@ -5,6 +5,7 @@ using VocaNova.API.Common.Results;
 using VocaNova.API.Features.Dictionary.DTOs;
 using VocaNova.API.Features.Dictionary.Repositories;
 using VocaNova.API.Features.Dictionary.Services;
+using VocaNova.API.Features.Dictionary.Validators;
 using VocaNova.API.Infrastructure.Caching;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
@@ -25,7 +26,7 @@ public class TopicFeatureTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
         var topics = result.Value!;
-        topics.Select(topic => topic.Name).Should().Equal("Movement", "Sports");
+        topics.Select(topic => topic.Name).Should().Equal("Empty Topic", "Movement", "Sports");
         topics.Single(topic => topic.TopicId == 1).WordCount.Should().Be(2);
         topics.Should().NotContain(topic => topic.TopicId == 3);
     }
@@ -101,6 +102,93 @@ public class TopicFeatureTests
         cache.SetTopicWordsCount.Should().Be(0);
     }
 
+    [Fact]
+    public async Task CreateAsync_Should_Create_Topic_And_Invalidate_Cache()
+    {
+        await using var dbContext = CreateDbContext();
+        var cache = new FakeTopicCache();
+        var service = CreateService(dbContext, cache);
+
+        var result = await service.CreateAsync(new CreateTopicRequest("Travel", "Du lich", "plane"));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Name.Should().Be("Travel");
+        result.Value.NameVi.Should().Be("Du lich");
+        result.Value.Icon.Should().Be("plane");
+        result.Value.WordCount.Should().Be(0);
+        cache.RemoveTopicsCount.Should().Be(1);
+
+        var topic = await dbContext.Topics.SingleAsync();
+        topic.TopicName.Should().Be("Travel");
+        topic.Status.Should().Be(UserStatus.Active);
+    }
+
+    [Fact]
+    public async Task SoftDeleteAsync_Should_Return_409_When_Topic_Has_Active_Words()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedTopicsAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.SoftDeleteAsync(1);
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(409);
+        result.Error.Should().Be("Topic still has active words.");
+
+        var topic = await dbContext.Topics.SingleAsync(entity => entity.TopicId == 1);
+        topic.Status.Should().Be(UserStatus.Active);
+    }
+
+    [Fact]
+    public async Task SoftDeleteAsync_Should_Delete_Topic_When_It_Has_No_Active_Words()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedTopicsAsync(dbContext);
+        var cache = new FakeTopicCache();
+        var service = CreateService(dbContext, cache);
+
+        var result = await service.SoftDeleteAsync(4);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeTrue();
+        cache.RemoveTopicsCount.Should().Be(1);
+
+        var topic = await dbContext.Topics
+            .IgnoreQueryFilters()
+            .SingleAsync(entity => entity.TopicId == 4);
+        topic.Status.Should().Be(UserStatus.Deleted);
+        (await dbContext.Topics.AnyAsync(entity => entity.TopicId == 4)).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task RestoreAsync_Should_Restore_Deleted_Topic_Using_IgnoreQueryFilters()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedTopicsAsync(dbContext);
+        var cache = new FakeTopicCache();
+        var service = CreateService(dbContext, cache);
+
+        var result = await service.RestoreAsync(3);
+
+        result.IsSuccess.Should().BeTrue();
+        cache.RemoveTopicsCount.Should().Be(1);
+
+        var topic = await dbContext.Topics.SingleAsync(entity => entity.TopicId == 3);
+        topic.Status.Should().Be(UserStatus.Active);
+    }
+
+    [Fact]
+    public void CreateTopicRequestValidator_Should_Reject_Empty_Name()
+    {
+        var validator = new CreateTopicRequestValidator();
+
+        var result = validator.Validate(new CreateTopicRequest("", null, null));
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(CreateTopicRequest.TopicName));
+    }
+
     private static VocaNovaDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<VocaNovaDbContext>()
@@ -144,6 +232,12 @@ public class TopicFeatureTests
                 TopicId = 3,
                 TopicName = "Deleted Topic",
                 Status = UserStatus.Deleted,
+            },
+            new Topic
+            {
+                TopicId = 4,
+                TopicName = "Empty Topic",
+                Status = UserStatus.Active,
             });
 
         dbContext.Words.AddRange(
@@ -231,6 +325,8 @@ public class TopicFeatureTests
 
         public int SetTopicWordsCount { get; private set; }
 
+        public int RemoveTopicsCount { get; private set; }
+
         public Task<IReadOnlyCollection<TopicSummaryDto>?> GetTopicsAsync(
             CancellationToken cancellationToken = default)
         {
@@ -264,6 +360,12 @@ public class TopicFeatureTests
             CancellationToken cancellationToken = default)
         {
             SetTopicWordsCount++;
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveTopicsAsync(CancellationToken cancellationToken = default)
+        {
+            RemoveTopicsCount++;
             return Task.CompletedTask;
         }
     }

@@ -23,4 +23,6 @@ public interface ITopicCache
         int limit,
         PagedResult<WordSummaryDto> words,
         CancellationToken cancellationToken = default);
+
+    Task RemoveTopicsAsync(CancellationToken cancellationToken = default);
 }
