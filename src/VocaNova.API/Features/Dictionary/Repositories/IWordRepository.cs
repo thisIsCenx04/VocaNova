@@ -17,4 +17,20 @@ public interface IWordRepository
     Task<WordDetailDto?> FindDetailAsync(
         uint wordId,
         CancellationToken cancellationToken = default);
+
+    Task<bool> WordKeyExistsAsync(
+        string wordKey,
+        uint? excludingWordId = null,
+        CancellationToken cancellationToken = default);
+
+    Task<WordDetailDto> CreateAsync(
+        CreateWordRequest request,
+        string wordKey,
+        CancellationToken cancellationToken = default);
+
+    Task<WordDetailDto?> UpdateMetadataAsync(
+        uint wordId,
+        UpdateWordRequest request,
+        string wordKey,
+        CancellationToken cancellationToken = default);
 }

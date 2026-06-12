@@ -285,6 +285,8 @@ public class WordDetailFeatureTests
 
         public int SetCount { get; private set; }
 
+        public int RemoveCount { get; private set; }
+
         public Task<WordDetailDto?> GetAsync(uint wordId, CancellationToken cancellationToken = default)
         {
             GetCount++;
@@ -294,6 +296,12 @@ public class WordDetailFeatureTests
         public Task SetAsync(WordDetailDto word, CancellationToken cancellationToken = default)
         {
             SetCount++;
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveAsync(uint wordId, CancellationToken cancellationToken = default)
+        {
+            RemoveCount++;
             return Task.CompletedTask;
         }
     }

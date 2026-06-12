@@ -49,6 +49,17 @@ public sealed class RedisWordDetailCache : IWordDetailCache
         await database.StringSetAsync(GetKey(word.WordId), payload, DetailTtl);
     }
 
+    public async Task RemoveAsync(uint wordId, CancellationToken cancellationToken = default)
+    {
+        var database = await GetDatabaseAsync();
+        if (database is null)
+        {
+            return;
+        }
+
+        await database.KeyDeleteAsync(GetKey(wordId));
+    }
+
     private async Task<IDatabase?> GetDatabaseAsync()
     {
         var connection = await _connection.Value;

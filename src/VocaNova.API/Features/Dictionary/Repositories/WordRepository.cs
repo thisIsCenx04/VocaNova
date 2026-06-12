@@ -92,6 +92,72 @@ public sealed class WordRepository : IWordRepository
         return word is null ? null : MapDetail(word);
     }
 
+    public Task<bool> WordKeyExistsAsync(
+        string wordKey,
+        uint? excludingWordId = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Words
+            .IgnoreQueryFilters()
+            .AnyAsync(
+                word => word.WordKey == wordKey
+                    && (!excludingWordId.HasValue || word.WordId != excludingWordId.Value),
+                cancellationToken);
+    }
+
+    public async Task<WordDetailDto> CreateAsync(
+        CreateWordRequest request,
+        string wordKey,
+        CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        var word = new Word
+        {
+            Word1 = request.Word!.Trim(),
+            WordKey = wordKey,
+            CefrLevel = NormalizeNullable(request.Cefr),
+            PhoneticUk = NormalizeNullable(request.PhoneticUk),
+            PhoneticUs = NormalizeNullable(request.PhoneticUs),
+            ImageUrl = NormalizeNullable(request.ImageUrl),
+            IsPhrase = request.IsPhrase,
+            Status = UserStatus.Active,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+
+        _dbContext.Words.Add(word);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return (await FindDetailAsync(word.WordId, cancellationToken))!;
+    }
+
+    public async Task<WordDetailDto?> UpdateMetadataAsync(
+        uint wordId,
+        UpdateWordRequest request,
+        string wordKey,
+        CancellationToken cancellationToken = default)
+    {
+        var word = await _dbContext.Words
+            .SingleOrDefaultAsync(entity => entity.WordId == wordId, cancellationToken);
+        if (word is null)
+        {
+            return null;
+        }
+
+        word.Word1 = request.Word!.Trim();
+        word.WordKey = wordKey;
+        word.CefrLevel = NormalizeNullable(request.Cefr);
+        word.PhoneticUk = NormalizeNullable(request.PhoneticUk);
+        word.PhoneticUs = NormalizeNullable(request.PhoneticUs);
+        word.ImageUrl = NormalizeNullable(request.ImageUrl);
+        word.IsPhrase = request.IsPhrase;
+        word.UpdatedAt = DateTime.UtcNow;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return await FindDetailAsync(word.WordId, cancellationToken);
+    }
+
     private static WordDetailDto MapDetail(Word word)
     {
         var senses = word.WordSenses
@@ -198,5 +264,10 @@ public sealed class WordRepository : IWordRepository
             relation.RelatedWord,
             relation.RelatedWordNavigation?.WordId,
             relation.IsQuizEligible ?? true);
+    }
+
+    private static string? NormalizeNullable(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }
