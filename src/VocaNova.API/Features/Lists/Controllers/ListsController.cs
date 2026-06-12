@@ -94,6 +94,46 @@ public sealed class ListsController : ControllerBase
         return this.OkResult(result.Value, "List deleted successfully.");
     }
 
+    [HttpGet("{id:uint}/words")]
+    public async Task<IActionResult> GetWords(
+        [FromRoute] uint id,
+        [FromQuery] ListWordsQuery query,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return this.ErrorResult(Result<PagedResult<ListWordDto>>.Unauthorized("Unauthorized."));
+        }
+
+        var result = await _userListService.GetWordsAsync(userId, id, query, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value!, "List words loaded successfully.");
+    }
+
+    [HttpPost("{id:uint}/words")]
+    public async Task<IActionResult> AddWord(
+        [FromRoute] uint id,
+        [FromBody] AddListWordRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return this.ErrorResult(Result<ListWordDto>.Unauthorized("Unauthorized."));
+        }
+
+        var result = await _userListService.AddWordAsync(userId, id, request, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.CreatedResult(result.Value!, "Word added to list successfully.");
+    }
+
     private bool TryGetCurrentUserId(out uint userId)
     {
         var userIdClaim = User.FindFirst("user_id")?.Value;

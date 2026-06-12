@@ -24,4 +24,16 @@ public interface IUserListService
         uint userId,
         uint listId,
         CancellationToken cancellationToken = default);
+
+    Task<Result<PagedResult<ListWordDto>>> GetWordsAsync(
+        uint userId,
+        uint listId,
+        ListWordsQuery query,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<ListWordDto>> AddWordAsync(
+        uint userId,
+        uint listId,
+        AddListWordRequest request,
+        CancellationToken cancellationToken = default);
 }

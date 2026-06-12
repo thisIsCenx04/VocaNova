@@ -1,4 +1,5 @@
 using VocaNova.API.Features.Lists.DTOs;
+using VocaNova.API.Common.Results;
 
 namespace VocaNova.API.Features.Lists.Repositories;
 
@@ -34,5 +35,38 @@ public interface IUserListRepository
 
     Task<bool> SoftDeleteWithWordsAsync(
         uint listId,
+        CancellationToken cancellationToken = default);
+
+    Task<PagedResult<ListWordDto>> GetWordsAsync(
+        uint userId,
+        uint listId,
+        int page,
+        int limit,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> ActiveWordExistsAsync(
+        uint wordId,
+        CancellationToken cancellationToken = default);
+
+    Task<ListWordStateDto?> FindListWordAsync(
+        uint userId,
+        uint listId,
+        uint wordId,
+        CancellationToken cancellationToken = default);
+
+    Task<ListWordDto> AddWordAsync(
+        uint userId,
+        uint listId,
+        uint wordId,
+        string addMethod,
+        string? note,
+        CancellationToken cancellationToken = default);
+
+    Task<ListWordDto?> RestoreWordAsync(
+        uint userId,
+        uint listId,
+        uint wordId,
+        string addMethod,
+        string? note,
         CancellationToken cancellationToken = default);
 }

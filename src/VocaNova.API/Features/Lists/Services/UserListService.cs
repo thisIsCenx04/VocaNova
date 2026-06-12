@@ -147,6 +147,105 @@ public sealed class UserListService : IUserListService
         return Result<bool>.Ok(true);
     }
 
+    public async Task<Result<PagedResult<ListWordDto>>> GetWordsAsync(
+        uint userId,
+        uint listId,
+        ListWordsQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        if (userId == 0)
+        {
+            return Result<PagedResult<ListWordDto>>.Unauthorized("Unauthorized.");
+        }
+
+        if (query.Page <= 0)
+        {
+            return Result<PagedResult<ListWordDto>>.Fail("Page must be greater than zero.");
+        }
+
+        if (query.Limit <= 0 || query.Limit > AppSettings.MaxPageLimit)
+        {
+            return Result<PagedResult<ListWordDto>>.Fail($"Limit must be between 1 and {AppSettings.MaxPageLimit}.");
+        }
+
+        var ownershipResult = await ValidateListOwnershipAsync(userId, listId, cancellationToken);
+        if (!ownershipResult.IsSuccess)
+        {
+            return ToPagedListWordFailure(ownershipResult);
+        }
+
+        var words = await _userListRepository.GetWordsAsync(
+            userId,
+            listId,
+            query.Page,
+            query.Limit,
+            cancellationToken);
+
+        return Result<PagedResult<ListWordDto>>.Ok(words);
+    }
+
+    public async Task<Result<ListWordDto>> AddWordAsync(
+        uint userId,
+        uint listId,
+        AddListWordRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (userId == 0)
+        {
+            return Result<ListWordDto>.Unauthorized("Unauthorized.");
+        }
+
+        var ownershipResult = await ValidateListOwnershipAsync(userId, listId, cancellationToken);
+        if (!ownershipResult.IsSuccess)
+        {
+            return ToListWordFailure(ownershipResult);
+        }
+
+        if (!await _userListRepository.ActiveWordExistsAsync(request.WordId, cancellationToken))
+        {
+            return Result<ListWordDto>.NotFound("Word not found.");
+        }
+
+        var addMethod = request.AddMethod!.Trim();
+        var note = NormalizeNullable(request.Note);
+        var existingListWord = await _userListRepository.FindListWordAsync(
+            userId,
+            listId,
+            request.WordId,
+            cancellationToken);
+
+        if (existingListWord?.Status == UserStatus.Active)
+        {
+            return Result<ListWordDto>.Conflict("Word already exists in this list.");
+        }
+
+        ListWordDto listWord;
+        if (existingListWord is not null)
+        {
+            listWord = (await _userListRepository.RestoreWordAsync(
+                userId,
+                listId,
+                request.WordId,
+                addMethod,
+                note,
+                cancellationToken))!;
+        }
+        else
+        {
+            listWord = await _userListRepository.AddWordAsync(
+                userId,
+                listId,
+                request.WordId,
+                addMethod,
+                note,
+                cancellationToken);
+        }
+
+        await RemoveCachedListsAsync(userId, cancellationToken);
+
+        return Result<ListWordDto>.Ok(listWord);
+    }
+
     private async Task<Result<bool>> ValidateListOwnershipAsync(
         uint userId,
         uint listId,
@@ -188,5 +287,32 @@ public sealed class UserListService : IUserListService
             StatusCodes.Status404NotFound => Result<UserListDto>.NotFound(result.Error!),
             _ => Result<UserListDto>.Fail(result.Error!),
         };
+    }
+
+    private static Result<PagedResult<ListWordDto>> ToPagedListWordFailure(Result<bool> result)
+    {
+        return result.StatusCode switch
+        {
+            StatusCodes.Status401Unauthorized => Result<PagedResult<ListWordDto>>.Unauthorized(result.Error!),
+            StatusCodes.Status403Forbidden => Result<PagedResult<ListWordDto>>.Forbidden(result.Error!),
+            StatusCodes.Status404NotFound => Result<PagedResult<ListWordDto>>.NotFound(result.Error!),
+            _ => Result<PagedResult<ListWordDto>>.Fail(result.Error!),
+        };
+    }
+
+    private static Result<ListWordDto> ToListWordFailure(Result<bool> result)
+    {
+        return result.StatusCode switch
+        {
+            StatusCodes.Status401Unauthorized => Result<ListWordDto>.Unauthorized(result.Error!),
+            StatusCodes.Status403Forbidden => Result<ListWordDto>.Forbidden(result.Error!),
+            StatusCodes.Status404NotFound => Result<ListWordDto>.NotFound(result.Error!),
+            _ => Result<ListWordDto>.Fail(result.Error!),
+        };
+    }
+
+    private static string? NormalizeNullable(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }
