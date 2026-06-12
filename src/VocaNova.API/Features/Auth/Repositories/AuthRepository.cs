@@ -29,6 +29,12 @@ public sealed class AuthRepository : IAuthRepository
                 cancellationToken);
     }
 
+    public Task<Role?> FindRoleByNameAsync(string roleName, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Roles
+            .SingleOrDefaultAsync(role => role.RoleName == roleName, cancellationToken);
+    }
+
     public async Task<User> CreateUserAsync(
         User user,
         UserAuth userAuth,
