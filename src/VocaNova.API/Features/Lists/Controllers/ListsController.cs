@@ -55,6 +55,45 @@ public sealed class ListsController : ControllerBase
         return this.CreatedResult(result.Value!, "List created successfully.");
     }
 
+    [HttpPut("{id:uint}")]
+    public async Task<IActionResult> Update(
+        [FromRoute] uint id,
+        [FromBody] UpdateListRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return this.ErrorResult(Result<UserListDto>.Unauthorized("Unauthorized."));
+        }
+
+        var result = await _userListService.UpdateAsync(userId, id, request, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value!, "List updated successfully.");
+    }
+
+    [HttpDelete("{id:uint}")]
+    public async Task<IActionResult> SoftDelete(
+        [FromRoute] uint id,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return this.ErrorResult(Result<bool>.Unauthorized("Unauthorized."));
+        }
+
+        var result = await _userListService.SoftDeleteAsync(userId, id, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value, "List deleted successfully.");
+    }
+
     private bool TryGetCurrentUserId(out uint userId)
     {
         var userIdClaim = User.FindFirst("user_id")?.Value;
