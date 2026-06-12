@@ -8,4 +8,8 @@ public interface IWordService
     Task<Result<PagedResult<WordSummaryDto>>> SearchAsync(
         WordSearchQuery query,
         CancellationToken cancellationToken = default);
+
+    Task<Result<WordDetailDto>> GetByIdAsync(
+        uint wordId,
+        CancellationToken cancellationToken = default);
 }

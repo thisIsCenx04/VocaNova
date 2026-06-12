@@ -31,4 +31,18 @@ public sealed class WordsController : ControllerBase
 
         return this.OkResult(result.Value!, "Words loaded successfully.");
     }
+
+    [HttpGet("{id:uint}")]
+    public async Task<IActionResult> GetById(
+        [FromRoute] uint id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _wordService.GetByIdAsync(id, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value!, "Word loaded successfully.");
+    }
 }
