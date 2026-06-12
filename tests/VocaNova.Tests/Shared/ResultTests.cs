@@ -43,6 +43,7 @@ public class ResultTests
             { Result<string>.Fail(), StatusCodes.Status400BadRequest },
             { Result<string>.NotFound(), StatusCodes.Status404NotFound },
             { Result<string>.Conflict(), StatusCodes.Status409Conflict },
+            { Result<string>.Unauthorized(), StatusCodes.Status401Unauthorized },
             { Result<string>.Forbidden(), StatusCodes.Status403Forbidden },
         };
     }
