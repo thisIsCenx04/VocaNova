@@ -45,6 +45,11 @@ public sealed class Result<T>
         return new Result<T>(false, default, error, StatusCodes.Status409Conflict);
     }
 
+    public static Result<T> Unauthorized(string error = "Unauthorized.")
+    {
+        return new Result<T>(false, default, error, StatusCodes.Status401Unauthorized);
+    }
+
     public static Result<T> Forbidden(string error = "Forbidden.")
     {
         return new Result<T>(false, default, error, StatusCodes.Status403Forbidden);

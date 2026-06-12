@@ -101,4 +101,55 @@ public sealed class AuthService : IAuthService
             RefreshToken: refreshToken,
             ExpiresIn: _jwtSettings.AccessTokenMinutes * 60));
     }
+
+    public async Task<Result<TokenResponse>> LoginAsync(
+        LoginRequest request,
+        string? deviceInfo = null,
+        string? ipAddress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var phone = request.Phone!.Trim();
+        var user = await _authRepository.FindByPhoneAsync(phone, cancellationToken);
+
+        if (user?.UserAuth?.PasswordHash is null
+            || !PasswordHelper.Verify(request.Password!, user.UserAuth.PasswordHash))
+        {
+            return Result<TokenResponse>.Unauthorized("Invalid phone or password.");
+        }
+
+        if (user.Status == UserStatus.Locked)
+        {
+            return Result<TokenResponse>.Forbidden("User account is locked.");
+        }
+
+        if (user.Status == UserStatus.Deleted)
+        {
+            return Result<TokenResponse>.Unauthorized("Invalid phone or password.");
+        }
+
+        var roleName = user.Role.RoleName;
+        var now = DateTime.UtcNow;
+        user.LastLoginAt = now;
+        user.UpdatedAt = now;
+
+        var accessToken = _jwtTokenService.GenerateAccessToken(user.UserId, roleName);
+        var refreshToken = _jwtTokenService.GenerateRefreshToken();
+
+        await _authRepository.CreateRefreshTokenAsync(
+            new RefreshToken
+            {
+                UserId = user.UserId,
+                TokenHash = TokenHelper.HashSha256(refreshToken),
+                DeviceInfo = deviceInfo,
+                IpAddress = ipAddress,
+                ExpiresAt = now.AddDays(_jwtSettings.RefreshTokenDays),
+                CreatedAt = now,
+            },
+            cancellationToken);
+
+        return Result<TokenResponse>.Ok(new TokenResponse(
+            AccessToken: accessToken,
+            RefreshToken: refreshToken,
+            ExpiresIn: _jwtSettings.AccessTokenMinutes * 60));
+    }
 }

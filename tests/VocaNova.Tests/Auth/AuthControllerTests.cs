@@ -40,6 +40,35 @@ public class AuthControllerTests
         objectResult.StatusCode.Should().Be(StatusCodes.Status409Conflict);
     }
 
+    [Fact]
+    public async Task Login_Should_Return_200_When_Service_Succeeds()
+    {
+        var controller = CreateController(new StubAuthService(
+            Result<TokenResponse>.Ok(new TokenResponse("access-token", "refresh-token", 900))));
+
+        var result = await controller.Login(
+            new LoginRequest("0912345678", "Password1"),
+            CancellationToken.None);
+
+        var objectResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(StatusCodes.Status200OK);
+        objectResult.Value.Should().BeAssignableTo<ApiResponse<TokenResponse>>();
+    }
+
+    [Fact]
+    public async Task Login_Should_Return_Forbidden_When_Service_Returns_Forbidden()
+    {
+        var controller = CreateController(new StubAuthService(
+            Result<TokenResponse>.Forbidden("User account is locked.")));
+
+        var result = await controller.Login(
+            new LoginRequest("0912345678", "Password1"),
+            CancellationToken.None);
+
+        var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
+    }
+
     private static AuthController CreateController(IAuthService authService)
     {
         return new AuthController(authService)
@@ -62,6 +91,15 @@ public class AuthControllerTests
 
         public Task<Result<TokenResponse>> RegisterAsync(
             RegisterRequest request,
+            string? deviceInfo = null,
+            string? ipAddress = null,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_result);
+        }
+
+        public Task<Result<TokenResponse>> LoginAsync(
+            LoginRequest request,
             string? deviceInfo = null,
             string? ipAddress = null,
             CancellationToken cancellationToken = default)
