@@ -21,4 +21,12 @@ public interface IWordService
         uint wordId,
         UpdateWordRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<Result<bool>> SoftDeleteAsync(
+        uint wordId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<bool>> RestoreAsync(
+        uint wordId,
+        CancellationToken cancellationToken = default);
 }

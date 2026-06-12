@@ -158,6 +158,26 @@ public sealed class WordRepository : IWordRepository
         return await FindDetailAsync(word.WordId, cancellationToken);
     }
 
+    public async Task<bool> SetStatusAsync(
+        uint wordId,
+        string status,
+        CancellationToken cancellationToken = default)
+    {
+        var word = await _dbContext.Words
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(entity => entity.WordId == wordId, cancellationToken);
+        if (word is null)
+        {
+            return false;
+        }
+
+        word.Status = status;
+        word.UpdatedAt = DateTime.UtcNow;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
+
     private static WordDetailDto MapDetail(Word word)
     {
         var senses = word.WordSenses
