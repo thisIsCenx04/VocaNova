@@ -207,6 +207,124 @@ public class UserListFeatureTests
     }
 
     [Fact]
+    public async Task GetWordsAsync_Should_Return_Paginated_Words_With_ListStats()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedListWordsForGetAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.GetWordsAsync(1, 20, new ListWordsQuery { Page = 1, Limit = 1 });
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.TotalItems.Should().Be(2);
+        result.Value.Items.Should().ContainSingle()
+            .Which.Should().BeEquivalentTo(new
+            {
+                WordId = 2u,
+                Word = "walk",
+                PrimaryMeaning = "di bo",
+                CorrectCount = 0,
+                WrongCount = 0,
+                Note = "second",
+            });
+    }
+
+    [Fact]
+    public async Task AddWordAsync_Should_Add_Word_When_Not_In_List()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedListAndWordAsync(dbContext, listId: 30, wordId: 1);
+        var cache = new FakeUserListCache();
+        var service = CreateService(dbContext, cache);
+
+        var result = await service.AddWordAsync(
+            1,
+            30,
+            new AddListWordRequest(1, AddMethod.Manual, " important "));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.WordId.Should().Be(1);
+        result.Value.Note.Should().Be("important");
+        cache.RemoveCount.Should().Be(1);
+
+        var listWord = await dbContext.UserListWords.SingleAsync();
+        listWord.Status.Should().Be(UserStatus.Active);
+        listWord.AddMethod.Should().Be(AddMethod.Manual);
+        listWord.Note.Should().Be("important");
+    }
+
+    [Fact]
+    public async Task AddWordAsync_Should_Return_409_When_Word_Already_Active_In_List()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedListAndWordAsync(dbContext, listId: 30, wordId: 1, listWordStatus: UserStatus.Active);
+        var service = CreateService(dbContext);
+
+        var result = await service.AddWordAsync(
+            1,
+            30,
+            new AddListWordRequest(1, AddMethod.Manual, null));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(409);
+        result.Error.Should().Be("Word already exists in this list.");
+        (await dbContext.UserListWords.CountAsync()).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task AddWordAsync_Should_Restore_When_Word_Is_Deleted_In_List()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedListAndWordAsync(dbContext, listId: 30, wordId: 1, listWordStatus: UserStatus.Deleted);
+        var cache = new FakeUserListCache();
+        var service = CreateService(dbContext, cache);
+
+        var result = await service.AddWordAsync(
+            1,
+            30,
+            new AddListWordRequest(1, AddMethod.Manual, "restored"));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.WordId.Should().Be(1);
+        result.Value.Note.Should().Be("restored");
+        cache.RemoveCount.Should().Be(1);
+
+        var listWord = await dbContext.UserListWords
+            .IgnoreQueryFilters()
+            .SingleAsync(entity => entity.UserId == 1 && entity.ListId == 30 && entity.WordId == 1);
+        listWord.Status.Should().Be(UserStatus.Active);
+        listWord.Note.Should().Be("restored");
+        (await dbContext.UserListWords.IgnoreQueryFilters().CountAsync()).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task AddWordAsync_Should_Return_404_When_Word_Does_Not_Exist()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.UserLists.Add(new UserList
+        {
+            ListId = 30,
+            UserId = 1,
+            ListName = "Favorites",
+            Status = UserStatus.Active,
+            CreatedAt = DateTime.UtcNow,
+        });
+        await dbContext.SaveChangesAsync();
+        var service = CreateService(dbContext);
+
+        var result = await service.AddWordAsync(
+            1,
+            30,
+            new AddListWordRequest(99, AddMethod.Manual, null));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(404);
+        result.Error.Should().Be("Word not found.");
+        (await dbContext.UserListWords.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
     public void CreateListRequestValidator_Should_Reject_Empty_Name()
     {
         var validator = new CreateListRequestValidator();
@@ -226,6 +344,20 @@ public class UserListFeatureTests
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(error => error.PropertyName == nameof(UpdateListRequest.ListName));
+    }
+
+    [Fact]
+    public void AddListWordRequestValidator_Should_Reject_Invalid_Request()
+    {
+        var validator = new AddListWordRequestValidator();
+        var longNote = new string('a', 1001);
+
+        var result = validator.Validate(new AddListWordRequest(0, "invalid", longNote));
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(AddListWordRequest.WordId));
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(AddListWordRequest.AddMethod));
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(AddListWordRequest.Note));
     }
 
     private static VocaNovaDbContext CreateDbContext()
@@ -355,6 +487,150 @@ public class UserListFeatureTests
                 SrsInterval = 1,
                 EaseFactor = 2.5f,
                 UpdatedAt = now,
+            });
+        }
+
+        await dbContext.SaveChangesAsync();
+    }
+
+    private static async Task SeedListWordsForGetAsync(VocaNovaDbContext dbContext)
+    {
+        var now = DateTime.UtcNow;
+        dbContext.UserLists.Add(new UserList
+        {
+            ListId = 20,
+            UserId = 1,
+            ListName = "Stats",
+            Status = UserStatus.Active,
+            CreatedAt = now,
+        });
+
+        dbContext.Words.AddRange(
+            new Word
+            {
+                WordId = 1,
+                Word1 = "run",
+                WordKey = "run",
+                Status = UserStatus.Active,
+                CreatedAt = now,
+                UpdatedAt = now,
+                WordSenses =
+                {
+                    new WordSense
+                    {
+                        SenseId = 1,
+                        WordId = 1,
+                        SenseOrder = 1,
+                        WordClass = "verb",
+                        EnglishDefinition = "move quickly",
+                        VietnameseMeaning = "chay",
+                    },
+                },
+            },
+            new Word
+            {
+                WordId = 2,
+                Word1 = "walk",
+                WordKey = "walk",
+                Status = UserStatus.Active,
+                CreatedAt = now,
+                UpdatedAt = now,
+                WordSenses =
+                {
+                    new WordSense
+                    {
+                        SenseId = 2,
+                        WordId = 2,
+                        SenseOrder = 1,
+                        WordClass = "verb",
+                        EnglishDefinition = "move on foot",
+                        VietnameseMeaning = "di bo",
+                    },
+                },
+            });
+
+        dbContext.UserListWords.AddRange(
+            new UserListWord
+            {
+                UserId = 1,
+                ListId = 20,
+                WordId = 1,
+                AddMethod = AddMethod.Manual,
+                Status = UserStatus.Active,
+                Note = "first",
+                AddedAt = now.AddMinutes(-5),
+            },
+            new UserListWord
+            {
+                UserId = 1,
+                ListId = 20,
+                WordId = 2,
+                AddMethod = AddMethod.Manual,
+                Status = UserStatus.Active,
+                Note = "second",
+                AddedAt = now,
+            });
+
+        dbContext.UserListWordStats.Add(new UserListWordStat
+        {
+            UserId = 1,
+            ListId = 20,
+            WordId = 1,
+            CorrectCount = 3,
+            WrongCount = 2,
+        });
+
+        await dbContext.SaveChangesAsync();
+    }
+
+    private static async Task SeedListAndWordAsync(
+        VocaNovaDbContext dbContext,
+        uint listId,
+        uint wordId,
+        string? listWordStatus = null)
+    {
+        var now = DateTime.UtcNow;
+        dbContext.UserLists.Add(new UserList
+        {
+            ListId = listId,
+            UserId = 1,
+            ListName = "Favorites",
+            Status = UserStatus.Active,
+            CreatedAt = now,
+        });
+
+        dbContext.Words.Add(new Word
+        {
+            WordId = wordId,
+            Word1 = "run",
+            WordKey = "run",
+            Status = UserStatus.Active,
+            CreatedAt = now,
+            UpdatedAt = now,
+            WordSenses =
+            {
+                new WordSense
+                {
+                    SenseId = wordId,
+                    WordId = wordId,
+                    SenseOrder = 1,
+                    WordClass = "verb",
+                    EnglishDefinition = "move quickly",
+                    VietnameseMeaning = "chay",
+                },
+            },
+        });
+
+        if (listWordStatus is not null)
+        {
+            dbContext.UserListWords.Add(new UserListWord
+            {
+                UserId = 1,
+                ListId = listId,
+                WordId = wordId,
+                AddMethod = AddMethod.Manual,
+                Status = listWordStatus,
+                AddedAt = now,
             });
         }
 

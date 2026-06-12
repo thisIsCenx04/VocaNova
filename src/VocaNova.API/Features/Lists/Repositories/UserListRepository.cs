@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
+using VocaNova.API.Common.Extensions;
+using VocaNova.API.Common.Results;
 using VocaNova.API.Features.Lists.DTOs;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
@@ -144,5 +146,159 @@ public sealed class UserListRepository : IUserListRepository
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    public Task<PagedResult<ListWordDto>> GetWordsAsync(
+        uint userId,
+        uint listId,
+        int page,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        return _dbContext.UserListWords
+            .AsNoTracking()
+            .Where(listWord => listWord.UserId == userId && listWord.ListId == listId)
+            .OrderByDescending(listWord => listWord.AddedAt)
+            .ThenByDescending(listWord => listWord.WordId)
+            .Select(listWord => new ListWordDto(
+                listWord.WordId,
+                listWord.Word.Word1,
+                listWord.Word.WordSenses
+                    .OrderBy(sense => sense.SenseOrder)
+                    .ThenBy(sense => sense.SenseId)
+                    .Select(sense => sense.VietnameseMeaning)
+                    .FirstOrDefault(),
+                _dbContext.UserListWordStats
+                    .Where(stat => stat.UserId == userId
+                        && stat.ListId == listId
+                        && stat.WordId == listWord.WordId)
+                    .Select(stat => (int?)stat.CorrectCount)
+                    .FirstOrDefault() ?? 0,
+                _dbContext.UserListWordStats
+                    .Where(stat => stat.UserId == userId
+                        && stat.ListId == listId
+                        && stat.WordId == listWord.WordId)
+                    .Select(stat => (int?)stat.WrongCount)
+                    .FirstOrDefault() ?? 0,
+                listWord.Note,
+                listWord.AddedAt))
+            .ToPagedResultAsync(page, limit, cancellationToken);
+    }
+
+    public Task<bool> ActiveWordExistsAsync(
+        uint wordId,
+        CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Words.AnyAsync(word => word.WordId == wordId, cancellationToken);
+    }
+
+    public async Task<ListWordStateDto?> FindListWordAsync(
+        uint userId,
+        uint listId,
+        uint wordId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.UserListWords
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(listWord => listWord.UserId == userId
+                && listWord.ListId == listId
+                && listWord.WordId == wordId)
+            .Select(listWord => new ListWordStateDto(
+                listWord.UserId,
+                listWord.ListId,
+                listWord.WordId,
+                listWord.Status))
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<ListWordDto> AddWordAsync(
+        uint userId,
+        uint listId,
+        uint wordId,
+        string addMethod,
+        string? note,
+        CancellationToken cancellationToken = default)
+    {
+        var listWord = new UserListWord
+        {
+            UserId = userId,
+            ListId = listId,
+            WordId = wordId,
+            AddMethod = addMethod,
+            Note = note,
+            AddedAt = DateTime.UtcNow,
+            Status = UserStatus.Active,
+        };
+
+        _dbContext.UserListWords.Add(listWord);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return (await FindListWordDtoAsync(userId, listId, wordId, cancellationToken))!;
+    }
+
+    public async Task<ListWordDto?> RestoreWordAsync(
+        uint userId,
+        uint listId,
+        uint wordId,
+        string addMethod,
+        string? note,
+        CancellationToken cancellationToken = default)
+    {
+        var listWord = await _dbContext.UserListWords
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(
+                entity => entity.UserId == userId
+                    && entity.ListId == listId
+                    && entity.WordId == wordId,
+                cancellationToken);
+        if (listWord is null)
+        {
+            return null;
+        }
+
+        listWord.Status = UserStatus.Active;
+        listWord.AddMethod = addMethod;
+        listWord.Note = note;
+        listWord.AddedAt = DateTime.UtcNow;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return await FindListWordDtoAsync(userId, listId, wordId, cancellationToken);
+    }
+
+    private async Task<ListWordDto?> FindListWordDtoAsync(
+        uint userId,
+        uint listId,
+        uint wordId,
+        CancellationToken cancellationToken)
+    {
+        return await _dbContext.UserListWords
+            .AsNoTracking()
+            .Where(listWord => listWord.UserId == userId
+                && listWord.ListId == listId
+                && listWord.WordId == wordId)
+            .Select(listWord => new ListWordDto(
+                listWord.WordId,
+                listWord.Word.Word1,
+                listWord.Word.WordSenses
+                    .OrderBy(sense => sense.SenseOrder)
+                    .ThenBy(sense => sense.SenseId)
+                    .Select(sense => sense.VietnameseMeaning)
+                    .FirstOrDefault(),
+                _dbContext.UserListWordStats
+                    .Where(stat => stat.UserId == userId
+                        && stat.ListId == listId
+                        && stat.WordId == listWord.WordId)
+                    .Select(stat => (int?)stat.CorrectCount)
+                    .FirstOrDefault() ?? 0,
+                _dbContext.UserListWordStats
+                    .Where(stat => stat.UserId == userId
+                        && stat.ListId == listId
+                        && stat.WordId == listWord.WordId)
+                    .Select(stat => (int?)stat.WrongCount)
+                    .FirstOrDefault() ?? 0,
+                listWord.Note,
+                listWord.AddedAt))
+            .SingleOrDefaultAsync(cancellationToken);
     }
 }
