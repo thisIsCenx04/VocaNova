@@ -114,4 +114,82 @@ public sealed class WordService : IWordService
 
         return Result<WordDetailDto>.Ok(word);
     }
+
+    public async Task<Result<WordDetailDto>> CreateAsync(
+        CreateWordRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var rawWord = request.Word!;
+        var wordKey = rawWord.NormalizeWord();
+        if (await _wordRepository.WordKeyExistsAsync(wordKey, cancellationToken: cancellationToken))
+        {
+            return Result<WordDetailDto>.Conflict("Word already exists.");
+        }
+
+        var normalizedRequest = request with
+        {
+            Word = rawWord.Trim(),
+            Cefr = NormalizeCefr(request.Cefr),
+            PhoneticUk = NormalizeNullable(request.PhoneticUk),
+            PhoneticUs = NormalizeNullable(request.PhoneticUs),
+            ImageUrl = NormalizeNullable(request.ImageUrl),
+        };
+
+        var word = await _wordRepository.CreateAsync(normalizedRequest, wordKey, cancellationToken);
+        return Result<WordDetailDto>.Ok(word);
+    }
+
+    public async Task<Result<WordDetailDto>> UpdateAsync(
+        uint wordId,
+        UpdateWordRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (wordId == 0)
+        {
+            return Result<WordDetailDto>.NotFound("Word not found.");
+        }
+
+        var rawWord = request.Word!;
+        var wordKey = rawWord.NormalizeWord();
+        if (await _wordRepository.WordKeyExistsAsync(wordKey, wordId, cancellationToken))
+        {
+            return Result<WordDetailDto>.Conflict("Word already exists.");
+        }
+
+        var normalizedRequest = request with
+        {
+            Word = rawWord.Trim(),
+            Cefr = NormalizeCefr(request.Cefr),
+            PhoneticUk = NormalizeNullable(request.PhoneticUk),
+            PhoneticUs = NormalizeNullable(request.PhoneticUs),
+            ImageUrl = NormalizeNullable(request.ImageUrl),
+        };
+
+        var word = await _wordRepository.UpdateMetadataAsync(
+            wordId,
+            normalizedRequest,
+            wordKey,
+            cancellationToken);
+        if (word is null)
+        {
+            return Result<WordDetailDto>.NotFound("Word not found.");
+        }
+
+        if (_wordDetailCache is not null)
+        {
+            await _wordDetailCache.RemoveAsync(wordId, cancellationToken);
+        }
+
+        return Result<WordDetailDto>.Ok(word);
+    }
+
+    private static string? NormalizeCefr(string? cefr)
+    {
+        return string.IsNullOrWhiteSpace(cefr) ? null : cefr.Trim().ToUpperInvariant();
+    }
+
+    private static string? NormalizeNullable(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
 }
