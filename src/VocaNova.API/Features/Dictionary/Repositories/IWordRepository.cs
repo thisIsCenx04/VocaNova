@@ -28,6 +28,16 @@ public interface IWordRepository
         string wordKey,
         CancellationToken cancellationToken = default);
 
+    Task<uint?> FindWordIdByKeyAsync(
+        string wordKey,
+        CancellationToken cancellationToken = default);
+
+    Task<WordDetailDto> CreateWithSenseAsync(
+        CreateWordRequest wordRequest,
+        string wordKey,
+        CreateSenseRequest senseRequest,
+        CancellationToken cancellationToken = default);
+
     Task<WordDetailDto?> UpdateMetadataAsync(
         uint wordId,
         UpdateWordRequest request,
@@ -46,6 +56,13 @@ public interface IWordRepository
     Task<WordSenseDto?> CreateSenseAsync(
         uint wordId,
         CreateSenseRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<WordSenseDto?> CreateNextSenseAsync(
+        uint wordId,
+        string wordClass,
+        string englishDefinition,
+        string? vietnameseMeaning,
         CancellationToken cancellationToken = default);
 
     Task<WordSenseDto?> UpdateSenseAsync(

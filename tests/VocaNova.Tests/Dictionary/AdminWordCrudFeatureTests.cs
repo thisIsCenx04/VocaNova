@@ -1,4 +1,6 @@
+using System.Text;
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
 using VocaNova.API.Features.Dictionary.DTOs;
@@ -94,6 +96,51 @@ public class AdminWordCrudFeatureTests
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(error => error.PropertyName == nameof(CreateWordRequest.Cefr));
+    }
+
+    [Fact]
+    public async Task ImportCsvAsync_Should_Import_Valid_Rows_And_Collect_Row_Errors()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedWordAsync(dbContext, "run", "run");
+        var cache = new FakeWordDetailCache();
+        var service = CreateService(dbContext, cache);
+        var file = CreateCsvFile(
+            """
+            word,cefr_level,phonetic_uk,phonetic_us,word_class,english_definition,vietnamese_meaning
+            run,A1,/run-uk/,/run-us/,verb,move quickly,chay
+            jump,A1,,,verb,move off the ground,nhay
+            swim,A2,,,verb,move through water,boi
+            invalid,Z9,,,noun,invalid cefr,loi
+            ,B1,,,noun,missing word,loi
+            read,B1,,,verb,look at and understand text,doc
+            write,B1,,,verb,mark letters on a surface,viet
+            listen,A2,,,verb,give attention to sound,nghe
+            speak,C1,,,verb,say words,noi
+            empty,B2,,,noun,,thieu dinh nghia
+            """);
+
+        var result = await service.ImportCsvAsync(file);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.ImportedWords.Should().Be(6);
+        result.Value.ImportedSenses.Should().Be(7);
+        result.Value.Skipped.Should().Be(3);
+        result.Value.Errors.Should().HaveCount(3);
+        result.Value.Errors.Select(error => error.Row).Should().Equal(5, 6, 11);
+        result.Value.Errors.Select(error => error.Column).Should().Equal("cefr_level", "word", "english_definition");
+        cache.RemoveCount.Should().Be(1);
+
+        (await dbContext.Words.CountAsync()).Should().Be(7);
+        (await dbContext.WordSenses.CountAsync()).Should().Be(7);
+
+        var runSense = await dbContext.WordSenses.SingleAsync(entity => entity.WordId == 1);
+        runSense.SenseOrder.Should().Be(1);
+        runSense.WordClass.Should().Be("verb");
+
+        var jump = await dbContext.Words.SingleAsync(entity => entity.WordKey == "jump");
+        jump.Status.Should().Be(UserStatus.Active);
+        jump.CefrLevel.Should().Be(CefrLevel.A1);
     }
 
     [Fact]
@@ -228,6 +275,17 @@ public class AdminWordCrudFeatureTests
         return new WordService(
             new WordRepository(dbContext),
             wordDetailCache: wordDetailCache);
+    }
+
+    private static IFormFile CreateCsvFile(string content)
+    {
+        var bytes = Encoding.UTF8.GetBytes(content);
+        var stream = new MemoryStream(bytes);
+        return new FormFile(stream, 0, bytes.Length, "file", "words.csv")
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = "text/csv",
+        };
     }
 
     private static async Task SeedWordAsync(
