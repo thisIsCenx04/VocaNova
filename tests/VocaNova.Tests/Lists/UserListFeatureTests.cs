@@ -121,6 +121,92 @@ public class UserListFeatureTests
     }
 
     [Fact]
+    public async Task UpdateAsync_Should_Rename_List_And_Invalidate_Cache()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedListsAsync(dbContext);
+        var cache = new FakeUserListCache();
+        var service = CreateService(dbContext, cache);
+
+        var result = await service.UpdateAsync(1, 1, new UpdateListRequest(" Favorites Updated "));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.ListName.Should().Be("Favorites Updated");
+        result.Value.WordCount.Should().Be(2);
+        cache.RemoveCount.Should().Be(1);
+
+        var list = await dbContext.UserLists.SingleAsync(entity => entity.ListId == 1);
+        list.ListName.Should().Be("Favorites Updated");
+    }
+
+    [Fact]
+    public async Task UpdateAsync_Should_Return_409_When_NewName_Already_Exists_CaseInsensitive()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedListsAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.UpdateAsync(1, 1, new UpdateListRequest(" travel "));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(409);
+        result.Error.Should().Be("List name already exists.");
+
+        var list = await dbContext.UserLists.SingleAsync(entity => entity.ListId == 1);
+        list.ListName.Should().Be("Favorites");
+    }
+
+    [Fact]
+    public async Task SoftDeleteAsync_Should_Return_403_When_User_Does_Not_Own_List()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedListsAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.SoftDeleteAsync(1, 4);
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(403);
+        result.Error.Should().Be("You do not have access to this list.");
+
+        var list = await dbContext.UserLists.SingleAsync(entity => entity.ListId == 4);
+        list.Status.Should().Be(UserStatus.Active);
+    }
+
+    [Fact]
+    public async Task SoftDeleteAsync_Should_Delete_List_And_Cascade_Delete_ListWords_Without_Changing_Progress()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedListWithWordsAndProgressAsync(dbContext, listWordCount: 10);
+        var cache = new FakeUserListCache();
+        var service = CreateService(dbContext, cache);
+
+        var result = await service.SoftDeleteAsync(1, 10);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeTrue();
+        cache.RemoveCount.Should().Be(1);
+
+        var list = await dbContext.UserLists
+            .IgnoreQueryFilters()
+            .SingleAsync(entity => entity.ListId == 10);
+        list.Status.Should().Be(UserStatus.Deleted);
+
+        var listWords = await dbContext.UserListWords
+            .IgnoreQueryFilters()
+            .Where(entity => entity.ListId == 10)
+            .ToListAsync();
+        listWords.Should().HaveCount(10);
+        listWords.Should().OnlyContain(listWord => listWord.Status == UserStatus.Deleted);
+
+        var progress = await dbContext.UserWordProgresses
+            .OrderBy(entity => entity.WordId)
+            .ToListAsync();
+        progress.Should().HaveCount(10);
+        progress.Should().OnlyContain(item => item.TestCount == 5 && item.CorrectCount == 3 && item.WrongCount == 2);
+    }
+
+    [Fact]
     public void CreateListRequestValidator_Should_Reject_Empty_Name()
     {
         var validator = new CreateListRequestValidator();
@@ -129,6 +215,17 @@ public class UserListFeatureTests
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(error => error.PropertyName == nameof(CreateListRequest.ListName));
+    }
+
+    [Fact]
+    public void UpdateListRequestValidator_Should_Reject_Empty_Name()
+    {
+        var validator = new UpdateListRequestValidator();
+
+        var result = validator.Validate(new UpdateListRequest(""));
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(UpdateListRequest.ListName));
     }
 
     private static VocaNovaDbContext CreateDbContext()
@@ -214,6 +311,52 @@ public class UserListFeatureTests
                 Status = UserStatus.Deleted,
                 AddedAt = now,
             });
+
+        await dbContext.SaveChangesAsync();
+    }
+
+    private static async Task SeedListWithWordsAndProgressAsync(
+        VocaNovaDbContext dbContext,
+        int listWordCount)
+    {
+        var now = DateTime.UtcNow;
+        dbContext.UserLists.Add(new UserList
+        {
+            ListId = 10,
+            UserId = 1,
+            ListName = "Cascade",
+            Status = UserStatus.Active,
+            CreatedAt = now,
+        });
+
+        for (var index = 1; index <= listWordCount; index++)
+        {
+            dbContext.UserListWords.Add(new UserListWord
+            {
+                UserId = 1,
+                ListId = 10,
+                WordId = (uint)index,
+                AddMethod = AddMethod.Manual,
+                Status = UserStatus.Active,
+                AddedAt = now.AddMinutes(index),
+            });
+
+            dbContext.UserWordProgresses.Add(new UserWordProgress
+            {
+                ProgressId = (uint)index,
+                UserId = 1,
+                WordId = (uint)index,
+                TestCount = 5,
+                CorrectCount = 3,
+                WrongCount = 2,
+                ConsecutiveCorrect = 1,
+                IsInWrongList = false,
+                MasteryLevel = 2,
+                SrsInterval = 1,
+                EaseFactor = 2.5f,
+                UpdatedAt = now,
+            });
+        }
 
         await dbContext.SaveChangesAsync();
     }
