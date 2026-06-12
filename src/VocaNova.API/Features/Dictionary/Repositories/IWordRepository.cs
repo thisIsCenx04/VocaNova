@@ -33,4 +33,9 @@ public interface IWordRepository
         UpdateWordRequest request,
         string wordKey,
         CancellationToken cancellationToken = default);
+
+    Task<bool> SetStatusAsync(
+        uint wordId,
+        string status,
+        CancellationToken cancellationToken = default);
 }

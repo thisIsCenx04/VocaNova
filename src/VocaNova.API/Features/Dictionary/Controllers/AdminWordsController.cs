@@ -53,6 +53,38 @@ public sealed class AdminWordsController : ControllerBase
         return this.OkResult(result.Value!, "Word updated successfully.");
     }
 
+    [Authorize(Policy = JwtAuthenticationExtensions.SuperAdminPolicy)]
+    [HttpDelete("{id:uint}")]
+    public async Task<IActionResult> SoftDelete(
+        [FromRoute] uint id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _wordService.SoftDeleteAsync(id, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        SetAuditEntity(id);
+        return this.OkResult(result.Value, "Word deleted successfully.");
+    }
+
+    [Authorize(Policy = JwtAuthenticationExtensions.SuperAdminPolicy)]
+    [HttpPatch("{id:uint}/restore")]
+    public async Task<IActionResult> Restore(
+        [FromRoute] uint id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _wordService.RestoreAsync(id, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        SetAuditEntity(id);
+        return this.OkResult(result.Value, "Word restored successfully.");
+    }
+
     private void SetAuditEntity(uint wordId)
     {
         HttpContext.Items[AuditLogHttpContextKeys.EntityType] = EntityType;

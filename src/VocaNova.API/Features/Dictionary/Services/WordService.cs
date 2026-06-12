@@ -183,6 +183,44 @@ public sealed class WordService : IWordService
         return Result<WordDetailDto>.Ok(word);
     }
 
+    public async Task<Result<bool>> SoftDeleteAsync(
+        uint wordId,
+        CancellationToken cancellationToken = default)
+    {
+        return await SetWordStatusAsync(wordId, UserStatus.Deleted, cancellationToken);
+    }
+
+    public async Task<Result<bool>> RestoreAsync(
+        uint wordId,
+        CancellationToken cancellationToken = default)
+    {
+        return await SetWordStatusAsync(wordId, UserStatus.Active, cancellationToken);
+    }
+
+    private async Task<Result<bool>> SetWordStatusAsync(
+        uint wordId,
+        string status,
+        CancellationToken cancellationToken)
+    {
+        if (wordId == 0)
+        {
+            return Result<bool>.NotFound("Word not found.");
+        }
+
+        var updated = await _wordRepository.SetStatusAsync(wordId, status, cancellationToken);
+        if (!updated)
+        {
+            return Result<bool>.NotFound("Word not found.");
+        }
+
+        if (_wordDetailCache is not null)
+        {
+            await _wordDetailCache.RemoveAsync(wordId, cancellationToken);
+        }
+
+        return Result<bool>.Ok(true);
+    }
+
     private static string? NormalizeCefr(string? cefr)
     {
         return string.IsNullOrWhiteSpace(cefr) ? null : cefr.Trim().ToUpperInvariant();

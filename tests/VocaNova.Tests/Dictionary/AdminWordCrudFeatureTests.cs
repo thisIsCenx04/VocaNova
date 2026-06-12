@@ -96,6 +96,45 @@ public class AdminWordCrudFeatureTests
         result.Errors.Should().Contain(error => error.PropertyName == nameof(CreateWordRequest.Cefr));
     }
 
+    [Fact]
+    public async Task SoftDeleteAsync_Should_Set_Status_Deleted_And_Invalidate_Cache()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedWordAsync(dbContext, "run", "run");
+        var cache = new FakeWordDetailCache();
+        var service = CreateService(dbContext, cache);
+
+        var result = await service.SoftDeleteAsync(1);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeTrue();
+        cache.RemoveCount.Should().Be(1);
+
+        var word = await dbContext.Words
+            .IgnoreQueryFilters()
+            .SingleAsync(entity => entity.WordId == 1);
+        word.Status.Should().Be(UserStatus.Deleted);
+        (await dbContext.Words.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task RestoreAsync_Should_Restore_Deleted_Word_Using_IgnoreQueryFilters_And_Invalidate_Cache()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedWordAsync(dbContext, "run", "run", UserStatus.Deleted);
+        var cache = new FakeWordDetailCache();
+        var service = CreateService(dbContext, cache);
+
+        var result = await service.RestoreAsync(1);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeTrue();
+        cache.RemoveCount.Should().Be(1);
+
+        var word = await dbContext.Words.SingleAsync(entity => entity.WordId == 1);
+        word.Status.Should().Be(UserStatus.Active);
+    }
+
     private static VocaNovaDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<VocaNovaDbContext>()
@@ -114,7 +153,11 @@ public class AdminWordCrudFeatureTests
             wordDetailCache: wordDetailCache);
     }
 
-    private static async Task SeedWordAsync(VocaNovaDbContext dbContext, string word, string wordKey)
+    private static async Task SeedWordAsync(
+        VocaNovaDbContext dbContext,
+        string word,
+        string wordKey,
+        string status = UserStatus.Active)
     {
         dbContext.Words.Add(new Word
         {
@@ -122,7 +165,7 @@ public class AdminWordCrudFeatureTests
             Word1 = word,
             WordKey = wordKey,
             CefrLevel = CefrLevel.A1,
-            Status = UserStatus.Active,
+            Status = status,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
         });
