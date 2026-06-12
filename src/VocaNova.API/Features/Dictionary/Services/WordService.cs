@@ -221,6 +221,70 @@ public sealed class WordService : IWordService
         return Result<bool>.Ok(true);
     }
 
+    public async Task<Result<WordSenseDto>> CreateSenseAsync(
+        uint wordId,
+        CreateSenseRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var sense = await _wordRepository.CreateSenseAsync(
+            wordId,
+            NormalizeCreateSenseRequest(request),
+            cancellationToken);
+        if (sense is null)
+        {
+            return Result<WordSenseDto>.NotFound("Word not found.");
+        }
+
+        await RemoveCachedWordAsync(wordId, cancellationToken);
+
+        return Result<WordSenseDto>.Ok(sense);
+    }
+
+    public async Task<Result<WordSenseDto>> UpdateSenseAsync(
+        uint wordId,
+        uint senseId,
+        UpdateSenseRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var sense = await _wordRepository.UpdateSenseAsync(
+            wordId,
+            senseId,
+            NormalizeUpdateSenseRequest(request),
+            cancellationToken);
+        if (sense is null)
+        {
+            return Result<WordSenseDto>.NotFound("Sense not found.");
+        }
+
+        await RemoveCachedWordAsync(wordId, cancellationToken);
+
+        return Result<WordSenseDto>.Ok(sense);
+    }
+
+    public Task<Result<bool>> SoftDeleteSenseAsync(
+        uint wordId,
+        uint senseId,
+        CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(Result<bool>.Fail("Sense soft delete is not supported by current database schema."));
+    }
+
+    public Task<Result<bool>> RestoreSenseAsync(
+        uint wordId,
+        uint senseId,
+        CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(Result<bool>.Fail("Sense restore is not supported by current database schema."));
+    }
+
+    private async Task RemoveCachedWordAsync(uint wordId, CancellationToken cancellationToken)
+    {
+        if (_wordDetailCache is not null)
+        {
+            await _wordDetailCache.RemoveAsync(wordId, cancellationToken);
+        }
+    }
+
     private static string? NormalizeCefr(string? cefr)
     {
         return string.IsNullOrWhiteSpace(cefr) ? null : cefr.Trim().ToUpperInvariant();
@@ -229,5 +293,25 @@ public sealed class WordService : IWordService
     private static string? NormalizeNullable(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private static CreateSenseRequest NormalizeCreateSenseRequest(CreateSenseRequest request)
+    {
+        return request with
+        {
+            WordClass = request.WordClass!.Trim(),
+            EnglishDefinition = request.EnglishDefinition!.Trim(),
+            VietnameseMeaning = NormalizeNullable(request.VietnameseMeaning),
+        };
+    }
+
+    private static UpdateSenseRequest NormalizeUpdateSenseRequest(UpdateSenseRequest request)
+    {
+        return request with
+        {
+            WordClass = request.WordClass!.Trim(),
+            EnglishDefinition = request.EnglishDefinition!.Trim(),
+            VietnameseMeaning = NormalizeNullable(request.VietnameseMeaning),
+        };
     }
 }
