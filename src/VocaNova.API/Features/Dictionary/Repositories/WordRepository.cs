@@ -178,6 +178,63 @@ public sealed class WordRepository : IWordRepository
         return true;
     }
 
+    public Task<bool> WordExistsAsync(
+        uint wordId,
+        CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Words.AnyAsync(word => word.WordId == wordId, cancellationToken);
+    }
+
+    public async Task<WordSenseDto?> CreateSenseAsync(
+        uint wordId,
+        CreateSenseRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await WordExistsAsync(wordId, cancellationToken))
+        {
+            return null;
+        }
+
+        var sense = new WordSense
+        {
+            WordId = wordId,
+            SenseOrder = request.SenseOrder,
+            WordClass = request.WordClass!.Trim(),
+            EnglishDefinition = request.EnglishDefinition!.Trim(),
+            VietnameseMeaning = NormalizeNullable(request.VietnameseMeaning),
+        };
+
+        _dbContext.WordSenses.Add(sense);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return MapSense(sense);
+    }
+
+    public async Task<WordSenseDto?> UpdateSenseAsync(
+        uint wordId,
+        uint senseId,
+        UpdateSenseRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var sense = await _dbContext.WordSenses
+            .SingleOrDefaultAsync(
+                entity => entity.WordId == wordId && entity.SenseId == senseId,
+                cancellationToken);
+        if (sense is null)
+        {
+            return null;
+        }
+
+        sense.SenseOrder = request.SenseOrder;
+        sense.WordClass = request.WordClass!.Trim();
+        sense.EnglishDefinition = request.EnglishDefinition!.Trim();
+        sense.VietnameseMeaning = NormalizeNullable(request.VietnameseMeaning);
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return MapSense(sense);
+    }
+
     private static WordDetailDto MapDetail(Word word)
     {
         var senses = word.WordSenses
@@ -273,6 +330,18 @@ public sealed class WordRepository : IWordRepository
             example.ExampleEn,
             example.ExampleVi,
             example.OrderIndex);
+    }
+
+    private static WordSenseDto MapSense(WordSense sense)
+    {
+        return new WordSenseDto(
+            sense.SenseId,
+            sense.SenseOrder,
+            sense.WordClass,
+            sense.EnglishDefinition,
+            sense.VietnameseMeaning,
+            Array.Empty<WordExampleDto>(),
+            Array.Empty<WordRelationDto>());
     }
 
     private static WordRelationDto MapRelation(WordRelation relation)

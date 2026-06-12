@@ -38,4 +38,19 @@ public interface IWordRepository
         uint wordId,
         string status,
         CancellationToken cancellationToken = default);
+
+    Task<bool> WordExistsAsync(
+        uint wordId,
+        CancellationToken cancellationToken = default);
+
+    Task<WordSenseDto?> CreateSenseAsync(
+        uint wordId,
+        CreateSenseRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<WordSenseDto?> UpdateSenseAsync(
+        uint wordId,
+        uint senseId,
+        UpdateSenseRequest request,
+        CancellationToken cancellationToken = default);
 }

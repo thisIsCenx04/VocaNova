@@ -135,6 +135,83 @@ public class AdminWordCrudFeatureTests
         word.Status.Should().Be(UserStatus.Active);
     }
 
+    [Fact]
+    public async Task CreateSenseAsync_Should_Create_Sense_And_Invalidate_Word_Cache()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedWordAsync(dbContext, "run", "run");
+        var cache = new FakeWordDetailCache();
+        var service = CreateService(dbContext, cache);
+
+        var result = await service.CreateSenseAsync(
+            1,
+            new CreateSenseRequest(1, "verb", "move quickly", "chay"));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.SenseId.Should().BeGreaterThan(0);
+        result.Value.WordClass.Should().Be("verb");
+        result.Value.VietnameseMeaning.Should().Be("chay");
+        cache.RemoveCount.Should().Be(1);
+
+        var sense = await dbContext.WordSenses.SingleAsync();
+        sense.WordId.Should().Be(1);
+        sense.SenseOrder.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task UpdateSenseAsync_Should_Update_Sense_And_Invalidate_Word_Cache()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedWordAsync(dbContext, "run", "run");
+        await SeedSenseAsync(dbContext);
+        var cache = new FakeWordDetailCache();
+        var service = CreateService(dbContext, cache);
+
+        var result = await service.UpdateSenseAsync(
+            1,
+            10,
+            new UpdateSenseRequest(2, "noun", "an act of running", "su chay"));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Order.Should().Be(2);
+        result.Value.WordClass.Should().Be("noun");
+        cache.RemoveCount.Should().Be(1);
+
+        var sense = await dbContext.WordSenses.SingleAsync(entity => entity.SenseId == 10);
+        sense.SenseOrder.Should().Be(2);
+        sense.WordClass.Should().Be("noun");
+    }
+
+    [Fact]
+    public async Task SoftDeleteSenseAsync_Should_Return_400_When_Schema_Does_Not_Support_Soft_Delete()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedWordAsync(dbContext, "run", "run");
+        await SeedSenseAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.SoftDeleteSenseAsync(1, 10);
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(400);
+        result.Error.Should().Be("Sense soft delete is not supported by current database schema.");
+
+        (await dbContext.WordSenses.CountAsync()).Should().Be(1);
+    }
+
+    [Fact]
+    public void CreateSenseRequestValidator_Should_Reject_Invalid_Request()
+    {
+        var validator = new CreateSenseRequestValidator();
+
+        var result = validator.Validate(new CreateSenseRequest(0, "", "", null));
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(CreateSenseRequest.SenseOrder));
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(CreateSenseRequest.WordClass));
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(CreateSenseRequest.EnglishDefinition));
+    }
+
     private static VocaNovaDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<VocaNovaDbContext>()
@@ -168,6 +245,21 @@ public class AdminWordCrudFeatureTests
             Status = status,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
+        });
+
+        await dbContext.SaveChangesAsync();
+    }
+
+    private static async Task SeedSenseAsync(VocaNovaDbContext dbContext)
+    {
+        dbContext.WordSenses.Add(new WordSense
+        {
+            SenseId = 10,
+            WordId = 1,
+            SenseOrder = 1,
+            WordClass = "verb",
+            EnglishDefinition = "move quickly",
+            VietnameseMeaning = "chay",
         });
 
         await dbContext.SaveChangesAsync();

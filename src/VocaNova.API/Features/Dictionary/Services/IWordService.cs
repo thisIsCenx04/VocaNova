@@ -29,4 +29,25 @@ public interface IWordService
     Task<Result<bool>> RestoreAsync(
         uint wordId,
         CancellationToken cancellationToken = default);
+
+    Task<Result<WordSenseDto>> CreateSenseAsync(
+        uint wordId,
+        CreateSenseRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<WordSenseDto>> UpdateSenseAsync(
+        uint wordId,
+        uint senseId,
+        UpdateSenseRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<bool>> SoftDeleteSenseAsync(
+        uint wordId,
+        uint senseId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<bool>> RestoreSenseAsync(
+        uint wordId,
+        uint senseId,
+        CancellationToken cancellationToken = default);
 }
