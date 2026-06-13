@@ -3,6 +3,7 @@ using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Results;
 using VocaNova.API.Features.Quiz.DTOs;
 using VocaNova.API.Features.Quiz.Repositories;
+using VocaNova.API.Infrastructure.Caching;
 
 namespace VocaNova.API.Features.Quiz.Services;
 
@@ -20,15 +21,18 @@ public sealed class QuizSessionService : IQuizSessionService
     private readonly IQuizSessionBuilder _quizSessionBuilder;
     private readonly IQuizQuestionBuilder _quizQuestionBuilder;
     private readonly IQuizSessionRepository _quizSessionRepository;
+    private readonly IProgressSummaryCache? _progressSummaryCache;
 
     public QuizSessionService(
         IQuizSessionBuilder quizSessionBuilder,
         IQuizQuestionBuilder quizQuestionBuilder,
-        IQuizSessionRepository quizSessionRepository)
+        IQuizSessionRepository quizSessionRepository,
+        IProgressSummaryCache? progressSummaryCache = null)
     {
         _quizSessionBuilder = quizSessionBuilder;
         _quizQuestionBuilder = quizQuestionBuilder;
         _quizSessionRepository = quizSessionRepository;
+        _progressSummaryCache = progressSummaryCache;
     }
 
     public async Task<Result<CreateSessionResponse>> CreateSessionAsync(
@@ -84,6 +88,10 @@ public sealed class QuizSessionService : IQuizSessionService
             request,
             pool.Count,
             cancellationToken);
+        if (_progressSummaryCache is not null)
+        {
+            await _progressSummaryCache.RemoveAsync(userId, cancellationToken);
+        }
 
         return Result<CreateSessionResponse>.Ok(new CreateSessionResponse(
             session,
