@@ -1,12 +1,15 @@
 using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Extensions;
+using VocaNova.API.Features.AiGrading.Services;
 using VocaNova.API.Features.Quiz.DTOs;
 
 namespace VocaNova.API.Features.Quiz.Services;
 
-public sealed class StubAiGradingService : IAiGradingService
+public sealed class StubAiGradingService : IAiGradingService, IAiGradingProvider
 {
     public Task<AiGradingResult> GradeAsync(
+        uint wordId,
+        int questionType,
         string? userAnswer,
         string expectedAnswer,
         CancellationToken cancellationToken = default)

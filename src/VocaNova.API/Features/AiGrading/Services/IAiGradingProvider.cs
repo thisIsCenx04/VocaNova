@@ -1,8 +1,8 @@
 using VocaNova.API.Features.Quiz.DTOs;
 
-namespace VocaNova.API.Features.Quiz.Services;
+namespace VocaNova.API.Features.AiGrading.Services;
 
-public interface IAiGradingService
+public interface IAiGradingProvider
 {
     Task<AiGradingResult> GradeAsync(
         uint wordId,

@@ -167,6 +167,8 @@ public sealed class QuizSubmitService : IQuizSubmitService
         if (session.TestType == AnswerMethod.AiTyping)
         {
             var aiResult = await _aiGradingService.GradeAsync(
+                request.WordId,
+                session.QuestionType,
                 request.UserAnswer,
                 question.ExpectedAnswer,
                 cancellationToken);
