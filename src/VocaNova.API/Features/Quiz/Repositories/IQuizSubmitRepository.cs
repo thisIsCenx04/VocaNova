@@ -20,5 +20,9 @@ public interface IQuizSubmitRepository
         string? aiSuggestion,
         CancellationToken cancellationToken = default);
 
+    Task CompleteSessionAsync(
+        TestSession session,
+        CancellationToken cancellationToken = default);
+
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

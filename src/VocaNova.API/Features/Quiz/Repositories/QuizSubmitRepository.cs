@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using VocaNova.API.Common.Constants;
 using VocaNova.API.Features.Quiz.DTOs;
+using VocaNova.API.Features.Quiz.Services;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -63,46 +65,24 @@ public sealed class QuizSubmitRepository : IQuizSubmitRepository
         answer.AiExplanation = aiExplanation;
         answer.AiSuggestion = aiSuggestion;
 
-        RecalculateSessionStats(session);
+        QuizSessionStatsCalculator.ApplyStats(session);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return answer;
     }
 
+    public async Task CompleteSessionAsync(
+        TestSession session,
+        CancellationToken cancellationToken = default)
+    {
+        QuizSessionStatsCalculator.ApplyStats(session);
+        session.Status = TestSessionStatus.Completed;
+        session.EndedAt ??= DateTime.UtcNow;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return _dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    private static void RecalculateSessionStats(TestSession session)
-    {
-        var gradedAnswers = session.TestAnswers
-            .Where(answer => answer.IsCorrect.HasValue)
-            .OrderBy(answer => answer.QuestionNumber)
-            .ThenBy(answer => answer.AnswerId)
-            .ToArray();
-
-        session.CorrectCount = gradedAnswers.Count(answer => answer.IsCorrect == true);
-        session.WrongCount = gradedAnswers.Count(answer => answer.IsCorrect == false);
-        session.Score = gradedAnswers.Length == 0
-            ? 0
-            : (float)session.CorrectCount / gradedAnswers.Length * 100;
-
-        var currentStreak = 0;
-        var maxStreak = 0;
-        foreach (var answer in gradedAnswers)
-        {
-            if (answer.IsCorrect == true)
-            {
-                currentStreak++;
-                maxStreak = Math.Max(maxStreak, currentStreak);
-            }
-            else
-            {
-                currentStreak = 0;
-            }
-        }
-
-        session.MaxStreak = maxStreak;
     }
 }
