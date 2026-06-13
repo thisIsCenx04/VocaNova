@@ -53,6 +53,8 @@ builder.Services.AddScoped<IQuizQuestionRepository, QuizQuestionRepository>();
 builder.Services.AddScoped<IQuizQuestionBuilder, QuizQuestionBuilder>();
 builder.Services.AddScoped<IQuizSessionRepository, QuizSessionRepository>();
 builder.Services.AddScoped<IQuizSessionService, QuizSessionService>();
+builder.Services.AddScoped<IAnswerGrader, ExactTypingGrader>();
+builder.Services.AddScoped<IAnswerGrader, MultipleChoiceGrader>();
 builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection(RedisSettings.SectionName));
 builder.Services.AddSingleton<IUserProfileCache, RedisUserProfileCache>();
 builder.Services.AddSingleton<IWordSearchCache, RedisWordSearchCache>();
