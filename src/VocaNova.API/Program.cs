@@ -51,6 +51,8 @@ builder.Services.AddScoped<IQuizWordPoolRepository, QuizWordPoolRepository>();
 builder.Services.AddScoped<IQuizSessionBuilder, QuizSessionBuilder>();
 builder.Services.AddScoped<IQuizQuestionRepository, QuizQuestionRepository>();
 builder.Services.AddScoped<IQuizQuestionBuilder, QuizQuestionBuilder>();
+builder.Services.AddScoped<IQuizSessionRepository, QuizSessionRepository>();
+builder.Services.AddScoped<IQuizSessionService, QuizSessionService>();
 builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection(RedisSettings.SectionName));
 builder.Services.AddSingleton<IUserProfileCache, RedisUserProfileCache>();
 builder.Services.AddSingleton<IWordSearchCache, RedisWordSearchCache>();
