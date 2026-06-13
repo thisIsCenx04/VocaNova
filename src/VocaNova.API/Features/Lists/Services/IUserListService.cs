@@ -36,4 +36,10 @@ public interface IUserListService
         uint listId,
         AddListWordRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<Result<AddRandomListWordsResultDto>> AddRandomWordsAsync(
+        uint userId,
+        uint listId,
+        AddRandomListWordsRequest request,
+        CancellationToken cancellationToken = default);
 }

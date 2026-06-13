@@ -69,4 +69,18 @@ public interface IUserListRepository
         string addMethod,
         string? note,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<uint>> GetRandomTopicWordIdsAsync(
+        uint userId,
+        uint listId,
+        uint? topicId,
+        int count,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<uint>> GetRandomRelationWordIdsAsync(
+        uint userId,
+        uint listId,
+        string relationType,
+        int count,
+        CancellationToken cancellationToken = default);
 }

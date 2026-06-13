@@ -134,6 +134,26 @@ public sealed class ListsController : ControllerBase
         return this.CreatedResult(result.Value!, "Word added to list successfully.");
     }
 
+    [HttpPost("{id:uint}/words/random")]
+    public async Task<IActionResult> AddRandomWords(
+        [FromRoute] uint id,
+        [FromBody] AddRandomListWordsRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return this.ErrorResult(Result<AddRandomListWordsResultDto>.Unauthorized("Unauthorized."));
+        }
+
+        var result = await _userListService.AddRandomWordsAsync(userId, id, request, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.CreatedResult(result.Value!, "Random words added to list successfully.");
+    }
+
     private bool TryGetCurrentUserId(out uint userId)
     {
         var userIdClaim = User.FindFirst("user_id")?.Value;

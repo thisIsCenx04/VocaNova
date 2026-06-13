@@ -246,6 +246,77 @@ public sealed class UserListService : IUserListService
         return Result<ListWordDto>.Ok(listWord);
     }
 
+    public async Task<Result<AddRandomListWordsResultDto>> AddRandomWordsAsync(
+        uint userId,
+        uint listId,
+        AddRandomListWordsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (userId == 0)
+        {
+            return Result<AddRandomListWordsResultDto>.Unauthorized("Unauthorized.");
+        }
+
+        if (request.Count <= 0 || request.Count > 50)
+        {
+            return Result<AddRandomListWordsResultDto>.Fail("Count must be between 1 and 50.");
+        }
+
+        var method = request.Method?.Trim();
+        if (method is not AddMethod.RandomTopic
+            and not AddMethod.RandomSynonym
+            and not AddMethod.RandomAntonym)
+        {
+            return Result<AddRandomListWordsResultDto>.Fail("Method is invalid.");
+        }
+
+        var ownershipResult = await ValidateListOwnershipAsync(userId, listId, cancellationToken);
+        if (!ownershipResult.IsSuccess)
+        {
+            return ToRandomWordsFailure(ownershipResult);
+        }
+
+        var wordIds = method switch
+        {
+            AddMethod.RandomTopic => await _userListRepository.GetRandomTopicWordIdsAsync(
+                userId,
+                listId,
+                request.TopicId,
+                request.Count,
+                cancellationToken),
+            AddMethod.RandomSynonym => await _userListRepository.GetRandomRelationWordIdsAsync(
+                userId,
+                listId,
+                "synonym",
+                request.Count,
+                cancellationToken),
+            _ => await _userListRepository.GetRandomRelationWordIdsAsync(
+                userId,
+                listId,
+                "antonym",
+                request.Count,
+                cancellationToken),
+        };
+
+        var addedWords = new List<ListWordDto>();
+        foreach (var wordId in wordIds)
+        {
+            var addResult = await AddWordAsync(
+                userId,
+                listId,
+                new AddListWordRequest(wordId, method, null),
+                cancellationToken);
+            if (addResult.IsSuccess)
+            {
+                addedWords.Add(addResult.Value!);
+            }
+        }
+
+        return Result<AddRandomListWordsResultDto>.Ok(new AddRandomListWordsResultDto(
+            addedWords.Count,
+            addedWords));
+    }
+
     private async Task<Result<bool>> ValidateListOwnershipAsync(
         uint userId,
         uint listId,
@@ -308,6 +379,17 @@ public sealed class UserListService : IUserListService
             StatusCodes.Status403Forbidden => Result<ListWordDto>.Forbidden(result.Error!),
             StatusCodes.Status404NotFound => Result<ListWordDto>.NotFound(result.Error!),
             _ => Result<ListWordDto>.Fail(result.Error!),
+        };
+    }
+
+    private static Result<AddRandomListWordsResultDto> ToRandomWordsFailure(Result<bool> result)
+    {
+        return result.StatusCode switch
+        {
+            StatusCodes.Status401Unauthorized => Result<AddRandomListWordsResultDto>.Unauthorized(result.Error!),
+            StatusCodes.Status403Forbidden => Result<AddRandomListWordsResultDto>.Forbidden(result.Error!),
+            StatusCodes.Status404NotFound => Result<AddRandomListWordsResultDto>.NotFound(result.Error!),
+            _ => Result<AddRandomListWordsResultDto>.Fail(result.Error!),
         };
     }
 

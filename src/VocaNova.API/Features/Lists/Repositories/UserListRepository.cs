@@ -266,6 +266,61 @@ public sealed class UserListRepository : IUserListRepository
         return await FindListWordDtoAsync(userId, listId, wordId, cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<uint>> GetRandomTopicWordIdsAsync(
+        uint userId,
+        uint listId,
+        uint? topicId,
+        int count,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.Words
+            .AsNoTracking()
+            .Where(word => !_dbContext.UserListWords
+                .IgnoreQueryFilters()
+                .Any(listWord => listWord.UserId == userId
+                    && listWord.ListId == listId
+                    && listWord.WordId == word.WordId
+                    && listWord.Status == UserStatus.Active));
+
+        if (topicId.HasValue)
+        {
+            query = query.Where(word => word.WordTopics.Any(wordTopic => wordTopic.TopicId == topicId.Value));
+        }
+
+        var candidates = await query
+            .Select(word => word.WordId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        return TakeRandom(candidates, count);
+    }
+
+    public async Task<IReadOnlyCollection<uint>> GetRandomRelationWordIdsAsync(
+        uint userId,
+        uint listId,
+        string relationType,
+        int count,
+        CancellationToken cancellationToken = default)
+    {
+        var candidates = await _dbContext.WordRelations
+            .AsNoTracking()
+            .Where(relation => relation.RelationType == relationType
+                && relation.IsQuizEligible == true
+                && relation.RelatedWordId.HasValue
+                && relation.RelatedWordNavigation != null
+                && !_dbContext.UserListWords
+                    .IgnoreQueryFilters()
+                    .Any(listWord => listWord.UserId == userId
+                        && listWord.ListId == listId
+                        && listWord.WordId == relation.RelatedWordId!.Value
+                        && listWord.Status == UserStatus.Active))
+            .Select(relation => relation.RelatedWordId!.Value)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        return TakeRandom(candidates, count);
+    }
+
     private async Task<ListWordDto?> FindListWordDtoAsync(
         uint userId,
         uint listId,
@@ -300,5 +355,18 @@ public sealed class UserListRepository : IUserListRepository
                 listWord.Note,
                 listWord.AddedAt))
             .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    private static IReadOnlyCollection<uint> TakeRandom(IList<uint> candidates, int count)
+    {
+        for (var index = candidates.Count - 1; index > 0; index--)
+        {
+            var swapIndex = Random.Shared.Next(index + 1);
+            (candidates[index], candidates[swapIndex]) = (candidates[swapIndex], candidates[index]);
+        }
+
+        return candidates
+            .Take(count)
+            .ToArray();
     }
 }

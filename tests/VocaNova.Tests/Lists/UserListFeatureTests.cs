@@ -325,6 +325,77 @@ public class UserListFeatureTests
     }
 
     [Fact]
+    public async Task AddRandomWordsAsync_Should_Add_RandomTopic_Words_And_Exclude_Active_Existing()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedRandomTopicWordsAsync(dbContext);
+        var cache = new FakeUserListCache();
+        var service = CreateService(dbContext, cache);
+
+        var result = await service.AddRandomWordsAsync(
+            1,
+            40,
+            new AddRandomListWordsRequest(7, 10, AddMethod.RandomTopic));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.AddedCount.Should().Be(3);
+        result.Value.Words.Select(word => word.WordId).Should().BeEquivalentTo(new[] { 2u, 3u, 4u });
+        cache.RemoveCount.Should().Be(3);
+
+        var activeListWordIds = await dbContext.UserListWords
+            .Where(entity => entity.UserId == 1 && entity.ListId == 40)
+            .Select(entity => entity.WordId)
+            .ToListAsync();
+        activeListWordIds.Should().BeEquivalentTo(new[] { 1u, 2u, 3u, 4u });
+
+        var restoredWord = await dbContext.UserListWords
+            .SingleAsync(entity => entity.UserId == 1 && entity.ListId == 40 && entity.WordId == 2);
+        restoredWord.Status.Should().Be(UserStatus.Active);
+        restoredWord.AddMethod.Should().Be(AddMethod.RandomTopic);
+    }
+
+    [Fact]
+    public async Task AddRandomWordsAsync_Should_Return_400_When_Count_Exceeds_50()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedRandomTopicWordsAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.AddRandomWordsAsync(
+            1,
+            40,
+            new AddRandomListWordsRequest(7, 51, AddMethod.RandomTopic));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(400);
+        result.Error.Should().Be("Count must be between 1 and 50.");
+    }
+
+    [Fact]
+    public async Task AddRandomWordsAsync_Should_Add_Only_QuizEligible_Relation_Words()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedRandomRelationWordsAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.AddRandomWordsAsync(
+            1,
+            50,
+            new AddRandomListWordsRequest(null, 10, AddMethod.RandomSynonym));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.AddedCount.Should().Be(1);
+        result.Value.Words.Should().ContainSingle()
+            .Which.WordId.Should().Be(2);
+
+        var activeListWordIds = await dbContext.UserListWords
+            .Where(entity => entity.UserId == 1 && entity.ListId == 50)
+            .Select(entity => entity.WordId)
+            .ToListAsync();
+        activeListWordIds.Should().BeEquivalentTo(new[] { 2u });
+    }
+
+    [Fact]
     public void CreateListRequestValidator_Should_Reject_Empty_Name()
     {
         var validator = new CreateListRequestValidator();
@@ -358,6 +429,18 @@ public class UserListFeatureTests
         result.Errors.Should().Contain(error => error.PropertyName == nameof(AddListWordRequest.WordId));
         result.Errors.Should().Contain(error => error.PropertyName == nameof(AddListWordRequest.AddMethod));
         result.Errors.Should().Contain(error => error.PropertyName == nameof(AddListWordRequest.Note));
+    }
+
+    [Fact]
+    public void AddRandomListWordsRequestValidator_Should_Reject_Invalid_Request()
+    {
+        var validator = new AddRandomListWordsRequestValidator();
+
+        var result = validator.Validate(new AddRandomListWordsRequest(null, 51, AddMethod.Manual));
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(AddRandomListWordsRequest.Count));
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(AddRandomListWordsRequest.Method));
     }
 
     private static VocaNovaDbContext CreateDbContext()
@@ -633,6 +716,124 @@ public class UserListFeatureTests
                 AddedAt = now,
             });
         }
+
+        await dbContext.SaveChangesAsync();
+    }
+
+    private static async Task SeedRandomTopicWordsAsync(VocaNovaDbContext dbContext)
+    {
+        var now = DateTime.UtcNow;
+        dbContext.UserLists.Add(new UserList
+        {
+            ListId = 40,
+            UserId = 1,
+            ListName = "Random Topic",
+            Status = UserStatus.Active,
+            CreatedAt = now,
+        });
+
+        dbContext.Topics.Add(new Topic
+        {
+            TopicId = 7,
+            TopicName = "Travel",
+            Status = UserStatus.Active,
+        });
+
+        for (var index = 1; index <= 5; index++)
+        {
+            dbContext.Words.Add(new Word
+            {
+                WordId = (uint)index,
+                Word1 = $"word-{index}",
+                WordKey = $"word-{index}",
+                Status = index == 5 ? UserStatus.Deleted : UserStatus.Active,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+
+            dbContext.WordTopics.Add(new WordTopic
+            {
+                WordId = (uint)index,
+                TopicId = 7,
+            });
+        }
+
+        dbContext.UserListWords.AddRange(
+            new UserListWord
+            {
+                UserId = 1,
+                ListId = 40,
+                WordId = 1,
+                AddMethod = AddMethod.Manual,
+                Status = UserStatus.Active,
+                AddedAt = now,
+            },
+            new UserListWord
+            {
+                UserId = 1,
+                ListId = 40,
+                WordId = 2,
+                AddMethod = AddMethod.Manual,
+                Status = UserStatus.Deleted,
+                AddedAt = now,
+            });
+
+        await dbContext.SaveChangesAsync();
+    }
+
+    private static async Task SeedRandomRelationWordsAsync(VocaNovaDbContext dbContext)
+    {
+        var now = DateTime.UtcNow;
+        dbContext.UserLists.Add(new UserList
+        {
+            ListId = 50,
+            UserId = 1,
+            ListName = "Random Relation",
+            Status = UserStatus.Active,
+            CreatedAt = now,
+        });
+
+        for (var index = 1; index <= 4; index++)
+        {
+            dbContext.Words.Add(new Word
+            {
+                WordId = (uint)index,
+                Word1 = $"relation-word-{index}",
+                WordKey = $"relation-word-{index}",
+                Status = UserStatus.Active,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+        }
+
+        dbContext.WordRelations.AddRange(
+            new WordRelation
+            {
+                RelationId = 1,
+                WordId = 1,
+                RelationType = "synonym",
+                RelatedWord = "relation-word-2",
+                RelatedWordId = 2,
+                IsQuizEligible = true,
+            },
+            new WordRelation
+            {
+                RelationId = 2,
+                WordId = 1,
+                RelationType = "synonym",
+                RelatedWord = "relation-word-3",
+                RelatedWordId = 3,
+                IsQuizEligible = false,
+            },
+            new WordRelation
+            {
+                RelationId = 3,
+                WordId = 1,
+                RelationType = "antonym",
+                RelatedWord = "relation-word-4",
+                RelatedWordId = 4,
+                IsQuizEligible = true,
+            });
 
         await dbContext.SaveChangesAsync();
     }
