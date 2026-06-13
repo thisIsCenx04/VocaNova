@@ -83,4 +83,17 @@ public interface IUserListRepository
         string relationType,
         int count,
         CancellationToken cancellationToken = default);
+
+    Task<bool> SoftDeleteWordAsync(
+        uint userId,
+        uint listId,
+        uint wordId,
+        CancellationToken cancellationToken = default);
+
+    Task<ListWordDto?> UpdateWordNoteAsync(
+        uint userId,
+        uint listId,
+        uint wordId,
+        string? note,
+        CancellationToken cancellationToken = default);
 }

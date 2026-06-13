@@ -42,4 +42,17 @@ public interface IUserListService
         uint listId,
         AddRandomListWordsRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<Result<bool>> RemoveWordAsync(
+        uint userId,
+        uint listId,
+        uint wordId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<ListWordDto>> UpdateWordNoteAsync(
+        uint userId,
+        uint listId,
+        uint wordId,
+        UpdateListWordNoteRequest request,
+        CancellationToken cancellationToken = default);
 }

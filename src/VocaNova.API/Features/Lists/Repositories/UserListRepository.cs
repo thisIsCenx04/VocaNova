@@ -321,6 +321,53 @@ public sealed class UserListRepository : IUserListRepository
         return TakeRandom(candidates, count);
     }
 
+    public async Task<bool> SoftDeleteWordAsync(
+        uint userId,
+        uint listId,
+        uint wordId,
+        CancellationToken cancellationToken = default)
+    {
+        var listWord = await _dbContext.UserListWords
+            .SingleOrDefaultAsync(
+                entity => entity.UserId == userId
+                    && entity.ListId == listId
+                    && entity.WordId == wordId,
+                cancellationToken);
+        if (listWord is null)
+        {
+            return false;
+        }
+
+        listWord.Status = UserStatus.Deleted;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return true;
+    }
+
+    public async Task<ListWordDto?> UpdateWordNoteAsync(
+        uint userId,
+        uint listId,
+        uint wordId,
+        string? note,
+        CancellationToken cancellationToken = default)
+    {
+        var listWord = await _dbContext.UserListWords
+            .SingleOrDefaultAsync(
+                entity => entity.UserId == userId
+                    && entity.ListId == listId
+                    && entity.WordId == wordId,
+                cancellationToken);
+        if (listWord is null)
+        {
+            return null;
+        }
+
+        listWord.Note = note;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return await FindListWordDtoAsync(userId, listId, wordId, cancellationToken);
+    }
+
     private async Task<ListWordDto?> FindListWordDtoAsync(
         uint userId,
         uint listId,
