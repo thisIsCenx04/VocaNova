@@ -15,15 +15,75 @@ public sealed class QuizSessionsController : ControllerBase
     private readonly IQuizSessionService _quizSessionService;
     private readonly IQuizSubmitService _quizSubmitService;
     private readonly IQuizResultService _quizResultService;
+    private readonly IQuizHistoryService _quizHistoryService;
 
     public QuizSessionsController(
         IQuizSessionService quizSessionService,
         IQuizSubmitService quizSubmitService,
-        IQuizResultService quizResultService)
+        IQuizResultService quizResultService,
+        IQuizHistoryService quizHistoryService)
     {
         _quizSessionService = quizSessionService;
         _quizSubmitService = quizSubmitService;
         _quizResultService = quizResultService;
+        _quizHistoryService = quizHistoryService;
+    }
+
+    [HttpGet("/api/quiz/history")]
+    public async Task<IActionResult> GetHistory(
+        [FromQuery] QuizHistoryQuery query,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return this.ErrorResult(Result<PagedResult<QuizHistoryItemDto>>.Unauthorized("Unauthorized."));
+        }
+
+        var result = await _quizHistoryService.GetHistoryAsync(userId, query, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value!, "Quiz history loaded successfully.");
+    }
+
+    [HttpGet("/api/quiz/wrong-words")]
+    public async Task<IActionResult> GetWrongWords(
+        [FromQuery] WrongWordsQuery query,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return this.ErrorResult(Result<PagedResult<WrongWordDto>>.Unauthorized("Unauthorized."));
+        }
+
+        var result = await _quizHistoryService.GetWrongWordsAsync(userId, query, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value!, "Wrong words loaded successfully.");
+    }
+
+    [HttpDelete("/api/quiz/wrong-words/{wordId:uint}")]
+    public async Task<IActionResult> ClearWrongWord(
+        [FromRoute] uint wordId,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return this.ErrorResult(Result<bool>.Unauthorized("Unauthorized."));
+        }
+
+        var result = await _quizHistoryService.ClearWrongWordAsync(userId, wordId, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value, "Wrong word removed successfully.");
     }
 
     [HttpPost]
