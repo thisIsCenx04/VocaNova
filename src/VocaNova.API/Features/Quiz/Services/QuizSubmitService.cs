@@ -3,6 +3,7 @@ using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Results;
 using VocaNova.API.Features.Quiz.DTOs;
 using VocaNova.API.Features.Quiz.Repositories;
+using VocaNova.API.Infrastructure.Caching;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
 namespace VocaNova.API.Features.Quiz.Services;
@@ -15,6 +16,7 @@ public sealed class QuizSubmitService : IQuizSubmitService
     private readonly IReadOnlyDictionary<string, IAnswerGrader> _answerGraders;
     private readonly IAiGradingService _aiGradingService;
     private readonly ISrsService _srsService;
+    private readonly IProgressSummaryCache? _progressSummaryCache;
 
     public QuizSubmitService(
         IQuizSubmitRepository quizSubmitRepository,
@@ -22,7 +24,8 @@ public sealed class QuizSubmitService : IQuizSubmitService
         IQuizQuestionBuilder quizQuestionBuilder,
         IEnumerable<IAnswerGrader> answerGraders,
         IAiGradingService aiGradingService,
-        ISrsService srsService)
+        ISrsService srsService,
+        IProgressSummaryCache? progressSummaryCache = null)
     {
         _quizSubmitRepository = quizSubmitRepository;
         _quizSessionBuilder = quizSessionBuilder;
@@ -30,6 +33,7 @@ public sealed class QuizSubmitService : IQuizSubmitService
         _answerGraders = answerGraders.ToDictionary(grader => grader.AnswerMethod, StringComparer.Ordinal);
         _aiGradingService = aiGradingService;
         _srsService = srsService;
+        _progressSummaryCache = progressSummaryCache;
     }
 
     public async Task<Result<AnswerResultDto>> SubmitAnswerAsync(
@@ -116,6 +120,11 @@ public sealed class QuizSubmitService : IQuizSubmitService
         if (nextQuestion is null)
         {
             await _quizSubmitRepository.CompleteSessionAsync(session, cancellationToken);
+        }
+
+        if (_progressSummaryCache is not null)
+        {
+            await _progressSummaryCache.RemoveAsync(userId, cancellationToken);
         }
 
         return Result<AnswerResultDto>.Ok(new AnswerResultDto(
