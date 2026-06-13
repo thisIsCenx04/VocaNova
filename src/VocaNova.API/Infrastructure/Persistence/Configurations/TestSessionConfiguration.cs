@@ -40,6 +40,14 @@ public sealed class TestSessionConfiguration : IEntityTypeConfiguration<TestSess
         entity.Property(e => e.QuestionType)
             .HasColumnName("question_type")
             .HasColumnType("int(11)");
+        entity.Property(e => e.Score)
+            .HasColumnName("score");
+        entity.Property(e => e.ScopeDateFrom)
+            .HasColumnName("scope_date_from")
+            .HasColumnType("date");
+        entity.Property(e => e.ScopeDateTo)
+            .HasColumnName("scope_date_to")
+            .HasColumnType("date");
         entity.Property(e => e.ScopeType)
             .HasColumnName("scope_type")
             .HasMaxLength(20);
