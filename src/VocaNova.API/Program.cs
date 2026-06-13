@@ -68,6 +68,8 @@ builder.Services.AddScoped<IQuizHistoryRepository, QuizHistoryRepository>();
 builder.Services.AddScoped<IQuizHistoryService, QuizHistoryService>();
 builder.Services.AddScoped<IProgressSummaryRepository, ProgressSummaryRepository>();
 builder.Services.AddScoped<IProgressSummaryService, ProgressSummaryService>();
+builder.Services.AddScoped<IProgressAnalyticsRepository, ProgressAnalyticsRepository>();
+builder.Services.AddScoped<IProgressAnalyticsService, ProgressAnalyticsService>();
 builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection(RedisSettings.SectionName));
 builder.Services.AddSingleton<IUserProfileCache, RedisUserProfileCache>();
 builder.Services.AddSingleton<IWordSearchCache, RedisWordSearchCache>();
