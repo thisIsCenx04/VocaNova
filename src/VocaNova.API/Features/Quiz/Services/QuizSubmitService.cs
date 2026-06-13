@@ -113,6 +113,10 @@ public sealed class QuizSubmitService : IQuizSubmitService
         }
 
         var nextQuestion = await BuildNextQuestionAsync(session, pool, cancellationToken);
+        if (nextQuestion is null)
+        {
+            await _quizSubmitRepository.CompleteSessionAsync(session, cancellationToken);
+        }
 
         return Result<AnswerResultDto>.Ok(new AnswerResultDto(
             session.SessionId,
