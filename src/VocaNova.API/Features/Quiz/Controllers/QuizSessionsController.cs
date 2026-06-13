@@ -13,10 +13,14 @@ namespace VocaNova.API.Features.Quiz.Controllers;
 public sealed class QuizSessionsController : ControllerBase
 {
     private readonly IQuizSessionService _quizSessionService;
+    private readonly IQuizSubmitService _quizSubmitService;
 
-    public QuizSessionsController(IQuizSessionService quizSessionService)
+    public QuizSessionsController(
+        IQuizSessionService quizSessionService,
+        IQuizSubmitService quizSubmitService)
     {
         _quizSessionService = quizSessionService;
+        _quizSubmitService = quizSubmitService;
     }
 
     [HttpPost]
@@ -36,6 +40,26 @@ public sealed class QuizSessionsController : ControllerBase
         }
 
         return this.CreatedResult(result.Value!, "Quiz session created successfully.");
+    }
+
+    [HttpPost("{id:uint}/answer")]
+    public async Task<IActionResult> SubmitAnswer(
+        [FromRoute] uint id,
+        [FromBody] SubmitAnswerRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return this.ErrorResult(Result<AnswerResultDto>.Unauthorized("Unauthorized."));
+        }
+
+        var result = await _quizSubmitService.SubmitAnswerAsync(userId, id, request, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value!, "Answer submitted successfully.");
     }
 
     private bool TryGetCurrentUserId(out uint userId)

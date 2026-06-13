@@ -27,6 +27,8 @@ public sealed class TestAnswerConfiguration : IEntityTypeConfiguration<TestAnswe
         entity.Property(e => e.AiExplanation)
             .HasColumnName("ai_explanation")
             .HasColumnType("text");
+        entity.Property(e => e.AiScore)
+            .HasColumnName("ai_score");
         entity.Property(e => e.AiSuggestion)
             .HasColumnName("ai_suggestion")
             .HasColumnType("text");
@@ -36,6 +38,8 @@ public sealed class TestAnswerConfiguration : IEntityTypeConfiguration<TestAnswe
         entity.Property(e => e.ExpectedAnswer)
             .HasColumnName("expected_answer")
             .HasColumnType("text");
+        entity.Property(e => e.IsCorrect)
+            .HasColumnName("is_correct");
         entity.Property(e => e.QuestionNumber)
             .HasColumnName("question_number")
             .HasColumnType("int(11)");
