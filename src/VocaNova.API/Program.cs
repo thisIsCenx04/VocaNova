@@ -2,6 +2,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Responses;
+using VocaNova.API.Features.AiGrading;
 using VocaNova.API.Features.AiGrading.Repositories;
 using VocaNova.API.Features.AiGrading.Services;
 using VocaNova.API.Features.Auth.Repositories;
@@ -24,9 +25,9 @@ using VocaNova.API.Infrastructure.RateLimiting;
 using VocaNova.API.Infrastructure.Sms;
 using VocaNova.API.Middleware;
 
-var builder = WebApplication.CreateBuilder(args);
-
 EnvironmentFile.LoadFromRepositoryRoot();
+
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<VocaNovaDbContext>(options =>
 {
@@ -62,7 +63,7 @@ builder.Services.AddScoped<IAnswerGrader, MultipleChoiceGrader>();
 builder.Services.AddScoped<ISrsRepository, SrsRepository>();
 builder.Services.AddScoped<ISrsService, SrsService>();
 builder.Services.AddScoped<IAiGradingCacheRepository, AiGradingCacheRepository>();
-builder.Services.AddScoped<IAiGradingProvider, StubAiGradingService>();
+builder.Services.AddScoped<IAiGradingProvider, GeminiAiGradingProvider>();
 builder.Services.AddScoped<IAiGradingService, CachedAiGradingService>();
 builder.Services.AddScoped<IQuizSubmitRepository, QuizSubmitRepository>();
 builder.Services.AddScoped<IQuizSubmitService, QuizSubmitService>();
@@ -75,6 +76,7 @@ builder.Services.AddScoped<IProgressSummaryService, ProgressSummaryService>();
 builder.Services.AddScoped<IProgressAnalyticsRepository, ProgressAnalyticsRepository>();
 builder.Services.AddScoped<IProgressAnalyticsService, ProgressAnalyticsService>();
 builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection(RedisSettings.SectionName));
+builder.Services.Configure<AiGradingSettings>(builder.Configuration.GetSection(AiGradingSettings.SectionName));
 builder.Services.AddSingleton<IUserProfileCache, RedisUserProfileCache>();
 builder.Services.AddSingleton<IWordSearchCache, RedisWordSearchCache>();
 builder.Services.AddSingleton<IWordDetailCache, RedisWordDetailCache>();
@@ -85,6 +87,17 @@ builder.Services.Configure<RateLimitSettings>(builder.Configuration.GetSection(R
 builder.Services.AddSingleton<IAuthRateLimiter, InMemoryAuthRateLimiter>();
 builder.Services.AddSingleton<IOtpCodeGenerator, RandomOtpCodeGenerator>();
 builder.Services.AddSingleton<ISmsProvider, ConsoleSmsProvider>();
+builder.Services.AddHttpClient<IGeminiClient, GeminiClient>((serviceProvider, client) =>
+{
+    var settings = serviceProvider
+        .GetRequiredService<Microsoft.Extensions.Options.IOptions<AiGradingSettings>>()
+        .Value;
+    var endpoint = string.IsNullOrWhiteSpace(settings.Endpoint)
+        ? "https://generativelanguage.googleapis.com/v1beta"
+        : settings.Endpoint.TrimEnd('/');
+
+    client.BaseAddress = new Uri($"{endpoint}/");
+});
 builder.Services.AddSingleton<IAuditLogQueue, AuditLogQueue>();
 builder.Services.AddHostedService<AuditLogBackgroundService>();
 builder.Services.AddSwaggerWithJwtBearer();

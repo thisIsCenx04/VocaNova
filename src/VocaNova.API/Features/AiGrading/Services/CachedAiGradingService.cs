@@ -4,11 +4,14 @@ using VocaNova.API.Common.Security;
 using VocaNova.API.Features.AiGrading.Repositories;
 using VocaNova.API.Features.Quiz.DTOs;
 using VocaNova.API.Features.Quiz.Services;
+using VocaNova.API.Infrastructure.Persistence.Entities;
 
 namespace VocaNova.API.Features.AiGrading.Services;
 
 public sealed class CachedAiGradingService : IAiGradingService
 {
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromDays(7);
+
     private readonly IAiGradingCacheRepository _aiGradingCacheRepository;
     private readonly IAiGradingProvider _aiGradingProvider;
 
@@ -42,12 +45,32 @@ public sealed class CachedAiGradingService : IAiGradingService
                 cached.Suggestion);
         }
 
-        return await _aiGradingProvider.GradeAsync(
+        var result = await _aiGradingProvider.GradeAsync(
             wordId,
             questionType,
             userAnswer,
             expectedAnswer,
             cancellationToken);
+
+        var now = DateTime.UtcNow;
+        await _aiGradingCacheRepository.SaveAsync(
+            new AiGradingCache
+            {
+                CacheKey = cacheKey,
+                WordId = wordId,
+                QuestionType = questionType,
+                UserAnswerNormalized = normalizedAnswer,
+                ExpectedAnswer = expectedAnswer,
+                AiScore = result.Score,
+                AiExplanation = result.Explanation,
+                AiSuggestion = result.Suggestion,
+                HitCount = 1,
+                CreatedAt = now,
+                ExpiresAt = now.Add(CacheTtl),
+            },
+            cancellationToken);
+
+        return result;
     }
 
     public static string CreateCacheKey(
