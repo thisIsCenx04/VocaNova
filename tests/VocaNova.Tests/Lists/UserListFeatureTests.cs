@@ -396,6 +396,83 @@ public class UserListFeatureTests
     }
 
     [Fact]
+    public async Task RemoveWordAsync_Should_SoftDelete_ListWord_Without_Changing_Progress()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedListWordWithProgressAsync(dbContext);
+        var cache = new FakeUserListCache();
+        var service = CreateService(dbContext, cache);
+
+        var result = await service.RemoveWordAsync(1, 60, 1);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeTrue();
+        cache.RemoveCount.Should().Be(1);
+
+        var listWord = await dbContext.UserListWords
+            .IgnoreQueryFilters()
+            .SingleAsync(entity => entity.UserId == 1 && entity.ListId == 60 && entity.WordId == 1);
+        listWord.Status.Should().Be(UserStatus.Deleted);
+
+        var progress = await dbContext.UserWordProgresses.SingleAsync();
+        progress.TestCount.Should().Be(5);
+        progress.CorrectCount.Should().Be(3);
+        progress.WrongCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task RemoveWordAsync_Should_Return_404_When_ListWord_Not_Active()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedListWordWithProgressAsync(dbContext, listWordStatus: UserStatus.Deleted);
+        var service = CreateService(dbContext);
+
+        var result = await service.RemoveWordAsync(1, 60, 1);
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(404);
+        result.Error.Should().Be("List word not found.");
+    }
+
+    [Fact]
+    public async Task UpdateWordNoteAsync_Should_Update_Note_For_Active_ListWord()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedListWordWithProgressAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.UpdateWordNoteAsync(
+            1,
+            60,
+            1,
+            new UpdateListWordNoteRequest(" new note "));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Note.Should().Be("new note");
+
+        var listWord = await dbContext.UserListWords.SingleAsync();
+        listWord.Note.Should().Be("new note");
+    }
+
+    [Fact]
+    public async Task UpdateWordNoteAsync_Should_Return_404_When_ListWord_Not_Active()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedListWordWithProgressAsync(dbContext, listWordStatus: UserStatus.Deleted);
+        var service = CreateService(dbContext);
+
+        var result = await service.UpdateWordNoteAsync(
+            1,
+            60,
+            1,
+            new UpdateListWordNoteRequest("new note"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(404);
+        result.Error.Should().Be("List word not found.");
+    }
+
+    [Fact]
     public void CreateListRequestValidator_Should_Reject_Empty_Name()
     {
         var validator = new CreateListRequestValidator();
@@ -441,6 +518,17 @@ public class UserListFeatureTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(error => error.PropertyName == nameof(AddRandomListWordsRequest.Count));
         result.Errors.Should().Contain(error => error.PropertyName == nameof(AddRandomListWordsRequest.Method));
+    }
+
+    [Fact]
+    public void UpdateListWordNoteRequestValidator_Should_Reject_Too_Long_Note()
+    {
+        var validator = new UpdateListWordNoteRequestValidator();
+
+        var result = validator.Validate(new UpdateListWordNoteRequest(new string('a', 1001)));
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(UpdateListWordNoteRequest.Note));
     }
 
     private static VocaNovaDbContext CreateDbContext()
@@ -834,6 +922,60 @@ public class UserListFeatureTests
                 RelatedWordId = 4,
                 IsQuizEligible = true,
             });
+
+        await dbContext.SaveChangesAsync();
+    }
+
+    private static async Task SeedListWordWithProgressAsync(
+        VocaNovaDbContext dbContext,
+        string listWordStatus = UserStatus.Active)
+    {
+        var now = DateTime.UtcNow;
+        dbContext.UserLists.Add(new UserList
+        {
+            ListId = 60,
+            UserId = 1,
+            ListName = "Remove Note",
+            Status = UserStatus.Active,
+            CreatedAt = now,
+        });
+
+        dbContext.Words.Add(new Word
+        {
+            WordId = 1,
+            Word1 = "run",
+            WordKey = "run",
+            Status = UserStatus.Active,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+
+        dbContext.UserListWords.Add(new UserListWord
+        {
+            UserId = 1,
+            ListId = 60,
+            WordId = 1,
+            AddMethod = AddMethod.Manual,
+            Note = "old note",
+            Status = listWordStatus,
+            AddedAt = now,
+        });
+
+        dbContext.UserWordProgresses.Add(new UserWordProgress
+        {
+            ProgressId = 1,
+            UserId = 1,
+            WordId = 1,
+            TestCount = 5,
+            CorrectCount = 3,
+            WrongCount = 2,
+            ConsecutiveCorrect = 1,
+            IsInWrongList = false,
+            MasteryLevel = 2,
+            SrsInterval = 1,
+            EaseFactor = 2.5f,
+            UpdatedAt = now,
+        });
 
         await dbContext.SaveChangesAsync();
     }

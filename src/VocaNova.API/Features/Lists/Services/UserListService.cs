@@ -317,6 +317,70 @@ public sealed class UserListService : IUserListService
             addedWords));
     }
 
+    public async Task<Result<bool>> RemoveWordAsync(
+        uint userId,
+        uint listId,
+        uint wordId,
+        CancellationToken cancellationToken = default)
+    {
+        if (userId == 0)
+        {
+            return Result<bool>.Unauthorized("Unauthorized.");
+        }
+
+        var ownershipResult = await ValidateListOwnershipAsync(userId, listId, cancellationToken);
+        if (!ownershipResult.IsSuccess)
+        {
+            return ownershipResult;
+        }
+
+        var deleted = await _userListRepository.SoftDeleteWordAsync(
+            userId,
+            listId,
+            wordId,
+            cancellationToken);
+        if (!deleted)
+        {
+            return Result<bool>.NotFound("List word not found.");
+        }
+
+        await RemoveCachedListsAsync(userId, cancellationToken);
+
+        return Result<bool>.Ok(true);
+    }
+
+    public async Task<Result<ListWordDto>> UpdateWordNoteAsync(
+        uint userId,
+        uint listId,
+        uint wordId,
+        UpdateListWordNoteRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (userId == 0)
+        {
+            return Result<ListWordDto>.Unauthorized("Unauthorized.");
+        }
+
+        var ownershipResult = await ValidateListOwnershipAsync(userId, listId, cancellationToken);
+        if (!ownershipResult.IsSuccess)
+        {
+            return ToListWordFailure(ownershipResult);
+        }
+
+        var listWord = await _userListRepository.UpdateWordNoteAsync(
+            userId,
+            listId,
+            wordId,
+            NormalizeNullable(request.Note),
+            cancellationToken);
+        if (listWord is null)
+        {
+            return Result<ListWordDto>.NotFound("List word not found.");
+        }
+
+        return Result<ListWordDto>.Ok(listWord);
+    }
+
     private async Task<Result<bool>> ValidateListOwnershipAsync(
         uint userId,
         uint listId,
