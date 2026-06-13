@@ -48,7 +48,7 @@ public class AiGradingCacheFeatureTests
     }
 
     [Fact]
-    public async Task GradeAsync_Should_Call_Provider_When_Cache_Expired()
+    public async Task GradeAsync_Should_Call_Provider_And_Refresh_Cache_When_Cache_Expired()
     {
         await using var dbContext = CreateDbContext();
         var cacheKey = CachedAiGradingService.CreateCacheKey(10, 1, "hello");
@@ -83,7 +83,38 @@ public class AiGradingCacheFeatureTests
         provider.CallCount.Should().Be(1);
 
         var cache = await dbContext.AiGradingCaches.SingleAsync();
-        cache.HitCount.Should().Be(2);
+        cache.HitCount.Should().Be(1);
+        cache.AiScore.Should().Be(0.25f);
+        cache.AiExplanation.Should().Be("Provider explanation.");
+        cache.AiSuggestion.Should().Be("Provider suggestion.");
+        cache.ExpiresAt.Should().BeAfter(DateTime.UtcNow.AddDays(6));
+    }
+
+    [Fact]
+    public async Task GradeAsync_Should_Save_New_Cache_Row_When_Cache_Missing()
+    {
+        await using var dbContext = CreateDbContext();
+        var provider = new FakeAiGradingProvider(new AiGradingResult(
+            true,
+            0.95f,
+            "New provider explanation.",
+            null));
+        var service = CreateService(dbContext, provider);
+
+        var result = await service.GradeAsync(30, 3, "close answer", "expected answer");
+
+        result.Score.Should().Be(0.95f);
+        provider.CallCount.Should().Be(1);
+
+        var cache = await dbContext.AiGradingCaches.SingleAsync();
+        cache.CacheKey.Should().Be(CachedAiGradingService.CreateCacheKey(30, 3, "close answer"));
+        cache.WordId.Should().Be(30);
+        cache.QuestionType.Should().Be(3);
+        cache.UserAnswerNormalized.Should().Be("close answer");
+        cache.ExpectedAnswer.Should().Be("expected answer");
+        cache.AiScore.Should().Be(0.95f);
+        cache.HitCount.Should().Be(1);
+        cache.ExpiresAt.Should().BeAfter(DateTime.UtcNow.AddDays(6));
     }
 
     [Fact]
