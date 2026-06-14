@@ -10,6 +10,7 @@ import 'package:vocanova_mobile/features/auth/presentation/login_screen.dart';
 import 'package:vocanova_mobile/features/auth/presentation/onboarding_screen.dart';
 import 'package:vocanova_mobile/features/auth/presentation/otp_screen.dart';
 import 'package:vocanova_mobile/features/auth/presentation/register_screen.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/word_search_screen.dart';
 import 'package:vocanova_mobile/features/home/presentation/home_screen.dart';
 import 'package:vocanova_mobile/features/shared/presentation/placeholder_screen.dart';
 
@@ -63,7 +64,7 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: AppRoutes.search,
-                builder: (_, _) => const PlaceholderScreen(title: 'Tra từ'),
+                builder: (_, _) => const WordSearchScreen(),
               ),
             ],
           ),
