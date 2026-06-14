@@ -102,6 +102,39 @@ public sealed class AdminWordsController : ControllerBase
         return this.OkResult(result.Value, "Audio deleted successfully.");
     }
 
+    [HttpPost("{id:uint}/image")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UploadImage(
+        [FromRoute] uint id,
+        [FromForm] UploadWordImageRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _wordService.UploadImageAsync(id, request, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        SetAuditEntity(id);
+        return this.OkResult(result.Value!, "Word image uploaded successfully.");
+    }
+
+    [HttpPut("{id:uint}/image")]
+    public async Task<IActionResult> UpdateImageUrl(
+        [FromRoute] uint id,
+        [FromBody] UpdateWordImageRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _wordService.UpdateImageUrlAsync(id, request, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        SetAuditEntity(id);
+        return this.OkResult(result.Value!, "Word image updated successfully.");
+    }
+
     [Authorize(Policy = JwtAuthenticationExtensions.SuperAdminPolicy)]
     [HttpDelete("{id:uint}")]
     public async Task<IActionResult> SoftDelete(

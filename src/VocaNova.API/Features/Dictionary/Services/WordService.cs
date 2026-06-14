@@ -19,9 +19,11 @@ public sealed class WordService : IWordService
     private const string CsvEnglishDefinitionColumn = "english_definition";
     private const string CsvVietnameseMeaningColumn = "vietnamese_meaning";
     private const long MaxAudioFileBytes = 5 * 1024 * 1024;
+    private const long MaxImageFileBytes = 5 * 1024 * 1024;
 
     private readonly IWordRepository _wordRepository;
     private readonly IAudioStorage? _audioStorage;
+    private readonly IImageStorage? _imageStorage;
     private readonly IWordSearchCache? _wordSearchCache;
     private readonly IWordDetailCache? _wordDetailCache;
 
@@ -29,10 +31,12 @@ public sealed class WordService : IWordService
         IWordRepository wordRepository,
         IWordSearchCache? wordSearchCache = null,
         IWordDetailCache? wordDetailCache = null,
-        IAudioStorage? audioStorage = null)
+        IAudioStorage? audioStorage = null,
+        IImageStorage? imageStorage = null)
     {
         _wordRepository = wordRepository;
         _audioStorage = audioStorage;
+        _imageStorage = imageStorage;
         _wordSearchCache = wordSearchCache;
         _wordDetailCache = wordDetailCache;
     }
@@ -327,6 +331,64 @@ public sealed class WordService : IWordService
         return await SetWordStatusAsync(wordId, UserStatus.Active, cancellationToken);
     }
 
+    public async Task<Result<WordDetailDto>> UploadImageAsync(
+        uint wordId,
+        UploadWordImageRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (wordId == 0)
+        {
+            return Result<WordDetailDto>.NotFound("Word not found.");
+        }
+
+        var fileValidation = ValidateImageFile(request.File);
+        if (!fileValidation.IsSuccess)
+        {
+            return Result<WordDetailDto>.Fail(fileValidation.Error!);
+        }
+
+        if (_imageStorage is null)
+        {
+            return Result<WordDetailDto>.Fail("Image storage is not configured.");
+        }
+
+        if (!await _wordRepository.WordExistsAsync(wordId, cancellationToken))
+        {
+            return Result<WordDetailDto>.NotFound("Word not found.");
+        }
+
+        ImageStorageResult uploadResult;
+        try
+        {
+            uploadResult = await _imageStorage.UploadAsync(wordId, request.File!, cancellationToken);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Result<WordDetailDto>.Fail(exception.Message);
+        }
+
+        return await SetImageUrlAsync(wordId, uploadResult.Url, cancellationToken);
+    }
+
+    public Task<Result<WordDetailDto>> UpdateImageUrlAsync(
+        uint wordId,
+        UpdateWordImageRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (wordId == 0)
+        {
+            return Task.FromResult(Result<WordDetailDto>.NotFound("Word not found."));
+        }
+
+        var normalizedUrl = NormalizeNullable(request.ImageUrl);
+        if (!IsValidHttpsUrl(normalizedUrl))
+        {
+            return Task.FromResult(Result<WordDetailDto>.Fail("ImageUrl must be a valid HTTPS URL."));
+        }
+
+        return SetImageUrlAsync(wordId, normalizedUrl!, cancellationToken);
+    }
+
     public async Task<Result<WordAudioDto>> UploadAudioAsync(
         uint wordId,
         UploadWordAudioRequest request,
@@ -538,6 +600,53 @@ public sealed class WordService : IWordService
 
     private static readonly IReadOnlySet<string> AllowedAudioContentTypes = new HashSet<string>(
         new[] { "audio/mpeg", "audio/wav", "audio/ogg" },
+        StringComparer.OrdinalIgnoreCase);
+
+    private async Task<Result<WordDetailDto>> SetImageUrlAsync(
+        uint wordId,
+        string imageUrl,
+        CancellationToken cancellationToken)
+    {
+        var word = await _wordRepository.SetImageUrlAsync(wordId, imageUrl, cancellationToken);
+        if (word is null)
+        {
+            return Result<WordDetailDto>.NotFound("Word not found.");
+        }
+
+        await RemoveCachedWordAsync(wordId, cancellationToken);
+        return Result<WordDetailDto>.Ok(word);
+    }
+
+    private static Result<bool> ValidateImageFile(IFormFile? file)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return Result<bool>.Fail("Image file is required.");
+        }
+
+        if (file.Length > MaxImageFileBytes)
+        {
+            return Result<bool>.Fail("Image file must be 5MB or smaller.");
+        }
+
+        if (!AllowedImageContentTypes.Contains(file.ContentType))
+        {
+            return Result<bool>.Fail("Image MIME type must be one of: image/jpeg, image/png, image/webp.");
+        }
+
+        return Result<bool>.Ok(true);
+    }
+
+    private static bool IsValidHttpsUrl(string? imageUrl)
+    {
+        return !string.IsNullOrWhiteSpace(imageUrl)
+            && imageUrl.Length <= 500
+            && Uri.TryCreate(imageUrl, UriKind.Absolute, out var uri)
+            && uri.Scheme == Uri.UriSchemeHttps;
+    }
+
+    private static readonly IReadOnlySet<string> AllowedImageContentTypes = new HashSet<string>(
+        new[] { "image/jpeg", "image/png", "image/webp" },
         StringComparer.OrdinalIgnoreCase);
 
     private static CreateSenseRequest NormalizeCreateSenseRequest(CreateSenseRequest request)

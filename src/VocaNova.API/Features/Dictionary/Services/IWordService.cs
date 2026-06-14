@@ -34,6 +34,16 @@ public interface IWordService
         uint wordId,
         CancellationToken cancellationToken = default);
 
+    Task<Result<WordDetailDto>> UploadImageAsync(
+        uint wordId,
+        UploadWordImageRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<WordDetailDto>> UpdateImageUrlAsync(
+        uint wordId,
+        UpdateWordImageRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<Result<WordAudioDto>> UploadAudioAsync(
         uint wordId,
         UploadWordAudioRequest request,

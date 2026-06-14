@@ -226,6 +226,25 @@ public sealed class WordRepository : IWordRepository
         return true;
     }
 
+    public async Task<WordDetailDto?> SetImageUrlAsync(
+        uint wordId,
+        string? imageUrl,
+        CancellationToken cancellationToken = default)
+    {
+        var word = await _dbContext.Words
+            .SingleOrDefaultAsync(entity => entity.WordId == wordId, cancellationToken);
+        if (word is null)
+        {
+            return null;
+        }
+
+        word.ImageUrl = NormalizeNullable(imageUrl);
+        word.UpdatedAt = DateTime.UtcNow;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return await FindDetailAsync(word.WordId, cancellationToken);
+    }
+
     public Task<bool> WordExistsAsync(
         uint wordId,
         CancellationToken cancellationToken = default)

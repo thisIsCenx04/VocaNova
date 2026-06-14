@@ -49,6 +49,11 @@ public interface IWordRepository
         string status,
         CancellationToken cancellationToken = default);
 
+    Task<WordDetailDto?> SetImageUrlAsync(
+        uint wordId,
+        string? imageUrl,
+        CancellationToken cancellationToken = default);
+
     Task<WordAudioDto?> UpsertAudioAsync(
         uint wordId,
         string accent,

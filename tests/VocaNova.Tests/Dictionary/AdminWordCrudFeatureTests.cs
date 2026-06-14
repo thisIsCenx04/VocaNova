@@ -287,6 +287,81 @@ public class AdminWordCrudFeatureTests
     }
 
     [Fact]
+    public async Task UploadImageAsync_Should_Upload_To_Storage_And_Save_ImageUrl()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedWordAsync(dbContext, "run", "run");
+        var cache = new FakeWordDetailCache();
+        var imageStorage = new FakeImageStorage("https://res.cloudinary.com/demo/image/upload/v1/vocanova/words/1/run.png");
+        var service = CreateService(dbContext, cache, imageStorage: imageStorage);
+        var file = CreateFormFile("run.png", "image/png", 1024);
+
+        var result = await service.UploadImageAsync(1, new UploadWordImageRequest { File = file });
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.ImageUrl.Should().Be("https://res.cloudinary.com/demo/image/upload/v1/vocanova/words/1/run.png");
+        imageStorage.UploadCount.Should().Be(1);
+        imageStorage.LastWordId.Should().Be(1);
+        cache.RemoveCount.Should().Be(1);
+
+        var word = await dbContext.Words.SingleAsync(entity => entity.WordId == 1);
+        word.ImageUrl.Should().Be("https://res.cloudinary.com/demo/image/upload/v1/vocanova/words/1/run.png");
+    }
+
+    [Fact]
+    public async Task UploadImageAsync_Should_Reject_Invalid_Mime_And_Size()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedWordAsync(dbContext, "run", "run");
+        var imageStorage = new FakeImageStorage("https://res.cloudinary.com/demo/image/upload/run.png");
+        var service = CreateService(dbContext, imageStorage: imageStorage);
+
+        var invalidMime = await service.UploadImageAsync(1, new UploadWordImageRequest
+        {
+            File = CreateFormFile("run.gif", "image/gif", 1024),
+        });
+        var tooLarge = await service.UploadImageAsync(1, new UploadWordImageRequest
+        {
+            File = CreateFormFile("run.png", "image/png", (5 * 1024 * 1024) + 1),
+        });
+
+        invalidMime.IsSuccess.Should().BeFalse();
+        invalidMime.Error.Should().Be("Image MIME type must be one of: image/jpeg, image/png, image/webp.");
+        tooLarge.IsSuccess.Should().BeFalse();
+        tooLarge.Error.Should().Be("Image file must be 5MB or smaller.");
+        imageStorage.UploadCount.Should().Be(0);
+        (await dbContext.Words.SingleAsync(entity => entity.WordId == 1)).ImageUrl.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UpdateImageUrlAsync_Should_Require_Https_And_Update_ImageUrl()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedWordAsync(dbContext, "run", "run");
+        var cache = new FakeWordDetailCache();
+        var service = CreateService(dbContext, cache);
+
+        var invalid = await service.UpdateImageUrlAsync(1, new UpdateWordImageRequest("http://example.com/run.png"));
+        var valid = await service.UpdateImageUrlAsync(1, new UpdateWordImageRequest("https://example.com/run.png"));
+
+        invalid.IsSuccess.Should().BeFalse();
+        invalid.Error.Should().Be("ImageUrl must be a valid HTTPS URL.");
+        valid.IsSuccess.Should().BeTrue();
+        valid.Value!.ImageUrl.Should().Be("https://example.com/run.png");
+        cache.RemoveCount.Should().Be(1);
+    }
+
+    [Fact]
+    public void CloudinaryImageStorage_BuildPublicId_Should_Be_Deterministic_And_Safe()
+    {
+        var timestamp = new DateTime(2026, 6, 15, 8, 9, 10, DateTimeKind.Utc);
+
+        var publicId = CloudinaryImageStorage.BuildPublicId(42, "../hello world!.png", timestamp, "vocanova/words");
+
+        publicId.Should().Be("vocanova/words/42/20260615080910-hello-world");
+    }
+
+    [Fact]
     public async Task CreateSenseAsync_Should_Create_Sense_And_Invalidate_Word_Cache()
     {
         await using var dbContext = CreateDbContext();
@@ -375,12 +450,14 @@ public class AdminWordCrudFeatureTests
     private static WordService CreateService(
         VocaNovaDbContext dbContext,
         IWordDetailCache? wordDetailCache = null,
-        IAudioStorage? audioStorage = null)
+        IAudioStorage? audioStorage = null,
+        IImageStorage? imageStorage = null)
     {
         return new WordService(
             new WordRepository(dbContext),
             wordDetailCache: wordDetailCache,
-            audioStorage: audioStorage);
+            audioStorage: audioStorage,
+            imageStorage: imageStorage);
     }
 
     private static IFormFile CreateCsvFile(string content)
@@ -395,6 +472,11 @@ public class AdminWordCrudFeatureTests
     }
 
     private static IFormFile CreateAudioFile(string fileName, string contentType, int length)
+    {
+        return CreateFormFile(fileName, contentType, length);
+    }
+
+    private static IFormFile CreateFormFile(string fileName, string contentType, int length)
     {
         var bytes = new byte[length];
         var stream = new MemoryStream(bytes);
@@ -488,6 +570,30 @@ public class AdminWordCrudFeatureTests
             return Task.FromResult(new AudioStorageResult(
                 $"words/{wordId}/audio/{accent}/{file.FileName}",
                 _url));
+        }
+    }
+
+    private sealed class FakeImageStorage : IImageStorage
+    {
+        private readonly string _url;
+
+        public FakeImageStorage(string url)
+        {
+            _url = url;
+        }
+
+        public int UploadCount { get; private set; }
+
+        public uint LastWordId { get; private set; }
+
+        public Task<ImageStorageResult> UploadAsync(
+            uint wordId,
+            IFormFile file,
+            CancellationToken cancellationToken = default)
+        {
+            UploadCount++;
+            LastWordId = wordId;
+            return Task.FromResult(new ImageStorageResult($"vocanova/words/{wordId}/{file.FileName}", _url));
         }
     }
 }
