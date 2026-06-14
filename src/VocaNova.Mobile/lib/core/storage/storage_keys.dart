@@ -11,4 +11,6 @@ abstract final class StorageKeys {
   static String wordCacheJson(int id) => 'word_cache_${id}_json';
 
   static String savedWordJson(int id) => 'saved_word_${id}_json';
+
+  static String listWordsCacheJson(int id) => 'list_${id}_words_cache_json';
 }
