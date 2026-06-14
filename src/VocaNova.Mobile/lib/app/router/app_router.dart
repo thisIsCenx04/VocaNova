@@ -7,6 +7,7 @@ import 'package:vocanova_mobile/core/storage/secure_storage.dart';
 import 'package:vocanova_mobile/core/storage/token_storage.dart';
 import 'package:vocanova_mobile/features/auth/presentation/forgot_password_screen.dart';
 import 'package:vocanova_mobile/features/auth/presentation/login_screen.dart';
+import 'package:vocanova_mobile/features/auth/presentation/onboarding_screen.dart';
 import 'package:vocanova_mobile/features/auth/presentation/otp_screen.dart';
 import 'package:vocanova_mobile/features/auth/presentation/register_screen.dart';
 import 'package:vocanova_mobile/features/home/presentation/home_screen.dart';
@@ -87,7 +88,7 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.onboarding,
-        builder: (_, _) => const PlaceholderScreen(title: 'Thiết lập học tập'),
+        builder: (_, _) => const OnboardingScreen(),
       ),
       GoRoute(
         path: AppRoutes.word,

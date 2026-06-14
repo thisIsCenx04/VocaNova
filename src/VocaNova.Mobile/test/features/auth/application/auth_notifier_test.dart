@@ -158,6 +158,42 @@ void main() {
     expect(state.user?.userId, 7);
   });
 
+  test('updateLearningProfile updates state and cached profile', () async {
+    const learningProfile = LearningProfile(
+      ageRangeId: 1,
+      regionId: 2,
+      occupationId: 3,
+      educationLevelId: 4,
+      learningPurposeId: 5,
+    );
+    const updatedUser = UserProfile(
+      userId: 7,
+      phone: '0901234567',
+      displayName: 'Nhut',
+      role: 'user',
+      status: 'active',
+      learningProfile: learningProfile,
+    );
+    when(
+      () => repository.updateLearningProfile(learningProfile),
+    ).thenAnswer((_) async => updatedUser);
+
+    final success = await container
+        .read(authProvider.notifier)
+        .updateLearningProfile(learningProfile);
+
+    final cachedJson = await localStorage.getWithTtl<String>(
+      StorageKeys.userProfileJson,
+      ttl: AuthNotifier.profileCacheTtl,
+    );
+    expect(success, isTrue);
+    expect(container.read(authProvider).user?.learningProfile?.occupationId, 3);
+    expect(
+      jsonDecode(cachedJson!)['learning_profile']['learning_purpose_id'],
+      5,
+    );
+  });
+
   test('login exposes Vietnamese AppException from Dio interceptor', () async {
     when(
       () => repository.login(phone: '0901234567', password: 'wrong'),
