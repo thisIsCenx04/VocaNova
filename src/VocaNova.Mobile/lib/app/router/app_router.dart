@@ -5,7 +5,9 @@ import 'package:vocanova_mobile/app/router/auth_guard.dart';
 import 'package:vocanova_mobile/app/router/main_shell.dart';
 import 'package:vocanova_mobile/core/storage/secure_storage.dart';
 import 'package:vocanova_mobile/core/storage/token_storage.dart';
+import 'package:vocanova_mobile/features/auth/presentation/forgot_password_screen.dart';
 import 'package:vocanova_mobile/features/auth/presentation/login_screen.dart';
+import 'package:vocanova_mobile/features/auth/presentation/otp_screen.dart';
 import 'package:vocanova_mobile/features/auth/presentation/register_screen.dart';
 import 'package:vocanova_mobile/features/home/presentation/home_screen.dart';
 import 'package:vocanova_mobile/features/shared/presentation/placeholder_screen.dart';
@@ -34,11 +36,14 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,
-        builder: (_, _) => const PlaceholderScreen(title: 'Quên mật khẩu'),
+        builder: (_, _) => const ForgotPasswordScreen(),
       ),
       GoRoute(
         path: AppRoutes.otp,
-        builder: (_, _) => const PlaceholderScreen(title: 'Xác thực OTP'),
+        builder: (_, state) => OtpScreen(
+          phone: state.uri.queryParameters['phone'] ?? '',
+          purpose: state.uri.queryParameters['purpose'] ?? 'verify',
+        ),
       ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, navigationShell) {

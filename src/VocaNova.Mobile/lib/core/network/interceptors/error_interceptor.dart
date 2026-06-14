@@ -63,6 +63,19 @@ class ErrorInterceptor extends Interceptor {
     if (normalized.contains('invalid phone or password')) {
       return 'Số điện thoại hoặc mật khẩu không đúng.';
     }
+    if (normalized.contains('maximum otp verify attempts exceeded')) {
+      return 'Bạn đã nhập sai OTP quá 5 lần. Vui lòng gửi lại mã.';
+    }
+    if (normalized.contains('otp has expired')) {
+      return 'Mã OTP đã hết hạn. Vui lòng gửi lại mã.';
+    }
+    if (normalized.contains('otp has already been used')) {
+      return 'Mã OTP đã được sử dụng. Vui lòng gửi lại mã.';
+    }
+    if (normalized.contains('invalid phone or otp') ||
+        normalized.contains('invalid otp')) {
+      return 'Mã OTP không đúng.';
+    }
     if (normalized.contains('invalid refresh token') ||
         normalized.contains('refresh token has expired') ||
         normalized.contains('refresh token has been revoked')) {

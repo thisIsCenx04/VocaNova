@@ -20,4 +20,11 @@ abstract final class AppRoutes {
   static String wordDetail(String id) => '/word/$id';
 
   static String listDetail(String id) => '/list/$id';
+
+  static String otpFor(String phone, {String purpose = 'verify'}) {
+    return Uri(
+      path: otp,
+      queryParameters: {'phone': phone, 'purpose': purpose},
+    ).toString();
+  }
 }

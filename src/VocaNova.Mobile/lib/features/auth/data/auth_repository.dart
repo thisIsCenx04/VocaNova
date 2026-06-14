@@ -38,6 +38,52 @@ class AuthRepository {
     return AuthTokens.fromJson(_responseData(response));
   }
 
+  Future<int> sendOtp({
+    required String phone,
+    String purpose = 'verify',
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.sendOtp,
+      data: {'phone': phone, 'purpose': purpose},
+    );
+    return _responseData(response)['expires_in'] as int;
+  }
+
+  Future<bool> verifyOtp({
+    required String phone,
+    required String otpCode,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.verifyOtp,
+      data: {'phone': phone, 'otp_code': otpCode},
+    );
+    return _responseData(response)['verified'] as bool;
+  }
+
+  Future<int> forgotPassword(String phone) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.forgotPassword,
+      data: {'phone': phone},
+    );
+    return _responseData(response)['expires_in'] as int;
+  }
+
+  Future<bool> resetPassword({
+    required String phone,
+    required String otpCode,
+    required String newPassword,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.resetPassword,
+      data: {'phone': phone, 'otp_code': otpCode, 'new_password': newPassword},
+    );
+    final data = response.data?['data'];
+    if (data is! bool) {
+      throw const FormatException('API response data is invalid.');
+    }
+    return data;
+  }
+
   Future<UserProfile> getCurrentUser() async {
     final response = await _dio.get<Map<String, dynamic>>(
       ApiEndpoints.currentUser,
