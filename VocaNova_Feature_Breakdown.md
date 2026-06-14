@@ -874,7 +874,7 @@ Phụ thuộc: F045
 > | **KNN Onboarding** (F048) | User mới chọn chủ đề học | Profile 5 chiều one-hot từ `user_learning_profiles` | Topic gợi ý | On-demand sau onboarding |
 > | **KNN Learning** (F049, FE-57) | Gợi ý từ vựng theo hành vi | Topic accuracy N chiều từ `test_answers` | Word gợi ý | Background job 24h |
 >
-> F050 cung cấp toàn bộ Admin API (FE-19) để F063 Dashboard gọi.
+> F050 cung cấp admin controls (FE-19) để F063 Dashboard gọi.
 
 ---
 
@@ -897,7 +897,7 @@ Phụ thuộc: F002
   - `user_word_progress` (user_id, word_id, mastery_level, srs_interval, ease_factor...)
   - `user_list_words` (user_id, list_id, word_id, status)
 - [ ] Word recommendation (KNN Learning) lưu kết quả vào **Redis** thay vì DB: key `vocanova:knn-words:{user_id}`, value JSON array `WordRecommendationItem[]`, TTL 24h. KHÔNG tạo bảng `recommendations`.
-- [ ] KNN config đọc từ **`appsettings.json`** — KHÔNG tạo bảng `knn_model_configs`:
+- [ ] KNN config bind qua `KnnOptions` từ **`.env`/environment configuration** — KHÔNG hardcode trong `appsettings.json`, KHÔNG tạo bảng `knn_model_configs`:
   ```json
   "Knn": {
     "Onboarding": { "KValue": 5, "DefaultTopicLimit": 10, "MinSimilarity": 0.1, "CacheTtlMinutes": 30 },
@@ -987,14 +987,14 @@ Phụ thuộc: F047, F041 (test_answers tồn tại), F044 (user_word_progress v
 
 ---
 
-### F050 — KNN Background Job & Admin API (FE-19)
+### F050 — KNN Background Job & Onboarding Lookup Admin (FE-19)
 ```
 Branch:    feature/knn/background-job-admin
 Assignee:  Huy
 Thời gian: 3h
 Phụ thuộc: F049, F048
 ```
-**Làm gì:** IHostedService rebuild word recommendations định kỳ + toàn bộ admin API quản lý KNN (FE-19). Đây là backend mà F063 Dashboard gọi để hiển thị config và trigger rebuild.
+**Làm gì:** IHostedService rebuild word recommendations định kỳ + admin APIs quản lý 5 bảng lookup onboarding dùng cho KNN. Config thuật toán KNN vẫn đọc từ `KnnOptions` qua `.env`/configuration; KHÔNG tạo hoặc CRUD bảng `knn_model_configs`.
 
 **Done khi:**
 - [ ] `KnnWordRecommendationJob : IHostedService`:
@@ -1004,26 +1004,102 @@ Phụ thuộc: F049, F048
   - Lỗi 1 user KHÔNG dừng toàn bộ job (try-catch per user, log riêng)
   - Sau khi xong: lưu timestamp vào Redis `vocanova:knn-last-rebuild` (TTL vô hạn)
   - Log: số users xử lý / bỏ qua / lỗi, tổng thời gian chạy
-- [ ] Admin: `GET /api/admin/knn/models` — danh sách `knn_model_configs` (kể cả deleted khi dùng `IgnoreQueryFilters`)
-- [ ] Admin: `POST /api/admin/knn/models` — tạo config mới, validate `k_value > 0`, `min_sessions > 0`
-- [ ] Admin: `PUT /api/admin/knn/models/{id}` — cập nhật config, invalidate cache config
-- [ ] Admin: `DELETE /api/admin/knn/models/{id}` — soft delete `status='deleted'`
+- [ ] Admin: `GET /api/admin/knn/config` — trả config hiện tại từ `IOptions<KnnOptions>`:
+  - onboarding: `k_value`, `default_topic_limit`, `min_similarity`, `cache_ttl_minutes`
+  - learning: `k_value`, `min_sessions`, `min_similarity`, `recommendation_count`, `rebuild_interval_hours`, `cache_ttl_minutes`
+  - read-only; muốn đổi config thì sửa `.env`/deployment config rồi restart app
+- [ ] Admin lookup APIs cho KNN onboarding, CRUD/soft delete/restore trên các bảng hiện có:
+  - `GET/POST/PUT/DELETE/PATCH restore /api/admin/knn/age-ranges`
+  - `GET/POST/PUT/DELETE/PATCH restore /api/admin/knn/regions`
+  - `GET/POST/PUT/DELETE/PATCH restore /api/admin/knn/occupations`
+  - `GET/POST/PUT/DELETE/PATCH restore /api/admin/knn/education-levels`
+  - `GET/POST/PUT/DELETE/PATCH restore /api/admin/knn/learning-purposes`
+- [ ] Mỗi lookup management phải có đủ cấu trúc backend chuẩn:
+  - DTO response riêng, request create/update riêng, query filter riêng.
+  - FluentValidation validator cho create/update/query.
+  - Repository interface + implementation.
+  - Service interface + implementation, xử lý rule nghiệp vụ và `Result<T>`.
+  - Controller admin endpoint dùng `ControllerResultExtensions`.
+  - Đăng ký DI trong `Program.cs`.
+  - Unit tests cho validator, service/repository, và endpoint behavior quan trọng.
+- [ ] `GET` list cho mỗi lookup:
+  - Support `page`, `limit`, `q`, `status`, `includeDeleted`.
+  - Pagination theo `AppSettings.DefaultPageLimit`/`MaxPageLimit`.
+  - Search case-insensitive theo `name`; riêng regions search thêm `code`.
+  - Sort ổn định: `display_order`, `name`, id nếu table có display_order; còn lại `name`, id.
+  - Mặc định chỉ trả `status='active'`; `includeDeleted=true` chỉ admin/super_admin dùng để quản lý restore.
+- [ ] `GET {id}` detail cho mỗi lookup:
+  - Trả 404 nếu không tồn tại.
+  - Mặc định không trả deleted trừ khi `includeDeleted=true`.
+- [ ] `POST` create cho mỗi lookup:
+  - Trim input.
+  - Set `status='active'`.
+  - Chặn duplicate active `name` trong cùng lookup table, case-insensitive.
+  - Regions chặn duplicate `code`, case-insensitive, kể cả deleted nếu DB unique không cho trùng.
+  - Trả 409 khi duplicate, 400 khi validation fail.
+- [ ] `PUT {id}` update cho mỗi lookup:
+  - Không cho update record đang deleted, trừ khi restore trước.
+  - Chặn duplicate active `name` khi đổi tên.
+  - Regions chặn duplicate `code` khi đổi code.
+  - Không cho regions chọn chính nó hoặc descendant làm `parent_id`.
+  - Trả 404 nếu không tồn tại, 409 nếu duplicate/conflict.
+- [ ] Lookup delete rule:
+  - Soft delete bằng `status='deleted'`.
+  - Không xóa cứng lookup row vì `user_learning_profiles` đang tham chiếu FK.
+  - Delete idempotency: nếu đã deleted thì trả 404 hoặc conflict theo pattern admin hiện có, nhưng không mutate dữ liệu.
+  - Có thể delete lookup đang được user sử dụng vì đây là soft delete; vector KNN chỉ encode records active, user đang tham chiếu deleted lookup sẽ được xem là missing dimension.
+  - Không cần migration; dùng schema hiện có.
+- [ ] `PATCH {id}/restore` rule:
+  - Restore bằng `status='active'`.
+  - Chặn restore nếu sẽ tạo duplicate active `name` hoặc duplicate `code` với regions.
+  - Trả 404 nếu id không tồn tại, 409 nếu conflict.
+- [ ] Lookup create/update validators:
+  - Common `name`: required, trim, max theo EF mapping (`50` cho age range, `100` cho các bảng còn lại).
+  - Common `status`: không nhận từ client khi create/update; status chỉ đổi qua delete/restore.
+  - `age_ranges`: `min_age >= 0`, `max_age >= 0`, `min_age <= max_age` khi cả hai có giá trị, `display_order >= 0`.
+  - `regions`: `code` required, trim, max `10`, allowed chars `[A-Z0-9_-]` sau normalize uppercase; `parent_id` optional, phải tồn tại active, không tự tham chiếu, không tạo cycle.
+  - `occupations`: `description` optional max `255`.
+  - `education_levels`: `description` optional max `255`, `display_order >= 0`.
+  - `learning_purposes`: `description` optional max `255`.
+- [ ] Invalidate cache `vocanova:knn-topics:{user_id}` khi lookup đổi:
+  - tối thiểu clear theo affected users nếu có thể xác định từ `user_learning_profiles`
+  - hoặc clear toàn bộ KNN topic cache namespace nếu triển khai cache namespace scan
 - [ ] Admin: `POST /api/admin/knn/trigger-rebuild`:
-  - Rate limit: 1 req/5 phút/admin (AspNetCoreRateLimit)
-  - Gọi job async (fire-and-forget, không await)
+  - Rate limit: 1 req/5 phút/admin
+  - Gọi rebuild service async (fire-and-forget, không await request)
   - Trả ngay `202 Accepted`: `{ message: "Đang rebuild, vui lòng chờ...", triggered_at: NOW() }`
 - [ ] Admin: `GET /api/admin/knn/rebuild-status`:
   - Đọc `vocanova:knn-last-rebuild` từ Redis
   - Trả `{ last_rebuild_at: DateTime?, is_running: bool }`
   - Dùng bởi F063 để hiển thị "Last rebuilt: X giờ trước"
-- [ ] `KnnModelConfigDto`: config_id, config_key, k_value, min_sessions, recommendation_count, min_similarity, rebuild_interval_hours, status, updated_at
-- [ ] Soft delete `knn_model_configs`: Global Query Filter áp dụng (status != 'deleted')
-- [ ] Audit log ghi qua middleware (POST/PUT/DELETE admin endpoints)
-- [ ] Unit test: trigger-rebuild 2 lần trong 5 phút → lần 2 nhận 429; job xử lý 1 user lỗi → user tiếp theo vẫn chạy
+- [ ] `KnnConfigDto`: current onboarding/learning config values from `KnnOptions`
+- [ ] `KnnRebuildStatusDto`: `last_rebuild_at`, `is_running`
+- [ ] Lookup DTOs cho 5 nhóm onboarding để F063 dashboard dùng:
+  - `AgeRangeDto`: `age_range_id`, `name`, `min_age`, `max_age`, `display_order`, `status`
+  - `RegionDto`: `region_id`, `name`, `code`, `parent_id`, `parent_name`, `status`
+  - `OccupationDto`: `occupation_id`, `name`, `description`, `status`
+  - `EducationLevelDto`: `education_level_id`, `name`, `description`, `display_order`, `status`
+  - `LearningPurposeDto`: `learning_purpose_id`, `name`, `description`, `status`
+- [ ] Audit log ghi qua middleware cho `POST/PUT/DELETE/PATCH /api/admin/knn/*`
+- [ ] Unit test:
+  - trigger-rebuild 2 lần trong 5 phút → lần 2 nhận 429.
+  - job xử lý 1 user lỗi → user tiếp theo vẫn chạy.
+  - config endpoint trả đúng `KnnOptions`.
+  - lookup list/search/status/includeDeleted/pagination đúng.
+  - lookup create/update/delete/restore đúng từng bảng.
+  - duplicate name/code trả 409.
+  - invalid age range/region parent/cycle trả 400.
+  - delete/restore invalidates KNN topic recommendation cache.
 
 ---
 
 ## PHASE 1 — Backend: Module Media (M8)
+
+**Quyết định provider M8:**
+- Word image assets upload lên **Cloudinary**. API chỉ lưu delivery URL vào `words.image_url`; Cloudinary credentials/config đọc từ `.env`/environment configuration.
+- Word audio assets lưu trên **Amazon S3** và phát qua **Amazon CloudFront**. API lưu public/CDN URL vào `word_audio_assets.storage_url`; không lưu file local trong repo/runtime server.
+- Không cần migration cho M8 nếu dữ liệu chỉ cần URL hiện có (`words.image_url`, `word_audio_assets.storage_url`).
+- Không hardcode provider keys trong `appsettings.json`; thêm key vào `.env.example`, bind qua Options.
 
 ---
 
@@ -1036,24 +1112,47 @@ Phụ thuộc: F002
 ```
 **Done khi:**
 - [ ] `POST /api/admin/words/{id}/audio` (multipart/form-data)
-- [ ] Validate MIME: `audio/mpeg`, `audio/wav`, `audio/ogg` — max 5MB
-- [ ] Lưu file local (`wwwroot/uploads/audio/`) + insert `word_audio_assets`
+- [ ] Request nhận `accent` (`uk`/`us`) và file audio.
+- [ ] Validate MIME: `audio/mpeg`, `audio/wav`, `audio/ogg` — max 5MB.
+- [ ] Upload file lên Amazon S3 bucket theo key chuẩn: `words/{word_id}/audio/{accent}/{yyyyMMddHHmmss}-{safeFileName}`.
+- [ ] Delivery URL trả về nên là CloudFront URL nếu `AudioStorage__CloudFrontBaseUrl` được cấu hình; fallback S3 object URL chỉ dùng cho dev.
+- [ ] Insert `word_audio_assets` với `word_id`, `accent`, `source='uploaded'`, `storage_url`, `status='uploaded'`, `created_at`.
 - [ ] `DELETE /api/admin/words/{id}/audio/{audioId}`: soft delete (`status='deleted'`)
-- [ ] `IFileStorage` interface (local implementation, easy swap to cloud)
+- [ ] Delete không xóa object S3 ngay trong request; chỉ soft delete DB. Cleanup object cứng là job/phạm vi riêng nếu cần.
+- [ ] `IAudioStorage` interface + `S3AudioStorage` implementation.
+- [ ] Config qua `.env.example`:
+  - `AudioStorage__Provider=S3`
+  - `AudioStorage__BucketName=`
+  - `AudioStorage__Region=`
+  - `AudioStorage__AccessKey=`
+  - `AudioStorage__SecretKey=`
+  - `AudioStorage__CloudFrontBaseUrl=`
+- [ ] Unit tests: MIME/size invalid, upload saves `storage_url`, delete soft-deletes only, S3 key generation deterministic/safe.
 
 ---
 
-### F052 — Image URL & Auto-Suggest
+### F052 — Cloudinary Image Upload & URL Update
 ```
-Branch:    feature/media/image-url
+Branch:    feature/media/cloudinary-image
 Assignee:  Huy
 Thời gian: 1.5h
 Phụ thuộc: F051
 ```
 **Done khi:**
-- [ ] `PUT /api/admin/words/{id}/image`: set `words.image_url`
-- [ ] `POST /api/admin/words/{id}/image/suggest`: gọi Pixabay/Unsplash API, trả 5 URL options
-- [ ] Validate image_url là URL hợp lệ
+- [ ] `POST /api/admin/words/{id}/image` (multipart/form-data) upload image lên Cloudinary.
+- [ ] Validate MIME: `image/jpeg`, `image/png`, `image/webp` — max 5MB.
+- [ ] Upload vào Cloudinary folder/key chuẩn: `vocanova/words/{word_id}`.
+- [ ] Lưu Cloudinary secure delivery URL vào `words.image_url`.
+- [ ] `PUT /api/admin/words/{id}/image`: vẫn hỗ trợ set URL thủ công nếu admin cần reuse URL có sẵn.
+- [ ] Validate manual `image_url` là URL hợp lệ và chỉ cho `https`.
+- [ ] `POST /api/admin/words/{id}/image/suggest` bị hạ xuống optional/later; không dùng Pixabay/Unsplash là provider mặc định cho upload chính.
+- [ ] `IImageStorage` interface + `CloudinaryImageStorage` implementation.
+- [ ] Config qua `.env.example`:
+  - `Cloudinary__CloudName=`
+  - `Cloudinary__ApiKey=`
+  - `Cloudinary__ApiSecret=`
+  - `Cloudinary__Folder=vocanova/words`
+- [ ] Unit tests: invalid MIME/size, Cloudinary upload result persisted to `words.image_url`, manual URL validation.
 
 ---
 
@@ -1233,8 +1332,32 @@ Thời gian: 1.5h
 Phụ thuộc: F050, F055
 ```
 **Done khi:**
-- [ ] List KNN configs: K value, min sessions, recommendation count, status
-- [ ] CRUD forms
+- [ ] Sidebar/menu "KNN Management" có các mục con:
+  - AgeRange Name Management
+  - Regions Management
+  - Occupation Management
+  - Education Levels Management
+  - Learning Purposes Management
+- [ ] Mỗi trang lookup có table + CRUD + soft delete/restore:
+  - Age ranges: name, min_age, max_age, display_order, status
+  - Regions: name, code, parent, status
+  - Occupations: name, description, status
+  - Education levels: name, description, display_order, status
+  - Learning purposes: name, description, status
+- [ ] Mỗi trang lookup phải có UX quản lý đầy đủ:
+  - Search box, status filter, toggle "Hiện đã xóa", server-side pagination.
+  - Create modal/form, edit modal/form, inline validation message theo API validator.
+  - Delete confirmation modal, restore action chỉ hiện khi đang xem deleted.
+  - Duplicate/conflict từ API hiển thị rõ trong form/table.
+  - Loading/empty/error states.
+  - Không cho sửa `status` trực tiếp; status chỉ qua Delete/Restore.
+- [ ] Form validation trên Dashboard phải mirror backend validators:
+  - Age ranges: min/max age hợp lệ, display_order không âm.
+  - Regions: code format, parent không tự tham chiếu.
+  - Description max length 255.
+  - Name required và max length đúng từng bảng.
+- [ ] Hiển thị KNN model config hiện tại dạng read-only trong trang tổng quan: K value, min sessions, recommendation count, min similarity, rebuild interval, cache TTL
+- [ ] Gợi ý operator sửa `.env`/deployment config để thay đổi model settings
 - [ ] "Trigger Rebuild" button với loading state (AJAX)
 - [ ] Hiển thị "Last rebuilt: X giờ trước"
 

@@ -82,6 +82,8 @@ builder.Services.AddScoped<IKnnProfileRepository, KnnProfileRepository>();
 builder.Services.AddScoped<IKnnOnboardingService, KnnOnboardingService>();
 builder.Services.AddScoped<IKnnLearningRepository, KnnLearningRepository>();
 builder.Services.AddScoped<IKnnLearningService, KnnLearningService>();
+builder.Services.AddScoped<IAdminKnnLookupRepository, AdminKnnLookupRepository>();
+builder.Services.AddScoped<IAdminKnnLookupService, AdminKnnLookupService>();
 builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection(RedisSettings.SectionName));
 builder.Services.Configure<AiGradingSettings>(builder.Configuration.GetSection(AiGradingSettings.SectionName));
 builder.Services.Configure<KnnOptions>(builder.Configuration.GetSection(KnnOptions.SectionName));
@@ -93,8 +95,11 @@ builder.Services.AddSingleton<IUserListCache, RedisUserListCache>();
 builder.Services.AddSingleton<IProgressSummaryCache, RedisProgressSummaryCache>();
 builder.Services.AddSingleton<IKnnTopicRecommendationCache, RedisKnnTopicRecommendationCache>();
 builder.Services.AddSingleton<IKnnWordRecommendationCache, RedisKnnWordRecommendationCache>();
+builder.Services.AddSingleton<IKnnRebuildStateCache, RedisKnnRebuildStateCache>();
+builder.Services.AddSingleton<IKnnRebuildService, KnnRebuildService>();
 builder.Services.Configure<RateLimitSettings>(builder.Configuration.GetSection(RateLimitSettings.SectionName));
 builder.Services.AddSingleton<IAuthRateLimiter, InMemoryAuthRateLimiter>();
+builder.Services.AddSingleton<IAdminKnnTriggerRateLimiter, InMemoryAdminKnnTriggerRateLimiter>();
 builder.Services.AddSingleton<IOtpCodeGenerator, RandomOtpCodeGenerator>();
 builder.Services.AddSingleton<ISmsProvider, ConsoleSmsProvider>();
 builder.Services.AddHttpClient<IGeminiClient, GeminiClient>((serviceProvider, client) =>
@@ -110,6 +115,7 @@ builder.Services.AddHttpClient<IGeminiClient, GeminiClient>((serviceProvider, cl
 });
 builder.Services.AddSingleton<IAuditLogQueue, AuditLogQueue>();
 builder.Services.AddHostedService<AuditLogBackgroundService>();
+builder.Services.AddHostedService<KnnWordRecommendationJob>();
 builder.Services.AddSwaggerWithJwtBearer();
 
 var app = builder.Build();
