@@ -21,6 +21,9 @@ abstract final class AppRoutes {
 
   static String listDetail(String id) => '/list/$id';
 
+  static String quizConfigForList(String id) =>
+      Uri(path: quizConfig, queryParameters: {'listId': id}).toString();
+
   static String otpFor(String phone, {String purpose = 'verify'}) {
     return Uri(
       path: otp,

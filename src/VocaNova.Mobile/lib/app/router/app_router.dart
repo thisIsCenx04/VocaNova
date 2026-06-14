@@ -14,6 +14,7 @@ import 'package:vocanova_mobile/features/dictionary/presentation/word_search_scr
 import 'package:vocanova_mobile/features/dictionary/presentation/word_detail_screen.dart';
 import 'package:vocanova_mobile/features/home/presentation/home_screen.dart';
 import 'package:vocanova_mobile/features/lists/presentation/lists_screen.dart';
+import 'package:vocanova_mobile/features/lists/presentation/list_detail_screen.dart';
 import 'package:vocanova_mobile/features/shared/presentation/placeholder_screen.dart';
 
 class AppRouter {
@@ -99,9 +100,8 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.list,
-        builder: (_, state) => PlaceholderScreen(
-          title: 'Danh sách #${state.pathParameters['id']}',
-        ),
+        builder: (_, state) =>
+            ListDetailScreen(listId: int.parse(state.pathParameters['id']!)),
       ),
       GoRoute(
         path: AppRoutes.quizConfig,

@@ -23,4 +23,9 @@ abstract final class ApiEndpoints {
   static String listWords(int id) => '$lists/$id/words';
 
   static String list(int id) => '$lists/$id';
+
+  static String listWord(int listId, int wordId) =>
+      '${listWords(listId)}/$wordId';
+
+  static String listRandomWords(int id) => '${listWords(id)}/random';
 }
