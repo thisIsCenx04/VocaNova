@@ -34,6 +34,16 @@ public interface IWordService
         uint wordId,
         CancellationToken cancellationToken = default);
 
+    Task<Result<WordAudioDto>> UploadAudioAsync(
+        uint wordId,
+        UploadWordAudioRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<bool>> SoftDeleteAudioAsync(
+        uint wordId,
+        uint audioId,
+        CancellationToken cancellationToken = default);
+
     Task<Result<WordSenseDto>> CreateSenseAsync(
         uint wordId,
         CreateSenseRequest request,

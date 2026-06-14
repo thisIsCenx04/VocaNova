@@ -69,6 +69,39 @@ public sealed class AdminWordsController : ControllerBase
         return this.OkResult(result.Value!, "Words imported successfully.");
     }
 
+    [HttpPost("{id:uint}/audio")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UploadAudio(
+        [FromRoute] uint id,
+        [FromForm] UploadWordAudioRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _wordService.UploadAudioAsync(id, request, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        SetAudioAuditEntity(result.Value!.AudioId);
+        return this.CreatedResult(result.Value, "Audio uploaded successfully.");
+    }
+
+    [HttpDelete("{id:uint}/audio/{audioId:uint}")]
+    public async Task<IActionResult> SoftDeleteAudio(
+        [FromRoute] uint id,
+        [FromRoute] uint audioId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _wordService.SoftDeleteAudioAsync(id, audioId, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        SetAudioAuditEntity(audioId);
+        return this.OkResult(result.Value, "Audio deleted successfully.");
+    }
+
     [Authorize(Policy = JwtAuthenticationExtensions.SuperAdminPolicy)]
     [HttpDelete("{id:uint}")]
     public async Task<IActionResult> SoftDelete(
@@ -176,5 +209,11 @@ public sealed class AdminWordsController : ControllerBase
     {
         HttpContext.Items[AuditLogHttpContextKeys.EntityType] = "word_senses";
         HttpContext.Items[AuditLogHttpContextKeys.EntityId] = senseId;
+    }
+
+    private void SetAudioAuditEntity(uint audioId)
+    {
+        HttpContext.Items[AuditLogHttpContextKeys.EntityType] = "word_audio_assets";
+        HttpContext.Items[AuditLogHttpContextKeys.EntityId] = audioId;
     }
 }

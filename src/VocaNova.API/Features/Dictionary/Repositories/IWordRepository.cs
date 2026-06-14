@@ -49,6 +49,18 @@ public interface IWordRepository
         string status,
         CancellationToken cancellationToken = default);
 
+    Task<WordAudioDto?> UpsertAudioAsync(
+        uint wordId,
+        string accent,
+        string storageUrl,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> SetAudioStatusAsync(
+        uint wordId,
+        uint audioId,
+        string status,
+        CancellationToken cancellationToken = default);
+
     Task<bool> WordExistsAsync(
         uint wordId,
         CancellationToken cancellationToken = default);

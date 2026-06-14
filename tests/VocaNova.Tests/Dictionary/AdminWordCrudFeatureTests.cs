@@ -10,6 +10,7 @@ using VocaNova.API.Features.Dictionary.Validators;
 using VocaNova.API.Infrastructure.Caching;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
+using VocaNova.API.Infrastructure.Storage;
 
 namespace VocaNova.Tests.Dictionary;
 
@@ -183,6 +184,109 @@ public class AdminWordCrudFeatureTests
     }
 
     [Fact]
+    public async Task UploadAudioAsync_Should_Upload_To_Storage_And_Save_AudioAsset()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedWordAsync(dbContext, "run", "run");
+        var cache = new FakeWordDetailCache();
+        var audioStorage = new FakeAudioStorage("https://cdn.example.com/words/1/audio/uk/run.mp3");
+        var service = CreateService(dbContext, cache, audioStorage);
+        var file = CreateAudioFile("run.mp3", "audio/mpeg", 1024);
+
+        var result = await service.UploadAudioAsync(1, new UploadWordAudioRequest
+        {
+            Accent = " UK ",
+            File = file,
+        });
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Accent.Should().Be(AudioAccent.Uk);
+        result.Value.Source.Should().Be(AudioSource.Uploaded);
+        result.Value.Status.Should().Be(AudioStatus.Uploaded);
+        result.Value.Url.Should().Be("https://cdn.example.com/words/1/audio/uk/run.mp3");
+        audioStorage.UploadCount.Should().Be(1);
+        audioStorage.LastWordId.Should().Be(1);
+        audioStorage.LastAccent.Should().Be(AudioAccent.Uk);
+        cache.RemoveCount.Should().Be(1);
+
+        var audio = await dbContext.WordAudioAssets.SingleAsync();
+        audio.WordId.Should().Be(1);
+        audio.Accent.Should().Be(AudioAccent.Uk);
+        audio.Source.Should().Be(AudioSource.Uploaded);
+        audio.StorageUrl.Should().Be("https://cdn.example.com/words/1/audio/uk/run.mp3");
+        audio.Status.Should().Be(AudioStatus.Uploaded);
+    }
+
+    [Fact]
+    public async Task UploadAudioAsync_Should_Reject_Invalid_Mime_And_Size()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedWordAsync(dbContext, "run", "run");
+        var audioStorage = new FakeAudioStorage("https://cdn.example.com/audio.mp3");
+        var service = CreateService(dbContext, audioStorage: audioStorage);
+
+        var invalidMime = await service.UploadAudioAsync(1, new UploadWordAudioRequest
+        {
+            Accent = "uk",
+            File = CreateAudioFile("run.txt", "text/plain", 1024),
+        });
+        var tooLarge = await service.UploadAudioAsync(1, new UploadWordAudioRequest
+        {
+            Accent = "uk",
+            File = CreateAudioFile("run.mp3", "audio/mpeg", (5 * 1024 * 1024) + 1),
+        });
+
+        invalidMime.IsSuccess.Should().BeFalse();
+        invalidMime.Error.Should().Be("Audio MIME type must be one of: audio/mpeg, audio/wav, audio/ogg.");
+        tooLarge.IsSuccess.Should().BeFalse();
+        tooLarge.Error.Should().Be("Audio file must be 5MB or smaller.");
+        audioStorage.UploadCount.Should().Be(0);
+        (await dbContext.WordAudioAssets.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task SoftDeleteAudioAsync_Should_Only_Mark_AudioAsset_Deleted()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedWordAsync(dbContext, "run", "run");
+        dbContext.WordAudioAssets.Add(new WordAudioAsset
+        {
+            AudioId = 10,
+            WordId = 1,
+            Accent = AudioAccent.Us,
+            Source = AudioSource.Uploaded,
+            StorageUrl = "https://cdn.example.com/run-us.mp3",
+            Status = AudioStatus.Uploaded,
+            CreatedAt = DateTime.UtcNow,
+        });
+        await dbContext.SaveChangesAsync();
+        var cache = new FakeWordDetailCache();
+        var service = CreateService(dbContext, cache);
+
+        var result = await service.SoftDeleteAudioAsync(1, 10);
+
+        result.IsSuccess.Should().BeTrue();
+        cache.RemoveCount.Should().Be(1);
+        (await dbContext.WordAudioAssets.CountAsync()).Should().Be(0);
+
+        var audio = await dbContext.WordAudioAssets
+            .IgnoreQueryFilters()
+            .SingleAsync(entity => entity.AudioId == 10);
+        audio.Status.Should().Be(AudioStatus.Deleted);
+        audio.StorageUrl.Should().Be("https://cdn.example.com/run-us.mp3");
+    }
+
+    [Fact]
+    public void S3AudioStorage_BuildObjectKey_Should_Be_Deterministic_And_Safe()
+    {
+        var timestamp = new DateTime(2026, 6, 15, 8, 9, 10, DateTimeKind.Utc);
+
+        var key = S3AudioStorage.BuildObjectKey(42, AudioAccent.Us, "../hello world!.mp3", timestamp);
+
+        key.Should().Be("words/42/audio/us/20260615080910-hello-world.mp3");
+    }
+
+    [Fact]
     public async Task CreateSenseAsync_Should_Create_Sense_And_Invalidate_Word_Cache()
     {
         await using var dbContext = CreateDbContext();
@@ -270,11 +374,13 @@ public class AdminWordCrudFeatureTests
 
     private static WordService CreateService(
         VocaNovaDbContext dbContext,
-        IWordDetailCache? wordDetailCache = null)
+        IWordDetailCache? wordDetailCache = null,
+        IAudioStorage? audioStorage = null)
     {
         return new WordService(
             new WordRepository(dbContext),
-            wordDetailCache: wordDetailCache);
+            wordDetailCache: wordDetailCache,
+            audioStorage: audioStorage);
     }
 
     private static IFormFile CreateCsvFile(string content)
@@ -285,6 +391,17 @@ public class AdminWordCrudFeatureTests
         {
             Headers = new HeaderDictionary(),
             ContentType = "text/csv",
+        };
+    }
+
+    private static IFormFile CreateAudioFile(string fileName, string contentType, int length)
+    {
+        var bytes = new byte[length];
+        var stream = new MemoryStream(bytes);
+        return new FormFile(stream, 0, bytes.Length, "file", fileName)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = contentType,
         };
     }
 
@@ -341,6 +458,36 @@ public class AdminWordCrudFeatureTests
         {
             RemoveCount++;
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeAudioStorage : IAudioStorage
+    {
+        private readonly string _url;
+
+        public FakeAudioStorage(string url)
+        {
+            _url = url;
+        }
+
+        public int UploadCount { get; private set; }
+
+        public uint LastWordId { get; private set; }
+
+        public string? LastAccent { get; private set; }
+
+        public Task<AudioStorageResult> UploadAsync(
+            uint wordId,
+            string accent,
+            IFormFile file,
+            CancellationToken cancellationToken = default)
+        {
+            UploadCount++;
+            LastWordId = wordId;
+            LastAccent = accent;
+            return Task.FromResult(new AudioStorageResult(
+                $"words/{wordId}/audio/{accent}/{file.FileName}",
+                _url));
         }
     }
 }

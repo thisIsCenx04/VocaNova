@@ -233,6 +233,81 @@ public sealed class WordRepository : IWordRepository
         return _dbContext.Words.AnyAsync(word => word.WordId == wordId, cancellationToken);
     }
 
+    public async Task<WordAudioDto?> UpsertAudioAsync(
+        uint wordId,
+        string accent,
+        string storageUrl,
+        CancellationToken cancellationToken = default)
+    {
+        var word = await _dbContext.Words
+            .SingleOrDefaultAsync(entity => entity.WordId == wordId, cancellationToken);
+        if (word is null)
+        {
+            return null;
+        }
+
+        var now = DateTime.UtcNow;
+        var audio = await _dbContext.WordAudioAssets
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(
+                entity => entity.WordId == wordId && entity.Accent == accent,
+                cancellationToken);
+        if (audio is null)
+        {
+            audio = new WordAudioAsset
+            {
+                WordId = wordId,
+                Accent = accent,
+                Source = AudioSource.Uploaded,
+                StorageUrl = storageUrl,
+                Status = AudioStatus.Uploaded,
+                CreatedAt = now,
+            };
+            _dbContext.WordAudioAssets.Add(audio);
+        }
+        else
+        {
+            audio.Source = AudioSource.Uploaded;
+            audio.StorageUrl = storageUrl;
+            audio.Status = AudioStatus.Uploaded;
+            audio.CreatedAt = now;
+        }
+
+        word.UpdatedAt = now;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return MapAudio(audio);
+    }
+
+    public async Task<bool> SetAudioStatusAsync(
+        uint wordId,
+        uint audioId,
+        string status,
+        CancellationToken cancellationToken = default)
+    {
+        var audio = await _dbContext.WordAudioAssets
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(
+                entity => entity.WordId == wordId && entity.AudioId == audioId,
+                cancellationToken);
+        if (audio is null || audio.Status == status)
+        {
+            return false;
+        }
+
+        audio.Status = status;
+        var word = await _dbContext.Words
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(entity => entity.WordId == wordId, cancellationToken);
+        if (word is not null)
+        {
+            word.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     public async Task<WordSenseDto?> CreateSenseAsync(
         uint wordId,
         CreateSenseRequest request,
@@ -369,12 +444,7 @@ public sealed class WordRepository : IWordRepository
                     && !string.IsNullOrWhiteSpace(audio.StorageUrl))
                 .OrderBy(audio => audio.Accent)
                 .ThenBy(audio => audio.AudioId)
-                .Select(audio => new WordAudioDto(
-                    audio.AudioId,
-                    audio.Accent,
-                    audio.Source,
-                    audio.StorageUrl!,
-                    audio.Status))
+                .Select(MapAudio)
                 .ToArray(),
             word.WordDerivedFormwords
                 .OrderBy(derivedForm => derivedForm.DerivedWord)
@@ -426,6 +496,16 @@ public sealed class WordRepository : IWordRepository
             sense.VietnameseMeaning,
             Array.Empty<WordExampleDto>(),
             Array.Empty<WordRelationDto>());
+    }
+
+    private static WordAudioDto MapAudio(WordAudioAsset audio)
+    {
+        return new WordAudioDto(
+            audio.AudioId,
+            audio.Accent,
+            audio.Source,
+            audio.StorageUrl!,
+            audio.Status);
     }
 
     private static WordRelationDto MapRelation(WordRelation relation)
