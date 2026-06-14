@@ -16,6 +16,13 @@ it for another device or environment:
 flutter run --dart-define=API_BASE_URL=http://192.168.1.10:5013
 ```
 
+Google sign-in needs the web OAuth client ID used by the API to verify ID
+tokens:
+
+```powershell
+flutter run --dart-define=GOOGLE_SERVER_CLIENT_ID=your-web-client-id
+```
+
 ## Verify
 
 ```powershell

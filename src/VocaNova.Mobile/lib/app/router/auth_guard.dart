@@ -17,6 +17,7 @@ class AuthGuard {
   static const _publicRoutes = {
     AppRoutes.login,
     AppRoutes.register,
+    AppRoutes.forgotPassword,
     AppRoutes.otp,
   };
 

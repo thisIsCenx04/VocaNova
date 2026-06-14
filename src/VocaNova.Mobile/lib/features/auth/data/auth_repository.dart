@@ -7,6 +7,18 @@ class AuthRepository {
 
   final Dio _dio;
 
+  Future<AuthTokens> register({
+    required String phone,
+    required String password,
+    required String displayName,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.register,
+      data: {'phone': phone, 'password': password, 'display_name': displayName},
+    );
+    return AuthTokens.fromJson(_responseData(response));
+  }
+
   Future<AuthTokens> login({
     required String phone,
     required String password,

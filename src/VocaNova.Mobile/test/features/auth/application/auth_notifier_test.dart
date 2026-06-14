@@ -102,6 +102,43 @@ void main() {
     },
   );
 
+  test('register authenticates with the backend register contract', () async {
+    when(
+      () => repository.register(
+        phone: '0901234567',
+        password: 'Password1',
+        displayName: 'Nhut',
+      ),
+    ).thenAnswer((_) async => tokens);
+    when(
+      () => secureStorage.saveTokens(
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      ),
+    ).thenAnswer((_) async {});
+    when(
+      () => secureStorage.getAccessToken(),
+    ).thenAnswer((_) async => tokens.accessToken);
+    when(() => repository.getCurrentUser()).thenAnswer((_) async => user);
+
+    await container
+        .read(authProvider.notifier)
+        .register(
+          phone: '0901234567',
+          password: 'Password1',
+          displayName: 'Nhut',
+        );
+
+    expect(container.read(authProvider).status, AuthStatus.authenticated);
+    verify(
+      () => repository.register(
+        phone: '0901234567',
+        password: 'Password1',
+        displayName: 'Nhut',
+      ),
+    ).called(1);
+  });
+
   test('loadCurrentUser uses valid one-day cache when API fails', () async {
     await localStorage.setWithTtl(
       StorageKeys.userProfileJson,
