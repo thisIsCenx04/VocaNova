@@ -89,6 +89,7 @@ builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection(Redis
 builder.Services.Configure<AiGradingSettings>(builder.Configuration.GetSection(AiGradingSettings.SectionName));
 builder.Services.Configure<KnnOptions>(builder.Configuration.GetSection(KnnOptions.SectionName));
 builder.Services.Configure<AudioStorageSettings>(builder.Configuration.GetSection(AudioStorageSettings.SectionName));
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(CloudinarySettings.SectionName));
 builder.Services.AddSingleton<IUserProfileCache, RedisUserProfileCache>();
 builder.Services.AddSingleton<IWordSearchCache, RedisWordSearchCache>();
 builder.Services.AddSingleton<IWordDetailCache, RedisWordDetailCache>();
@@ -103,6 +104,7 @@ builder.Services.Configure<RateLimitSettings>(builder.Configuration.GetSection(R
 builder.Services.AddSingleton<IAuthRateLimiter, InMemoryAuthRateLimiter>();
 builder.Services.AddSingleton<IAdminKnnTriggerRateLimiter, InMemoryAdminKnnTriggerRateLimiter>();
 builder.Services.AddSingleton<IAudioStorage, S3AudioStorage>();
+builder.Services.AddSingleton<IImageStorage, CloudinaryImageStorage>();
 builder.Services.AddSingleton<IOtpCodeGenerator, RandomOtpCodeGenerator>();
 builder.Services.AddSingleton<ISmsProvider, ConsoleSmsProvider>();
 builder.Services.AddHttpClient<IGeminiClient, GeminiClient>((serviceProvider, client) =>
