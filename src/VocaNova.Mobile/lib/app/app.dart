@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:vocanova_mobile/app/router/app_router.dart';
 import 'package:vocanova_mobile/app/theme/app_theme.dart';
-import 'package:vocanova_mobile/features/home/presentation/home_screen.dart';
 
 class VocaNovaApp extends StatelessWidget {
-  const VocaNovaApp({super.key});
+  VocaNovaApp({super.key, GoRouter? router})
+    : router = router ?? AppRouter.instance.router;
+
+  final GoRouter router;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'VocaNova',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.dark,
-      home: const HomeScreen(),
+      routerConfig: router,
     );
   }
 }
