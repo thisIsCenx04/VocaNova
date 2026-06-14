@@ -147,6 +147,30 @@ void main() {
         expect(appException.errors, ['Invalid phone or password.']);
       }
     });
+
+    test('translates OTP errors before generic unauthorized message', () async {
+      final client = DioClient.create(
+        baseUrl: 'https://api.vocanova.test',
+        tokenStorage: MemoryTokenStorage(),
+        adapter: CallbackAdapter(
+          (_) => jsonResponse(
+            401,
+            body: {
+              'success': false,
+              'data': null,
+              'errors': ['Invalid OTP.'],
+            },
+          ),
+        ),
+      );
+
+      try {
+        await client.dio.post<Map<String, dynamic>>(ApiEndpoints.verifyOtp);
+        fail('Expected DioException.');
+      } on DioException catch (error) {
+        expect((error.error! as AppException).message, 'Mã OTP không đúng.');
+      }
+    });
   });
 }
 
