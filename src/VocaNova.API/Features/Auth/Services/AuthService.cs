@@ -22,6 +22,7 @@ public sealed class AuthService : IAuthService
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IGoogleTokenVerifier _googleTokenVerifier;
     private readonly IUserProfileCache? _userProfileCache;
+    private readonly IKnnTopicRecommendationCache? _knnTopicRecommendationCache;
     private readonly IOtpCodeGenerator _otpCodeGenerator;
     private readonly ISmsProvider _smsProvider;
     private readonly RateLimitSettings _rateLimitSettings;
@@ -36,13 +37,15 @@ public sealed class AuthService : IAuthService
         IUserProfileCache? userProfileCache = null,
         IOtpCodeGenerator? otpCodeGenerator = null,
         ISmsProvider? smsProvider = null,
-        IOptions<RateLimitSettings>? rateLimitSettings = null)
+        IOptions<RateLimitSettings>? rateLimitSettings = null,
+        IKnnTopicRecommendationCache? knnTopicRecommendationCache = null)
     {
         _dbContext = dbContext;
         _authRepository = authRepository;
         _jwtTokenService = jwtTokenService;
         _googleTokenVerifier = googleTokenVerifier;
         _userProfileCache = userProfileCache;
+        _knnTopicRecommendationCache = knnTopicRecommendationCache;
         _otpCodeGenerator = otpCodeGenerator ?? new RandomOtpCodeGenerator();
         _smsProvider = smsProvider ?? NullSmsProvider.Instance;
         _rateLimitSettings = rateLimitSettings?.Value ?? new RateLimitSettings();
@@ -390,6 +393,7 @@ public sealed class AuthService : IAuthService
             cancellationToken);
 
         await RemoveCachedProfileAsync(userId, cancellationToken);
+        await RemoveCachedKnnTopicRecommendationsAsync(userId, cancellationToken);
 
         return Result<UserProfileDto>.Ok(MapUserProfile(user));
     }
@@ -653,6 +657,14 @@ public sealed class AuthService : IAuthService
         if (_userProfileCache is not null)
         {
             await _userProfileCache.RemoveAsync(userId, cancellationToken);
+        }
+    }
+
+    private async Task RemoveCachedKnnTopicRecommendationsAsync(uint userId, CancellationToken cancellationToken)
+    {
+        if (_knnTopicRecommendationCache is not null)
+        {
+            await _knnTopicRecommendationCache.RemoveAsync(userId, cancellationToken);
         }
     }
 

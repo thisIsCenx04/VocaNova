@@ -9,6 +9,7 @@ using VocaNova.API.Features.Auth.DTOs;
 using VocaNova.API.Features.Auth.Repositories;
 using VocaNova.API.Features.Auth.Services;
 using VocaNova.API.Features.Auth.Validators;
+using VocaNova.API.Features.Knn.DTOs;
 using VocaNova.API.Infrastructure.Authentication;
 using VocaNova.API.Infrastructure.Caching;
 using VocaNova.API.Infrastructure.Persistence;
@@ -101,7 +102,8 @@ public class LogoutProfileFeatureTests
         await SeedUserAsync(dbContext, includeLearningProfile: false);
         await SeedLearningProfileLookupsAsync(dbContext);
         var cache = new FakeUserProfileCache();
-        var service = CreateAuthService(dbContext, cache);
+        var knnCache = new FakeKnnTopicRecommendationCache();
+        var service = CreateAuthService(dbContext, cache, knnCache);
 
         var result = await service.UpdateLearningProfileAsync(
             1,
@@ -122,6 +124,7 @@ public class LogoutProfileFeatureTests
         learningProfile.OccupationId.Should().Be(3);
         learningProfile.EducationLevelId.Should().Be(4);
         learningProfile.LearningPurposeId.Should().Be(5);
+        knnCache.RemoveCount.Should().Be(1);
     }
 
     [Fact]
@@ -163,7 +166,8 @@ public class LogoutProfileFeatureTests
 
     private static AuthService CreateAuthService(
         VocaNovaDbContext dbContext,
-        IUserProfileCache? userProfileCache = null)
+        IUserProfileCache? userProfileCache = null,
+        IKnnTopicRecommendationCache? knnTopicRecommendationCache = null)
     {
         return new AuthService(
             dbContext,
@@ -171,7 +175,8 @@ public class LogoutProfileFeatureTests
             CreateJwtTokenService(),
             new FakeGoogleTokenVerifier(),
             Options.Create(CreateJwtSettings()),
-            userProfileCache);
+            userProfileCache,
+            knnTopicRecommendationCache: knnTopicRecommendationCache);
     }
 
     private static JwtTokenService CreateJwtTokenService()
@@ -331,6 +336,33 @@ public class LogoutProfileFeatureTests
         {
             SetCount++;
             StoredProfile = profile;
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveAsync(uint userId, CancellationToken cancellationToken = default)
+        {
+            RemoveCount++;
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeKnnTopicRecommendationCache : IKnnTopicRecommendationCache
+    {
+        public int RemoveCount { get; private set; }
+
+        public Task<IReadOnlyCollection<TopicRecommendationDto>?> GetAsync(
+            uint userId,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyCollection<TopicRecommendationDto>?>(null);
+        }
+
+        public Task SetAsync(
+            uint userId,
+            IReadOnlyCollection<TopicRecommendationDto> recommendations,
+            TimeSpan ttl,
+            CancellationToken cancellationToken = default)
+        {
             return Task.CompletedTask;
         }
 
