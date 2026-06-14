@@ -39,24 +39,7 @@ public sealed class KnnOnboardingService : IKnnOnboardingService
 
     public double CosineSimilarity(double[] a, double[] b)
     {
-        if (a.Length == 0 || a.Length != b.Length)
-        {
-            return 0.0;
-        }
-
-        var dotProduct = 0.0;
-        var normA = 0.0;
-        var normB = 0.0;
-        for (var index = 0; index < a.Length; index++)
-        {
-            dotProduct += a[index] * b[index];
-            normA += a[index] * a[index];
-            normB += b[index] * b[index];
-        }
-
-        return normA == 0.0 || normB == 0.0
-            ? 0.0
-            : dotProduct / (Math.Sqrt(normA) * Math.Sqrt(normB));
+        return KnnMathHelper.CosineSimilarity(a, b);
     }
 
     public async Task<Result<IReadOnlyCollection<TopicRecommendationDto>>> RecommendTopicsAsync(
@@ -170,7 +153,7 @@ public sealed class KnnOnboardingService : IKnnOnboardingService
             .Select(profile => new
             {
                 profile.UserId,
-                Similarity = CosineSimilarity(userVector, BuildProfileVector(profile, dimensions)),
+                Similarity = KnnMathHelper.CosineSimilarity(userVector, BuildProfileVector(profile, dimensions)),
             })
             .Where(neighbor => neighbor.Similarity >= _options.Onboarding.MinSimilarity)
             .OrderByDescending(neighbor => neighbor.Similarity)
