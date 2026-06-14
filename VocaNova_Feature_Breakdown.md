@@ -867,71 +867,159 @@ Phụ thuộc: F045
 
 ## PHASE 1 — Backend: Module KNN (M7)
 
+> **Hai luồng KNN song song trong hệ thống:**
+>
+> | Luồng | Mục tiêu | Feature vector | Output | Trigger |
+> |---|---|---|---|---|
+> | **KNN Onboarding** (F048) | User mới chọn chủ đề học | Profile 5 chiều one-hot từ `user_learning_profiles` | Topic gợi ý | On-demand sau onboarding |
+> | **KNN Learning** (F049, FE-57) | Gợi ý từ vựng theo hành vi | Topic accuracy N chiều từ `test_answers` | Word gợi ý | Background job 24h |
+>
+> F050 cung cấp toàn bộ Admin API (FE-19) để F063 Dashboard gọi.
+
 ---
 
-### F047 — KNN Tables Migration
+### F047 — KNN: Configuration Setup & Existing Table Verification
 ```
-Branch:    feature/knn/migration-tables
+Branch:    feature/knn/knn-config
 Assignee:  Huy
-Thời gian: 1h
+Thời gian: 1.5h
 Phụ thuộc: F002
 ```
+**Làm gì:** Xác nhận các bảng hiện có đủ để chạy cả hai luồng KNN và thiết lập config. KHÔNG tạo bảng mới vì schema đã chốt.
+
 **Done khi:**
-- [ ] Migration tạo bảng `recommendations(user_id, word_id, score, generated_at)` (PK composite)
-- [ ] Migration tạo bảng `knn_model_configs(config_id, k_value, min_sessions, recommendation_count, status, created_at)`
-- [ ] EF entity + IEntityTypeConfiguration
+- [ ] Xác nhận EF entity + `IEntityTypeConfiguration` đã map đúng các bảng nguồn:
+  - `user_learning_profiles` (age_range_id, region_id, occupation_id, education_level_id, learning_purpose_id, created_at, updated_at)
+  - `user_topic_preferences` (user_id, topic_id, source, status, created_at) — `source` hỗ trợ giá trị `'knn_suggested'`
+  - `age_ranges`, `regions`, `occupations`, `education_levels`, `learning_purposes` (bảng lookup onboarding)
+  - `test_answers` (session_id, word_id, is_correct) — dùng cho topic accuracy vector
+  - `word_topics` (word_id, topic_id) — dùng để JOIN topic từ test_answers
+  - `user_word_progress` (user_id, word_id, mastery_level, srs_interval, ease_factor...)
+  - `user_list_words` (user_id, list_id, word_id, status)
+- [ ] Word recommendation (KNN Learning) lưu kết quả vào **Redis** thay vì DB: key `vocanova:knn-words:{user_id}`, value JSON array `WordRecommendationItem[]`, TTL 24h. KHÔNG tạo bảng `recommendations`.
+- [ ] KNN config đọc từ **`appsettings.json`** — KHÔNG tạo bảng `knn_model_configs`:
+  ```json
+  "Knn": {
+    "Onboarding": { "KValue": 5, "DefaultTopicLimit": 10, "MinSimilarity": 0.1, "CacheTtlMinutes": 30 },
+    "Learning":   { "KValue": 5, "MinSessions": 5, "MinSimilarity": 0.1, "RecommendationCount": 50, "RebuildIntervalHours": 24, "CacheTtlMinutes": 60 }
+  }
+  ```
+- [ ] `KnnOptions` strongly-typed class, inject qua `IOptions<KnnOptions>`
+- [ ] `WordRecommendationItem` record: `{ WordId, Word, PhoneticUk, PrimaryMeaning, ImageUrl, CefrLevel, Score }`
+- [ ] Smoke test: đọc được `user_learning_profiles` + `user_topic_preferences` của seed users
 
 ---
 
-### F048 — Feature Vector & Cosine Similarity
+### F048 — KNN Onboarding: Profile-Based Topic Recommendation
 ```
-Branch:    feature/knn/feature-vector
+Branch:    feature/knn/onboarding-topic-recommendation
 Assignee:  Huy
-Thời gian: 2.5h
-Phụ thuộc: F041, F047
+Thời gian: 3.5h
+Phụ thuộc: F047, F024 (topics list)
 ```
+**Làm gì:** Cold-start KNN — dùng hồ sơ học (age/region/occupation/education/purpose) để gợi ý topic cho user mới chưa có test data. Kích hoạt ngay sau khi user hoàn thành onboarding (F071).
+
 **Done khi:**
-- [ ] `KnnService.ComputeFeatureVectorAsync(userId)`: topic_accuracy_vector (13 chiều — 1 per topic)
-- [ ] accuracy = correct/(correct+wrong) per topic, từ `test_answers` JOIN `word_topics`
-- [ ] User thiếu data cho topic → accuracy = 0 (không phải null)
-- [ ] `CosineSimilarity(vectorA, vectorB)`: trả double [0, 1]
-- [ ] Unit test: zero vector cosine = 0, identical vectors cosine = 1
+- [ ] `KnnOnboardingService.ComputeProfileVectorAsync(userId)`:
+  - One-hot encode 5 nhóm: `age_ranges`, `regions`, `occupations`, `education_levels`, `learning_purposes`
+  - Số chiều = tổng số records active trong 5 bảng lookup
+  - User thiếu nhóm nào → toàn bộ chiều của nhóm đó = 0.0, không throw lỗi
+  - Chỉ encode records có `status = 'active'`
+- [ ] `KnnOnboardingService.CosineSimilarity(double[] a, double[] b)`:
+  - Trả 0.0 nếu cả hai đều all-zero (tránh division by zero)
+  - Unit test: identical → 1.0; zero vector → 0.0; orthogonal → 0.0
+- [ ] `KnnOnboardingService.RecommendTopicsAsync(userId, limit)`:
+  - Tính vector user hiện tại; nếu all-zero → nhảy thẳng vào fallback
+  - Tính cosine similarity với tất cả users có ít nhất 1 chiều profile ≠ 0
+  - Lấy K neighbors gần nhất (từ `KnnOptions.Onboarding.KValue`), filter `similarity < MinSimilarity`
+  - Tổng hợp topics từ `user_topic_preferences` của neighbors (`status='active'`, `source IN ('user_selected','onboarding')`)
+  - Score mỗi topic = `SUM(similarity_của_neighbor_có_topic_đó)`
+  - Loại topics user hiện tại đã có `status='active'` trong `user_topic_preferences`
+  - **Fallback** khi không đủ neighbors hoặc vector all-zero: trả top N topics theo tần suất xuất hiện nhiều nhất trong `user_topic_preferences` toàn hệ thống
+  - Trả `List<TopicRecommendationDto>`: topic_id, topic_name, topic_name_vi, icon, word_count, recommendation_score
+- [ ] `GET /api/recommendations/topics?limit=10`:
+  - Cache: `vocanova:knn-topics:{user_id}` TTL `KnnOptions.Onboarding.CacheTtlMinutes`
+  - Trả `[]` nếu user chưa có profile (KHÔNG phải lỗi)
+- [ ] `POST /api/recommendations/topics/{topicId}/accept`:
+  - Upsert `user_topic_preferences(user_id, topic_id, source='knn_suggested', status='active')`
+  - Nếu đã có record → cập nhật `source='knn_suggested'`
+  - Invalidate cache `vocanova:knn-topics:{user_id}`
+- [ ] Invalidate cache `vocanova:knn-topics:{user_id}` khi `user_learning_profiles` của user thay đổi (gọi từ F018)
+- [ ] Unit test: user thiếu profile → fallback trả kết quả hợp lệ; recommendation loại đúng topic user đã chọn; accept → invalidate cache
 
 ---
 
-### F049 — KNN Recommendation Generation
+### F049 — KNN Learning: Behavior-Based Word Recommendation (FE-57)
 ```
-Branch:    feature/knn/recommendation-generation
+Branch:    feature/knn/learning-word-recommendation
 Assignee:  Huy
-Thời gian: 2.5h
-Phụ thuộc: F048
+Thời gian: 4.5h
+Phụ thuộc: F047, F041 (test_answers tồn tại), F044 (user_word_progress với mastery_level)
 ```
+**Làm gì:** Behavior-based KNN (FE-57) — topic accuracy từ lịch sử làm bài để gợi ý từ vựng. Kết quả lưu Redis (không tạo bảng mới). Background job ghi vào Redis, API đọc từ Redis.
+
 **Done khi:**
-- [ ] `KnnService.GenerateRecommendationsAsync(userId)`:
-  - Skip user có < 5 sessions
-  - Tính feature vectors tất cả eligible users
-  - Tìm K=5 users gần nhất (cosine)
-  - Tập hợp từ neighbors có `mastery_level >= 3`
-  - Loại từ user hiện tại đã có (bất kỳ list active nào)
-  - Rank theo frequency, lưu top 50 vào `recommendations` (replace)
-- [ ] `GET /api/recommendations?limit=10`: trả danh sách gợi ý (từ cache `recommendations` table)
-- [ ] Unit test: user chưa đủ data → skip; recommendation không chứa từ user đã có
+- [ ] `KnnLearningService.ComputeTopicAccuracyVectorAsync(userId)`:
+  - Với mỗi topic active trong `topics` table: `accuracy_i = SUM(ta.is_correct) / COUNT(ta.answer_id)` từ `test_answers ta` JOIN `test_sessions ts` JOIN `word_topics wt` WHERE `ts.user_id = userId AND wt.topic_id = i`
+  - Topic user chưa có data → accuracy = 0.0 (không phải null)
+  - User có < `KnnOptions.Learning.MinSessions` sessions → trả `Result.Fail`, KHÔNG throw exception
+- [ ] `KnnMathHelper.CosineSimilarity(double[] a, double[] b)`: shared utility, trả 0.0 nếu any vector all-zero
+- [ ] `KnnLearningService.FindKNearestAsync(userId, vector, k)`:
+  - Load eligible users (≥ MinSessions, status='active', loại chính user đó)
+  - Tính cosine similarity với từng user; filter `similarity < MinSimilarity`, lấy top K
+- [ ] `KnnLearningService.GenerateWordRecommendationsAsync(userId)`:
+  - Gọi `ComputeTopicAccuracyVectorAsync` → nếu Fail → log và return (không crash job)
+  - Với mỗi neighbor: lấy word_ids có `mastery_level >= 3` từ `user_word_progress`
+  - Score: `score_word = SUM(similarity_của_neighbor_có_word)`
+  - Loại word_ids user đã có trong `user_list_words` (`status='active'`)
+  - Sort DESC, lấy top `KnnOptions.Learning.RecommendationCount`
+  - **Lưu vào Redis** (không phải DB): key `vocanova:knn-words:{userId}`, value = JSON serialize `List<WordRecommendationItem>`, TTL = `KnnOptions.Learning.RebuildIntervalHours` giờ
+- [ ] `GET /api/recommendations/words?limit=10`:
+  - Đọc từ Redis key `vocanova:knn-words:{userId}`
+  - Nếu Redis miss → trả `[]` (không phải 404, không tự tính lại)
+  - Deserialize → JOIN `words` table để lấy thông tin mới nhất (phonetic, image_url)
+  - Trả `WordRecommendationDto[]`: word_id, word, phonetic_uk, primary_meaning, image_url, cefr_level, score
+- [ ] Unit test:
+  - User < MinSessions → GenerateWordRecommendationsAsync return sớm, Redis key không được ghi
+  - CosineSimilarity zero vector → 0.0, không exception
+  - Neighbor có word user đã sở hữu → bị loại
+  - Sau Generate → Redis có key đúng, TTL đúng
 
 ---
 
-### F050 — KNN Background Service & Admin
+### F050 — KNN Background Job & Admin API (FE-19)
 ```
-Branch:    feature/knn/background-service-admin
+Branch:    feature/knn/background-job-admin
 Assignee:  Huy
-Thời gian: 2h
-Phụ thuộc: F049
+Thời gian: 3h
+Phụ thuộc: F049, F048
 ```
+**Làm gì:** IHostedService rebuild word recommendations định kỳ + toàn bộ admin API quản lý KNN (FE-19). Đây là backend mà F063 Dashboard gọi để hiển thị config và trigger rebuild.
+
 **Done khi:**
-- [ ] `KnnBackgroundService : IHostedService` — `PeriodicTimer` 24h
-- [ ] Trigger tất cả users đủ điều kiện
-- [ ] `POST /api/admin/knn/trigger-rebuild`: trigger ngay lập tức (rate limit: 1 req/5 phút/admin)
-- [ ] Admin CRUD: `GET/POST/PUT/DELETE /api/admin/knn/models`
-- [ ] Soft delete model config: `status='deleted'`
+- [ ] `KnnWordRecommendationJob : IHostedService`:
+  - `PeriodicTimer` mỗi `KnnOptions.Learning.RebuildIntervalHours` giờ
+  - Lấy tất cả eligible users (≥ MinSessions, `status='active'`)
+  - Gọi `KnnLearningService.GenerateWordRecommendationsAsync(userId)` tuần tự (không parallel để tránh DB overload)
+  - Lỗi 1 user KHÔNG dừng toàn bộ job (try-catch per user, log riêng)
+  - Sau khi xong: lưu timestamp vào Redis `vocanova:knn-last-rebuild` (TTL vô hạn)
+  - Log: số users xử lý / bỏ qua / lỗi, tổng thời gian chạy
+- [ ] Admin: `GET /api/admin/knn/models` — danh sách `knn_model_configs` (kể cả deleted khi dùng `IgnoreQueryFilters`)
+- [ ] Admin: `POST /api/admin/knn/models` — tạo config mới, validate `k_value > 0`, `min_sessions > 0`
+- [ ] Admin: `PUT /api/admin/knn/models/{id}` — cập nhật config, invalidate cache config
+- [ ] Admin: `DELETE /api/admin/knn/models/{id}` — soft delete `status='deleted'`
+- [ ] Admin: `POST /api/admin/knn/trigger-rebuild`:
+  - Rate limit: 1 req/5 phút/admin (AspNetCoreRateLimit)
+  - Gọi job async (fire-and-forget, không await)
+  - Trả ngay `202 Accepted`: `{ message: "Đang rebuild, vui lòng chờ...", triggered_at: NOW() }`
+- [ ] Admin: `GET /api/admin/knn/rebuild-status`:
+  - Đọc `vocanova:knn-last-rebuild` từ Redis
+  - Trả `{ last_rebuild_at: DateTime?, is_running: bool }`
+  - Dùng bởi F063 để hiển thị "Last rebuilt: X giờ trước"
+- [ ] `KnnModelConfigDto`: config_id, config_key, k_value, min_sessions, recommendation_count, min_similarity, rebuild_interval_hours, status, updated_at
+- [ ] Soft delete `knn_model_configs`: Global Query Filter áp dụng (status != 'deleted')
+- [ ] Audit log ghi qua middleware (POST/PUT/DELETE admin endpoints)
+- [ ] Unit test: trigger-rebuild 2 lần trong 5 phút → lần 2 nhận 429; job xử lý 1 user lỗi → user tiếp theo vẫn chạy
 
 ---
 
