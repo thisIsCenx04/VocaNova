@@ -4,5 +4,5 @@ import 'package:vocanova_mobile/app/app.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ProviderScope(child: VocaNovaApp()));
+  runApp(ProviderScope(child: VocaNovaApp()));
 }
