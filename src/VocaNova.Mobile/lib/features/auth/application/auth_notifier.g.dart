@@ -50,6 +50,53 @@ final class AuthRepositoryProvider
 
 String _$authRepositoryHash() => r'cbb4bb7c22b6f1a94152d79f0b586f1126cea832';
 
+@ProviderFor(googleAuthService)
+const googleAuthServiceProvider = GoogleAuthServiceProvider._();
+
+final class GoogleAuthServiceProvider
+    extends
+        $FunctionalProvider<
+          GoogleAuthService,
+          GoogleAuthService,
+          GoogleAuthService
+        >
+    with $Provider<GoogleAuthService> {
+  const GoogleAuthServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'googleAuthServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$googleAuthServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<GoogleAuthService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  GoogleAuthService create(Ref ref) {
+    return googleAuthService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(GoogleAuthService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<GoogleAuthService>(value),
+    );
+  }
+}
+
+String _$googleAuthServiceHash() => r'f6d1a44e9156de4b859bb96071b2a534f59ce5d4';
+
 @ProviderFor(localStorage)
 const localStorageProvider = LocalStorageProvider._();
 
@@ -205,7 +252,7 @@ final class AuthNotifierProvider
   }
 }
 
-String _$authNotifierHash() => r'a590f517b530584ccf52660874a0633e02403c54';
+String _$authNotifierHash() => r'000a88e16ed0b04641f8c1d56fe7de3f0e41b891';
 
 abstract class _$AuthNotifier extends $Notifier<AuthState> {
   AuthState build();

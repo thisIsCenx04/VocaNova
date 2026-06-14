@@ -10,6 +10,7 @@ import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/secure_storage.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
 import 'package:vocanova_mobile/features/auth/data/auth_repository.dart';
+import 'package:vocanova_mobile/features/auth/data/google_auth_service.dart';
 import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
 import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
 
@@ -19,6 +20,9 @@ part 'auth_notifier.g.dart';
 AuthRepository authRepository(Ref ref) {
   return AuthRepository(dio: DioClient.instance.dio);
 }
+
+@Riverpod(keepAlive: true)
+GoogleAuthService googleAuthService(Ref ref) => GoogleAuthService();
 
 @Riverpod(keepAlive: true)
 LocalStorage localStorage(Ref ref) => LocalStorage.instance;
@@ -36,6 +40,18 @@ class AuthNotifier extends _$AuthNotifier {
   @override
   AuthState build() => const AuthState();
 
+  Future<void> register({
+    required String phone,
+    required String password,
+    required String displayName,
+  }) async {
+    await _authenticate(
+      () => ref
+          .read(authRepositoryProvider)
+          .register(phone: phone, password: password, displayName: displayName),
+    );
+  }
+
   Future<void> login(String phone, String password) async {
     await _authenticate(
       () => ref
@@ -48,6 +64,21 @@ class AuthNotifier extends _$AuthNotifier {
     await _authenticate(
       () => ref.read(authRepositoryProvider).googleLogin(idToken),
     );
+  }
+
+  Future<void> signInWithGoogle() async {
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
+    try {
+      final idToken = await ref.read(googleAuthServiceProvider).getIdToken();
+      await _authenticate(
+        () => ref.read(authRepositoryProvider).googleLogin(idToken),
+      );
+    } catch (error) {
+      state = AuthState(
+        status: AuthStatus.error,
+        errorMessage: _errorMessage(error),
+      );
+    }
   }
 
   Future<void> loadCurrentUser() async {
@@ -140,6 +171,9 @@ class AuthNotifier extends _$AuthNotifier {
     }
     if (error is DioException && error.error is AppException) {
       return (error.error! as AppException).message;
+    }
+    if (error is FormatException) {
+      return error.message;
     }
     return 'Đã xảy ra lỗi. Vui lòng thử lại.';
   }

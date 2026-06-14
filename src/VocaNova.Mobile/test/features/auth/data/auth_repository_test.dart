@@ -7,21 +7,32 @@ import 'package:vocanova_mobile/core/network/api_endpoints.dart';
 import 'package:vocanova_mobile/features/auth/data/auth_repository.dart';
 
 void main() {
+  test('register sends backend contract and parses wrapped tokens', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      expect(options.path, ApiEndpoints.register);
+      expect(options.data, {
+        'phone': '0901234567',
+        'password': 'Password1',
+        'display_name': 'Nhut',
+      });
+      return tokenResponse();
+    });
+
+    final tokens = await AuthRepository(
+      dio: dio,
+    ).register(phone: '0901234567', password: 'Password1', displayName: 'Nhut');
+
+    expect(tokens.accessToken, 'access');
+    expect(tokens.refreshToken, 'refresh');
+  });
+
   test('login sends backend contract and parses wrapped tokens', () async {
     final dio = Dio();
     dio.httpClientAdapter = CallbackAdapter((options) {
       expect(options.path, ApiEndpoints.login);
       expect(options.data, {'phone': '0901234567', 'password': 'Password1'});
-      return jsonResponse({
-        'success': true,
-        'data': {
-          'access_token': 'access',
-          'refresh_token': 'refresh',
-          'expires_in': 900,
-          'token_type': 'Bearer',
-        },
-        'errors': <String>[],
-      });
+      return tokenResponse();
     });
 
     final tokens = await AuthRepository(
@@ -93,4 +104,17 @@ ResponseBody jsonResponse(Object body) {
       Headers.contentTypeHeader: [Headers.jsonContentType],
     },
   );
+}
+
+ResponseBody tokenResponse() {
+  return jsonResponse({
+    'success': true,
+    'data': {
+      'access_token': 'access',
+      'refresh_token': 'refresh',
+      'expires_in': 900,
+      'token_type': 'Bearer',
+    },
+    'errors': <String>[],
+  });
 }

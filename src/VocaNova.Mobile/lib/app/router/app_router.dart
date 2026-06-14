@@ -5,6 +5,8 @@ import 'package:vocanova_mobile/app/router/auth_guard.dart';
 import 'package:vocanova_mobile/app/router/main_shell.dart';
 import 'package:vocanova_mobile/core/storage/secure_storage.dart';
 import 'package:vocanova_mobile/core/storage/token_storage.dart';
+import 'package:vocanova_mobile/features/auth/presentation/login_screen.dart';
+import 'package:vocanova_mobile/features/auth/presentation/register_screen.dart';
 import 'package:vocanova_mobile/features/home/presentation/home_screen.dart';
 import 'package:vocanova_mobile/features/shared/presentation/placeholder_screen.dart';
 
@@ -25,13 +27,14 @@ class AppRouter {
     redirect: _authGuard.redirect,
     routes: [
       GoRoute(path: AppRoutes.root, builder: (_, _) => const SizedBox.shrink()),
-      GoRoute(
-        path: AppRoutes.login,
-        builder: (_, _) => const PlaceholderScreen(title: 'Đăng nhập'),
-      ),
+      GoRoute(path: AppRoutes.login, builder: (_, _) => const LoginScreen()),
       GoRoute(
         path: AppRoutes.register,
-        builder: (_, _) => const PlaceholderScreen(title: 'Đăng ký'),
+        builder: (_, _) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (_, _) => const PlaceholderScreen(title: 'Quên mật khẩu'),
       ),
       GoRoute(
         path: AppRoutes.otp,
