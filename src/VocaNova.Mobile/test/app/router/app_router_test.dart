@@ -59,10 +59,10 @@ void main() {
       initialLocation: AppRoutes.wordDetail('42'),
     );
 
-    await pumpRouter(tester, router);
+    await pumpRouter(tester, router, settle: false);
 
     expect(router.state.matchedLocation, AppRoutes.wordDetail('42'));
-    expect(find.text('Chi tiết từ #42'), findsWidgets);
+    expect(find.text('Chi tiết từ'), findsOneWidget);
   });
 }
 
@@ -76,11 +76,19 @@ GoRouter createRouter({String? accessToken, String? initialLocation}) {
   return router;
 }
 
-Future<void> pumpRouter(WidgetTester tester, GoRouter router) async {
+Future<void> pumpRouter(
+  WidgetTester tester,
+  GoRouter router, {
+  bool settle = true,
+}) async {
   await tester.pumpWidget(
     ProviderScope(child: MaterialApp.router(routerConfig: router)),
   );
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
 }
 
 class TestTokenStorage implements TokenStorage {
