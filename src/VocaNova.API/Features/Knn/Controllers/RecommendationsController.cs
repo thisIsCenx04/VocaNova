@@ -13,10 +13,14 @@ namespace VocaNova.API.Features.Knn.Controllers;
 public sealed class RecommendationsController : ControllerBase
 {
     private readonly IKnnOnboardingService _knnOnboardingService;
+    private readonly IKnnLearningService _knnLearningService;
 
-    public RecommendationsController(IKnnOnboardingService knnOnboardingService)
+    public RecommendationsController(
+        IKnnOnboardingService knnOnboardingService,
+        IKnnLearningService knnLearningService)
     {
         _knnOnboardingService = knnOnboardingService;
+        _knnLearningService = knnLearningService;
     }
 
     [HttpGet("topics")]
@@ -36,6 +40,25 @@ public sealed class RecommendationsController : ControllerBase
         }
 
         return this.OkResult(result.Value!, "Topic recommendations loaded successfully.");
+    }
+
+    [HttpGet("words")]
+    public async Task<IActionResult> GetWords(
+        [FromQuery] int? limit,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return this.ErrorResult(Result<IReadOnlyCollection<WordRecommendationDto>>.Unauthorized("Unauthorized."));
+        }
+
+        var result = await _knnLearningService.GetWordRecommendationsAsync(userId, limit, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value!, "Word recommendations loaded successfully.");
     }
 
     [HttpPost("topics/{topicId:uint}/accept")]

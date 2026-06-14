@@ -80,6 +80,8 @@ builder.Services.AddScoped<IProgressAnalyticsRepository, ProgressAnalyticsReposi
 builder.Services.AddScoped<IProgressAnalyticsService, ProgressAnalyticsService>();
 builder.Services.AddScoped<IKnnProfileRepository, KnnProfileRepository>();
 builder.Services.AddScoped<IKnnOnboardingService, KnnOnboardingService>();
+builder.Services.AddScoped<IKnnLearningRepository, KnnLearningRepository>();
+builder.Services.AddScoped<IKnnLearningService, KnnLearningService>();
 builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection(RedisSettings.SectionName));
 builder.Services.Configure<AiGradingSettings>(builder.Configuration.GetSection(AiGradingSettings.SectionName));
 builder.Services.Configure<KnnOptions>(builder.Configuration.GetSection(KnnOptions.SectionName));
@@ -90,6 +92,7 @@ builder.Services.AddSingleton<ITopicCache, RedisTopicCache>();
 builder.Services.AddSingleton<IUserListCache, RedisUserListCache>();
 builder.Services.AddSingleton<IProgressSummaryCache, RedisProgressSummaryCache>();
 builder.Services.AddSingleton<IKnnTopicRecommendationCache, RedisKnnTopicRecommendationCache>();
+builder.Services.AddSingleton<IKnnWordRecommendationCache, RedisKnnWordRecommendationCache>();
 builder.Services.Configure<RateLimitSettings>(builder.Configuration.GetSection(RateLimitSettings.SectionName));
 builder.Services.AddSingleton<IAuthRateLimiter, InMemoryAuthRateLimiter>();
 builder.Services.AddSingleton<IOtpCodeGenerator, RandomOtpCodeGenerator>();
