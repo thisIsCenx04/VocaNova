@@ -5,6 +5,7 @@ using VocaNova.API.Common.Results;
 using VocaNova.API.Features.Dictionary.DTOs;
 using VocaNova.API.Features.Dictionary.Repositories;
 using VocaNova.API.Infrastructure.Caching;
+using VocaNova.API.Infrastructure.Storage;
 
 namespace VocaNova.API.Features.Dictionary.Services;
 
@@ -17,17 +18,21 @@ public sealed class WordService : IWordService
     private const string CsvWordClassColumn = "word_class";
     private const string CsvEnglishDefinitionColumn = "english_definition";
     private const string CsvVietnameseMeaningColumn = "vietnamese_meaning";
+    private const long MaxAudioFileBytes = 5 * 1024 * 1024;
 
     private readonly IWordRepository _wordRepository;
+    private readonly IAudioStorage? _audioStorage;
     private readonly IWordSearchCache? _wordSearchCache;
     private readonly IWordDetailCache? _wordDetailCache;
 
     public WordService(
         IWordRepository wordRepository,
         IWordSearchCache? wordSearchCache = null,
-        IWordDetailCache? wordDetailCache = null)
+        IWordDetailCache? wordDetailCache = null,
+        IAudioStorage? audioStorage = null)
     {
         _wordRepository = wordRepository;
+        _audioStorage = audioStorage;
         _wordSearchCache = wordSearchCache;
         _wordDetailCache = wordDetailCache;
     }
@@ -322,6 +327,86 @@ public sealed class WordService : IWordService
         return await SetWordStatusAsync(wordId, UserStatus.Active, cancellationToken);
     }
 
+    public async Task<Result<WordAudioDto>> UploadAudioAsync(
+        uint wordId,
+        UploadWordAudioRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (wordId == 0)
+        {
+            return Result<WordAudioDto>.NotFound("Word not found.");
+        }
+
+        var accent = NormalizeAccent(request.Accent);
+        if (accent is null)
+        {
+            return Result<WordAudioDto>.Fail("Accent must be one of: uk, us.");
+        }
+
+        var fileValidation = ValidateAudioFile(request.File);
+        if (!fileValidation.IsSuccess)
+        {
+            return Result<WordAudioDto>.Fail(fileValidation.Error!);
+        }
+
+        if (_audioStorage is null)
+        {
+            return Result<WordAudioDto>.Fail("Audio storage is not configured.");
+        }
+
+        if (!await _wordRepository.WordExistsAsync(wordId, cancellationToken))
+        {
+            return Result<WordAudioDto>.NotFound("Word not found.");
+        }
+
+        AudioStorageResult uploadResult;
+        try
+        {
+            uploadResult = await _audioStorage.UploadAsync(wordId, accent, request.File!, cancellationToken);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Result<WordAudioDto>.Fail(exception.Message);
+        }
+
+        var audio = await _wordRepository.UpsertAudioAsync(
+            wordId,
+            accent,
+            uploadResult.Url,
+            cancellationToken);
+        if (audio is null)
+        {
+            return Result<WordAudioDto>.NotFound("Word not found.");
+        }
+
+        await RemoveCachedWordAsync(wordId, cancellationToken);
+        return Result<WordAudioDto>.Ok(audio);
+    }
+
+    public async Task<Result<bool>> SoftDeleteAudioAsync(
+        uint wordId,
+        uint audioId,
+        CancellationToken cancellationToken = default)
+    {
+        if (wordId == 0 || audioId == 0)
+        {
+            return Result<bool>.NotFound("Audio asset not found.");
+        }
+
+        var updated = await _wordRepository.SetAudioStatusAsync(
+            wordId,
+            audioId,
+            AudioStatus.Deleted,
+            cancellationToken);
+        if (!updated)
+        {
+            return Result<bool>.NotFound("Audio asset not found.");
+        }
+
+        await RemoveCachedWordAsync(wordId, cancellationToken);
+        return Result<bool>.Ok(true);
+    }
+
     private async Task<Result<bool>> SetWordStatusAsync(
         uint wordId,
         string status,
@@ -419,6 +504,41 @@ public sealed class WordService : IWordService
     {
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
+
+    private static string? NormalizeAccent(string? accent)
+    {
+        if (string.IsNullOrWhiteSpace(accent))
+        {
+            return null;
+        }
+
+        var normalized = accent.Trim().ToLowerInvariant();
+        return AudioAccent.All.Contains(normalized) ? normalized : null;
+    }
+
+    private static Result<bool> ValidateAudioFile(IFormFile? file)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return Result<bool>.Fail("Audio file is required.");
+        }
+
+        if (file.Length > MaxAudioFileBytes)
+        {
+            return Result<bool>.Fail("Audio file must be 5MB or smaller.");
+        }
+
+        if (!AllowedAudioContentTypes.Contains(file.ContentType))
+        {
+            return Result<bool>.Fail("Audio MIME type must be one of: audio/mpeg, audio/wav, audio/ogg.");
+        }
+
+        return Result<bool>.Ok(true);
+    }
+
+    private static readonly IReadOnlySet<string> AllowedAudioContentTypes = new HashSet<string>(
+        new[] { "audio/mpeg", "audio/wav", "audio/ogg" },
+        StringComparer.OrdinalIgnoreCase);
 
     private static CreateSenseRequest NormalizeCreateSenseRequest(CreateSenseRequest request)
     {

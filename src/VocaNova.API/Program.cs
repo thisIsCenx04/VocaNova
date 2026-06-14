@@ -26,6 +26,7 @@ using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Otp;
 using VocaNova.API.Infrastructure.RateLimiting;
 using VocaNova.API.Infrastructure.Sms;
+using VocaNova.API.Infrastructure.Storage;
 using VocaNova.API.Middleware;
 
 EnvironmentFile.LoadFromRepositoryRoot();
@@ -87,6 +88,7 @@ builder.Services.AddScoped<IAdminKnnLookupService, AdminKnnLookupService>();
 builder.Services.Configure<RedisSettings>(builder.Configuration.GetSection(RedisSettings.SectionName));
 builder.Services.Configure<AiGradingSettings>(builder.Configuration.GetSection(AiGradingSettings.SectionName));
 builder.Services.Configure<KnnOptions>(builder.Configuration.GetSection(KnnOptions.SectionName));
+builder.Services.Configure<AudioStorageSettings>(builder.Configuration.GetSection(AudioStorageSettings.SectionName));
 builder.Services.AddSingleton<IUserProfileCache, RedisUserProfileCache>();
 builder.Services.AddSingleton<IWordSearchCache, RedisWordSearchCache>();
 builder.Services.AddSingleton<IWordDetailCache, RedisWordDetailCache>();
@@ -100,6 +102,7 @@ builder.Services.AddSingleton<IKnnRebuildService, KnnRebuildService>();
 builder.Services.Configure<RateLimitSettings>(builder.Configuration.GetSection(RateLimitSettings.SectionName));
 builder.Services.AddSingleton<IAuthRateLimiter, InMemoryAuthRateLimiter>();
 builder.Services.AddSingleton<IAdminKnnTriggerRateLimiter, InMemoryAdminKnnTriggerRateLimiter>();
+builder.Services.AddSingleton<IAudioStorage, S3AudioStorage>();
 builder.Services.AddSingleton<IOtpCodeGenerator, RandomOtpCodeGenerator>();
 builder.Services.AddSingleton<ISmsProvider, ConsoleSmsProvider>();
 builder.Services.AddHttpClient<IGeminiClient, GeminiClient>((serviceProvider, client) =>
