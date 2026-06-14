@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vocanova_mobile/core/network/api_endpoints.dart';
 import 'package:vocanova_mobile/features/auth/data/auth_repository.dart';
+import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
 
 void main() {
   test('register sends backend contract and parses wrapped tokens', () async {
@@ -147,6 +148,33 @@ void main() {
     expect(user.displayName, 'Nhut');
     expect(user.learningProfile?.learningPurposeId, 5);
   });
+
+  test('updateLearningProfile sends nullable backend contract', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      expect(options.path, ApiEndpoints.updateLearningProfile);
+      expect(options.data, {
+        'age_range_id': 1,
+        'region_id': 2,
+        'occupation_id': null,
+        'education_level_id': 4,
+        'learning_purpose_id': 5,
+      });
+      return profileResponse();
+    });
+
+    final user = await AuthRepository(dio: dio).updateLearningProfile(
+      const LearningProfile(
+        ageRangeId: 1,
+        regionId: 2,
+        educationLevelId: 4,
+        learningPurposeId: 5,
+      ),
+    );
+
+    expect(user.learningProfile?.regionId, 2);
+    expect(user.learningProfile?.occupationId, isNull);
+  });
 }
 
 typedef AdapterCallback = ResponseBody Function(RequestOptions options);
@@ -187,6 +215,28 @@ ResponseBody tokenResponse() {
       'refresh_token': 'refresh',
       'expires_in': 900,
       'token_type': 'Bearer',
+    },
+    'errors': <String>[],
+  });
+}
+
+ResponseBody profileResponse() {
+  return jsonResponse({
+    'success': true,
+    'data': {
+      'user_id': 7,
+      'phone': '0901234567',
+      'display_name': 'Nhut',
+      'avatar_url': null,
+      'role': 'user',
+      'status': 'active',
+      'learning_profile': {
+        'age_range_id': 1,
+        'region_id': 2,
+        'occupation_id': null,
+        'education_level_id': 4,
+        'learning_purpose_id': 5,
+      },
     },
     'errors': <String>[],
   });

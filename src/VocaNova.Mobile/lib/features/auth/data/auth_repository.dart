@@ -91,6 +91,14 @@ class AuthRepository {
     return UserProfile.fromJson(_responseData(response));
   }
 
+  Future<UserProfile> updateLearningProfile(LearningProfile profile) async {
+    final response = await _dio.put<Map<String, dynamic>>(
+      ApiEndpoints.updateLearningProfile,
+      data: profile.toJson(),
+    );
+    return UserProfile.fromJson(_responseData(response));
+  }
+
   Future<void> logout(String refreshToken) async {
     await _dio.post<Map<String, dynamic>>(
       ApiEndpoints.logout,

@@ -107,6 +107,25 @@ class AuthNotifier extends _$AuthNotifier {
     }
   }
 
+  Future<bool> updateLearningProfile(LearningProfile profile) async {
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
+    try {
+      final user = await ref
+          .read(authRepositoryProvider)
+          .updateLearningProfile(profile);
+      await _cacheUser(user);
+      state = AuthState(status: AuthStatus.authenticated, user: user);
+      return true;
+    } catch (error) {
+      state = AuthState(
+        status: AuthStatus.error,
+        user: state.user,
+        errorMessage: _errorMessage(error),
+      );
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     final secureStorage = ref.read(secureStorageProvider);
     final refreshToken = await secureStorage.getRefreshToken();
