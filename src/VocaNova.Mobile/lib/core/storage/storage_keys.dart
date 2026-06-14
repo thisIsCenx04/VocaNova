@@ -9,4 +9,6 @@ abstract final class StorageKeys {
   static const appTheme = 'app_theme';
 
   static String wordCacheJson(int id) => 'word_cache_${id}_json';
+
+  static String savedWordJson(int id) => 'saved_word_${id}_json';
 }

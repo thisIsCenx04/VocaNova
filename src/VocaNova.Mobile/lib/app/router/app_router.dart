@@ -11,6 +11,7 @@ import 'package:vocanova_mobile/features/auth/presentation/onboarding_screen.dar
 import 'package:vocanova_mobile/features/auth/presentation/otp_screen.dart';
 import 'package:vocanova_mobile/features/auth/presentation/register_screen.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/word_search_screen.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/word_detail_screen.dart';
 import 'package:vocanova_mobile/features/home/presentation/home_screen.dart';
 import 'package:vocanova_mobile/features/shared/presentation/placeholder_screen.dart';
 
@@ -93,9 +94,8 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.word,
-        builder: (_, state) => PlaceholderScreen(
-          title: 'Chi tiết từ #${state.pathParameters['id']}',
-        ),
+        builder: (_, state) =>
+            WordDetailScreen(wordId: int.parse(state.pathParameters['id']!)),
       ),
       GoRoute(
         path: AppRoutes.list,
