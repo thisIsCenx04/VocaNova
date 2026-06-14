@@ -13,6 +13,7 @@ import 'package:vocanova_mobile/features/auth/presentation/register_screen.dart'
 import 'package:vocanova_mobile/features/dictionary/presentation/word_search_screen.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/word_detail_screen.dart';
 import 'package:vocanova_mobile/features/home/presentation/home_screen.dart';
+import 'package:vocanova_mobile/features/lists/presentation/lists_screen.dart';
 import 'package:vocanova_mobile/features/shared/presentation/placeholder_screen.dart';
 
 class AppRouter {
@@ -73,8 +74,7 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: AppRoutes.lists,
-                builder: (_, _) =>
-                    const PlaceholderScreen(title: 'Danh sách từ'),
+                builder: (_, _) => const ListsScreen(),
               ),
             ],
           ),

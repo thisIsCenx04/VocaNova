@@ -21,4 +21,6 @@ abstract final class ApiEndpoints {
   static String word(int id) => '$words/$id';
 
   static String listWords(int id) => '$lists/$id/words';
+
+  static String list(int id) => '$lists/$id';
 }

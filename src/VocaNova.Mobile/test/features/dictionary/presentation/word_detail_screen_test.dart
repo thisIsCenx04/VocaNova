@@ -64,10 +64,7 @@ void main() {
     await tester.pump();
     expect(find.text('Đã lưu vào sách từ'), findsOneWidget);
 
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('word-topic-2')),
-      300,
-    );
+    await tester.scrollUntilVisible(find.byKey(const Key('word-topic-2')), 300);
     expect(find.text('Giao tiếp'), findsOneWidget);
   });
 
