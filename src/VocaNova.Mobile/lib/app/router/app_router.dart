@@ -15,6 +15,7 @@ import 'package:vocanova_mobile/features/dictionary/presentation/word_detail_scr
 import 'package:vocanova_mobile/features/home/presentation/home_screen.dart';
 import 'package:vocanova_mobile/features/lists/presentation/lists_screen.dart';
 import 'package:vocanova_mobile/features/lists/presentation/list_detail_screen.dart';
+import 'package:vocanova_mobile/features/progress/presentation/progress_overview_screen.dart';
 import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/quiz_config_screen.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/quiz_result_screen.dart';
@@ -88,7 +89,7 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: AppRoutes.progress,
-                builder: (_, _) => const PlaceholderScreen(title: 'Tiến độ'),
+                builder: (_, _) => const ProgressOverviewScreen(),
               ),
             ],
           ),
