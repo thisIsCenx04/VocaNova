@@ -99,6 +99,17 @@ class AuthRepository {
     return UserProfile.fromJson(_responseData(response));
   }
 
+  Future<UserProfile> updateProfile({
+    required String displayName,
+    String? avatarUrl,
+  }) async {
+    final response = await _dio.put<Map<String, dynamic>>(
+      ApiEndpoints.updateProfile,
+      data: {'display_name': displayName, 'avatar_url': avatarUrl},
+    );
+    return UserProfile.fromJson(_responseData(response));
+  }
+
   Future<void> logout(String refreshToken) async {
     await _dio.post<Map<String, dynamic>>(
       ApiEndpoints.logout,

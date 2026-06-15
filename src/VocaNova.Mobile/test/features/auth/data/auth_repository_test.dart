@@ -175,6 +175,27 @@ void main() {
     expect(user.learningProfile?.regionId, 2);
     expect(user.learningProfile?.occupationId, isNull);
   });
+
+  test(
+    'updateProfile sends backend display name and avatar contract',
+    () async {
+      final dio = Dio();
+      dio.httpClientAdapter = CallbackAdapter((options) {
+        expect(options.path, ApiEndpoints.updateProfile);
+        expect(options.data, {
+          'display_name': 'Nhut Updated',
+          'avatar_url': null,
+        });
+        return profileResponse(displayName: 'Nhut Updated');
+      });
+
+      final user = await AuthRepository(
+        dio: dio,
+      ).updateProfile(displayName: 'Nhut Updated');
+
+      expect(user.displayName, 'Nhut Updated');
+    },
+  );
 }
 
 typedef AdapterCallback = ResponseBody Function(RequestOptions options);
@@ -220,13 +241,13 @@ ResponseBody tokenResponse() {
   });
 }
 
-ResponseBody profileResponse() {
+ResponseBody profileResponse({String displayName = 'Nhut'}) {
   return jsonResponse({
     'success': true,
     'data': {
       'user_id': 7,
       'phone': '0901234567',
-      'display_name': 'Nhut',
+      'display_name': displayName,
       'avatar_url': null,
       'role': 'user',
       'status': 'active',

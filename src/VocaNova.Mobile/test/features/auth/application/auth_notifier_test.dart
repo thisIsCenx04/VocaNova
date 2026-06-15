@@ -194,6 +194,34 @@ void main() {
     );
   });
 
+  test('updateProfile updates state and cached display name', () async {
+    const updatedUser = UserProfile(
+      userId: 7,
+      phone: '0901234567',
+      displayName: 'Nhut Updated',
+      role: 'user',
+      status: 'active',
+    );
+    when(
+      () => repository.updateProfile(
+        displayName: 'Nhut Updated',
+        avatarUrl: null,
+      ),
+    ).thenAnswer((_) async => updatedUser);
+
+    final success = await container
+        .read(authProvider.notifier)
+        .updateProfile(displayName: 'Nhut Updated');
+
+    final cachedJson = await localStorage.getWithTtl<String>(
+      StorageKeys.userProfileJson,
+      ttl: AuthNotifier.profileCacheTtl,
+    );
+    expect(success, isTrue);
+    expect(container.read(authProvider).user?.displayName, 'Nhut Updated');
+    expect(jsonDecode(cachedJson!)['display_name'], 'Nhut Updated');
+  });
+
   test('login exposes Vietnamese AppException from Dio interceptor', () async {
     when(
       () => repository.login(phone: '0901234567', password: 'wrong'),
