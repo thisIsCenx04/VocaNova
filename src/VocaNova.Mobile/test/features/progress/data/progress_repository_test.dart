@@ -24,6 +24,31 @@ void main() {
     expect(summary.masteredWords, 12);
     expect(summary.sessionsThisMonth, 8);
   });
+
+  test('analytics requests match backend contracts and parse data', () async {
+    final dio = Dio();
+    final requests = <RequestOptions>[];
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      requests.add(options);
+      return jsonResponse(switch (options.path) {
+        ApiEndpoints.progressChart => chartJson,
+        ApiEndpoints.progressMasteryBreakdown => masteryJson,
+        _ => weakestJson,
+      });
+    });
+    final repository = ProgressRepository(dio: dio);
+
+    final chart = await repository.getChart('weekly');
+    final mastery = await repository.getMasteryBreakdown();
+    final weakest = await repository.getWeakestWords();
+
+    expect(chart.granularity, 'weekly');
+    expect(chart.points.single.sessionsCount, 3);
+    expect(mastery.last.masteryLevel, 5);
+    expect(weakest.single.accuracyRate, 25);
+    expect(requests[0].queryParameters, {'granularity': 'weekly'});
+    expect(requests[2].queryParameters, {'limit': 10});
+  });
 }
 
 typedef AdapterCallback = ResponseBody Function(RequestOptions options);
@@ -61,3 +86,28 @@ const summaryJson = {
   'mastered_words': 12,
   'sessions_this_month': 8,
 };
+
+const chartJson = {
+  'granularity': 'weekly',
+  'points': [
+    {'period_label': '2026-06-09', 'sessions_count': 3, 'accuracy': 75},
+  ],
+};
+
+const masteryJson = [
+  {'mastery_level': 0, 'word_count': 2},
+  {'mastery_level': 5, 'word_count': 7},
+];
+
+const weakestJson = [
+  {
+    'word_id': 7,
+    'word': 'apple',
+    'primary_meaning': 'quả táo',
+    'test_count': 4,
+    'correct_count': 1,
+    'wrong_count': 3,
+    'accuracy_rate': 25,
+    'mastery_level': 1,
+  },
+];

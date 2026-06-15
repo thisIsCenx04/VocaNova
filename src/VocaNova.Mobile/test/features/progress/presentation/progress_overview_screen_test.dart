@@ -38,6 +38,7 @@ void main() {
     expect(find.text('42'), findsOneWidget);
     expect(find.text('12'), findsOneWidget);
     expect(find.text('8'), findsOneWidget);
+    expect(find.byKey(const Key('open-progress-charts')), findsOneWidget);
   });
 
   testWidgets('offline renders fresh cached summary and banner', (

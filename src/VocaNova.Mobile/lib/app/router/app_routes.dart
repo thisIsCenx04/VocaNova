@@ -15,6 +15,7 @@ abstract final class AppRoutes {
   static const quizResult = '/quiz/result';
   static const wrongWords = '/quiz/wrong-words';
   static const progress = '/progress';
+  static const progressCharts = '/progress/charts';
   static const settings = '/settings';
   static const profile = '/profile';
 
