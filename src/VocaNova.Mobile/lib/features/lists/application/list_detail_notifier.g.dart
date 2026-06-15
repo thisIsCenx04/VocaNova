@@ -59,7 +59,7 @@ final class ListDetailNotifierProvider
 }
 
 String _$listDetailNotifierHash() =>
-    r'3ce55e0b726c8d16d0273490f918916cc18d6dd2';
+    r'58beb56d3b258bca9147ba5dae5198f99fbb028e';
 
 final class ListDetailNotifierFamily extends $Family
     with

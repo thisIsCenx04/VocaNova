@@ -39,7 +39,9 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
       floatingActionButton: FloatingActionButton(
         key: const Key('create-list-fab'),
         tooltip: 'Tạo danh sách',
-        onPressed: state.isMutating ? null : () => _showNameDialog(),
+        onPressed: state.isMutating || state.isOffline
+            ? null
+            : () => _showNameDialog(),
         child: state.isMutating
             ? const SizedBox.square(
                 dimension: 22,
@@ -75,7 +77,9 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
                           onTap: () => context.push(
                             AppRoutes.listDetail(list.listId.toString()),
                           ),
-                          onLongPress: () => _showActions(list),
+                          onLongPress: state.isOffline
+                              ? () {}
+                              : () => _showActions(list),
                         );
                       },
                     ),

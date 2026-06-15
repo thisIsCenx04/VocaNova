@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
+import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/data/word_search_repository.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
@@ -77,13 +78,29 @@ void main() {
     expect(router.state.uri.queryParameters['sessionId'], '9');
     verify(() => repository.createSession(any())).called(1);
   });
+
+  testWidgets('offline disables start with connectivity tooltip', (
+    tester,
+  ) async {
+    await pumpConfig(tester, repository, searchRepository, isOnline: false);
+
+    await tester.pump();
+    final button = tester.widget<FilledButton>(
+      find.byKey(const Key('start-quiz-button')),
+    );
+    expect(button.onPressed, isNull);
+    expect(find.text('Bạn đang ngoại tuyến'), findsOneWidget);
+    expect(find.byTooltip('Cần kết nối mạng'), findsOneWidget);
+    verifyNever(() => repository.createSession(any()));
+  });
 }
 
 Future<GoRouter> pumpConfig(
   WidgetTester tester,
   QuizRepository repository,
-  WordSearchRepository searchRepository,
-) async {
+  WordSearchRepository searchRepository, {
+  bool isOnline = true,
+}) async {
   tester.view.physicalSize = const Size(800, 2400);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -110,6 +127,7 @@ Future<GoRouter> pumpConfig(
       overrides: [
         quizRepositoryProvider.overrideWithValue(repository),
         wordSearchRepositoryProvider.overrideWithValue(searchRepository),
+        connectivityProvider.overrideWith((ref) => Stream.value(isOnline)),
       ],
       child: MaterialApp.router(routerConfig: router),
     ),

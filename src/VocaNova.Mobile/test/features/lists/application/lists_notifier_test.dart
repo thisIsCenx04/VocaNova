@@ -7,8 +7,8 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
-import 'package:vocanova_mobile/features/dictionary/application/connectivity_service.dart';
-import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
+import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
+import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
 import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
@@ -89,6 +89,21 @@ void main() {
       await storage.get<String>(StorageKeys.listsCacheJson),
       contains('Trips'),
     );
+  });
+
+  test('offline mutations do not call API', () async {
+    when(() => connectivity.isOnline).thenAnswer((_) async => false);
+    await container.read(listsProvider.notifier).load();
+
+    expect(
+      await container.read(listsProvider.notifier).create('Travel'),
+      isFalse,
+    );
+    expect(await container.read(listsProvider.notifier).delete(3), isFalse);
+
+    expect(container.read(listsProvider).isOffline, isTrue);
+    verifyNever(() => repository.create(any()));
+    verifyNever(() => repository.delete(any()));
   });
 }
 

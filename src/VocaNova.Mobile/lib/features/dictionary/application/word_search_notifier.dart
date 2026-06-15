@@ -3,11 +3,11 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/core/network/app_exception.dart';
 import 'package:vocanova_mobile/core/network/dio_client.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
-import 'package:vocanova_mobile/features/dictionary/application/connectivity_service.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_state.dart';
 import 'package:vocanova_mobile/features/dictionary/data/word_search_repository.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
@@ -18,9 +18,6 @@ part 'word_search_notifier.g.dart';
 WordSearchRepository wordSearchRepository(Ref ref) {
   return WordSearchRepository(dio: DioClient.instance.dio);
 }
-
-@Riverpod(keepAlive: true)
-ConnectivityService connectivityService(Ref ref) => ConnectivityService();
 
 @Riverpod(keepAlive: true)
 LocalStorage searchLocalStorage(Ref ref) => LocalStorage.instance;

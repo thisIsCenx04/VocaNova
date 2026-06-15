@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vocanova_mobile/app/router/app_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
+import 'package:vocanova_mobile/core/connectivity/cache_warming_service.dart';
 import 'package:vocanova_mobile/core/network/app_exception.dart';
 import 'package:vocanova_mobile/core/network/dio_client.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
@@ -13,6 +14,8 @@ import 'package:vocanova_mobile/features/auth/data/auth_repository.dart';
 import 'package:vocanova_mobile/features/auth/data/google_auth_service.dart';
 import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
 import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
+import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
+import 'package:vocanova_mobile/features/progress/data/progress_repository.dart';
 
 part 'auth_notifier.g.dart';
 
@@ -32,6 +35,13 @@ SecureStorage secureStorage(Ref ref) => SecureStorage.instance;
 
 @Riverpod(keepAlive: true)
 AppRouter appRouter(Ref ref) => AppRouter.instance;
+
+@Riverpod(keepAlive: true)
+CacheWarmingService cacheWarmingService(Ref ref) => CacheWarmingService(
+  listsRepository: ListsRepository(dio: DioClient.instance.dio),
+  progressRepository: ProgressRepository(dio: DioClient.instance.dio),
+  storage: ref.read(localStorageProvider),
+);
 
 @Riverpod(keepAlive: true)
 class AuthNotifier extends _$AuthNotifier {
@@ -176,6 +186,9 @@ class AuthNotifier extends _$AuthNotifier {
             refreshToken: tokens.refreshToken,
           );
       await loadCurrentUser();
+      if (state.status == AuthStatus.authenticated) {
+        await ref.read(cacheWarmingServiceProvider).warm();
+      }
     } catch (error) {
       state = AuthState(
         status: AuthStatus.error,

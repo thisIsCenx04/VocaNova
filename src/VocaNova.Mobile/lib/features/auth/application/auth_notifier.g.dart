@@ -220,6 +220,54 @@ final class AppRouterProvider
 
 String _$appRouterHash() => r'c9f22d65a2ce7ef7bcf942efcdab430a527bdc06';
 
+@ProviderFor(cacheWarmingService)
+const cacheWarmingServiceProvider = CacheWarmingServiceProvider._();
+
+final class CacheWarmingServiceProvider
+    extends
+        $FunctionalProvider<
+          CacheWarmingService,
+          CacheWarmingService,
+          CacheWarmingService
+        >
+    with $Provider<CacheWarmingService> {
+  const CacheWarmingServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'cacheWarmingServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$cacheWarmingServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<CacheWarmingService> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  CacheWarmingService create(Ref ref) {
+    return cacheWarmingService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CacheWarmingService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CacheWarmingService>(value),
+    );
+  }
+}
+
+String _$cacheWarmingServiceHash() =>
+    r'70e7803912abf7cb7e2caf575abf2feeae5f3cd2';
+
 @ProviderFor(AuthNotifier)
 const authProvider = AuthNotifierProvider._();
 
@@ -252,7 +300,7 @@ final class AuthNotifierProvider
   }
 }
 
-String _$authNotifierHash() => r'cbcf9bcd2167a5549994d05b39bbb178d9d7388c';
+String _$authNotifierHash() => r'5136d5b4b449dabcc3f5910b3bd33dd1adf6033e';
 
 abstract class _$AuthNotifier extends $Notifier<AuthState> {
   AuthState build();
