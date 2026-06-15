@@ -280,7 +280,10 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
   Future<void> _startQuiz() async {
     final session = await _notifier.createSession();
     if (session != null && mounted) {
-      context.push(AppRoutes.quizSession(session.sessionId.toString()));
+      context.push(
+        AppRoutes.quizSession(session.sessionId.toString()),
+        extra: session,
+      );
     }
   }
 }

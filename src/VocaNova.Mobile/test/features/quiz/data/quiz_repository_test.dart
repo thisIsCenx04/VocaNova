@@ -29,8 +29,21 @@ void main() {
           'answer_method': 'exact_typing',
         });
         return jsonResponse({
-          'session': {'session_id': 9},
-          'first_question': {'word_id': 7},
+          'session': {
+            'session_id': 9,
+            'answer_method': 'exact_typing',
+            'mode': 'timed',
+            'question_count': 20,
+            'time_limit_sec': 120,
+            'lives': null,
+          },
+          'first_question': {
+            'word_id': 7,
+            'sense_id': 8,
+            'question_type': 2,
+            'display_content': 'quả táo',
+            'choices': ['apple', 'orange', 'pear', 'grape'],
+          },
         });
       });
 
@@ -49,8 +62,56 @@ void main() {
 
       expect(result.sessionId, 9);
       expect(result.firstQuestionWordId, 7);
+      expect(result.questionCount, 20);
+      expect(result.firstQuestion.choices, hasLength(4));
     },
   );
+
+  test(
+    'submitAnswer sends answer and parses feedback with next question',
+    () async {
+      final dio = Dio();
+      dio.httpClientAdapter = CallbackAdapter((options) {
+        expect(options.path, ApiEndpoints.quizAnswer(9));
+        expect(options.method, 'POST');
+        expect(options.data, {'word_id': 7, 'user_answer': 'orange'});
+        return jsonResponse({
+          'is_correct': false,
+          'expected_answer': 'apple',
+          'correct_count': 0,
+          'wrong_count': 1,
+          'score': 0,
+          'ai_explanation': null,
+          'next_question': {
+            'word_id': 10,
+            'sense_id': 11,
+            'question_type': 2,
+            'display_content': 'quả lê',
+            'choices': ['pear', 'orange', 'apple', 'grape'],
+          },
+        });
+      });
+
+      final result = await QuizRepository(
+        dio: dio,
+      ).submitAnswer(sessionId: 9, wordId: 7, answer: 'orange');
+
+      expect(result.isCorrect, isFalse);
+      expect(result.expectedAnswer, 'apple');
+      expect(result.nextQuestion?.wordId, 10);
+    },
+  );
+
+  test('finishSession posts to current backend endpoint', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      expect(options.path, ApiEndpoints.quizFinish(9));
+      expect(options.method, 'POST');
+      return jsonResponse({});
+    });
+
+    await QuizRepository(dio: dio).finishSession(9);
+  });
 }
 
 typedef AdapterCallback = ResponseBody Function(RequestOptions options);

@@ -27,6 +27,9 @@ abstract final class AppRoutes {
   static String quizSession(String id) =>
       Uri(path: quizActive, queryParameters: {'sessionId': id}).toString();
 
+  static String quizResultFor(String id) =>
+      Uri(path: quizResult, queryParameters: {'sessionId': id}).toString();
+
   static String otpFor(String phone, {String purpose = 'verify'}) {
     return Uri(
       path: otp,
