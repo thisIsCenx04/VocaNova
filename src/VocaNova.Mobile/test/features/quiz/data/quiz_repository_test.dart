@@ -1,0 +1,79 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:vocanova_mobile/core/network/api_endpoints.dart';
+import 'package:vocanova_mobile/features/quiz/data/quiz_repository.dart';
+import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
+
+void main() {
+  test(
+    'createSession sends current backend contract and parses response',
+    () async {
+      final dio = Dio();
+      dio.httpClientAdapter = CallbackAdapter((options) {
+        expect(options.path, ApiEndpoints.quizSessions);
+        expect(options.method, 'POST');
+        expect(options.data, {
+          'mode': 'timed',
+          'question_type': 2,
+          'scope_type': 'date_range',
+          'scope_date_from': '2026-06-01',
+          'scope_date_to': '2026-06-15',
+          'topic_ids': [2, 3],
+          'word_order': 'random',
+          'word_limit': 20,
+          'time_limit_sec': 120,
+          'lives': null,
+          'answer_method': 'exact_typing',
+        });
+        return jsonResponse({
+          'session': {'session_id': 9},
+          'first_question': {'word_id': 7},
+        });
+      });
+
+      final result = await QuizRepository(dio: dio).createSession(
+        QuizConfigRequest(
+          mode: 'timed',
+          questionType: 2,
+          scopeType: 'date_range',
+          scopeDateFrom: DateTime(2026, 6, 1),
+          scopeDateTo: DateTime(2026, 6, 15),
+          topicIds: const [2, 3],
+          timeLimitSec: 120,
+          answerMethod: 'exact_typing',
+        ),
+      );
+
+      expect(result.sessionId, 9);
+      expect(result.firstQuestionWordId, 7);
+    },
+  );
+}
+
+typedef AdapterCallback = ResponseBody Function(RequestOptions options);
+
+class CallbackAdapter implements HttpClientAdapter {
+  CallbackAdapter(this.callback);
+  final AdapterCallback callback;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async => callback(options);
+
+  @override
+  void close({bool force = false}) {}
+}
+
+ResponseBody jsonResponse(Object data) => ResponseBody.fromString(
+  jsonEncode({'success': true, 'data': data, 'errors': <String>[]}),
+  201,
+  headers: {
+    Headers.contentTypeHeader: [Headers.jsonContentType],
+  },
+);
