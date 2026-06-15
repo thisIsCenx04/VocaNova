@@ -31,9 +31,9 @@ void main() {
         ),
       ],
     );
-    when(() => repository.createSession(any())).thenAnswer(
-      (_) async => const QuizSessionStart(sessionId: 9, firstQuestionWordId: 7),
-    );
+    when(
+      () => repository.createSession(any()),
+    ).thenAnswer((_) async => testSession);
   });
 
   testWidgets('renders all sections, topics, and dynamic mode inputs', (
@@ -129,4 +129,18 @@ const fallbackRequest = QuizConfigRequest(
   scopeType: 'all',
   topicIds: [],
   answerMethod: 'multiple_choice',
+);
+
+const testSession = QuizSessionStart(
+  sessionId: 9,
+  answerMethod: 'multiple_choice',
+  mode: 'standard',
+  questionCount: 1,
+  firstQuestion: QuizQuestion(
+    wordId: 7,
+    senseId: 8,
+    questionType: 1,
+    displayContent: 'apple',
+    choices: ['quả táo', 'quả cam', 'quả lê', 'quả nho'],
+  ),
 );

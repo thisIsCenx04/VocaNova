@@ -1,20 +1,96 @@
 class QuizSessionStart {
   const QuizSessionStart({
     required this.sessionId,
-    required this.firstQuestionWordId,
+    required this.answerMethod,
+    required this.mode,
+    required this.questionCount,
+    required this.firstQuestion,
+    this.timeLimitSec,
+    this.lives,
   });
 
   final int sessionId;
-  final int firstQuestionWordId;
+  final String answerMethod;
+  final String mode;
+  final int questionCount;
+  final int? timeLimitSec;
+  final int? lives;
+  final QuizQuestion firstQuestion;
+
+  int get firstQuestionWordId => firstQuestion.wordId;
 
   factory QuizSessionStart.fromJson(Map<String, dynamic> json) {
     final session = json['session'] as Map<String, dynamic>;
     final question = json['first_question'] as Map<String, dynamic>;
     return QuizSessionStart(
       sessionId: session['session_id'] as int,
-      firstQuestionWordId: question['word_id'] as int,
+      answerMethod: session['answer_method'] as String,
+      mode: session['mode'] as String,
+      questionCount: session['question_count'] as int,
+      timeLimitSec: session['time_limit_sec'] as int?,
+      lives: session['lives'] as int?,
+      firstQuestion: QuizQuestion.fromJson(question),
     );
   }
+}
+
+class QuizQuestion {
+  const QuizQuestion({
+    required this.wordId,
+    required this.senseId,
+    required this.questionType,
+    required this.displayContent,
+    required this.choices,
+  });
+
+  final int wordId;
+  final int senseId;
+  final int questionType;
+  final String displayContent;
+  final List<String> choices;
+
+  factory QuizQuestion.fromJson(Map<String, dynamic> json) => QuizQuestion(
+    wordId: json['word_id'] as int,
+    senseId: json['sense_id'] as int,
+    questionType: json['question_type'] as int,
+    displayContent: json['display_content'] as String,
+    choices: (json['choices'] as List<dynamic>).cast<String>(),
+  );
+}
+
+class QuizAnswerResult {
+  const QuizAnswerResult({
+    required this.isCorrect,
+    required this.expectedAnswer,
+    required this.correctCount,
+    required this.wrongCount,
+    required this.score,
+    this.aiExplanation,
+    this.nextQuestion,
+  });
+
+  final bool isCorrect;
+  final String expectedAnswer;
+  final int correctCount;
+  final int wrongCount;
+  final double score;
+  final String? aiExplanation;
+  final QuizQuestion? nextQuestion;
+
+  factory QuizAnswerResult.fromJson(Map<String, dynamic> json) =>
+      QuizAnswerResult(
+        isCorrect: json['is_correct'] as bool,
+        expectedAnswer: json['expected_answer'] as String,
+        correctCount: json['correct_count'] as int,
+        wrongCount: json['wrong_count'] as int,
+        score: (json['score'] as num).toDouble(),
+        aiExplanation: json['ai_explanation'] as String?,
+        nextQuestion: json['next_question'] == null
+            ? null
+            : QuizQuestion.fromJson(
+                json['next_question'] as Map<String, dynamic>,
+              ),
+      );
 }
 
 class QuizConfigRequest {

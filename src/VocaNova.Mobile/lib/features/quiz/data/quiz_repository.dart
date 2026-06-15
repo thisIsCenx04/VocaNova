@@ -18,4 +18,24 @@ class QuizRepository {
     }
     return QuizSessionStart.fromJson(data);
   }
+
+  Future<QuizAnswerResult> submitAnswer({
+    required int sessionId,
+    required int wordId,
+    required String answer,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.quizAnswer(sessionId),
+      data: {'word_id': wordId, 'user_answer': answer},
+    );
+    final data = response.data?['data'];
+    if (data is! Map<String, dynamic>) {
+      throw const FormatException('Invalid quiz answer response.');
+    }
+    return QuizAnswerResult.fromJson(data);
+  }
+
+  Future<void> finishSession(int sessionId) async {
+    await _dio.post<Map<String, dynamic>>(ApiEndpoints.quizFinish(sessionId));
+  }
 }

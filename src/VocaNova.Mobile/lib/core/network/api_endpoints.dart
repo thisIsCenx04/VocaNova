@@ -29,4 +29,8 @@ abstract final class ApiEndpoints {
       '${listWords(listId)}/$wordId';
 
   static String listRandomWords(int id) => '${listWords(id)}/random';
+
+  static String quizAnswer(int id) => '$quizSessions/$id/answer';
+
+  static String quizFinish(int id) => '$quizSessions/$id/finish';
 }

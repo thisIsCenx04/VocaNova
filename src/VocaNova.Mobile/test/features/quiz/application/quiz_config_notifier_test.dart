@@ -60,9 +60,9 @@ void main() {
   });
 
   test('creates session with selected config', () async {
-    when(() => repository.createSession(any())).thenAnswer(
-      (_) async => const QuizSessionStart(sessionId: 9, firstQuestionWordId: 7),
-    );
+    when(
+      () => repository.createSession(any()),
+    ).thenAnswer((_) async => testSession);
     final notifier = container.read(quizConfigProvider.notifier);
     notifier.setMode('timed');
     notifier.setTimeLimit(120);
@@ -94,4 +94,18 @@ const fallbackRequest = QuizConfigRequest(
   scopeType: 'all',
   topicIds: [],
   answerMethod: 'multiple_choice',
+);
+
+const testSession = QuizSessionStart(
+  sessionId: 9,
+  answerMethod: 'multiple_choice',
+  mode: 'standard',
+  questionCount: 1,
+  firstQuestion: QuizQuestion(
+    wordId: 7,
+    senseId: 8,
+    questionType: 1,
+    displayContent: 'apple',
+    choices: ['quả táo', 'quả cam', 'quả lê', 'quả nho'],
+  ),
 );
