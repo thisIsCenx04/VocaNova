@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -101,6 +103,70 @@ void main() {
     verify(() => repository.finishSession(9)).called(1);
     expect(router.state.uri.path, AppRoutes.quizResult);
   });
+
+  testWidgets('exact typing autofocuses and submits from keyboard', (
+    tester,
+  ) async {
+    when(
+      () => repository.submitAnswer(
+        sessionId: any(named: 'sessionId'),
+        wordId: any(named: 'wordId'),
+        answer: any(named: 'answer'),
+      ),
+    ).thenAnswer((_) async => exactAnswerResult);
+    await pumpSession(tester, repository, exactTypingSession);
+
+    final field = tester.widget<TextField>(
+      find.byKey(const Key('typing-answer-input')),
+    );
+    expect(field.autofocus, isTrue);
+    expect(find.textContaining('Không phân biệt hoa thường'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('typing-answer-input')),
+      'APPLE!!!',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    verify(
+      () =>
+          repository.submitAnswer(sessionId: 9, wordId: 7, answer: 'APPLE!!!'),
+    ).called(1);
+    expect(find.text('Chính xác'), findsOneWidget);
+    expect(find.text('Đáp án: apple'), findsOneWidget);
+  });
+
+  testWidgets('AI typing shows loading, score, explanation, and suggestion', (
+    tester,
+  ) async {
+    final response = Completer<QuizAnswerResult>();
+    when(
+      () => repository.submitAnswer(
+        sessionId: any(named: 'sessionId'),
+        wordId: any(named: 'wordId'),
+        answer: any(named: 'answer'),
+      ),
+    ).thenAnswer((_) => response.future);
+    await pumpSession(tester, repository, aiTypingSession);
+
+    await tester.enterText(
+      find.byKey(const Key('typing-answer-input')),
+      'a sweet fruit',
+    );
+    await tester.tap(find.byKey(const Key('submit-typing-answer-button')));
+    await tester.pump();
+
+    expect(find.text('AI đang đánh giá...'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsWidgets);
+
+    response.complete(aiAnswerResult);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Điểm AI: 75%'), findsOneWidget);
+    expect(find.text('Ý đúng nhưng chưa đủ.'), findsOneWidget);
+    expect(find.text('Gợi ý: Bổ sung màu sắc.'), findsOneWidget);
+  });
 }
 
 Future<GoRouter> pumpSession(
@@ -173,6 +239,22 @@ const eliminationSession = QuizSessionStart(
   firstQuestion: firstQuestion,
 );
 
+const exactTypingSession = QuizSessionStart(
+  sessionId: 9,
+  answerMethod: 'exact_typing',
+  mode: 'standard',
+  questionCount: 1,
+  firstQuestion: firstQuestion,
+);
+
+const aiTypingSession = QuizSessionStart(
+  sessionId: 9,
+  answerMethod: 'ai_typing',
+  mode: 'standard',
+  questionCount: 1,
+  firstQuestion: firstQuestion,
+);
+
 const wrongAnswerWithNext = QuizAnswerResult(
   isCorrect: false,
   expectedAnswer: 'apple',
@@ -180,4 +262,23 @@ const wrongAnswerWithNext = QuizAnswerResult(
   wrongCount: 1,
   score: 0,
   nextQuestion: nextQuestion,
+);
+
+const exactAnswerResult = QuizAnswerResult(
+  isCorrect: true,
+  expectedAnswer: 'apple',
+  correctCount: 1,
+  wrongCount: 0,
+  score: 1,
+);
+
+const aiAnswerResult = QuizAnswerResult(
+  isCorrect: true,
+  expectedAnswer: 'apple',
+  correctCount: 1,
+  wrongCount: 0,
+  score: 1,
+  aiScore: 0.75,
+  aiExplanation: 'Ý đúng nhưng chưa đủ.',
+  aiSuggestion: 'Bổ sung màu sắc.',
 );

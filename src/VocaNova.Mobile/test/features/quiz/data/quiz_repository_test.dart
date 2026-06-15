@@ -81,7 +81,9 @@ void main() {
           'correct_count': 0,
           'wrong_count': 1,
           'score': 0,
-          'ai_explanation': null,
+          'ai_score': 0.75,
+          'ai_explanation': 'Gần đúng.',
+          'ai_suggestion': 'Dùng từ apple.',
           'next_question': {
             'word_id': 10,
             'sense_id': 11,
@@ -99,6 +101,9 @@ void main() {
       expect(result.isCorrect, isFalse);
       expect(result.expectedAnswer, 'apple');
       expect(result.nextQuestion?.wordId, 10);
+      expect(result.aiScore, 0.75);
+      expect(result.aiExplanation, 'Gần đúng.');
+      expect(result.aiSuggestion, 'Dùng từ apple.');
     },
   );
 

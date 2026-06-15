@@ -65,7 +65,9 @@ class QuizAnswerResult {
     required this.correctCount,
     required this.wrongCount,
     required this.score,
+    this.aiScore,
     this.aiExplanation,
+    this.aiSuggestion,
     this.nextQuestion,
   });
 
@@ -74,7 +76,9 @@ class QuizAnswerResult {
   final int correctCount;
   final int wrongCount;
   final double score;
+  final double? aiScore;
   final String? aiExplanation;
+  final String? aiSuggestion;
   final QuizQuestion? nextQuestion;
 
   factory QuizAnswerResult.fromJson(Map<String, dynamic> json) =>
@@ -84,7 +88,9 @@ class QuizAnswerResult {
         correctCount: json['correct_count'] as int,
         wrongCount: json['wrong_count'] as int,
         score: (json['score'] as num).toDouble(),
+        aiScore: (json['ai_score'] as num?)?.toDouble(),
         aiExplanation: json['ai_explanation'] as String?,
+        aiSuggestion: json['ai_suggestion'] as String?,
         nextQuestion: json['next_question'] == null
             ? null
             : QuizQuestion.fromJson(
