@@ -15,6 +15,7 @@ import 'package:vocanova_mobile/features/dictionary/presentation/word_detail_scr
 import 'package:vocanova_mobile/features/home/presentation/home_screen.dart';
 import 'package:vocanova_mobile/features/lists/presentation/lists_screen.dart';
 import 'package:vocanova_mobile/features/lists/presentation/list_detail_screen.dart';
+import 'package:vocanova_mobile/features/quiz/presentation/quiz_config_screen.dart';
 import 'package:vocanova_mobile/features/shared/presentation/placeholder_screen.dart';
 
 class AppRouter {
@@ -105,7 +106,11 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.quizConfig,
-        builder: (_, _) => const PlaceholderScreen(title: 'Cấu hình kiểm tra'),
+        builder: (_, state) => QuizConfigScreen(
+          initialListId: int.tryParse(
+            state.uri.queryParameters['listId'] ?? '',
+          ),
+        ),
       ),
       GoRoute(
         path: AppRoutes.quizActive,
