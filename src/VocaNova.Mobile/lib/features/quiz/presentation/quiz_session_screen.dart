@@ -6,6 +6,8 @@ import 'package:vocanova_mobile/features/quiz/application/quiz_session_notifier.
 import 'package:vocanova_mobile/features/quiz/application/quiz_session_state.dart';
 import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
 
+part 'typing_answer.dart';
+
 class QuizSessionScreen extends ConsumerWidget {
   const QuizSessionScreen({required this.session, super.key});
 
@@ -76,32 +78,38 @@ class QuizSessionScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 24),
                 Expanded(
-                  child: ListView.separated(
-                    itemCount: state.question.choices.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final answer = state.question.choices[index];
-                      return _AnswerButton(
-                        key: Key('quiz-answer-$index'),
-                        label: answer,
-                        style: _answerStyle(context, state, answer),
-                        isLoading:
-                            state.isSubmitting &&
-                            state.selectedAnswer == answer,
-                        onPressed: state.hasAnswered || state.isSubmitting
-                            ? null
-                            : () => notifier.submitAnswer(answer),
-                      );
-                    },
-                  ),
+                  child: session.answerMethod == 'multiple_choice'
+                      ? ListView.separated(
+                          itemCount: state.question.choices.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final answer = state.question.choices[index];
+                            return _AnswerButton(
+                              key: Key('quiz-answer-$index'),
+                              label: answer,
+                              style: _answerStyle(context, state, answer),
+                              isLoading:
+                                  state.isSubmitting &&
+                                  state.selectedAnswer == answer,
+                              onPressed: state.hasAnswered || state.isSubmitting
+                                  ? null
+                                  : () => notifier.submitAnswer(answer),
+                            );
+                          },
+                        )
+                      : _TypingAnswer(
+                          key: ValueKey(state.question.wordId),
+                          answerMethod: session.answerMethod,
+                          state: state,
+                          onSubmit: notifier.submitAnswer,
+                        ),
                 ),
-                if (state.answerResult?.aiExplanation != null) ...[
-                  Card(
-                    key: const Key('ai-explanation'),
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Text(state.answerResult!.aiExplanation!),
-                    ),
+                if (session.answerMethod != 'multiple_choice' &&
+                    state.hasAnswered) ...[
+                  _TypingFeedback(
+                    answerMethod: session.answerMethod,
+                    result: state.answerResult!,
                   ),
                   const SizedBox(height: 12),
                 ],
