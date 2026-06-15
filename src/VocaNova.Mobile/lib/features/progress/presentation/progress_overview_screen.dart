@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_state.dart';
 import 'package:vocanova_mobile/features/progress/domain/progress_summary.dart';
@@ -24,7 +26,17 @@ class _ProgressOverviewScreenState
   Widget build(BuildContext context) {
     final state = ref.watch(progressOverviewProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Tiến độ học tập')),
+      appBar: AppBar(
+        title: const Text('Tiến độ học tập'),
+        actions: [
+          IconButton(
+            key: const Key('open-progress-charts'),
+            tooltip: 'Biểu đồ chi tiết',
+            onPressed: () => context.push(AppRoutes.progressCharts),
+            icon: const Icon(Icons.show_chart),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           if (state.isOffline) const _OfflineBanner(),
