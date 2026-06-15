@@ -57,54 +57,6 @@ final class WordSearchRepositoryProvider
 String _$wordSearchRepositoryHash() =>
     r'af690cfd6ed1542ae581706fc436e49c8e63222c';
 
-@ProviderFor(connectivityService)
-const connectivityServiceProvider = ConnectivityServiceProvider._();
-
-final class ConnectivityServiceProvider
-    extends
-        $FunctionalProvider<
-          ConnectivityService,
-          ConnectivityService,
-          ConnectivityService
-        >
-    with $Provider<ConnectivityService> {
-  const ConnectivityServiceProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'connectivityServiceProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$connectivityServiceHash();
-
-  @$internal
-  @override
-  $ProviderElement<ConnectivityService> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  ConnectivityService create(Ref ref) {
-    return connectivityService(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ConnectivityService value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ConnectivityService>(value),
-    );
-  }
-}
-
-String _$connectivityServiceHash() =>
-    r'a41855a7e07cfa28457d4a8747cbc16077f207b4';
-
 @ProviderFor(searchLocalStorage)
 const searchLocalStorageProvider = SearchLocalStorageProvider._();
 

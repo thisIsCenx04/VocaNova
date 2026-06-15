@@ -8,6 +8,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vocanova_mobile/app/router/app_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
+import 'package:vocanova_mobile/core/connectivity/cache_warming_service.dart';
 import 'package:vocanova_mobile/core/network/app_exception.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/secure_storage.dart';
@@ -38,6 +39,7 @@ void main() {
   late MockSecureStorage secureStorage;
   late MockAppRouter appRouter;
   late MockGoRouter goRouter;
+  late MockCacheWarmingService cacheWarmingService;
   late LocalStorage localStorage;
   late SharedPreferences preferences;
   late ProviderContainer container;
@@ -50,7 +52,9 @@ void main() {
     secureStorage = MockSecureStorage();
     appRouter = MockAppRouter();
     goRouter = MockGoRouter();
+    cacheWarmingService = MockCacheWarmingService();
     when(() => appRouter.router).thenReturn(goRouter);
+    when(() => cacheWarmingService.warm()).thenAnswer((_) async {});
 
     container = ProviderContainer(
       overrides: [
@@ -58,6 +62,7 @@ void main() {
         localStorageProvider.overrideWithValue(localStorage),
         secureStorageProvider.overrideWithValue(secureStorage),
         appRouterProvider.overrideWithValue(appRouter),
+        cacheWarmingServiceProvider.overrideWithValue(cacheWarmingService),
       ],
     );
   });
@@ -99,6 +104,7 @@ void main() {
           refreshToken: tokens.refreshToken,
         ),
       ).called(1);
+      verify(() => cacheWarmingService.warm()).called(1);
     },
   );
 
@@ -266,3 +272,5 @@ class MockSecureStorage extends Mock implements SecureStorage {}
 class MockAppRouter extends Mock implements AppRouter {}
 
 class MockGoRouter extends Mock implements GoRouter {}
+
+class MockCacheWarmingService extends Mock implements CacheWarmingService {}

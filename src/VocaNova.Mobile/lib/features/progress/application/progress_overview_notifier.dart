@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/core/network/dio_client.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
-import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_state.dart';
 import 'package:vocanova_mobile/features/progress/data/progress_repository.dart';
 import 'package:vocanova_mobile/features/progress/domain/progress_summary.dart';

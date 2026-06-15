@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
-import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
 import 'package:vocanova_mobile/features/lists/application/list_detail_state.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/lists/domain/list_word.dart';
@@ -79,6 +79,7 @@ class ListDetailNotifier extends _$ListDetailNotifier {
   }
 
   Future<bool> addWord(int wordId) async {
+    if (!_canMutate()) return false;
     try {
       final word = await ref
           .read(listsRepositoryProvider)
@@ -101,6 +102,7 @@ class ListDetailNotifier extends _$ListDetailNotifier {
     required String method,
     int? topicId,
   }) async {
+    if (!_canMutate()) return false;
     try {
       final added = await ref
           .read(listsRepositoryProvider)
@@ -125,6 +127,7 @@ class ListDetailNotifier extends _$ListDetailNotifier {
   }
 
   Future<bool> removeWord(int wordId) async {
+    if (!_canMutate()) return false;
     final index = state.words.indexWhere((word) => word.wordId == wordId);
     if (index < 0) return false;
     final removed = state.words[index];
@@ -152,6 +155,15 @@ class ListDetailNotifier extends _$ListDetailNotifier {
         StorageKeys.listWordsCacheJson(listId),
         jsonEncode(words.map((word) => word.toJson()).toList()),
       );
+
+  bool _canMutate() {
+    if (!state.isOffline) return true;
+    state = state.copyWith(
+      isOffline: true,
+      errorMessage: 'Cần kết nối mạng để thay đổi danh sách.',
+    );
+    return false;
+  }
 
   List<ListWord> _decode(String? source) {
     try {

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
+import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
+import 'package:vocanova_mobile/core/widgets/offline_banner.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
 
 class QuizConfigScreen extends ConsumerStatefulWidget {
@@ -24,6 +26,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(quizConfigProvider);
+    final isOnline = ref.watch(connectivityProvider).value ?? true;
     ref.listen(quizConfigProvider.select((value) => value.errorMessage), (
       previous,
       next,
@@ -39,6 +42,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
+          if (!isOnline) const OfflineBanner(),
           if (widget.initialListId != null)
             Card(
               child: Padding(
@@ -233,16 +237,19 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          FilledButton.icon(
-            key: const Key('start-quiz-button'),
-            onPressed: state.isCreating ? null : _startQuiz,
-            icon: state.isCreating
-                ? const SizedBox.square(
-                    dimension: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.play_arrow),
-            label: const Text('Bắt đầu'),
+          Tooltip(
+            message: isOnline ? '' : 'Cần kết nối mạng',
+            child: FilledButton.icon(
+              key: const Key('start-quiz-button'),
+              onPressed: state.isCreating || !isOnline ? null : _startQuiz,
+              icon: state.isCreating
+                  ? const SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.play_arrow),
+              label: const Text('Bắt đầu'),
+            ),
           ),
         ],
       ),

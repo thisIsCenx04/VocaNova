@@ -6,9 +6,9 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
-import 'package:vocanova_mobile/features/dictionary/application/connectivity_service.dart';
+import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
+import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_detail_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/data/word_detail_repository.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_detail.dart';
 

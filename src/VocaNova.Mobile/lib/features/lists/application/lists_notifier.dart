@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/core/network/dio_client.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
-import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_state.dart';
 import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
 import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
@@ -49,6 +49,7 @@ class ListsNotifier extends _$ListsNotifier {
   }
 
   Future<bool> create(String name) async {
+    if (!_canMutate()) return false;
     state = state.copyWith(isMutating: true, clearError: true);
     try {
       final created = await ref
@@ -68,6 +69,7 @@ class ListsNotifier extends _$ListsNotifier {
   }
 
   Future<bool> rename({required int listId, required String name}) async {
+    if (!_canMutate()) return false;
     state = state.copyWith(isMutating: true, clearError: true);
     try {
       final updated = await ref
@@ -90,6 +92,7 @@ class ListsNotifier extends _$ListsNotifier {
   }
 
   Future<bool> delete(int listId) async {
+    if (!_canMutate()) return false;
     final index = state.lists.indexWhere((list) => list.listId == listId);
     if (index < 0) return false;
     final removed = state.lists[index];
@@ -115,6 +118,15 @@ class ListsNotifier extends _$ListsNotifier {
         StorageKeys.listsCacheJson,
         jsonEncode(lists.map((list) => list.toJson()).toList()),
       );
+
+  bool _canMutate() {
+    if (!state.isOffline) return true;
+    state = state.copyWith(
+      isOffline: true,
+      errorMessage: 'Cần kết nối mạng để thay đổi danh sách.',
+    );
+    return false;
+  }
 
   List<UserList> _decode(String? source) {
     try {

@@ -63,18 +63,24 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
       appBar: AppBar(title: Text(listName ?? 'Chi tiết danh sách')),
       floatingActionButton: FloatingActionButton.extended(
         key: const Key('add-word-fab'),
-        onPressed: () => showModalBottomSheet<void>(
-          context: context,
-          isScrollControlled: true,
-          builder: (_) => AddWordSheet(listId: widget.listId),
-        ),
+        onPressed: state.isOffline
+            ? null
+            : () => showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                builder: (_) => AddWordSheet(listId: widget.listId),
+              ),
         icon: const Icon(Icons.add),
         label: const Text('Thêm từ'),
       ),
       body: Column(
         children: [
           if (state.isOffline) const _OfflineBanner(),
-          _Actions(listId: widget.listId, onRandom: _showRandomDialog),
+          _Actions(
+            listId: widget.listId,
+            isOffline: state.isOffline,
+            onRandom: _showRandomDialog,
+          ),
           Expanded(child: _content(state)),
         ],
       ),
@@ -107,7 +113,9 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
             padding: const EdgeInsets.only(bottom: 10),
             child: Dismissible(
               key: Key('list-word-${word.wordId}'),
-              direction: DismissDirection.endToStart,
+              direction: state.isOffline
+                  ? DismissDirection.none
+                  : DismissDirection.endToStart,
               confirmDismiss: (_) => _confirmRemove(word),
               onDismissed: (_) => ref
                   .read(listDetailProvider(widget.listId).notifier)
@@ -269,9 +277,14 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
 }
 
 class _Actions extends StatelessWidget {
-  const _Actions({required this.listId, required this.onRandom});
+  const _Actions({
+    required this.listId,
+    required this.isOffline,
+    required this.onRandom,
+  });
 
   final int listId;
+  final bool isOffline;
   final VoidCallback onRandom;
 
   @override
@@ -283,7 +296,7 @@ class _Actions extends StatelessWidget {
           Expanded(
             child: OutlinedButton.icon(
               key: const Key('add-random-words'),
-              onPressed: onRandom,
+              onPressed: isOffline ? null : onRandom,
               icon: const Icon(Icons.shuffle),
               label: const Text('Thêm ngẫu nhiên'),
             ),
@@ -292,8 +305,11 @@ class _Actions extends StatelessWidget {
           Expanded(
             child: FilledButton.icon(
               key: const Key('start-list-quiz'),
-              onPressed: () =>
-                  context.push(AppRoutes.quizConfigForList(listId.toString())),
+              onPressed: isOffline
+                  ? null
+                  : () => context.push(
+                      AppRoutes.quizConfigForList(listId.toString()),
+                    ),
               icon: const Icon(Icons.quiz_outlined),
               label: const Text('Bắt đầu kiểm tra'),
             ),
