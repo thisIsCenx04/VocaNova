@@ -17,7 +17,9 @@ import 'package:vocanova_mobile/features/lists/presentation/lists_screen.dart';
 import 'package:vocanova_mobile/features/lists/presentation/list_detail_screen.dart';
 import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/quiz_config_screen.dart';
+import 'package:vocanova_mobile/features/quiz/presentation/quiz_result_screen.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/quiz_session_screen.dart';
+import 'package:vocanova_mobile/features/quiz/presentation/wrong_words_screen.dart';
 import 'package:vocanova_mobile/features/shared/presentation/placeholder_screen.dart';
 
 class AppRouter {
@@ -122,7 +124,18 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.quizResult,
-        builder: (_, _) => const PlaceholderScreen(title: 'Kết quả kiểm tra'),
+        builder: (_, state) {
+          final sessionId = int.tryParse(
+            state.uri.queryParameters['sessionId'] ?? '',
+          );
+          return sessionId == null
+              ? const QuizResultUnavailableScreen()
+              : QuizResultScreen(sessionId: sessionId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.wrongWords,
+        builder: (_, _) => const WrongWordsScreen(),
       ),
       GoRoute(
         path: AppRoutes.settings,

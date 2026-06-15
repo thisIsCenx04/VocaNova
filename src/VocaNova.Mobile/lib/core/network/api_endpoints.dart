@@ -18,6 +18,7 @@ abstract final class ApiEndpoints {
   static const topics = '/api/topics';
   static const lists = '/api/lists';
   static const quizSessions = '/api/quiz/sessions';
+  static const quizWrongWords = '/api/quiz/wrong-words';
 
   static String word(int id) => '$words/$id';
 
@@ -33,4 +34,8 @@ abstract final class ApiEndpoints {
   static String quizAnswer(int id) => '$quizSessions/$id/answer';
 
   static String quizFinish(int id) => '$quizSessions/$id/finish';
+
+  static String quizResult(int id) => '$quizSessions/$id/result';
+
+  static String quizWrongWord(int id) => '$quizWrongWords/$id';
 }

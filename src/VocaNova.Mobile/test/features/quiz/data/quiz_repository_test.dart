@@ -117,6 +117,47 @@ void main() {
 
     await QuizRepository(dio: dio).finishSession(9);
   });
+
+  test('loads quiz result with answer breakdown', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      expect(options.path, ApiEndpoints.quizResult(9));
+      return jsonResponse(resultJson);
+    });
+
+    final result = await QuizRepository(dio: dio).getResult(9);
+
+    expect(result.accuracy, 50);
+    expect(result.durationSec, 75);
+    expect(result.answers.single.userAnswer, 'orange');
+  });
+
+  test('loads paged wrong words and removes one', () async {
+    final dio = Dio();
+    final requests = <RequestOptions>[];
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      requests.add(options);
+      return jsonResponse(
+        options.method == 'GET'
+            ? {
+                'items': [wrongWordJson],
+                'page': 1,
+                'totalPages': 2,
+              }
+            : true,
+      );
+    });
+    final repository = QuizRepository(dio: dio);
+
+    final page = await repository.getWrongWords(page: 1);
+    await repository.removeWrongWord(7);
+
+    expect(page.items.single.word, 'apple');
+    expect(page.totalPages, 2);
+    expect(requests[0].queryParameters, {'page': 1, 'limit': 20});
+    expect(requests[1].path, ApiEndpoints.quizWrongWord(7));
+    expect(requests[1].method, 'DELETE');
+  });
 }
 
 typedef AdapterCallback = ResponseBody Function(RequestOptions options);
@@ -143,3 +184,36 @@ ResponseBody jsonResponse(Object data) => ResponseBody.fromString(
     Headers.contentTypeHeader: [Headers.jsonContentType],
   },
 );
+
+const resultJson = {
+  'session_id': 9,
+  'status': 'completed',
+  'correct_count': 1,
+  'wrong_count': 1,
+  'question_count': 2,
+  'answered_count': 2,
+  'accuracy': 50,
+  'duration_sec': 75,
+  'max_streak': 1,
+  'score': 50,
+  'answers': [
+    {
+      'word_id': 7,
+      'question_number': 1,
+      'display_content': 'apple',
+      'expected_answer': 'apple',
+      'user_answer': 'orange',
+      'is_correct': false,
+    },
+  ],
+};
+
+const wrongWordJson = {
+  'word_id': 7,
+  'word': 'apple',
+  'primary_meaning': 'quả táo',
+  'test_count': 4,
+  'correct_count': 1,
+  'wrong_count': 3,
+  'mastery_level': 2,
+};

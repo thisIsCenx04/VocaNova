@@ -1,0 +1,87 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:vocanova_mobile/app/router/app_routes.dart';
+import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
+import 'package:vocanova_mobile/features/quiz/data/quiz_repository.dart';
+import 'package:vocanova_mobile/features/quiz/domain/quiz_result.dart';
+import 'package:vocanova_mobile/features/quiz/presentation/quiz_result_screen.dart';
+
+void main() {
+  testWidgets('renders animated score, stats, breakdown, and actions', (
+    tester,
+  ) async {
+    final repository = MockQuizRepository();
+    when(() => repository.getResult(9)).thenAnswer((_) async => result);
+    final router = GoRouter(
+      initialLocation: AppRoutes.quizResultFor('9'),
+      routes: [
+        GoRoute(
+          path: AppRoutes.quizResult,
+          builder: (_, _) => const QuizResultScreen(sessionId: 9),
+        ),
+        GoRoute(
+          path: AppRoutes.wrongWords,
+          builder: (_, _) => const Scaffold(body: Text('Wrong words')),
+        ),
+        GoRoute(
+          path: AppRoutes.quizConfig,
+          builder: (_, _) => const Scaffold(body: Text('Quiz config')),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [quizRepositoryProvider.overrideWithValue(repository)],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.byKey(const Key('score-animation')), findsOneWidget);
+    expect(find.text('50%'), findsWidgets);
+    expect(find.text('1/2'), findsOneWidget);
+    expect(find.text('1:15'), findsOneWidget);
+    expect(find.textContaining('Bạn trả lời: orange'), findsOneWidget);
+    expect(find.textContaining('Đáp án: apple'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('review-wrong-words-button')));
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, AppRoutes.wrongWords);
+
+    router.go(AppRoutes.quizResultFor('9'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('retry-quiz-button')));
+    await tester.tap(find.byKey(const Key('retry-quiz-button')));
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, AppRoutes.quizConfig);
+  });
+}
+
+class MockQuizRepository extends Mock implements QuizRepository {}
+
+const result = QuizResult(
+  sessionId: 9,
+  status: 'completed',
+  correctCount: 1,
+  wrongCount: 1,
+  questionCount: 2,
+  answeredCount: 2,
+  accuracy: 50,
+  durationSec: 75,
+  maxStreak: 1,
+  score: 50,
+  answers: [
+    QuizResultAnswer(
+      wordId: 7,
+      questionNumber: 1,
+      displayContent: 'apple',
+      expectedAnswer: 'apple',
+      userAnswer: 'orange',
+      isCorrect: false,
+    ),
+  ],
+);
