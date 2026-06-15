@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 
@@ -10,7 +12,23 @@ class HomeScreen extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('VocaNova')),
+      appBar: AppBar(
+        title: const Text('VocaNova'),
+        actions: [
+          IconButton(
+            key: const Key('open-profile'),
+            tooltip: 'Hồ sơ',
+            onPressed: () => context.push(AppRoutes.profile),
+            icon: const Icon(Icons.account_circle_outlined),
+          ),
+          IconButton(
+            key: const Key('open-settings'),
+            tooltip: 'Cài đặt',
+            onPressed: () => context.push(AppRoutes.settings),
+            icon: const Icon(Icons.settings_outlined),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),

@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   audioplayers: ^6.7.1
   cached_network_image: ^3.4.1
   connectivity_plus: ^7.1.1

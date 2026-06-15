@@ -22,7 +22,8 @@ import 'package:vocanova_mobile/features/quiz/presentation/quiz_config_screen.da
 import 'package:vocanova_mobile/features/quiz/presentation/quiz_result_screen.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/quiz_session_screen.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/wrong_words_screen.dart';
-import 'package:vocanova_mobile/features/shared/presentation/placeholder_screen.dart';
+import 'package:vocanova_mobile/features/settings/presentation/profile_screen.dart';
+import 'package:vocanova_mobile/features/settings/presentation/settings_screen.dart';
 
 class AppRouter {
   AppRouter._(this.tokenStorage);
@@ -145,11 +146,11 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.settings,
-        builder: (_, _) => const PlaceholderScreen(title: 'Cài đặt'),
+        builder: (_, _) => const SettingsScreen(),
       ),
       GoRoute(
         path: AppRoutes.profile,
-        builder: (_, _) => const PlaceholderScreen(title: 'Hồ sơ'),
+        builder: (_, _) => const ProfileScreen(),
       ),
     ],
   );
