@@ -41,6 +41,9 @@ public sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refresh
         entity.Property(e => e.RevokedAt)
             .HasColumnName("revoked_at")
             .HasColumnType("timestamp");
+        entity.Property(e => e.TokenHash)
+            .HasColumnName("token_hash")
+            .HasMaxLength(255);
         entity.Property(e => e.UserId)
             .HasColumnName("user_id")
             .HasColumnType("int(10) unsigned");

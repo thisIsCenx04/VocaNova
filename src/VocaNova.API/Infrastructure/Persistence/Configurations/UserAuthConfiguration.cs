@@ -36,6 +36,8 @@ public sealed class UserAuthConfiguration : IEntityTypeConfiguration<UserAuth>
         entity.Property(e => e.Phone)
             .HasColumnName("phone")
             .HasMaxLength(20);
+        entity.Property(e => e.IsPhoneVerified)
+            .HasColumnName("is_phone_verified");
         entity.Property(e => e.UpdatedAt)
             .HasColumnName("updated_at")
             .HasColumnType("datetime(3)");

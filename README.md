@@ -10,7 +10,7 @@ VocaNova is a vocabulary learning and testing system for SEP490. The repository 
 ## Prerequisites
 
 - .NET SDK 8.0 or newer.
-- PostgreSQL for the main database.
+- MySQL Server 8.x for the main database. MySQL Workbench can be used to create/manage the local connection.
 - Redis for cache and rate-limit related features.
 - Flutter 3.38 or newer for the mobile application.
 
@@ -30,16 +30,22 @@ VocaNova is a vocabulary learning and testing system for SEP490. The repository 
 
 3. Update local configuration:
 
-   In `.env`:
+   In the repository root `.env`:
 
    - `MYSQL_CONNECTION_STRING`
    - `MYSQL_SERVER_VERSION`
-
-   In `src/VocaNova.API/appsettings.json` or user secrets:
-
    - `JwtSettings:SecretKey`
    - `Redis:Configuration`
    - `AiGrading:*`
+
+   Example MySQL Server connection:
+
+   ```dotenv
+   MYSQL_CONNECTION_STRING=Server=127.0.0.1;Port=3306;Database=vocanova;User=root;Password=YOUR_MYSQL_PASSWORD;
+   MYSQL_SERVER_VERSION=8.0.0-mysql
+   ```
+
+   Use `MYSQL_SERVER_VERSION=auto` if you want Pomelo EF Core to detect the server version from the configured database connection.
 
 4. Build the solution:
 
@@ -75,9 +81,9 @@ VocaNova is a vocabulary learning and testing system for SEP490. The repository 
 
 ## Database Scaffold
 
-The database is MySQL/MariaDB from XAMPP. Connection details are read from the repository root `.env` file, which is ignored by Git.
+The database is MySQL Server. Connection details are read from the repository root `.env` file, which is ignored by Git.
 
-Run the scaffold script after the XAMPP MySQL service is running and the `vocanova` schema exists:
+Run the scaffold script after MySQL Server is running and the `vocanova` schema exists:
 
 ```powershell
 .\scripts\scaffold-mysql.ps1
