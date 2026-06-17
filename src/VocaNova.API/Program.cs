@@ -2,6 +2,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Responses;
+using VocaNova.API.Common.Routing;
 using VocaNova.API.Features.AiGrading;
 using VocaNova.API.Features.AiGrading.Repositories;
 using VocaNova.API.Features.AiGrading.Services;
@@ -45,6 +46,10 @@ builder.Services.AddDbContext<VocaNovaDbContext>(options =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.Configure<RouteOptions>(options =>
+{
+    options.ConstraintMap["uint"] = typeof(UIntRouteConstraint);
+});
 builder.Services.AddControllers();
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddVocaNovaAuthorization();

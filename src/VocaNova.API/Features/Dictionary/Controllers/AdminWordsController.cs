@@ -56,10 +56,10 @@ public sealed class AdminWordsController : ControllerBase
     [HttpPost("import")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Import(
-        [FromForm] IFormFile file,
+        [FromForm] ImportWordsRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _wordService.ImportCsvAsync(file, cancellationToken);
+        var result = await _wordService.ImportCsvAsync(request.File, cancellationToken);
         if (!result.IsSuccess)
         {
             return this.ErrorResult(result);

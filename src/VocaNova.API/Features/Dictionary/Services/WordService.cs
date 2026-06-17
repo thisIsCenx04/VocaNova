@@ -202,7 +202,7 @@ public sealed class WordService : IWordService
     }
 
     public async Task<Result<BulkImportResultDto>> ImportCsvAsync(
-        IFormFile file,
+        IFormFile? file,
         CancellationToken cancellationToken = default)
     {
         if (file is null || file.Length == 0)

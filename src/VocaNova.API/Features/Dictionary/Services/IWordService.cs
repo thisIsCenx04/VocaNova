@@ -23,7 +23,7 @@ public interface IWordService
         CancellationToken cancellationToken = default);
 
     Task<Result<BulkImportResultDto>> ImportCsvAsync(
-        IFormFile file,
+        IFormFile? file,
         CancellationToken cancellationToken = default);
 
     Task<Result<bool>> SoftDeleteAsync(
