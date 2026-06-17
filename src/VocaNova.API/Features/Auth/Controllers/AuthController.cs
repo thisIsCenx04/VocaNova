@@ -82,6 +82,15 @@ public sealed class AuthController : ControllerBase
         [FromBody] GoogleLoginRequest request,
         CancellationToken cancellationToken)
     {
+        var rateLimitResult = CheckRateLimit(
+            "auth:login",
+            _rateLimitSettings.LoginPerMinutePerIp);
+        if (!rateLimitResult.IsAllowed)
+        {
+            SetRetryAfterHeader(rateLimitResult);
+            return this.ErrorResult(Result<TokenResponse>.TooManyRequests("Login rate limit exceeded."));
+        }
+
         var result = await _authService.GoogleLoginAsync(
             request,
             Request.Headers.UserAgent.ToString(),

@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
-import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_form_scaffold.dart';
+import 'package:vocanova_mobile/features/auth/presentation/auth_request_error.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_validators.dart';
+import 'package:vocanova_mobile/features/auth/presentation/otp_screen.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -22,6 +23,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmation = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -34,9 +36,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(authProvider, _handleAuthState);
-    final isLoading = ref.watch(authProvider).status == AuthStatus.loading;
-
     return AuthFormScaffold(
       title: 'Tạo tài khoản',
       subtitle: 'Bắt đầu xây dựng vốn từ của riêng bạn.',
@@ -48,7 +47,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             TextFormField(
               key: const Key('register-display-name'),
               controller: _displayNameController,
-              enabled: !isLoading,
+              enabled: !_isLoading,
               textInputAction: TextInputAction.next,
               decoration: const InputDecoration(
                 labelText: 'Tên hiển thị',
@@ -60,7 +59,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             TextFormField(
               key: const Key('register-phone'),
               controller: _phoneController,
-              enabled: !isLoading,
+              enabled: !_isLoading,
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.next,
               decoration: const InputDecoration(
@@ -74,7 +73,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             TextFormField(
               key: const Key('register-password'),
               controller: _passwordController,
-              enabled: !isLoading,
+              enabled: !_isLoading,
               obscureText: _obscurePassword,
               textInputAction: TextInputAction.next,
               decoration: InputDecoration(
@@ -98,7 +97,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             TextFormField(
               key: const Key('register-confirm-password'),
               controller: _confirmPasswordController,
-              enabled: !isLoading,
+              enabled: !_isLoading,
               obscureText: _obscureConfirmation,
               textInputAction: TextInputAction.done,
               decoration: InputDecoration(
@@ -122,8 +121,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             const SizedBox(height: 24),
             ElevatedButton(
               key: const Key('register-submit'),
-              onPressed: isLoading ? null : _submit,
-              child: isLoading
+              onPressed: _isLoading ? null : _submit,
+              child: _isLoading
                   ? const SizedBox.square(
                       dimension: 22,
                       child: CircularProgressIndicator(strokeWidth: 2),
@@ -136,7 +135,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               children: [
                 const Text('Đã có tài khoản?'),
                 TextButton(
-                  onPressed: isLoading
+                  onPressed: _isLoading
                       ? null
                       : () => context.go(AppRoutes.login),
                   child: const Text('Đăng nhập'),
@@ -162,29 +161,35 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    ref
-        .read(authProvider.notifier)
-        .register(
-          phone: _phoneController.text.trim(),
-          password: _passwordController.text,
-          displayName: _displayNameController.text.trim(),
-        );
-  }
+    final phone = _phoneController.text.trim();
+    final payload = RegisterOtpPayload(
+      displayName: _displayNameController.text.trim(),
+      password: _passwordController.text,
+    );
 
-  void _handleAuthState(AuthState? previous, AuthState next) {
-    if (previous?.status == next.status) {
-      return;
-    }
-    if (next.status == AuthStatus.error && next.errorMessage != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
-    } else if (next.status == AuthStatus.authenticated) {
-      context.go(AppRoutes.onboarding);
+    setState(() => _isLoading = true);
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .sendOtp(phone: phone, purpose: 'register');
+      if (!mounted) {
+        return;
+      }
+      context.go(AppRoutes.otpFor(phone, purpose: 'register'), extra: payload);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(authRequestError(error))));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 }

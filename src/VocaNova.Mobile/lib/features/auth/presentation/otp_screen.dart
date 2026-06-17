@@ -10,10 +10,16 @@ import 'package:vocanova_mobile/features/auth/presentation/auth_request_error.da
 import 'package:vocanova_mobile/features/auth/presentation/otp_code_fields.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
-  const OtpScreen({required this.phone, this.purpose = 'verify', super.key});
+  const OtpScreen({
+    required this.phone,
+    this.purpose = 'verify',
+    this.registerPayload,
+    super.key,
+  });
 
   final String phone;
   final String purpose;
+  final RegisterOtpPayload? registerPayload;
 
   @override
   ConsumerState<OtpScreen> createState() => _OtpScreenState();
@@ -87,9 +93,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     }
     setState(() => _isLoading = true);
     try {
-      final verified = await ref
-          .read(authRepositoryProvider)
-          .verifyOtp(phone: widget.phone, otpCode: code);
+      final verified = widget.purpose == 'register'
+          ? await _completeRegister(code)
+          : await ref
+                .read(authRepositoryProvider)
+                .verifyOtp(phone: widget.phone, otpCode: code);
       if (!mounted) {
         return;
       }
@@ -97,7 +105,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Xác thực OTP thành công.')),
         );
-        if (context.canPop()) {
+        if (widget.purpose == 'register') {
+          context.go(AppRoutes.onboarding);
+        } else if (context.canPop()) {
           context.pop(true);
         } else {
           context.go(AppRoutes.login);
@@ -119,6 +129,22 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<bool> _completeRegister(String code) async {
+    final payload = widget.registerPayload;
+    if (payload == null) {
+      throw const FormatException('Missing registration data.');
+    }
+
+    return ref
+        .read(authProvider.notifier)
+        .register(
+          phone: widget.phone,
+          password: payload.password,
+          displayName: payload.displayName,
+          otpCode: code,
+        );
   }
 
   Future<void> _resend() async {
@@ -167,4 +193,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
   }
+}
+
+class RegisterOtpPayload {
+  const RegisterOtpPayload({required this.displayName, required this.password});
+
+  final String displayName;
+  final String password;
 }

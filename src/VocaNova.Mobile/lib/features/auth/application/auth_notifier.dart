@@ -50,15 +50,21 @@ class AuthNotifier extends _$AuthNotifier {
   @override
   AuthState build() => const AuthState();
 
-  Future<void> register({
+  Future<bool> register({
     required String phone,
     required String password,
     required String displayName,
+    required String otpCode,
   }) async {
-    await _authenticate(
+    return _authenticate(
       () => ref
           .read(authRepositoryProvider)
-          .register(phone: phone, password: password, displayName: displayName),
+          .register(
+            phone: phone,
+            password: password,
+            displayName: displayName,
+            otpCode: otpCode,
+          ),
     );
   }
 
@@ -175,7 +181,7 @@ class AuthNotifier extends _$AuthNotifier {
     }
   }
 
-  Future<void> _authenticate(Future<AuthTokens> Function() request) async {
+  Future<bool> _authenticate(Future<AuthTokens> Function() request) async {
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
     try {
       final tokens = await request();
@@ -189,11 +195,13 @@ class AuthNotifier extends _$AuthNotifier {
       if (state.status == AuthStatus.authenticated) {
         await ref.read(cacheWarmingServiceProvider).warm();
       }
+      return state.status == AuthStatus.authenticated;
     } catch (error) {
       state = AuthState(
         status: AuthStatus.error,
         errorMessage: _errorMessage(error),
       );
+      return false;
     }
   }
 

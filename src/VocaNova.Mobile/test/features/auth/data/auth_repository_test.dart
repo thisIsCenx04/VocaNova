@@ -16,13 +16,17 @@ void main() {
         'phone': '0901234567',
         'password': 'Password1',
         'display_name': 'Nhut',
+        'otp_code': '123456',
       });
       return tokenResponse();
     });
 
-    final tokens = await AuthRepository(
-      dio: dio,
-    ).register(phone: '0901234567', password: 'Password1', displayName: 'Nhut');
+    final tokens = await AuthRepository(dio: dio).register(
+      phone: '0901234567',
+      password: 'Password1',
+      displayName: 'Nhut',
+      otpCode: '123456',
+    );
 
     expect(tokens.accessToken, 'access');
     expect(tokens.refreshToken, 'refresh');

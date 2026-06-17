@@ -202,6 +202,19 @@ public sealed class AuthRepository : IAuthRepository
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public Task<OtpVerification?> FindLatestOtpByPhoneAndUserAsync(
+        string phone,
+        uint? userId,
+        CancellationToken cancellationToken = default)
+    {
+        return _dbContext.OtpVerifications
+            .Where(otp => otp.Phone == phone
+                && otp.UserId == userId
+                && otp.Status == OtpStatus.Active)
+            .OrderByDescending(otp => otp.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public Task<OtpVerification?> FindLatestOtpByPhoneSinceAsync(
         string phone,
         DateTime createdSince,

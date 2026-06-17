@@ -114,6 +114,7 @@ void main() {
         phone: '0901234567',
         password: 'Password1',
         displayName: 'Nhut',
+        otpCode: '123456',
       ),
     ).thenAnswer((_) async => tokens);
     when(
@@ -133,6 +134,7 @@ void main() {
           phone: '0901234567',
           password: 'Password1',
           displayName: 'Nhut',
+          otpCode: '123456',
         );
 
     expect(container.read(authProvider).status, AuthStatus.authenticated);
@@ -141,6 +143,7 @@ void main() {
         phone: '0901234567',
         password: 'Password1',
         displayName: 'Nhut',
+        otpCode: '123456',
       ),
     ).called(1);
   });

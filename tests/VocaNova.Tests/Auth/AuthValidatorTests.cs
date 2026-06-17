@@ -11,7 +11,7 @@ public class AuthValidatorTests
     {
         var validator = new RegisterRequestValidator();
 
-        var result = validator.Validate(new RegisterRequest("0912345678", "Password1", "Nguyen Van A"));
+        var result = validator.Validate(new RegisterRequest("0912345678", "Password1", "Nguyen Van A", "123456"));
 
         result.IsValid.Should().BeTrue();
     }
@@ -21,12 +21,13 @@ public class AuthValidatorTests
     {
         var validator = new RegisterRequestValidator();
 
-        var result = validator.Validate(new RegisterRequest("0212345678", "weak", "A"));
+        var result = validator.Validate(new RegisterRequest("0212345678", "weak", "A", "abc"));
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(error => error.PropertyName == nameof(RegisterRequest.Phone));
         result.Errors.Should().Contain(error => error.PropertyName == nameof(RegisterRequest.Password));
         result.Errors.Should().Contain(error => error.PropertyName == nameof(RegisterRequest.DisplayName));
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(RegisterRequest.OtpCode));
     }
 
     [Fact]
