@@ -210,6 +210,26 @@ public sealed class AuthController : ControllerBase
     }
 
     [Authorize]
+    [HttpPut("me/password")]
+    public async Task<IActionResult> ChangePassword(
+        [FromBody] ChangePasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return this.ErrorResult(Result<bool>.Unauthorized("Unauthorized."));
+        }
+
+        var result = await _authService.ChangePasswordAsync(userId, request, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value, "Password changed successfully.");
+    }
+
+    [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> GetMe(CancellationToken cancellationToken)
     {
@@ -245,6 +265,28 @@ public sealed class AuthController : ControllerBase
         }
 
         return this.OkResult(result.Value!, "Profile updated successfully.");
+    }
+
+    [Authorize]
+    [HttpPost("me/avatar")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    public async Task<IActionResult> UploadAvatar(
+        [FromForm] UploadAvatarRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return this.ErrorResult(Result<UserProfileDto>.Unauthorized("Unauthorized."));
+        }
+
+        var result = await _authService.UploadAvatarAsync(userId, request, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value!, "Avatar uploaded successfully.");
     }
 
     [Authorize]

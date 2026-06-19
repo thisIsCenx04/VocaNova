@@ -200,6 +200,51 @@ void main() {
       expect(user.displayName, 'Nhut Updated');
     },
   );
+
+  test('changePassword sends authenticated password contract', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      expect(options.path, ApiEndpoints.changePassword);
+      expect(options.method, 'PUT');
+      expect(options.data, {
+        'current_password': 'OldPassword1',
+        'new_password': 'NewPassword1',
+      });
+      return jsonResponse({
+        'success': true,
+        'data': true,
+        'errors': <String>[],
+      });
+    });
+
+    final changed = await AuthRepository(dio: dio).changePassword(
+      currentPassword: 'OldPassword1',
+      newPassword: 'NewPassword1',
+    );
+
+    expect(changed, isTrue);
+  });
+
+  test('uploadAvatar sends a multipart image contract', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      expect(options.path, ApiEndpoints.uploadAvatar);
+      expect(options.method, 'POST');
+      final form = options.data as FormData;
+      expect(form.files.single.key, 'file');
+      expect(form.files.single.value.filename, 'cat.png');
+      expect(form.files.single.value.contentType?.mimeType, 'image/png');
+      return profileResponse(
+        avatarUrl: 'https://res.cloudinary.com/demo/cat.png',
+      );
+    });
+
+    final user = await AuthRepository(
+      dio: dio,
+    ).uploadAvatar(bytes: Uint8List.fromList([1, 2, 3]), fileName: 'cat.png');
+
+    expect(user.avatarUrl, 'https://res.cloudinary.com/demo/cat.png');
+  });
 }
 
 typedef AdapterCallback = ResponseBody Function(RequestOptions options);
@@ -245,14 +290,14 @@ ResponseBody tokenResponse() {
   });
 }
 
-ResponseBody profileResponse({String displayName = 'Nhut'}) {
+ResponseBody profileResponse({String displayName = 'Nhut', String? avatarUrl}) {
   return jsonResponse({
     'success': true,
     'data': {
       'user_id': 7,
       'phone': '0901234567',
       'display_name': displayName,
-      'avatar_url': null,
+      'avatar_url': avatarUrl,
       'role': 'user',
       'status': 'active',
       'learning_profile': {

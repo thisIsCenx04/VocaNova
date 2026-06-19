@@ -14,6 +14,7 @@ using VocaNova.API.Infrastructure.Authentication;
 using VocaNova.API.Infrastructure.Caching;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
+using VocaNova.API.Infrastructure.Storage;
 
 namespace VocaNova.Tests.Auth;
 
@@ -154,6 +155,52 @@ public class LogoutProfileFeatureTests
         result.Errors.Should().Contain(error => error.PropertyName == nameof(UpdateUserProfileRequest.AvatarUrl));
     }
 
+    [Fact]
+    public async Task UploadAvatarAsync_Should_Upload_And_Update_Profile()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserAsync(dbContext);
+        var cache = new FakeUserProfileCache();
+        var storage = new FakeImageStorage("https://res.cloudinary.com/demo/avatar.png");
+        var service = CreateAuthService(dbContext, cache, imageStorage: storage);
+        await using var stream = new MemoryStream(new byte[] { 1, 2, 3 });
+        var file = new FormFile(stream, 0, stream.Length, "file", "avatar.png")
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = "image/png",
+        };
+
+        var result = await service.UploadAvatarAsync(1, new UploadAvatarRequest { File = file });
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.AvatarUrl.Should().Be("https://res.cloudinary.com/demo/avatar.png");
+        storage.Folder.Should().Be("vocanova/avatars");
+        cache.RemoveCount.Should().Be(1);
+        (await dbContext.UserProfiles.SingleAsync()).AvatarUrl.Should()
+            .Be("https://res.cloudinary.com/demo/avatar.png");
+    }
+
+    [Fact]
+    public async Task UploadAvatarAsync_Should_Reject_Unsupported_File()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserAsync(dbContext);
+        var storage = new FakeImageStorage("https://res.cloudinary.com/demo/avatar.png");
+        var service = CreateAuthService(dbContext, imageStorage: storage);
+        await using var stream = new MemoryStream(new byte[] { 1, 2, 3 });
+        var file = new FormFile(stream, 0, stream.Length, "file", "avatar.gif")
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = "image/gif",
+        };
+
+        var result = await service.UploadAvatarAsync(1, new UploadAvatarRequest { File = file });
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+        storage.UploadCount.Should().Be(0);
+    }
+
     private static VocaNovaDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<VocaNovaDbContext>()
@@ -167,7 +214,8 @@ public class LogoutProfileFeatureTests
     private static AuthService CreateAuthService(
         VocaNovaDbContext dbContext,
         IUserProfileCache? userProfileCache = null,
-        IKnnTopicRecommendationCache? knnTopicRecommendationCache = null)
+        IKnnTopicRecommendationCache? knnTopicRecommendationCache = null,
+        IImageStorage? imageStorage = null)
     {
         return new AuthService(
             dbContext,
@@ -176,7 +224,12 @@ public class LogoutProfileFeatureTests
             new FakeGoogleTokenVerifier(),
             Options.Create(CreateJwtSettings()),
             userProfileCache,
-            knnTopicRecommendationCache: knnTopicRecommendationCache);
+            knnTopicRecommendationCache: knnTopicRecommendationCache,
+            imageStorage: imageStorage,
+            cloudinarySettings: Options.Create(new CloudinarySettings
+            {
+                AvatarFolder = "vocanova/avatars",
+            }));
     }
 
     private static JwtTokenService CreateJwtTokenService()
@@ -370,6 +423,31 @@ public class LogoutProfileFeatureTests
         {
             RemoveCount++;
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeImageStorage : IImageStorage
+    {
+        private readonly string _url;
+
+        public FakeImageStorage(string url)
+        {
+            _url = url;
+        }
+
+        public int UploadCount { get; private set; }
+
+        public string? Folder { get; private set; }
+
+        public Task<ImageStorageResult> UploadAsync(
+            uint ownerId,
+            IFormFile file,
+            string? folder = null,
+            CancellationToken cancellationToken = default)
+        {
+            UploadCount++;
+            Folder = folder;
+            return Task.FromResult(new ImageStorageResult($"{folder}/{ownerId}/avatar", _url));
         }
     }
 }

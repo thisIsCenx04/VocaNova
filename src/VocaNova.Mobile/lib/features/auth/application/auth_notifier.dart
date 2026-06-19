@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -154,6 +155,52 @@ class AuthNotifier extends _$AuthNotifier {
       await _cacheUser(user);
       state = AuthState(status: AuthStatus.authenticated, user: user);
       return true;
+    } catch (error) {
+      state = AuthState(
+        status: AuthStatus.error,
+        user: state.user,
+        errorMessage: _errorMessage(error),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> uploadAvatar({
+    required Uint8List bytes,
+    required String fileName,
+  }) async {
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
+    try {
+      final user = await ref
+          .read(authRepositoryProvider)
+          .uploadAvatar(bytes: bytes, fileName: fileName);
+      await _cacheUser(user);
+      state = AuthState(status: AuthStatus.authenticated, user: user);
+      return true;
+    } catch (error) {
+      state = AuthState(
+        status: AuthStatus.error,
+        user: state.user,
+        errorMessage: _errorMessage(error),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
+    try {
+      final changed = await ref
+          .read(authRepositoryProvider)
+          .changePassword(
+            currentPassword: currentPassword,
+            newPassword: newPassword,
+          );
+      state = AuthState(status: AuthStatus.authenticated, user: state.user);
+      return changed;
     } catch (error) {
       state = AuthState(
         status: AuthStatus.error,

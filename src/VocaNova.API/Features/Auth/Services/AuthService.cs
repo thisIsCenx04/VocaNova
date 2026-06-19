@@ -13,11 +13,14 @@ using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 using VocaNova.API.Infrastructure.RateLimiting;
 using VocaNova.API.Infrastructure.Sms;
+using VocaNova.API.Infrastructure.Storage;
 
 namespace VocaNova.API.Features.Auth.Services;
 
 public sealed class AuthService : IAuthService
 {
+    private const long MaxAvatarFileBytes = 5 * 1024 * 1024;
+
     private readonly VocaNovaDbContext _dbContext;
     private readonly IAuthRepository _authRepository;
     private readonly IJwtTokenService _jwtTokenService;
@@ -28,6 +31,8 @@ public sealed class AuthService : IAuthService
     private readonly ISmsProvider _smsProvider;
     private readonly RateLimitSettings _rateLimitSettings;
     private readonly JwtSettings _jwtSettings;
+    private readonly IImageStorage? _imageStorage;
+    private readonly CloudinarySettings _cloudinarySettings;
 
     public AuthService(
         VocaNovaDbContext dbContext,
@@ -39,7 +44,9 @@ public sealed class AuthService : IAuthService
         IOtpCodeGenerator? otpCodeGenerator = null,
         ISmsProvider? smsProvider = null,
         IOptions<RateLimitSettings>? rateLimitSettings = null,
-        IKnnTopicRecommendationCache? knnTopicRecommendationCache = null)
+        IKnnTopicRecommendationCache? knnTopicRecommendationCache = null,
+        IImageStorage? imageStorage = null,
+        IOptions<CloudinarySettings>? cloudinarySettings = null)
     {
         _dbContext = dbContext;
         _authRepository = authRepository;
@@ -51,6 +58,8 @@ public sealed class AuthService : IAuthService
         _smsProvider = smsProvider ?? NullSmsProvider.Instance;
         _rateLimitSettings = rateLimitSettings?.Value ?? new RateLimitSettings();
         _jwtSettings = jwtSettings.Value;
+        _imageStorage = imageStorage;
+        _cloudinarySettings = cloudinarySettings?.Value ?? new CloudinarySettings();
         _jwtSettings.Validate();
     }
 
@@ -380,6 +389,53 @@ public sealed class AuthService : IAuthService
         return Result<UserProfileDto>.Ok(MapUserProfile(user));
     }
 
+    public async Task<Result<UserProfileDto>> UploadAvatarAsync(
+        uint userId,
+        UploadAvatarRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var validationError = ValidateAvatarFile(request.File);
+        if (validationError is not null)
+        {
+            return Result<UserProfileDto>.Fail(validationError);
+        }
+
+        if (_imageStorage is null)
+        {
+            return Result<UserProfileDto>.Fail("Image storage is not configured.");
+        }
+
+        var user = await _authRepository.FindByIdAsync(userId, cancellationToken);
+        if (user is null || user.Status == UserStatus.Deleted)
+        {
+            return Result<UserProfileDto>.Unauthorized("Invalid user.");
+        }
+
+        ImageStorageResult uploadResult;
+        try
+        {
+            uploadResult = await _imageStorage.UploadAsync(
+                userId,
+                request.File!,
+                _cloudinarySettings.AvatarFolder,
+                cancellationToken);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Result<UserProfileDto>.Fail(exception.Message);
+        }
+
+        await _authRepository.UpdateUserProfileAsync(
+            user,
+            user.UserProfile?.FullName ?? string.Empty,
+            uploadResult.Url,
+            DateTime.UtcNow,
+            cancellationToken);
+        await RemoveCachedProfileAsync(userId, cancellationToken);
+
+        return Result<UserProfileDto>.Ok(MapUserProfile(user));
+    }
+
     public async Task<Result<UserProfileDto>> UpdateLearningProfileAsync(
         uint userId,
         UpdateLearningProfileRequest request,
@@ -538,6 +594,31 @@ public sealed class AuthService : IAuthService
         await _authRepository.SaveChangesAsync(cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
+
+        return Result<bool>.Ok(true);
+    }
+
+    public async Task<Result<bool>> ChangePasswordAsync(
+        uint userId,
+        ChangePasswordRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await _authRepository.FindByIdAsync(userId, cancellationToken);
+        if (user?.UserAuth?.PasswordHash is null || user.Status == UserStatus.Deleted)
+        {
+            return Result<bool>.Unauthorized("Invalid user.");
+        }
+
+        if (!PasswordHelper.Verify(request.CurrentPassword!, user.UserAuth.PasswordHash))
+        {
+            return Result<bool>.Unauthorized("Current password is incorrect.");
+        }
+
+        await _authRepository.UpdatePasswordAsync(
+            user,
+            PasswordHelper.Hash(request.NewPassword!),
+            DateTime.UtcNow,
+            cancellationToken);
 
         return Result<bool>.Ok(true);
     }
@@ -714,6 +795,30 @@ public sealed class AuthService : IAuthService
             await _userProfileCache.RemoveAsync(userId, cancellationToken);
         }
     }
+
+    private static string? ValidateAvatarFile(IFormFile? file)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return "Avatar file is required.";
+        }
+
+        if (file.Length > MaxAvatarFileBytes)
+        {
+            return "Avatar file must be 5MB or smaller.";
+        }
+
+        if (!AllowedAvatarContentTypes.Contains(file.ContentType))
+        {
+            return "Avatar MIME type must be one of: image/jpeg, image/png, image/webp.";
+        }
+
+        return null;
+    }
+
+    private static readonly IReadOnlySet<string> AllowedAvatarContentTypes = new HashSet<string>(
+        new[] { "image/jpeg", "image/png", "image/webp" },
+        StringComparer.OrdinalIgnoreCase);
 
     private async Task RemoveCachedKnnTopicRecommendationsAsync(uint userId, CancellationToken cancellationToken)
     {

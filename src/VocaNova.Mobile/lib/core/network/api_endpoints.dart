@@ -12,6 +12,8 @@ abstract final class ApiEndpoints {
   static const resetPassword = '/api/auth/reset-password';
   static const currentUser = '/api/auth/me';
   static const updateProfile = '/api/auth/me/profile';
+  static const uploadAvatar = '/api/auth/me/avatar';
+  static const changePassword = '/api/auth/me/password';
   static const updateLearningProfile = '/api/auth/me/learning-profile';
 
   static const words = '/api/words';

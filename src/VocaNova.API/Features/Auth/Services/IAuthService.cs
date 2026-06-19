@@ -42,6 +42,11 @@ public interface IAuthService
         UpdateUserProfileRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<Result<UserProfileDto>> UploadAvatarAsync(
+        uint userId,
+        UploadAvatarRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<Result<UserProfileDto>> UpdateLearningProfileAsync(
         uint userId,
         UpdateLearningProfileRequest request,
@@ -61,5 +66,10 @@ public interface IAuthService
 
     Task<Result<bool>> ResetPasswordAsync(
         ResetPasswordRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<bool>> ChangePasswordAsync(
+        uint userId,
+        ChangePasswordRequest request,
         CancellationToken cancellationToken = default);
 }

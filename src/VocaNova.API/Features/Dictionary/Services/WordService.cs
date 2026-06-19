@@ -360,7 +360,10 @@ public sealed class WordService : IWordService
         ImageStorageResult uploadResult;
         try
         {
-            uploadResult = await _imageStorage.UploadAsync(wordId, request.File!, cancellationToken);
+            uploadResult = await _imageStorage.UploadAsync(
+                wordId,
+                request.File!,
+                cancellationToken: cancellationToken);
         }
         catch (InvalidOperationException exception)
         {

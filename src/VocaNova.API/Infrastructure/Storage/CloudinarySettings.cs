@@ -11,4 +11,6 @@ public sealed class CloudinarySettings
     public string? ApiSecret { get; set; }
 
     public string Folder { get; set; } = "vocanova/words";
+
+    public string AvatarFolder { get; set; } = "vocanova/avatars";
 }
