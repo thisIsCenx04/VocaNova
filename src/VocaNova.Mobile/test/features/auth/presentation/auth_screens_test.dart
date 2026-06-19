@@ -53,10 +53,9 @@ void main() {
 
     expect(find.text('Mật khẩu xác nhận không khớp.'), findsOneWidget);
     verifyNever(
-      () => repository.register(
+      () => repository.sendOtp(
         phone: any(named: 'phone'),
-        password: any(named: 'password'),
-        displayName: any(named: 'displayName'),
+        purpose: any(named: 'purpose'),
       ),
     );
   });

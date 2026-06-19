@@ -22,7 +22,7 @@ public class AuthControllerTests
             Result<TokenResponse>.Ok(new TokenResponse("access-token", "refresh-token", 900))));
 
         var result = await controller.Register(
-            new RegisterRequest("0912345678", "Password1", "Nguyen Van A"),
+            new RegisterRequest("0912345678", "Password1", "Nguyen Van A", "123456"),
             CancellationToken.None);
 
         var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
@@ -37,7 +37,7 @@ public class AuthControllerTests
             Result<TokenResponse>.Conflict("Phone already exists.")));
 
         var result = await controller.Register(
-            new RegisterRequest("0912345678", "Password1", "Nguyen Van A"),
+            new RegisterRequest("0912345678", "Password1", "Nguyen Van A", "123456"),
             CancellationToken.None);
 
         var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
@@ -124,6 +124,41 @@ public class AuthControllerTests
     }
 
     [Fact]
+    public async Task GoogleLogin_Should_Return_429_With_RetryAfter_When_Ip_Rate_Limit_Is_Exceeded()
+    {
+        var authService = new StubAuthService(
+            Result<TokenResponse>.Ok(new TokenResponse("access-token", "refresh-token", 900)));
+        var controller = CreateController(
+            authService,
+            new InMemoryAuthRateLimiter(),
+            new RateLimitSettings
+            {
+                LoginPerMinutePerIp = 10,
+                OtpPerMinutePerIp = 1,
+                RetryAfterSeconds = 60,
+            });
+        controller.HttpContext.Connection.RemoteIpAddress = IPAddress.Parse("127.0.0.3");
+
+        for (var index = 0; index < 10; index++)
+        {
+            var allowedResult = await controller.GoogleLogin(
+                new GoogleLoginRequest("google-id-token"),
+                CancellationToken.None);
+
+            allowedResult.Should().BeOfType<OkObjectResult>();
+        }
+
+        var blockedResult = await controller.GoogleLogin(
+            new GoogleLoginRequest("google-id-token"),
+            CancellationToken.None);
+
+        var objectResult = blockedResult.Should().BeOfType<ObjectResult>().Subject;
+        objectResult.StatusCode.Should().Be(StatusCodes.Status429TooManyRequests);
+        controller.Response.Headers["Retry-After"].ToString().Should().NotBeNullOrWhiteSpace();
+        authService.GoogleLoginCallCount.Should().Be(10);
+    }
+
+    [Fact]
     public async Task RefreshToken_Should_Return_200_When_Service_Succeeds()
     {
         var controller = CreateController(new StubAuthService(
@@ -182,6 +217,23 @@ public class AuthControllerTests
         controller.Response.Headers["Retry-After"].ToString().Should().NotBeNullOrWhiteSpace();
     }
 
+    [Fact]
+    public void RateLimitSettings_Should_Keep_Defaults_When_Config_Binds_Zero_Values()
+    {
+        var settings = new RateLimitSettings
+        {
+            OtpPerMinutePerPhone = 0,
+            OtpPerMinutePerIp = 0,
+            LoginPerMinutePerIp = 0,
+            RetryAfterSeconds = 0,
+        };
+
+        settings.OtpPerMinutePerPhone.Should().Be(1);
+        settings.OtpPerMinutePerIp.Should().Be(1);
+        settings.LoginPerMinutePerIp.Should().Be(10);
+        settings.RetryAfterSeconds.Should().Be(60);
+    }
+
     private static AuthController CreateController(
         IAuthService authService,
         IAuthRateLimiter? authRateLimiter = null,
@@ -218,6 +270,8 @@ public class AuthControllerTests
 
         public int LoginCallCount { get; private set; }
 
+        public int GoogleLoginCallCount { get; private set; }
+
         public Task<Result<TokenResponse>> RegisterAsync(
             RegisterRequest request,
             string? deviceInfo = null,
@@ -243,6 +297,7 @@ public class AuthControllerTests
             string? ipAddress = null,
             CancellationToken cancellationToken = default)
         {
+            GoogleLoginCallCount++;
             return Task.FromResult(_result);
         }
 

@@ -10,10 +10,16 @@ import 'package:vocanova_mobile/features/auth/presentation/auth_request_error.da
 import 'package:vocanova_mobile/features/auth/presentation/otp_code_fields.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
-  const OtpScreen({required this.phone, this.purpose = 'verify', super.key});
+  const OtpScreen({
+    required this.phone,
+    this.purpose = 'verify',
+    this.registerPayload,
+    super.key,
+  });
 
   final String phone;
   final String purpose;
+  final RegisterOtpPayload? registerPayload;
 
   @override
   ConsumerState<OtpScreen> createState() => _OtpScreenState();
@@ -45,8 +51,16 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   Widget build(BuildContext context) {
     final attemptsLeft = maxAttempts - _failedAttempts;
     return AuthFormScaffold(
-      title: 'Xác thực OTP',
-      subtitle: 'Nhập mã 6 số đã gửi đến ${widget.phone}.',
+      title: 'Verify your email',
+      subtitle: 'Enter the 6-digit code sent to\n${widget.phone}',
+      showBackButton: true,
+      onBack: () {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go(AppRoutes.login);
+        }
+      },
       form: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -55,27 +69,33 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
             enabled: !_isLoading && attemptsLeft > 0,
             onCompleted: _verify,
           ),
-          const SizedBox(height: 16),
-          Text(
-            attemptsLeft > 0
-                ? 'Bạn còn $attemptsLeft lần nhập.'
-                : 'Bạn đã nhập sai OTP quá 5 lần. Vui lòng gửi lại mã.',
-            key: const Key('otp-attempt-message'),
-            textAlign: TextAlign.center,
+          const SizedBox(height: 32),
+          AuthPrimaryButton(
+            onPressed: _isLoading || attemptsLeft <= 0
+                ? null
+                : () {
+                    final code = _otpKey.currentState?.code ?? '';
+                    if (code.length == OtpCodeFieldsState.length) {
+                      _verify(code);
+                    }
+                  },
+            child: _isLoading ? authLoadingIndicator() : const Text('Verify'),
           ),
-          const SizedBox(height: 20),
-          if (_isLoading)
-            const Center(child: CircularProgressIndicator())
-          else
-            TextButton(
-              key: const Key('otp-resend'),
-              onPressed: _secondsRemaining == 0 ? _resend : null,
-              child: Text(
-                _secondsRemaining == 0
-                    ? 'Gửi lại mã'
-                    : 'Gửi lại mã sau ${_secondsRemaining}s',
-              ),
-            ),
+          const SizedBox(height: 28),
+          AuthHelperText(
+            attemptsLeft > 0
+                ? 'You have $attemptsLeft attempts remaining.'
+                : 'Bạn đã nhập sai OTP quá 5 lần. Vui lòng gửi lại mã.',
+            widgetKey: const Key('otp-attempt-message'),
+          ),
+          const SizedBox(height: 12),
+          AuthInlineLink(
+            text: "Didn't receive it? ",
+            actionText: _secondsRemaining == 0
+                ? 'Resend code'
+                : 'Resend in ${_secondsRemaining}s',
+            onPressed: !_isLoading && _secondsRemaining == 0 ? _resend : null,
+          ),
         ],
       ),
     );
@@ -87,17 +107,21 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     }
     setState(() => _isLoading = true);
     try {
-      final verified = await ref
-          .read(authRepositoryProvider)
-          .verifyOtp(phone: widget.phone, otpCode: code);
+      final verified = widget.purpose == 'register'
+          ? await _completeRegister(code)
+          : await ref
+                .read(authRepositoryProvider)
+                .verifyOtp(phone: widget.phone, otpCode: code);
       if (!mounted) {
         return;
       }
       if (verified) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Xác thực OTP thành công.')),
+          const SnackBar(content: Text('OTP verified successfully.')),
         );
-        if (context.canPop()) {
+        if (widget.purpose == 'register') {
+          context.go(AppRoutes.onboarding);
+        } else if (context.canPop()) {
           context.pop(true);
         } else {
           context.go(AppRoutes.login);
@@ -121,6 +145,22 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     }
   }
 
+  Future<bool> _completeRegister(String code) async {
+    final payload = widget.registerPayload;
+    if (payload == null) {
+      throw const FormatException('Missing registration data.');
+    }
+
+    return ref
+        .read(authProvider.notifier)
+        .register(
+          phone: widget.phone,
+          password: payload.password,
+          displayName: payload.displayName,
+          otpCode: code,
+        );
+  }
+
   Future<void> _resend() async {
     setState(() => _isLoading = true);
     try {
@@ -135,7 +175,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       _startCountdown();
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Đã gửi lại mã OTP.')));
+      ).showSnackBar(const SnackBar(content: Text('OTP code resent.')));
     } catch (error) {
       if (mounted) {
         _showError(authRequestError(error));
@@ -167,4 +207,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
   }
+}
+
+class RegisterOtpPayload {
+  const RegisterOtpPayload({required this.displayName, required this.password});
+
+  final String displayName;
+  final String password;
 }

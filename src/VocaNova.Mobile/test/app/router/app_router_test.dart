@@ -13,7 +13,7 @@ void main() {
     await pumpRouter(tester, router);
 
     expect(router.state.matchedLocation, AppRoutes.login);
-    expect(find.text('Đăng nhập'), findsWidgets);
+    expect(find.text('Sign in'), findsWidgets);
   });
 
   testWidgets('root redirects authenticated user to home with bottom nav', (
@@ -24,12 +24,12 @@ void main() {
     await pumpRouter(tester, router);
 
     expect(router.state.matchedLocation, AppRoutes.home);
-    expect(find.text('Học từ vựng mỗi ngày'), findsOneWidget);
-    expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.text('Trang chủ'), findsOneWidget);
-    expect(find.text('Tra từ'), findsOneWidget);
-    expect(find.text('Danh sách'), findsOneWidget);
-    expect(find.text('Tiến độ'), findsOneWidget);
+    expect(find.text('Hi, An'), findsOneWidget);
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Search'), findsOneWidget);
+    expect(find.text('Lists'), findsOneWidget);
+    expect(find.text('Practice'), findsOneWidget);
+    expect(find.text('Profile'), findsOneWidget);
   });
 
   testWidgets('auth guard redirects protected route to login', (tester) async {
@@ -44,11 +44,11 @@ void main() {
     final router = createRouter(accessToken: 'access-token');
     await pumpRouter(tester, router);
 
-    await tester.tap(find.text('Tra từ'));
+    await tester.tap(find.text('Search'));
     await tester.pumpAndSettle();
 
     expect(router.state.matchedLocation, AppRoutes.search);
-    expect(find.text('Tra từ'), findsWidgets);
+    expect(find.text('Search'), findsWidgets);
   });
 
   testWidgets('authenticated user can open dynamic detail routes', (

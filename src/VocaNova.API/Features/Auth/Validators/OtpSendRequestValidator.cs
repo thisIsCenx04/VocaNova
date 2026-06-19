@@ -1,4 +1,5 @@
 using FluentValidation;
+using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Validation;
 using VocaNova.API.Features.Auth.DTOs;
 
@@ -12,7 +13,8 @@ public sealed class OtpSendRequestValidator : AbstractValidator<OtpSendRequest>
             .VietnamesePhone();
 
         RuleFor(request => request.Purpose)
-            .MaximumLength(20)
-            .When(request => !string.IsNullOrWhiteSpace(request.Purpose));
+            .Must(purpose => string.IsNullOrWhiteSpace(purpose)
+                || OtpPurpose.All.Contains(purpose.Trim().ToLowerInvariant()))
+            .WithMessage("Purpose must be register, verify, or reset.");
     }
 }

@@ -56,6 +56,9 @@ class AppRouter {
         builder: (_, state) => OtpScreen(
           phone: state.uri.queryParameters['phone'] ?? '',
           purpose: state.uri.queryParameters['purpose'] ?? 'verify',
+          registerPayload: state.extra is RegisterOtpPayload
+              ? state.extra! as RegisterOtpPayload
+              : null,
         ),
       ),
       StatefulShellRoute.indexedStack(

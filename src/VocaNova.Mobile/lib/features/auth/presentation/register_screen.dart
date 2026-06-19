@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
-import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_form_scaffold.dart';
+import 'package:vocanova_mobile/features/auth/presentation/auth_request_error.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_validators.dart';
+import 'package:vocanova_mobile/features/auth/presentation/otp_screen.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -22,6 +23,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmation = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -34,12 +36,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(authProvider, _handleAuthState);
-    final isLoading = ref.watch(authProvider).status == AuthStatus.loading;
-
     return AuthFormScaffold(
-      title: 'Tạo tài khoản',
-      subtitle: 'Bắt đầu xây dựng vốn từ của riêng bạn.',
+      title: 'Create account',
+      subtitle: 'Start learning today',
+      showBackButton: true,
+      onBack: () => context.go(AppRoutes.login),
       form: Form(
         key: _formKey,
         child: Column(
@@ -48,11 +49,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             TextFormField(
               key: const Key('register-display-name'),
               controller: _displayNameController,
-              enabled: !isLoading,
+              enabled: !_isLoading,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Tên hiển thị',
-                prefixIcon: Icon(Icons.person_outline),
+              decoration: authInputDecoration(
+                label: 'Full name',
+                hint: 'Nguyen Van An',
               ),
               validator: AuthValidators.displayName,
             ),
@@ -60,13 +61,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             TextFormField(
               key: const Key('register-phone'),
               controller: _phoneController,
-              enabled: !isLoading,
+              enabled: !_isLoading,
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Số điện thoại',
-                hintText: 'Ví dụ: 0901234567',
-                prefixIcon: Icon(Icons.phone_outlined),
+              decoration: authInputDecoration(
+                label: 'Phone number',
+                hint: '+84 90 000 0000',
               ),
               validator: AuthValidators.phone,
             ),
@@ -74,12 +74,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             TextFormField(
               key: const Key('register-password'),
               controller: _passwordController,
-              enabled: !isLoading,
+              enabled: !_isLoading,
               obscureText: _obscurePassword,
               textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                labelText: 'Mật khẩu',
-                prefixIcon: const Icon(Icons.lock_outline),
+              decoration: authInputDecoration(
+                label: 'Password',
+                hint: 'At least 8 characters',
                 suffixIcon: _visibilityButton(
                   obscure: _obscurePassword,
                   onPressed: () {
@@ -98,12 +98,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             TextFormField(
               key: const Key('register-confirm-password'),
               controller: _confirmPasswordController,
-              enabled: !isLoading,
+              enabled: !_isLoading,
               obscureText: _obscureConfirmation,
               textInputAction: TextInputAction.done,
-              decoration: InputDecoration(
-                labelText: 'Xác nhận mật khẩu',
-                prefixIcon: const Icon(Icons.lock_outline),
+              decoration: authInputDecoration(
+                label: 'Confirm password',
+                hint: 'Repeat your password',
                 suffixIcon: _visibilityButton(
                   obscure: _obscureConfirmation,
                   onPressed: () {
@@ -120,28 +120,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               onFieldSubmitted: (_) => _submit(),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              key: const Key('register-submit'),
-              onPressed: isLoading ? null : _submit,
-              child: isLoading
-                  ? const SizedBox.square(
-                      dimension: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Đăng ký'),
+            AuthPrimaryButton(
+              buttonKey: const Key('register-submit'),
+              onPressed: _isLoading ? null : _submit,
+              child: _isLoading
+                  ? authLoadingIndicator()
+                  : const Text('Create account'),
+            ),
+            const SizedBox(height: 16),
+            const AuthDivider(),
+            const SizedBox(height: 16),
+            GoogleAuthButton(
+              onPressed: _isLoading
+                  ? null
+                  : () => ref.read(authProvider.notifier).signInWithGoogle(),
             ),
             const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('Đã có tài khoản?'),
-                TextButton(
-                  onPressed: isLoading
-                      ? null
-                      : () => context.go(AppRoutes.login),
-                  child: const Text('Đăng nhập'),
-                ),
-              ],
+            AuthInlineLink(
+              text: 'Already have an account? ',
+              actionText: 'Sign in',
+              onPressed: _isLoading ? null : () => context.go(AppRoutes.login),
             ),
           ],
         ),
@@ -154,7 +152,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     required VoidCallback onPressed,
   }) {
     return IconButton(
-      tooltip: obscure ? 'Hiện mật khẩu' : 'Ẩn mật khẩu',
+      tooltip: obscure ? 'Show password' : 'Hide password',
       onPressed: onPressed,
       icon: Icon(
         obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
@@ -162,29 +160,35 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    ref
-        .read(authProvider.notifier)
-        .register(
-          phone: _phoneController.text.trim(),
-          password: _passwordController.text,
-          displayName: _displayNameController.text.trim(),
-        );
-  }
+    final phone = _phoneController.text.trim();
+    final payload = RegisterOtpPayload(
+      displayName: _displayNameController.text.trim(),
+      password: _passwordController.text,
+    );
 
-  void _handleAuthState(AuthState? previous, AuthState next) {
-    if (previous?.status == next.status) {
-      return;
-    }
-    if (next.status == AuthStatus.error && next.errorMessage != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
-    } else if (next.status == AuthStatus.authenticated) {
-      context.go(AppRoutes.onboarding);
+    setState(() => _isLoading = true);
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .sendOtp(phone: phone, purpose: 'register');
+      if (!mounted) {
+        return;
+      }
+      context.go(AppRoutes.otpFor(phone, purpose: 'register'), extra: payload);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(authRequestError(error))));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 }

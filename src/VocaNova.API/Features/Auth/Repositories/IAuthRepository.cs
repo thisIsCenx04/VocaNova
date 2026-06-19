@@ -65,6 +65,11 @@ public interface IAuthRepository
         string phone,
         CancellationToken cancellationToken = default);
 
+    Task<OtpVerification?> FindLatestOtpByPhoneAndUserAsync(
+        string phone,
+        uint? userId,
+        CancellationToken cancellationToken = default);
+
     Task<OtpVerification?> FindLatestOtpByPhoneSinceAsync(
         string phone,
         DateTime createdSince,

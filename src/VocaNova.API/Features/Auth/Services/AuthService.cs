@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Results;
@@ -68,6 +69,16 @@ public sealed class AuthService : IAuthService
             return Result<TokenResponse>.Conflict("Phone already exists.");
         }
 
+        var otpResult = await ValidateOtpAsync(
+            phone,
+            userId: null,
+            request.OtpCode!,
+            cancellationToken);
+        if (!otpResult.IsSuccess)
+        {
+            return PropagateFailure<TokenResponse, OtpVerification>(otpResult);
+        }
+
         var userRole = await _authRepository.FindRoleByNameAsync(UserRole.User, cancellationToken);
         if (userRole is null)
         {
@@ -90,7 +101,7 @@ public sealed class AuthService : IAuthService
             new UserAuth
             {
                 Phone = phone,
-                IsPhoneVerified = false,
+                IsPhoneVerified = true,
                 PasswordHash = PasswordHelper.Hash(request.Password!),
                 UpdatedAt = now,
             },
@@ -100,6 +111,10 @@ public sealed class AuthService : IAuthService
                 UpdatedAt = now,
             },
             cancellationToken: cancellationToken);
+
+        otpResult.Value!.UserId = user.UserId;
+        otpResult.Value.IsUsed = true;
+        await _authRepository.SaveChangesAsync(cancellationToken);
 
         var accessToken = _jwtTokenService.GenerateAccessToken(user.UserId, UserRole.User);
         var refreshToken = _jwtTokenService.GenerateRefreshToken();
@@ -403,6 +418,12 @@ public sealed class AuthService : IAuthService
         CancellationToken cancellationToken = default)
     {
         var phone = request.Phone!.Trim();
+        var purpose = NormalizeOtpPurpose(request.Purpose);
+        if (!OtpPurpose.All.Contains(purpose))
+        {
+            return Result<OtpSendResponse>.Fail("Purpose must be register, verify, or reset.");
+        }
+
         var now = DateTime.UtcNow;
         var rateLimitWindowStart = now.AddSeconds(-_rateLimitSettings.RetryAfterSeconds);
         var recentOtp = await _authRepository.FindLatestOtpByPhoneSinceAsync(
@@ -415,12 +436,27 @@ public sealed class AuthService : IAuthService
         }
 
         var user = await _authRepository.FindByPhoneAsync(phone, cancellationToken);
+        uint? otpUserId = null;
+        if (purpose == OtpPurpose.Reset)
+        {
+            if (user?.UserAuth?.PasswordHash is null || user.Status == UserStatus.Deleted)
+            {
+                return Result<OtpSendResponse>.NotFound("User not found.");
+            }
+
+            otpUserId = user.UserId;
+        }
+        else if (user is not null && user.Status != UserStatus.Deleted)
+        {
+            return Result<OtpSendResponse>.Conflict("Phone already exists.");
+        }
+
         var otpCode = _otpCodeGenerator.Generate();
 
         await _authRepository.CreateOtpAsync(
             new OtpVerification
             {
-                UserId = user?.UserId,
+                UserId = otpUserId,
                 Phone = phone,
                 OtpCode = otpCode,
                 IsUsed = false,
@@ -441,37 +477,13 @@ public sealed class AuthService : IAuthService
         CancellationToken cancellationToken = default)
     {
         var phone = request.Phone!.Trim();
-        var otp = await _authRepository.FindLatestOtpByPhoneAsync(phone, cancellationToken);
-        if (otp is null)
+        var result = await ValidateOtpAsync(phone, userId: null, request.OtpCode!, cancellationToken);
+        if (!result.IsSuccess)
         {
-            return Result<OtpVerifyResponse>.Unauthorized("Invalid OTP.");
+            return PropagateFailure<OtpVerifyResponse, OtpVerification>(result);
         }
 
-        var now = DateTime.UtcNow;
-        if (otp.ExpiresAt <= now)
-        {
-            return Result<OtpVerifyResponse>.Unauthorized("OTP has expired.");
-        }
-
-        if (otp.IsUsed)
-        {
-            return Result<OtpVerifyResponse>.Conflict("OTP has already been used.");
-        }
-
-        if (otp.VerifyAttemptCount >= AppSettings.OtpMaxVerifyAttempts)
-        {
-            return Result<OtpVerifyResponse>.TooManyRequests("Maximum OTP verify attempts exceeded.");
-        }
-
-        otp.VerifyAttemptCount++;
-
-        if (otp.OtpCode != request.OtpCode)
-        {
-            await _authRepository.SaveChangesAsync(cancellationToken);
-            return Result<OtpVerifyResponse>.Unauthorized("Invalid OTP.");
-        }
-
-        otp.IsUsed = true;
+        result.Value!.IsUsed = true;
         await _authRepository.SaveChangesAsync(cancellationToken);
 
         return Result<OtpVerifyResponse>.Ok(new OtpVerifyResponse(true));
@@ -483,12 +495,12 @@ public sealed class AuthService : IAuthService
     {
         var phone = request.Phone!.Trim();
         var user = await _authRepository.FindByPhoneAsync(phone, cancellationToken);
-        if (user is null || user.Status == UserStatus.Deleted)
+        if (user?.UserAuth?.PasswordHash is null || user.Status == UserStatus.Deleted)
         {
             return Result<OtpSendResponse>.NotFound("User not found.");
         }
 
-        return await SendOtpAsync(new OtpSendRequest(phone, "reset"), cancellationToken);
+        return await SendOtpAsync(new OtpSendRequest(phone, OtpPurpose.Reset), cancellationToken);
     }
 
     public async Task<Result<bool>> ResetPasswordAsync(
@@ -497,41 +509,22 @@ public sealed class AuthService : IAuthService
     {
         var phone = request.Phone!.Trim();
         var user = await _authRepository.FindByPhoneAsync(phone, cancellationToken);
-        if (user?.UserAuth is null || user.Status == UserStatus.Deleted)
+        if (user?.UserAuth?.PasswordHash is null || user.Status == UserStatus.Deleted)
         {
             return Result<bool>.Unauthorized("Invalid phone or OTP.");
         }
 
-        var otp = await _authRepository.FindLatestOtpByPhoneAsync(phone, cancellationToken);
-        if (otp is null)
+        var otpResult = await ValidateOtpAsync(
+            phone,
+            user.UserId,
+            request.OtpCode!,
+            cancellationToken);
+        if (!otpResult.IsSuccess)
         {
-            return Result<bool>.Unauthorized("Invalid phone or OTP.");
+            return PropagateFailure<bool, OtpVerification>(otpResult);
         }
 
         var now = DateTime.UtcNow;
-        if (otp.ExpiresAt <= now)
-        {
-            return Result<bool>.Unauthorized("OTP has expired.");
-        }
-
-        if (otp.IsUsed)
-        {
-            return Result<bool>.Conflict("OTP has already been used.");
-        }
-
-        if (otp.VerifyAttemptCount >= AppSettings.OtpMaxVerifyAttempts)
-        {
-            return Result<bool>.TooManyRequests("Maximum OTP verify attempts exceeded.");
-        }
-
-        otp.VerifyAttemptCount++;
-
-        if (otp.OtpCode != request.OtpCode)
-        {
-            await _authRepository.SaveChangesAsync(cancellationToken);
-            return Result<bool>.Unauthorized("Invalid phone or OTP.");
-        }
-
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         await _authRepository.UpdatePasswordAsync(
@@ -540,12 +533,74 @@ public sealed class AuthService : IAuthService
             now,
             cancellationToken);
 
+        var otp = otpResult.Value!;
         otp.IsUsed = true;
         await _authRepository.SaveChangesAsync(cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
 
         return Result<bool>.Ok(true);
+    }
+
+    private async Task<Result<OtpVerification>> ValidateOtpAsync(
+        string phone,
+        uint? userId,
+        string otpCode,
+        CancellationToken cancellationToken)
+    {
+        var otp = await _authRepository.FindLatestOtpByPhoneAndUserAsync(
+            phone,
+            userId,
+            cancellationToken);
+        if (otp is null)
+        {
+            return Result<OtpVerification>.Unauthorized("Invalid OTP.");
+        }
+
+        var now = DateTime.UtcNow;
+        if (otp.ExpiresAt <= now)
+        {
+            return Result<OtpVerification>.Unauthorized("OTP has expired.");
+        }
+
+        if (otp.IsUsed)
+        {
+            return Result<OtpVerification>.Conflict("OTP has already been used.");
+        }
+
+        if (otp.VerifyAttemptCount >= AppSettings.OtpMaxVerifyAttempts)
+        {
+            return Result<OtpVerification>.TooManyRequests("Maximum OTP verify attempts exceeded.");
+        }
+
+        otp.VerifyAttemptCount++;
+        if (otp.OtpCode != otpCode)
+        {
+            await _authRepository.SaveChangesAsync(cancellationToken);
+            return Result<OtpVerification>.Unauthorized("Invalid OTP.");
+        }
+
+        return Result<OtpVerification>.Ok(otp);
+    }
+
+    private static string NormalizeOtpPurpose(string? purpose)
+    {
+        return string.IsNullOrWhiteSpace(purpose)
+            ? OtpPurpose.Verify
+            : purpose.Trim().ToLowerInvariant();
+    }
+
+    private static Result<TOut> PropagateFailure<TOut, TIn>(Result<TIn> result)
+    {
+        return result.StatusCode switch
+        {
+            StatusCodes.Status401Unauthorized => Result<TOut>.Unauthorized(result.Error!),
+            StatusCodes.Status403Forbidden => Result<TOut>.Forbidden(result.Error!),
+            StatusCodes.Status404NotFound => Result<TOut>.NotFound(result.Error!),
+            StatusCodes.Status409Conflict => Result<TOut>.Conflict(result.Error!),
+            StatusCodes.Status429TooManyRequests => Result<TOut>.TooManyRequests(result.Error!),
+            _ => Result<TOut>.Fail(result.Error!),
+        };
     }
 
     private async Task<Result<TokenResponse>> SignInUserAsync(

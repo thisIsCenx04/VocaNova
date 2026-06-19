@@ -33,8 +33,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isLoading = ref.watch(authProvider).status == AuthStatus.loading;
 
     return AuthFormScaffold(
-      title: 'Đăng nhập',
-      subtitle: 'Tiếp tục hành trình học từ vựng của bạn.',
+      title: 'Sign in',
+      subtitle: 'Welcome back to VocaNova',
       form: Form(
         key: _formKey,
         child: Column(
@@ -46,10 +46,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               enabled: !isLoading,
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Số điện thoại',
-                hintText: 'Ví dụ: 0901234567',
-                prefixIcon: Icon(Icons.phone_outlined),
+              decoration: authInputDecoration(
+                label: 'Phone number',
+                hint: '0901234567',
               ),
               validator: AuthValidators.phone,
             ),
@@ -60,11 +59,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               enabled: !isLoading,
               obscureText: _obscurePassword,
               textInputAction: TextInputAction.done,
-              decoration: InputDecoration(
-                labelText: 'Mật khẩu',
-                prefixIcon: const Icon(Icons.lock_outline),
+              decoration: authInputDecoration(
+                label: 'Password',
                 suffixIcon: IconButton(
-                  tooltip: _obscurePassword ? 'Hiện mật khẩu' : 'Ẩn mật khẩu',
+                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
                   onPressed: () {
                     setState(() => _obscurePassword = !_obscurePassword);
                   },
@@ -84,40 +82,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 onPressed: isLoading
                     ? null
                     : () => context.push(AppRoutes.forgotPassword),
-                child: const Text('Quên mật khẩu?'),
+                child: const Text('Forgot password?'),
               ),
             ),
-            ElevatedButton(
-              key: const Key('login-submit'),
+            AuthPrimaryButton(
+              buttonKey: const Key('login-submit'),
               onPressed: isLoading ? null : _submit,
-              child: isLoading
-                  ? const SizedBox.square(
-                      dimension: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Đăng nhập'),
+              child: isLoading ? authLoadingIndicator() : const Text('Sign in'),
             ),
             const SizedBox(height: 16),
-            OutlinedButton.icon(
-              key: const Key('google-login'),
+            const AuthDivider(),
+            const SizedBox(height: 16),
+            GoogleAuthButton(
               onPressed: isLoading
                   ? null
                   : () => ref.read(authProvider.notifier).signInWithGoogle(),
-              icon: const Icon(Icons.g_mobiledata, size: 28),
-              label: const Text('Tiếp tục với Google'),
             ),
             const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('Chưa có tài khoản?'),
-                TextButton(
-                  onPressed: isLoading
-                      ? null
-                      : () => context.go(AppRoutes.register),
-                  child: const Text('Đăng ký'),
-                ),
-              ],
+            AuthInlineLink(
+              text: 'New here? ',
+              actionText: 'Create account',
+              onPressed: isLoading
+                  ? null
+                  : () => context.go(AppRoutes.register),
             ),
           ],
         ),

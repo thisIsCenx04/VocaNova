@@ -46,6 +46,23 @@ public class ForgotResetPasswordFeatureTests
     }
 
     [Fact]
+    public async Task ForgotPasswordAsync_Should_Return_404_For_Account_Without_Password()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserAsync(dbContext, hasPassword: false);
+        var smsProvider = new FakeSmsProvider();
+        var service = CreateAuthService(dbContext, smsProvider);
+
+        var result = await service.ForgotPasswordAsync(new ForgotPasswordRequest(Phone));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status404NotFound);
+        result.Error.Should().Be("User not found.");
+        (await dbContext.OtpVerifications.CountAsync()).Should().Be(0);
+        smsProvider.Messages.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task ResetPasswordAsync_Should_Update_Password_And_Mark_Otp_Used_When_Otp_Is_Valid()
     {
         await using var dbContext = CreateDbContext();
@@ -82,6 +99,28 @@ public class ForgotResetPasswordFeatureTests
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
         result.Error.Should().Be("OTP has expired.");
+
+        var userAuth = await dbContext.UserAuths.SingleAsync(auth => auth.UserId == 1);
+        PasswordHelper.Verify("OldPassword1", userAuth.PasswordHash!).Should().BeTrue();
+
+        var otp = await dbContext.OtpVerifications.SingleAsync();
+        otp.IsUsed.Should().BeFalse();
+        otp.VerifyAttemptCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ResetPasswordAsync_Should_Not_Accept_Register_Otp()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserAsync(dbContext);
+        await SeedOtpAsync(dbContext, DateTime.UtcNow.AddMinutes(5), userId: null);
+        var service = CreateAuthService(dbContext);
+
+        var result = await service.ResetPasswordAsync(
+            new ResetPasswordRequest(Phone, OtpCode, "NewPassword1"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
 
         var userAuth = await dbContext.UserAuths.SingleAsync(auth => auth.UserId == 1);
         PasswordHelper.Verify("OldPassword1", userAuth.PasswordHash!).Should().BeTrue();
@@ -144,7 +183,9 @@ public class ForgotResetPasswordFeatureTests
         };
     }
 
-    private static async Task SeedUserAsync(VocaNovaDbContext dbContext)
+    private static async Task SeedUserAsync(
+        VocaNovaDbContext dbContext,
+        bool hasPassword = true)
     {
         var role = new Role
         {
@@ -165,7 +206,7 @@ public class ForgotResetPasswordFeatureTests
             {
                 UserId = 1,
                 Phone = Phone,
-                PasswordHash = PasswordHelper.Hash("OldPassword1"),
+                PasswordHash = hasPassword ? PasswordHelper.Hash("OldPassword1") : null,
                 UpdatedAt = DateTime.UtcNow,
             },
             UserProfile = new UserProfile
@@ -179,11 +220,14 @@ public class ForgotResetPasswordFeatureTests
         await dbContext.SaveChangesAsync();
     }
 
-    private static async Task SeedOtpAsync(VocaNovaDbContext dbContext, DateTime expiresAt)
+    private static async Task SeedOtpAsync(
+        VocaNovaDbContext dbContext,
+        DateTime expiresAt,
+        uint? userId = 1)
     {
         dbContext.OtpVerifications.Add(new OtpVerification
         {
-            UserId = 1,
+            UserId = userId,
             Phone = Phone,
             OtpCode = OtpCode,
             IsUsed = false,

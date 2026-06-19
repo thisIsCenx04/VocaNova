@@ -52,23 +52,27 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return AuthFormScaffold(
-      title: 'Quên mật khẩu',
-      subtitle: switch (_step) {
-        ForgotPasswordStep.phone => 'Nhập số điện thoại đã đăng ký.',
-        ForgotPasswordStep.otp =>
-          'Nhập mã 6 số đã gửi đến ${_phoneController.text.trim()}.',
-        ForgotPasswordStep.password =>
-          'Tạo mật khẩu mới cho tài khoản của bạn.',
+      title: switch (_step) {
+        ForgotPasswordStep.phone => 'Reset password',
+        ForgotPasswordStep.otp => 'Verify your code',
+        ForgotPasswordStep.password => 'Create password',
       },
+      subtitle: switch (_step) {
+        ForgotPasswordStep.phone =>
+          "Enter your phone number and we'll send a code to reset your password.",
+        ForgotPasswordStep.otp =>
+          'Enter the 6-digit code sent to ${_phoneController.text.trim()}.',
+        ForgotPasswordStep.password =>
+          'Create a new password for your account.',
+      },
+      showBackButton: true,
+      onBack: () => context.go(AppRoutes.login),
       form: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          LinearProgressIndicator(value: (_step.index + 1) / 3),
-          const SizedBox(height: 8),
-          Text(
-            'Bước ${_step.index + 1}/3',
-            textAlign: TextAlign.right,
-            style: Theme.of(context).textTheme.bodySmall,
+          AuthProgressHeader(
+            value: (_step.index + 1) / 3,
+            label: 'Bước ${_step.index + 1}/3',
           ),
           const SizedBox(height: 24),
           switch (_step) {
@@ -93,19 +97,18 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             enabled: !_isLoading,
             keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
-              labelText: 'Số điện thoại',
-              hintText: 'Ví dụ: 0901234567',
-              prefixIcon: Icon(Icons.phone_outlined),
+            decoration: authInputDecoration(
+              label: 'Email or phone number',
+              hint: '0901234567',
             ),
             validator: AuthValidators.phone,
             onFieldSubmitted: (_) => _sendResetOtp(),
           ),
           const SizedBox(height: 24),
-          ElevatedButton(
-            key: const Key('forgot-send-otp'),
+          AuthPrimaryButton(
+            buttonKey: const Key('forgot-send-otp'),
             onPressed: _isLoading ? null : _sendResetOtp,
-            child: _buttonContent('Gửi mã OTP'),
+            child: _buttonContent('Send reset code'),
           ),
         ],
       ),
@@ -127,12 +130,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           },
         ),
         const SizedBox(height: 16),
-        Text(
+        AuthHelperText(
           _failedAttempts >= maxAttempts
               ? 'Bạn đã nhập sai OTP quá 5 lần. Vui lòng gửi lại mã.'
               : 'Mã OTP sẽ được kiểm tra khi bạn lưu mật khẩu mới.',
-          key: const Key('forgot-otp-message'),
-          textAlign: TextAlign.center,
+          widgetKey: const Key('forgot-otp-message'),
         ),
         const SizedBox(height: 16),
         TextButton(
@@ -140,15 +142,15 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           onPressed: !_isLoading && _secondsRemaining == 0 ? _resendOtp : null,
           child: Text(
             _secondsRemaining == 0
-                ? 'Gửi lại mã'
-                : 'Gửi lại mã sau ${_secondsRemaining}s',
+                ? 'Resend code'
+                : 'Resend in ${_secondsRemaining}s',
           ),
         ),
         TextButton(
           onPressed: _isLoading
               ? null
               : () => setState(() => _step = ForgotPasswordStep.phone),
-          child: const Text('Đổi số điện thoại'),
+          child: const Text('Change phone number'),
         ),
       ],
     );
@@ -166,9 +168,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             enabled: !_isLoading,
             obscureText: _obscurePassword,
             textInputAction: TextInputAction.next,
-            decoration: InputDecoration(
-              labelText: 'Mật khẩu mới',
-              prefixIcon: const Icon(Icons.lock_outline),
+            decoration: authInputDecoration(
+              label: 'New password',
               suffixIcon: _visibilityButton(
                 obscure: _obscurePassword,
                 onPressed: () =>
@@ -184,9 +185,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             enabled: !_isLoading,
             obscureText: _obscureConfirmation,
             textInputAction: TextInputAction.done,
-            decoration: InputDecoration(
-              labelText: 'Xác nhận mật khẩu mới',
-              prefixIcon: const Icon(Icons.lock_outline),
+            decoration: authInputDecoration(
+              label: 'Confirm new password',
               suffixIcon: _visibilityButton(
                 obscure: _obscureConfirmation,
                 onPressed: () => setState(
@@ -199,16 +199,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             onFieldSubmitted: (_) => _resetPassword(),
           ),
           const SizedBox(height: 24),
-          ElevatedButton(
-            key: const Key('forgot-reset-password'),
+          AuthPrimaryButton(
+            buttonKey: const Key('forgot-reset-password'),
             onPressed: _isLoading ? null : _resetPassword,
-            child: _buttonContent('Lưu mật khẩu mới'),
+            child: _buttonContent('Save new password'),
           ),
           TextButton(
             onPressed: _isLoading
                 ? null
                 : () => setState(() => _step = ForgotPasswordStep.otp),
-            child: const Text('Nhập lại mã OTP'),
+            child: const Text('Enter OTP again'),
           ),
         ],
       ),
@@ -220,7 +220,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     required VoidCallback onPressed,
   }) {
     return IconButton(
-      tooltip: obscure ? 'Hiện mật khẩu' : 'Ẩn mật khẩu',
+      tooltip: obscure ? 'Show password' : 'Hide password',
       onPressed: onPressed,
       icon: Icon(
         obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
@@ -229,12 +229,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   Widget _buttonContent(String label) {
-    return _isLoading
-        ? const SizedBox.square(
-            dimension: 22,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
-        : Text(label);
+    return _isLoading ? authLoadingIndicator() : Text(label);
   }
 
   Future<void> _sendResetOtp() async {
@@ -271,7 +266,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       _startCountdown();
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Đã gửi lại mã OTP.')));
+      ).showSnackBar(const SnackBar(content: Text('OTP code resent.')));
     } catch (error) {
       if (mounted) _showError(authRequestError(error));
     } finally {
@@ -295,7 +290,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Đổi mật khẩu thành công.')));
+      ).showSnackBar(const SnackBar(content: Text('Password changed.')));
       context.go(AppRoutes.login);
     } catch (error) {
       if (!mounted) return;

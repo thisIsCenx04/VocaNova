@@ -29,7 +29,7 @@ public class OtpFeatureTests
         var smsProvider = new FakeSmsProvider();
         var service = CreateAuthService(dbContext, smsProvider: smsProvider);
 
-        var result = await service.SendOtpAsync(new OtpSendRequest(Phone, "reset"));
+        var result = await service.SendOtpAsync(new OtpSendRequest(Phone, "register"));
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.ExpiresIn.Should().Be(300);
@@ -53,7 +53,7 @@ public class OtpFeatureTests
         await SeedOtpAsync(dbContext, expiresAt: DateTime.UtcNow.AddMinutes(5), createdAt: DateTime.UtcNow);
         var service = CreateAuthService(dbContext);
 
-        var result = await service.SendOtpAsync(new OtpSendRequest(Phone, "reset"));
+        var result = await service.SendOtpAsync(new OtpSendRequest(Phone, "register"));
 
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(StatusCodes.Status429TooManyRequests);

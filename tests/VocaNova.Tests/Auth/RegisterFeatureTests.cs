@@ -22,10 +22,11 @@ public class RegisterFeatureTests
     {
         await using var dbContext = CreateDbContext();
         await SeedUserRoleAsync(dbContext);
+        await SeedOtpAsync(dbContext, "0912345678", "123456", DateTime.UtcNow.AddMinutes(5));
         var service = CreateAuthService(dbContext);
 
         var result = await service.RegisterAsync(
-            new RegisterRequest("0912345678", "Password1", "Nguyen Van A"),
+            new RegisterRequest("0912345678", "Password1", "Nguyen Van A", "123456"),
             deviceInfo: "xunit",
             ipAddress: "127.0.0.1");
 
@@ -42,6 +43,7 @@ public class RegisterFeatureTests
         user.Status.Should().Be(UserStatus.Active);
         user.RoleId.Should().Be(1);
         user.UserAuth!.Phone.Should().Be("0912345678");
+        user.UserAuth.IsPhoneVerified.Should().BeTrue();
         PasswordHelper.Verify("Password1", user.UserAuth.PasswordHash!).Should().BeTrue();
         user.UserProfile!.FullName.Should().Be("Nguyen Van A");
 
@@ -55,6 +57,11 @@ public class RegisterFeatureTests
         principal.Should().NotBeNull();
         principal!.FindFirst("user_id")!.Value.Should().Be(user.UserId.ToString());
         principal.FindFirst("role")!.Value.Should().Be(UserRole.User);
+
+        var otp = await dbContext.OtpVerifications.SingleAsync();
+        otp.IsUsed.Should().BeTrue();
+        otp.UserId.Should().Be(user.UserId);
+        otp.VerifyAttemptCount.Should().Be(1);
     }
 
     [Fact]
@@ -65,7 +72,7 @@ public class RegisterFeatureTests
         await SeedExistingUserAsync(dbContext, UserStatus.Active);
         var service = CreateAuthService(dbContext);
 
-        var result = await service.RegisterAsync(new RegisterRequest("0912345678", "Password1", "Nguyen Van A"));
+        var result = await service.RegisterAsync(new RegisterRequest("0912345678", "Password1", "Nguyen Van A", "123456"));
 
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(StatusCodes.Status409Conflict);
@@ -74,11 +81,51 @@ public class RegisterFeatureTests
     }
 
     [Fact]
+    public async Task RegisterAsync_Should_Return_401_And_Not_Create_User_When_Otp_Is_Invalid()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserRoleAsync(dbContext);
+        await SeedOtpAsync(dbContext, "0912345678", "123456", DateTime.UtcNow.AddMinutes(5));
+        var service = CreateAuthService(dbContext);
+
+        var result = await service.RegisterAsync(
+            new RegisterRequest("0912345678", "Password1", "Nguyen Van A", "654321"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
+        (await dbContext.Users.CountAsync()).Should().Be(0);
+
+        var otp = await dbContext.OtpVerifications.SingleAsync();
+        otp.IsUsed.Should().BeFalse();
+        otp.VerifyAttemptCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_Should_Not_Accept_Reset_Otp()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserRoleAsync(dbContext);
+        await SeedOtpAsync(dbContext, "0912345678", "123456", DateTime.UtcNow.AddMinutes(5), userId: 99);
+        var service = CreateAuthService(dbContext);
+
+        var result = await service.RegisterAsync(
+            new RegisterRequest("0912345678", "Password1", "Nguyen Van A", "123456"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
+        (await dbContext.Users.CountAsync()).Should().Be(0);
+
+        var otp = await dbContext.OtpVerifications.SingleAsync();
+        otp.IsUsed.Should().BeFalse();
+        otp.VerifyAttemptCount.Should().Be(0);
+    }
+
+    [Fact]
     public void RegisterRequestValidator_Should_Reject_Weak_Password()
     {
         var validator = new RegisterRequestValidator();
 
-        var result = validator.Validate(new RegisterRequest("0912345678", "weak", "Nguyen Van A"));
+        var result = validator.Validate(new RegisterRequest("0912345678", "weak", "Nguyen Van A", "123456"));
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(error => error.PropertyName == nameof(RegisterRequest.Password));
@@ -127,6 +174,28 @@ public class RegisterFeatureTests
         {
             RoleId = 1,
             RoleName = UserRole.User,
+        });
+
+        await dbContext.SaveChangesAsync();
+    }
+
+    private static async Task SeedOtpAsync(
+        VocaNovaDbContext dbContext,
+        string phone,
+        string otpCode,
+        DateTime expiresAt,
+        uint? userId = null)
+    {
+        dbContext.OtpVerifications.Add(new OtpVerification
+        {
+            UserId = userId,
+            Phone = phone,
+            OtpCode = otpCode,
+            IsUsed = false,
+            Status = OtpStatus.Active,
+            VerifyAttemptCount = 0,
+            ExpiresAt = expiresAt,
+            CreatedAt = DateTime.UtcNow.AddMinutes(-2),
         });
 
         await dbContext.SaveChangesAsync();

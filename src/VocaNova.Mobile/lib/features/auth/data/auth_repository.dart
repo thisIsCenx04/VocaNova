@@ -11,10 +11,16 @@ class AuthRepository {
     required String phone,
     required String password,
     required String displayName,
+    required String otpCode,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       ApiEndpoints.register,
-      data: {'phone': phone, 'password': password, 'display_name': displayName},
+      data: {
+        'phone': phone,
+        'password': password,
+        'display_name': displayName,
+        'otp_code': otpCode,
+      },
     );
     return AuthTokens.fromJson(_responseData(response));
   }

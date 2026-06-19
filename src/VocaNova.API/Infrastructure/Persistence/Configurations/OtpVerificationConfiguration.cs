@@ -32,6 +32,8 @@ public sealed class OtpVerificationConfiguration : IEntityTypeConfiguration<OtpV
             .ValueGeneratedOnAddOrUpdate()
             .HasDefaultValueSql("current_timestamp()")
             .HasColumnType("timestamp");
+        entity.Property(e => e.IsUsed)
+            .HasColumnName("is_used");
         entity.Property(e => e.OtpCode)
             .HasColumnName("otp_code")
             .HasMaxLength(6);
