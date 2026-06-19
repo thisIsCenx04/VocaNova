@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using VocaNova.API.Common.Constants;
 using VocaNova.API.Features.Auth.Repositories;
 using VocaNova.API.Infrastructure.Persistence;
@@ -9,6 +10,20 @@ namespace VocaNova.Tests.Auth;
 
 public class AuthRepositoryTests
 {
+    [Fact]
+    public void EfModel_Should_Map_OtpVerification_IsUsed_To_Snake_Case_Column()
+    {
+        using var dbContext = CreateDbContext();
+        var storeObject = StoreObjectIdentifier.Table("otp_verifications", null);
+
+        dbContext.Model
+            .FindEntityType(typeof(OtpVerification))!
+            .FindProperty(nameof(OtpVerification.IsUsed))!
+            .GetColumnName(storeObject)
+            .Should()
+            .Be("is_used");
+    }
+
     [Fact]
     public async Task FindByPhoneAsync_Should_Return_User_Aggregate()
     {

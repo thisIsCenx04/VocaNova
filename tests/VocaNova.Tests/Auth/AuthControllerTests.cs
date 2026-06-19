@@ -217,6 +217,23 @@ public class AuthControllerTests
         controller.Response.Headers["Retry-After"].ToString().Should().NotBeNullOrWhiteSpace();
     }
 
+    [Fact]
+    public void RateLimitSettings_Should_Keep_Defaults_When_Config_Binds_Zero_Values()
+    {
+        var settings = new RateLimitSettings
+        {
+            OtpPerMinutePerPhone = 0,
+            OtpPerMinutePerIp = 0,
+            LoginPerMinutePerIp = 0,
+            RetryAfterSeconds = 0,
+        };
+
+        settings.OtpPerMinutePerPhone.Should().Be(1);
+        settings.OtpPerMinutePerIp.Should().Be(1);
+        settings.LoginPerMinutePerIp.Should().Be(10);
+        settings.RetryAfterSeconds.Should().Be(60);
+    }
+
     private static AuthController CreateController(
         IAuthService authService,
         IAuthRateLimiter? authRateLimiter = null,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 
 class OtpCodeFields extends StatefulWidget {
   const OtpCodeFields({
@@ -49,24 +50,33 @@ class OtpCodeFieldsState extends State<OtpCodeFields> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 10,
+      runSpacing: 10,
       children: List.generate(length, (index) {
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(right: index == length - 1 ? 0 : 8),
-            child: TextField(
-              key: Key('otp-digit-$index'),
-              controller: _controllers[index],
-              focusNode: _focusNodes[index],
-              enabled: widget.enabled,
-              autofocus: index == 0,
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              maxLength: 1,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(counterText: ''),
-              onChanged: (value) => _onChanged(index, value),
+        return SizedBox(
+          width: 40,
+          height: 48,
+          child: TextField(
+            key: Key('otp-digit-$index'),
+            controller: _controllers[index],
+            focusNode: _focusNodes[index],
+            enabled: widget.enabled,
+            autofocus: index == 0,
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            maxLength: 1,
+            style: AppTextStyles.body.copyWith(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
             ),
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: const InputDecoration(
+              counterText: '',
+              contentPadding: EdgeInsets.zero,
+            ),
+            onChanged: (value) => _onChanged(index, value),
           ),
         );
       }),

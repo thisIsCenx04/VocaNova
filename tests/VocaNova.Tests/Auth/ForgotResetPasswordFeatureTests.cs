@@ -46,6 +46,23 @@ public class ForgotResetPasswordFeatureTests
     }
 
     [Fact]
+    public async Task ForgotPasswordAsync_Should_Return_404_For_Account_Without_Password()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserAsync(dbContext, hasPassword: false);
+        var smsProvider = new FakeSmsProvider();
+        var service = CreateAuthService(dbContext, smsProvider);
+
+        var result = await service.ForgotPasswordAsync(new ForgotPasswordRequest(Phone));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status404NotFound);
+        result.Error.Should().Be("User not found.");
+        (await dbContext.OtpVerifications.CountAsync()).Should().Be(0);
+        smsProvider.Messages.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task ResetPasswordAsync_Should_Update_Password_And_Mark_Otp_Used_When_Otp_Is_Valid()
     {
         await using var dbContext = CreateDbContext();
@@ -166,7 +183,9 @@ public class ForgotResetPasswordFeatureTests
         };
     }
 
-    private static async Task SeedUserAsync(VocaNovaDbContext dbContext)
+    private static async Task SeedUserAsync(
+        VocaNovaDbContext dbContext,
+        bool hasPassword = true)
     {
         var role = new Role
         {
@@ -187,7 +206,7 @@ public class ForgotResetPasswordFeatureTests
             {
                 UserId = 1,
                 Phone = Phone,
-                PasswordHash = PasswordHelper.Hash("OldPassword1"),
+                PasswordHash = hasPassword ? PasswordHelper.Hash("OldPassword1") : null,
                 UpdatedAt = DateTime.UtcNow,
             },
             UserProfile = new UserProfile

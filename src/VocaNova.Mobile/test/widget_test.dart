@@ -14,8 +14,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('VocaNova'), findsOneWidget);
-    expect(find.text('Học từ vựng mỗi ngày'), findsOneWidget);
-    expect(find.text('Khám phá VocaNova'), findsOneWidget);
+    expect(find.text('Hi, An'), findsOneWidget);
+    expect(find.text('DAILY GOAL'), findsOneWidget);
   });
 }
 

@@ -101,6 +101,26 @@ public class RegisterFeatureTests
     }
 
     [Fact]
+    public async Task RegisterAsync_Should_Not_Accept_Reset_Otp()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserRoleAsync(dbContext);
+        await SeedOtpAsync(dbContext, "0912345678", "123456", DateTime.UtcNow.AddMinutes(5), userId: 99);
+        var service = CreateAuthService(dbContext);
+
+        var result = await service.RegisterAsync(
+            new RegisterRequest("0912345678", "Password1", "Nguyen Van A", "123456"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
+        (await dbContext.Users.CountAsync()).Should().Be(0);
+
+        var otp = await dbContext.OtpVerifications.SingleAsync();
+        otp.IsUsed.Should().BeFalse();
+        otp.VerifyAttemptCount.Should().Be(0);
+    }
+
+    [Fact]
     public void RegisterRequestValidator_Should_Reject_Weak_Password()
     {
         var validator = new RegisterRequestValidator();
@@ -163,10 +183,12 @@ public class RegisterFeatureTests
         VocaNovaDbContext dbContext,
         string phone,
         string otpCode,
-        DateTime expiresAt)
+        DateTime expiresAt,
+        uint? userId = null)
     {
         dbContext.OtpVerifications.Add(new OtpVerification
         {
+            UserId = userId,
             Phone = phone,
             OtpCode = otpCode,
             IsUsed = false,

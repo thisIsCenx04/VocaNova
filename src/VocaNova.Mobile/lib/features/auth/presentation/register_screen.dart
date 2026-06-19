@@ -37,8 +37,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return AuthFormScaffold(
-      title: 'Tạo tài khoản',
-      subtitle: 'Bắt đầu xây dựng vốn từ của riêng bạn.',
+      title: 'Create account',
+      subtitle: 'Start learning today',
+      showBackButton: true,
+      onBack: () => context.go(AppRoutes.login),
       form: Form(
         key: _formKey,
         child: Column(
@@ -49,9 +51,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               controller: _displayNameController,
               enabled: !_isLoading,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Tên hiển thị',
-                prefixIcon: Icon(Icons.person_outline),
+              decoration: authInputDecoration(
+                label: 'Full name',
+                hint: 'Nguyen Van An',
               ),
               validator: AuthValidators.displayName,
             ),
@@ -62,10 +64,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               enabled: !_isLoading,
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Số điện thoại',
-                hintText: 'Ví dụ: 0901234567',
-                prefixIcon: Icon(Icons.phone_outlined),
+              decoration: authInputDecoration(
+                label: 'Phone number',
+                hint: '+84 90 000 0000',
               ),
               validator: AuthValidators.phone,
             ),
@@ -76,9 +77,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               enabled: !_isLoading,
               obscureText: _obscurePassword,
               textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                labelText: 'Mật khẩu',
-                prefixIcon: const Icon(Icons.lock_outline),
+              decoration: authInputDecoration(
+                label: 'Password',
+                hint: 'At least 8 characters',
                 suffixIcon: _visibilityButton(
                   obscure: _obscurePassword,
                   onPressed: () {
@@ -100,9 +101,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               enabled: !_isLoading,
               obscureText: _obscureConfirmation,
               textInputAction: TextInputAction.done,
-              decoration: InputDecoration(
-                labelText: 'Xác nhận mật khẩu',
-                prefixIcon: const Icon(Icons.lock_outline),
+              decoration: authInputDecoration(
+                label: 'Confirm password',
+                hint: 'Repeat your password',
                 suffixIcon: _visibilityButton(
                   obscure: _obscureConfirmation,
                   onPressed: () {
@@ -119,28 +120,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               onFieldSubmitted: (_) => _submit(),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              key: const Key('register-submit'),
+            AuthPrimaryButton(
+              buttonKey: const Key('register-submit'),
               onPressed: _isLoading ? null : _submit,
               child: _isLoading
-                  ? const SizedBox.square(
-                      dimension: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Đăng ký'),
+                  ? authLoadingIndicator()
+                  : const Text('Create account'),
+            ),
+            const SizedBox(height: 16),
+            const AuthDivider(),
+            const SizedBox(height: 16),
+            GoogleAuthButton(
+              onPressed: _isLoading
+                  ? null
+                  : () => ref.read(authProvider.notifier).signInWithGoogle(),
             ),
             const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('Đã có tài khoản?'),
-                TextButton(
-                  onPressed: _isLoading
-                      ? null
-                      : () => context.go(AppRoutes.login),
-                  child: const Text('Đăng nhập'),
-                ),
-              ],
+            AuthInlineLink(
+              text: 'Already have an account? ',
+              actionText: 'Sign in',
+              onPressed: _isLoading ? null : () => context.go(AppRoutes.login),
             ),
           ],
         ),
@@ -153,7 +152,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     required VoidCallback onPressed,
   }) {
     return IconButton(
-      tooltip: obscure ? 'Hiện mật khẩu' : 'Ẩn mật khẩu',
+      tooltip: obscure ? 'Show password' : 'Hide password',
       onPressed: onPressed,
       icon: Icon(
         obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,

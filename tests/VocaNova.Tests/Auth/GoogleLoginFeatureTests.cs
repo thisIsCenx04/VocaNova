@@ -68,6 +68,40 @@ public class GoogleLoginFeatureTests
     }
 
     [Fact]
+    public async Task GoogleLoginAsync_Should_Return_403_When_Existing_Google_User_Is_Locked()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserRoleAsync(dbContext);
+        await SeedGoogleUserAsync(dbContext, "google-uid-1", "existing@example.com", UserStatus.Locked);
+        var googleUser = new GoogleUserInfo("google-uid-1", "existing@example.com", true, "Existing Google User", null);
+        var service = CreateAuthService(dbContext, googleUser);
+
+        var result = await service.GoogleLoginAsync(new GoogleLoginRequest("google-id-token"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
+        result.Error.Should().Be("User account is locked.");
+        (await dbContext.RefreshTokens.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GoogleLoginAsync_Should_Return_401_When_Existing_Google_User_Is_Deleted()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserRoleAsync(dbContext);
+        await SeedGoogleUserAsync(dbContext, "google-uid-1", "existing@example.com", UserStatus.Deleted);
+        var googleUser = new GoogleUserInfo("google-uid-1", "existing@example.com", true, "Existing Google User", null);
+        var service = CreateAuthService(dbContext, googleUser);
+
+        var result = await service.GoogleLoginAsync(new GoogleLoginRequest("google-id-token"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
+        result.Error.Should().Be("Invalid Google account.");
+        (await dbContext.RefreshTokens.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
     public async Task GoogleLoginAsync_Should_Return_409_When_Google_Email_Belongs_To_Another_User()
     {
         await using var dbContext = CreateDbContext();

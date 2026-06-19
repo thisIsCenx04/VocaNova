@@ -495,7 +495,7 @@ public sealed class AuthService : IAuthService
     {
         var phone = request.Phone!.Trim();
         var user = await _authRepository.FindByPhoneAsync(phone, cancellationToken);
-        if (user is null || user.Status == UserStatus.Deleted)
+        if (user?.UserAuth?.PasswordHash is null || user.Status == UserStatus.Deleted)
         {
             return Result<OtpSendResponse>.NotFound("User not found.");
         }
