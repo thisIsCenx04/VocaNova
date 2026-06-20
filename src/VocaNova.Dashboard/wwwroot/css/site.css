@@ -426,3 +426,58 @@ body {
     transition: none;
   }
 }
+
+/* ===== Language switch (F055.3) ===== */
+.lang-switch {
+  position: relative;
+}
+
+.lang-switch > summary {
+  list-style: none;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.lang-switch > summary::-webkit-details-marker {
+  display: none;
+}
+
+.lang-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  gap: 2px;
+  min-width: 150px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.lang-switch form {
+  margin: 0;
+}
+
+.lang-option {
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--ink);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lang-option:hover,
+.lang-option:focus-visible {
+  background: var(--bg);
+}
+
+.lang-option.is-active {
+  color: var(--accent);
+  font-weight: 700;
+}

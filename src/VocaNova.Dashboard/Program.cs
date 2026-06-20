@@ -7,7 +7,11 @@ using VocaNova.Dashboard.Services.Auth;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+// R2: localization EN + VI.
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.AddControllersWithViews()
+    .AddViewLocalization()
+    .AddDataAnnotationsLocalization();
 builder.Services.Configure<DashboardApiOptions>(
     builder.Configuration.GetSection(DashboardApiOptions.SectionName));
 builder.Services
@@ -60,6 +64,13 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+// R2: áp culture từ cookie (CookieRequestCultureProvider mặc định), hỗ trợ EN + VI.
+var supportedCultures = new[] { "en", "vi" };
+app.UseRequestLocalization(new RequestLocalizationOptions()
+    .SetDefaultCulture("en")
+    .AddSupportedCultures(supportedCultures)
+    .AddSupportedUICultures(supportedCultures));
 
 app.UseRouting();
 

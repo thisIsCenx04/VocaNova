@@ -14,7 +14,7 @@
 | F055 | Cookie auth + layout + login | `feature/dashboard/auth-layout` | ✅ | (trước) | đã có sẵn |
 | **F055.1** | **Authenticated API client + refresh** | `feature/dashboard/api-client` | ✅ (S5 verify ở F056) | 2026-06-21 | code xong, build sạch |
 | F055.2 | Theme dark/light scaffold (R1) | `feature/dashboard/theme` | ✅ | 2026-06-21 | tokens + `<html data-theme>` từ cookie + toggle topbar |
-| F055.3 | i18n EN/VI scaffold (R2) | `feature/dashboard/i18n` | ⬜ | | `IStringLocalizer` + `.resx` + middleware |
+| F055.3 | i18n EN/VI scaffold (R2) | `feature/dashboard/i18n` | ✅ | 2026-06-21 | localization + `_LangSwitch` + nav/login localized |
 | — | Shared components (_DataTable, _Badge, _FilterBar, _StateBlock, _Toast, _Modal, _ChartCard) | `feature/dashboard/shared-ui` | ⬜ | | Chart.js self-host |
 | F056 | Overview (stat cards + charts) | `feature/dashboard/overview` | ⬜ | | cần F055.1 |
 | F057 | Vocabulary list & filter | `feature/dashboard/vocab-list` | ⬜ | | API word list 🟥 G1 (An) |
@@ -46,6 +46,11 @@
 ## Nhật ký (mới nhất ở trên)
 
 ### 2026-06-21
+- **F055.3 xong** (nhánh `feature/dashboard/i18n`):
+  - S1: `Program.cs` `AddLocalization`+`AddViewLocalization`+`UseRequestLocalization` (en, vi, default en, culture cookie); `SharedResource.cs`; `Resources/SharedResource.{en,vi}.resx`; `_ViewImports` inject `IStringLocalizer<SharedResource> L`.
+  - S2: `CultureController` (POST `/culture/set` + antiforgery) + `Views/Shared/_LangSwitch.cshtml` (dropdown EN/VI topbar) + CSS.
+  - S3: localize `_Layout` (nav + đăng xuất + theme aria) + `Login.cshtml` (title/subtitle/submit). Key `Nav.*`/`Account.*`/`Theme.*`/`Lang.*`/`Login.*`.
+  - Build → 0 warning, 0 error. Commit gợi ý: `feat(dashboard): add EN/VI localization with language switch`.
 - **F055.2 xong** (nhánh `feature/dashboard/theme`):
   - step1: `site.css` tách token `[data-theme="light"]`/`[data-theme="dark"]` + status + thang CEFR + `--accent-soft`/`--auth-gradient`.
   - step2: `_Layout.cshtml` đọc cookie `VocaNova.Dashboard.Theme` → `<html data-theme="...">` server-side.
