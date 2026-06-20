@@ -3,15 +3,14 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using VocaNova.Dashboard.Models.Auth;
+using VocaNova.Dashboard.Services.Api;
 
 namespace VocaNova.Dashboard.Services.Auth;
 
 public sealed class DashboardAuthService : IDashboardAuthService
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
-    {
-        PropertyNameCaseInsensitive = true,
-    };
+    // Dùng chung cấu hình JSON với API client (snake_case). [JsonPropertyName] trên các record vẫn override.
+    private static readonly JsonSerializerOptions JsonOptions = ApiJson.Default;
 
     private static readonly HashSet<string> DashboardRoles = new(StringComparer.Ordinal)
     {

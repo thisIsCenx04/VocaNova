@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Options;
+using VocaNova.Dashboard.Services.Api;
 using VocaNova.Dashboard.Services.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,11 +30,23 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddHttpClient<IDashboardAuthService, DashboardAuthService>((serviceProvider, client) =>
 {
     var options = serviceProvider
-        .GetRequiredService<Microsoft.Extensions.Options.IOptions<DashboardApiOptions>>()
+        .GetRequiredService<IOptions<DashboardApiOptions>>()
         .Value;
 
     client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
 });
+
+// API client có Bearer token + auto-refresh (F055.1).
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<BearerTokenHandler>();
+builder.Services.AddHttpClient<IVocaNovaApiClient, VocaNovaApiClient>((serviceProvider, client) =>
+{
+    var options = serviceProvider
+        .GetRequiredService<IOptions<DashboardApiOptions>>()
+        .Value;
+
+    client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
+}).AddHttpMessageHandler<BearerTokenHandler>();
 
 var app = builder.Build();
 
