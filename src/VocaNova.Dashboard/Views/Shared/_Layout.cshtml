@@ -6,9 +6,11 @@
     var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
     var avatarUrl = User.FindFirstValue("avatar_url");
     var canManageAdminAccounts = string.Equals(role, "super_admin", StringComparison.Ordinal);
+    // R1: theme đọc từ cookie để render server-side (không nhấp nháy). Mặc định light.
+    var theme = Context.Request.Cookies["VocaNova.Dashboard.Theme"] == "dark" ? "dark" : "light";
 }
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="@theme">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -66,6 +68,10 @@
                     </label>
 
                     <div class="account-summary">
+                        <button type="button" class="icon-button theme-toggle" id="theme-toggle" aria-label="Đổi giao diện sáng/tối" title="Sáng / Tối">
+                            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" /></svg>
+                            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19" /></svg>
+                        </button>
                         @if (!string.IsNullOrWhiteSpace(avatarUrl))
                         {
                             <img src="@avatarUrl" alt="" />

@@ -27,6 +27,7 @@
   --cefr-c2: #9333ea; --cefr-c2-bg: #faf0ff;
 
   --accent-soft: rgba(15, 118, 110, 0.18);
+  --auth-gradient: linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(37, 99, 235, 0.08));
 }
 
 [data-theme="dark"] {
@@ -57,6 +58,7 @@
   --cefr-c2: #d8b4fe; --cefr-c2-bg: #2a1a3a;
 
   --accent-soft: rgba(45, 212, 191, 0.22);
+  --auth-gradient: linear-gradient(135deg, rgba(45, 212, 191, 0.10), rgba(88, 166, 255, 0.06));
 }
 
 html {
@@ -93,7 +95,7 @@ a {
 .btn:focus,
 .icon-button:focus-visible {
   border-color: var(--accent);
-  box-shadow: 0 0 0 0.2rem rgba(15, 118, 110, 0.18);
+  box-shadow: 0 0 0 0.2rem var(--accent-soft);
   outline: none;
 }
 
@@ -102,9 +104,7 @@ a {
   min-height: 100vh;
   place-items: center;
   padding: 24px;
-  background:
-    linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(37, 99, 235, 0.08)),
-    var(--bg);
+  background: var(--auth-gradient), var(--bg);
 }
 
 .login-panel {
@@ -278,7 +278,7 @@ a {
   display: inline-grid;
   place-items: center;
   color: #fff;
-  background: #2563eb;
+  background: var(--info);
   font-weight: 700;
 }
 
@@ -395,5 +395,34 @@ a {
 
   .account-summary > div {
     display: none;
+  }
+}
+
+/* ===== Theme toggle (F055.2) ===== */
+/* Đặt SAU rule `.icon-button svg` để thắng tie specificity (cùng (0,1,1), rule sau thắng). */
+.theme-toggle svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+[data-theme="light"] .theme-icon-sun {
+  display: none;
+}
+
+[data-theme="dark"] .theme-icon-moon {
+  display: none;
+}
+
+/* Chuyển theme mượt; tôn trọng reduced-motion. */
+body {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
   }
 }
