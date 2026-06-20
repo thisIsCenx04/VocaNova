@@ -15,7 +15,7 @@
 | **F055.1** | **Authenticated API client + refresh** | `feature/dashboard/api-client` | ✅ (S5 verify ở F056) | 2026-06-21 | code xong, build sạch |
 | F055.2 | Theme dark/light scaffold (R1) | `feature/dashboard/theme` | ✅ | 2026-06-21 | tokens + `<html data-theme>` từ cookie + toggle topbar |
 | F055.3 | i18n EN/VI scaffold (R2) | `feature/dashboard/i18n` | ✅ | 2026-06-21 | localization + `_LangSwitch` + nav/login localized |
-| — | Shared components (_DataTable, _Badge, _FilterBar, _StateBlock, _Toast, _Modal, _ChartCard) | `feature/dashboard/shared-ui` | ⬜ | | Chart.js self-host |
+| F055.4 | Shared components + Chart.js | `feature/dashboard/shared-ui` | ✅ | 2026-06-21 | CSS + partials + modals/toast/JS; Chart.js cần `libman restore` |
 | F056 | Overview (stat cards + charts) | `feature/dashboard/overview` | ⬜ | | cần F055.1 |
 | F057 | Vocabulary list & filter | `feature/dashboard/vocab-list` | ⬜ | | API word list 🟥 G1 (An) |
 | F058 | Vocabulary detail & sense mgmt | `feature/dashboard/vocab-detail` | ⬜ | | |
@@ -46,6 +46,13 @@
 ## Nhật ký (mới nhất ở trên)
 
 ### 2026-06-21
+- **F055.4 xong** (nhánh `feature/dashboard/shared-ui`):
+  - step1: CSS toàn bộ component vào `site.css` (stat card, badge status+CEFR, filter bar, data table sticky, pagination, state block + skeleton, modal theming, toast, chart card).
+  - step2: `Models/Components/ComponentViewModels.cs` (+ `BadgeModifiers`) + partials `Components/_Badge`, `_StatCard`, `_StateBlock`, `_Pagination`; `_ViewImports` thêm `@using ...Models.Components`.
+  - step3: `_Toast` (TempData) + `_ConfirmModal` + `_FormModal` gắn vào `_Layout`; JS `site.js` (`vnToast`, confirm, form-modal AJAX); key `Common.*`/`Confirm.Title`.
+  - step4: `_ChartCard` + `ChartCardViewModel` + `libman.json` (chart.js 4.4.1). **Phải chạy `libman restore`** để có `wwwroot/lib/chart/chart.umd.min.js` (cần internet máy bạn). Page nào dùng chart thì include script này trong `@@section Scripts`.
+  - step5: sidebar `_Layout` thêm **KNN** + **Activity Logs** (link `#` tạm); key `Nav.Knn`/`Nav.ActivityLogs`/`Chart.*`. (Vocabulary submenu để khi có page F057/F059.)
+  - Build → 0 warning, 0 error. Commit gợi ý: `feat(dashboard): add shared UI components (cards, table, badges, modals, toast, charts)`.
 - **F055.3 xong** (nhánh `feature/dashboard/i18n`):
   - S1: `Program.cs` `AddLocalization`+`AddViewLocalization`+`UseRequestLocalization` (en, vi, default en, culture cookie); `SharedResource.cs`; `Resources/SharedResource.{en,vi}.resx`; `_ViewImports` inject `IStringLocalizer<SharedResource> L`.
   - S2: `CultureController` (POST `/culture/set` + antiforgery) + `Views/Shared/_LangSwitch.cshtml` (dropdown EN/VI topbar) + CSS.
