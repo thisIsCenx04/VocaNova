@@ -100,4 +100,34 @@
   <data name="Login.Submit" xml:space="preserve">
     <value>Sign in</value>
   </data>
+  <data name="Common.Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Common.Confirm" xml:space="preserve">
+    <value>Confirm</value>
+  </data>
+  <data name="Common.Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Common.Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Confirm.Title" xml:space="preserve">
+    <value>Are you sure?</value>
+  </data>
+  <data name="Nav.Knn" xml:space="preserve">
+    <value>KNN</value>
+  </data>
+  <data name="Nav.ActivityLogs" xml:space="preserve">
+    <value>Activity Logs</value>
+  </data>
+  <data name="Chart.Daily" xml:space="preserve">
+    <value>Daily</value>
+  </data>
+  <data name="Chart.Weekly" xml:space="preserve">
+    <value>Weekly</value>
+  </data>
+  <data name="Chart.Monthly" xml:space="preserve">
+    <value>Monthly</value>
+  </data>
 </root>

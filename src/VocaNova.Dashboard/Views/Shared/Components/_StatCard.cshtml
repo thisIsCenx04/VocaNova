@@ -1,0 +1,15 @@
+@model StatCardViewModel
+<div class="stat-card">
+    <p class="eyebrow">@Model.Eyebrow</p>
+    <div class="stat-value">@Model.Value</div>
+    @if (!string.IsNullOrEmpty(Model.Delta))
+    {
+        var cls = Model.Direction switch
+        {
+            StatDelta.Up => "is-up",
+            StatDelta.Down => "is-down",
+            _ => string.Empty,
+        };
+        <div class="stat-delta @cls">@Model.Delta</div>
+    }
+</div>

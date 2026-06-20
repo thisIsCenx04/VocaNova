@@ -481,3 +481,291 @@ body {
   color: var(--accent);
   font-weight: 700;
 }
+
+/* ============================================================
+   Shared components (F055.4)
+   ============================================================ */
+
+.card-surface,
+.stat-card,
+.chart-card {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+/* --- Stat cards --- */
+.stat-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.stat-value {
+  margin: 6px 0 2px;
+  font-size: 2rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.stat-delta {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.stat-delta.is-up {
+  color: var(--ok);
+}
+
+.stat-delta.is-down {
+  color: var(--err);
+}
+
+/* --- Badges (dùng .badge-chip để tránh đụng .badge của Bootstrap) --- */
+.badge-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge--ok   { color: var(--ok);   background: var(--ok-bg); }
+.badge--warn { color: var(--warn); background: var(--warn-bg); }
+.badge--err  { color: var(--err);  background: var(--err-bg); }
+.badge--info { color: var(--info); background: var(--info-bg); }
+
+.badge--a1 { color: var(--cefr-a1); background: var(--cefr-a1-bg); }
+.badge--a2 { color: var(--cefr-a2); background: var(--cefr-a2-bg); }
+.badge--b1 { color: var(--cefr-b1); background: var(--cefr-b1-bg); }
+.badge--b2 { color: var(--cefr-b2); background: var(--cefr-b2-bg); }
+.badge--c1 { color: var(--cefr-c1); background: var(--cefr-c1-bg); }
+.badge--c2 { color: var(--cefr-c2); background: var(--cefr-c2-bg); }
+
+/* --- Filter bar --- */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.filter-bar .form-control,
+.filter-bar .form-select {
+  max-width: 240px;
+}
+
+.filter-bar .filter-spacer {
+  margin-left: auto;
+}
+
+/* --- Data table --- */
+.data-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 16px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.data-table tbody tr {
+  border-top: 1px solid var(--line);
+}
+
+.data-table tbody tr:hover {
+  background: var(--bg);
+}
+
+.data-table td {
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table .row-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* --- Pagination --- */
+.pagination-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.pagination-bar .pages {
+  display: flex;
+  gap: 6px;
+}
+
+.page-btn {
+  display: inline-grid;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--surface);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.page-btn.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.page-btn[aria-disabled="true"] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.pagination-info {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* --- State block (loading / empty / error) --- */
+.state-block {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.state-block h2 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.state-block p {
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+
+/* --- Skeleton --- */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--line);
+  border-radius: 6px;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  animation: skeleton-shimmer 1.2s infinite;
+}
+
+.skeleton-row {
+  height: 14px;
+  margin: 10px 0;
+}
+
+@keyframes skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}
+
+/* --- Modal theming (Bootstrap) --- */
+.modal-content {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.modal-header,
+.modal-footer {
+  border-color: var(--line);
+}
+
+/* --- Toast --- */
+.toast-stack {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 1080;
+  display: grid;
+  gap: 10px;
+  max-width: 360px;
+}
+
+.toast-item {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.toast-item.is-ok   { border-left-color: var(--ok); }
+.toast-item.is-err  { border-left-color: var(--err); }
+.toast-item.is-info { border-left-color: var(--info); }
+
+/* --- Chart card --- */
+.chart-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.chart-card h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.chart-canvas-wrap {
+  position: relative;
+  height: 280px;
+}
