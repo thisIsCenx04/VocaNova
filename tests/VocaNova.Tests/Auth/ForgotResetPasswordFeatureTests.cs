@@ -141,6 +141,55 @@ public class ForgotResetPasswordFeatureTests
         result.Errors.Should().Contain(error => error.PropertyName == nameof(ResetPasswordRequest.NewPassword));
     }
 
+    [Fact]
+    public async Task ChangePasswordAsync_Should_Update_Password_When_Current_Password_Is_Correct()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserAsync(dbContext);
+        var service = CreateAuthService(dbContext);
+
+        var result = await service.ChangePasswordAsync(
+            1,
+            new ChangePasswordRequest("OldPassword1", "NewPassword1"));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeTrue();
+
+        var userAuth = await dbContext.UserAuths.SingleAsync(auth => auth.UserId == 1);
+        PasswordHelper.Verify("NewPassword1", userAuth.PasswordHash!).Should().BeTrue();
+        PasswordHelper.Verify("OldPassword1", userAuth.PasswordHash!).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ChangePasswordAsync_Should_Reject_Incorrect_Current_Password()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserAsync(dbContext);
+        var service = CreateAuthService(dbContext);
+
+        var result = await service.ChangePasswordAsync(
+            1,
+            new ChangePasswordRequest("WrongPassword1", "NewPassword1"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
+        result.Error.Should().Be("Current password is incorrect.");
+
+        var userAuth = await dbContext.UserAuths.SingleAsync(auth => auth.UserId == 1);
+        PasswordHelper.Verify("OldPassword1", userAuth.PasswordHash!).Should().BeTrue();
+    }
+
+    [Fact]
+    public void ChangePasswordRequestValidator_Should_Reject_Weak_NewPassword()
+    {
+        var validator = new ChangePasswordRequestValidator();
+
+        var result = validator.Validate(new ChangePasswordRequest("OldPassword1", "weak"));
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error => error.PropertyName == nameof(ChangePasswordRequest.NewPassword));
+    }
+
     private static VocaNovaDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<VocaNovaDbContext>()

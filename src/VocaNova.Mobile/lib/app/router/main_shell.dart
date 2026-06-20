@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
@@ -25,10 +24,6 @@ class MainShell extends ConsumerWidget {
       bottomNavigationBar: _VocaNovaBottomNav(
         currentIndex: navigationShell.currentIndex,
         onSelected: (index) {
-          if (index == 4) {
-            context.push(AppRoutes.profile);
-            return;
-          }
           navigationShell.goBranch(
             index,
             initialLocation: index == navigationShell.currentIndex,

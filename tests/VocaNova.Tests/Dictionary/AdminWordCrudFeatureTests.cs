@@ -589,6 +589,7 @@ public class AdminWordCrudFeatureTests
         public Task<ImageStorageResult> UploadAsync(
             uint wordId,
             IFormFile file,
+            string? folder = null,
             CancellationToken cancellationToken = default)
         {
             UploadCount++;

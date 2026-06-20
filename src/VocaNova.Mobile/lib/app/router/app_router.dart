@@ -98,6 +98,18 @@ class AppRouter {
               ),
             ],
           ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.profile,
+                builder: (_, _) => const ProfileScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.settings,
+                builder: (_, _) => const SettingsScreen(),
+              ),
+            ],
+          ),
         ],
       ),
       GoRoute(
@@ -146,14 +158,6 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.wrongWords,
         builder: (_, _) => const WrongWordsScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.settings,
-        builder: (_, _) => const SettingsScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.profile,
-        builder: (_, _) => const ProfileScreen(),
       ),
     ],
   );

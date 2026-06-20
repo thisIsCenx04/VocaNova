@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:vocanova_mobile/core/network/api_endpoints.dart';
 import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
@@ -116,11 +118,43 @@ class AuthRepository {
     return UserProfile.fromJson(_responseData(response));
   }
 
+  Future<UserProfile> uploadAvatar({
+    required Uint8List bytes,
+    required String fileName,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.uploadAvatar,
+      data: FormData.fromMap({
+        'file': MultipartFile.fromBytes(bytes, filename: fileName),
+      }),
+    );
+    return UserProfile.fromJson(_responseData(response));
+  }
+
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final response = await _dio.put<Map<String, dynamic>>(
+      ApiEndpoints.changePassword,
+      data: {'current_password': currentPassword, 'new_password': newPassword},
+    );
+    final data = response.data?['data'];
+    if (data is! bool) {
+      throw const FormatException('API response data is invalid.');
+    }
+    return data;
+  }
+
   Future<void> logout(String refreshToken) async {
     await _dio.post<Map<String, dynamic>>(
       ApiEndpoints.logout,
       data: {'refresh_token': refreshToken},
     );
+  }
+
+  Future<void> deleteAccount() async {
+    await _dio.delete<Map<String, dynamic>>(ApiEndpoints.deleteAccount);
   }
 
   Map<String, dynamic> _responseData(Response<Map<String, dynamic>> response) {

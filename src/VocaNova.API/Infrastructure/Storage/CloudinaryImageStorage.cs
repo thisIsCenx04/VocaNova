@@ -18,13 +18,18 @@ public sealed class CloudinaryImageStorage : IImageStorage
     }
 
     public async Task<ImageStorageResult> UploadAsync(
-        uint wordId,
+        uint ownerId,
         IFormFile file,
+        string? folder = null,
         CancellationToken cancellationToken = default)
     {
         EnsureConfigured();
 
-        var publicId = BuildPublicId(wordId, file.FileName, DateTime.UtcNow, _settings.Folder);
+        var publicId = BuildPublicId(
+            ownerId,
+            file.FileName,
+            DateTime.UtcNow,
+            string.IsNullOrWhiteSpace(folder) ? _settings.Folder : folder);
         await using var stream = file.OpenReadStream();
         var uploadParams = new ImageUploadParams
         {

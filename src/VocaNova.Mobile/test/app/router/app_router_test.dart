@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vocanova_mobile/app/router/app_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/core/storage/token_storage.dart';
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   testWidgets('root redirects unauthenticated user to login', (tester) async {
     final router = createRouter();
 
@@ -49,6 +52,20 @@ void main() {
 
     expect(router.state.matchedLocation, AppRoutes.search);
     expect(find.text('Search'), findsWidgets);
+  });
+
+  testWidgets('settings stays inside the profile shell', (tester) async {
+    final router = createRouter(
+      accessToken: 'access-token',
+      initialLocation: AppRoutes.settings,
+    );
+
+    await pumpRouter(tester, router);
+
+    expect(router.state.matchedLocation, AppRoutes.settings);
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Profile'), findsWidgets);
   });
 
   testWidgets('authenticated user can open dynamic detail routes', (

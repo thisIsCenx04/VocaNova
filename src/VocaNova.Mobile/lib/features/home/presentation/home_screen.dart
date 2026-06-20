@@ -6,13 +6,52 @@ import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 
+class _HomePalette {
+  const _HomePalette({
+    required this.background,
+    required this.surface,
+    required this.elevatedSurface,
+    required this.text,
+    required this.secondaryText,
+    required this.border,
+    required this.dailyGoal,
+    required this.wordOfTheDay,
+  });
+
+  final Color background;
+  final Color surface;
+  final Color elevatedSurface;
+  final Color text;
+  final Color secondaryText;
+  final Color border;
+  final Color dailyGoal;
+  final Color wordOfTheDay;
+
+  bool get isDark => background == AppColors.background;
+
+  factory _HomePalette.of(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return _HomePalette(
+      background: dark ? AppColors.background : AppColors.lightBackground,
+      surface: dark ? AppColors.surface : Colors.white,
+      elevatedSurface: dark ? const Color(0xFF2A2A2A) : const Color(0xFFF7F7F5),
+      text: dark ? AppColors.onSurface : Colors.black,
+      secondaryText: dark ? const Color(0xFFB8B3C3) : const Color(0xFF888888),
+      border: dark ? const Color(0xFF37343D) : const Color(0xFFE6E6E6),
+      dailyGoal: dark ? const Color(0xFF29371F) : const Color(0xFFDCEEB1),
+      wordOfTheDay: dark ? const Color(0xFF35284D) : const Color(0xFFC5B0F4),
+    );
+  }
+}
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final palette = _HomePalette.of(context);
     return Scaffold(
-      backgroundColor: AppColors.lightBackground,
+      backgroundColor: palette.background,
       body: SafeArea(
         bottom: false,
         child: ListView(
@@ -27,7 +66,7 @@ class HomeScreen extends StatelessWidget {
                   Text(
                     'Good morning',
                     style: AppTextStyles.caption.copyWith(
-                      color: const Color(0xFF888888),
+                      color: palette.secondaryText,
                       fontSize: 13,
                       height: 19.5 / 13,
                     ),
@@ -35,7 +74,7 @@ class HomeScreen extends StatelessWidget {
                   Text(
                     'Hi, An',
                     style: AppTextStyles.heading.copyWith(
-                      color: Colors.black,
+                      color: palette.text,
                       fontSize: 28,
                       height: 32.2 / 28,
                       letterSpacing: -0.7,
@@ -66,21 +105,22 @@ class _HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _HomePalette.of(context);
     return Container(
       height: 56,
       padding: const EdgeInsets.fromLTRB(32, 0, 25, 0),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFE6E6E6), width: 1)),
+      decoration: BoxDecoration(
+        color: palette.surface,
+        border: Border(bottom: BorderSide(color: palette.border, width: 1)),
       ),
       child: Row(
         children: [
-          const _VocaNovaLogo(),
+          _VocaNovaLogo(color: palette.text),
           const SizedBox(width: 9),
           Text(
             'VocaNova',
             style: AppTextStyles.button.copyWith(
-              color: Colors.black,
+              color: palette.text,
               fontSize: 16,
               height: 24 / 16,
               fontWeight: FontWeight.w700,
@@ -95,23 +135,29 @@ class _HomeHeader extends StatelessWidget {
 }
 
 class _VocaNovaLogo extends StatelessWidget {
-  const _VocaNovaLogo();
+  const _VocaNovaLogo({required this.color});
+
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 31,
       height: 31,
-      child: CustomPaint(painter: _LogoPainter()),
+      child: CustomPaint(painter: _LogoPainter(color)),
     );
   }
 }
 
 class _LogoPainter extends CustomPainter {
+  const _LogoPainter(this.color);
+
+  final Color color;
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.black
+      ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.square;
@@ -123,7 +169,9 @@ class _LogoPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _LogoPainter oldDelegate) {
+    return oldDelegate.color != color;
+  }
 }
 
 class _NotificationButton extends StatelessWidget {
@@ -133,19 +181,24 @@ class _NotificationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _HomePalette.of(context);
     return Stack(
       clipBehavior: Clip.none,
       children: [
         Material(
-          color: const Color(0xFFF7F7F5),
+          color: palette.elevatedSurface,
           shape: const CircleBorder(),
           child: InkWell(
             customBorder: const CircleBorder(),
             onTap: onPressed,
-            child: const SizedBox(
+            child: SizedBox(
               width: 40,
               height: 40,
-              child: Icon(Icons.notifications_none, size: 17),
+              child: Icon(
+                Icons.notifications_none,
+                size: 17,
+                color: palette.text,
+              ),
             ),
           ),
         ),
@@ -173,8 +226,9 @@ class _SearchPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _HomePalette.of(context);
     return Material(
-      color: const Color(0xFFF7F7F5),
+      color: palette.elevatedSurface,
       borderRadius: BorderRadius.circular(50),
       child: InkWell(
         borderRadius: BorderRadius.circular(50),
@@ -183,17 +237,17 @@ class _SearchPill extends StatelessWidget {
           height: 44,
           padding: const EdgeInsets.fromLTRB(15, 0, 12, 0),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFE6E6E6), width: 1.25),
+            border: Border.all(color: palette.border, width: 1.25),
             borderRadius: BorderRadius.circular(50),
           ),
           child: Row(
             children: [
-              const Icon(Icons.search, size: 16, color: Color(0xFF888888)),
+              Icon(Icons.search, size: 16, color: palette.secondaryText),
               const SizedBox(width: 12),
               Text(
                 'Search a word...',
                 style: AppTextStyles.caption.copyWith(
-                  color: const Color(0xFF888888),
+                  color: palette.secondaryText,
                   fontSize: 14,
                   height: 21 / 14,
                 ),
@@ -204,13 +258,13 @@ class _SearchPill extends StatelessWidget {
                 height: 20,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE6E6E6),
+                  color: palette.border,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   '⌘K',
                   style: AppTextStyles.caption.copyWith(
-                    color: const Color(0xFF666666),
+                    color: palette.secondaryText,
                     fontSize: 10,
                     height: 15 / 10,
                     fontWeight: FontWeight.w600,
@@ -230,11 +284,13 @@ class _DailyGoalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _HomePalette.of(context);
+    final foreground = palette.isDark ? AppColors.onSurface : Colors.black;
     return Container(
       constraints: const BoxConstraints(minHeight: 142),
       padding: const EdgeInsets.fromLTRB(19, 17, 19, 13),
       decoration: BoxDecoration(
-        color: const Color(0xFFDCEEB1),
+        color: palette.dailyGoal,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -242,12 +298,12 @@ class _DailyGoalCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.track_changes, size: 12, color: Colors.black),
+              Icon(Icons.track_changes, size: 12, color: foreground),
               const SizedBox(width: 6),
               Text(
                 'DAILY GOAL',
                 style: AppTextStyles.caption.copyWith(
-                  color: Colors.black,
+                  color: foreground,
                   fontSize: 10,
                   height: 15 / 10,
                   letterSpacing: 0.6,
@@ -260,7 +316,7 @@ class _DailyGoalCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const _DashedGoalRing(),
+              _DashedGoalRing(foreground: foreground),
               const SizedBox(width: 19),
               Expanded(
                 child: Column(
@@ -269,7 +325,7 @@ class _DailyGoalCard extends StatelessWidget {
                     Text(
                       '18 / 25 words',
                       style: AppTextStyles.button.copyWith(
-                        color: Colors.black,
+                        color: foreground,
                         fontSize: 18,
                         height: 27 / 18,
                         letterSpacing: -0.3,
@@ -279,7 +335,9 @@ class _DailyGoalCard extends StatelessWidget {
                     Text(
                       '7 more to keep your streak',
                       style: AppTextStyles.caption.copyWith(
-                        color: const Color(0xFF444444),
+                        color: palette.isDark
+                            ? palette.secondaryText
+                            : const Color(0xFF444444),
                         fontSize: 13,
                         height: 19.5 / 13,
                       ),
@@ -287,19 +345,33 @@ class _DailyGoalCard extends StatelessWidget {
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        const Icon(Icons.local_fire_department, size: 12),
+                        Icon(
+                          Icons.local_fire_department,
+                          size: 12,
+                          color: foreground,
+                        ),
                         const SizedBox(width: 5),
-                        Text(
-                          '7-day streak',
-                          style: AppTextStyles.caption.copyWith(
-                            color: Colors.black,
-                            fontSize: 11,
-                            height: 16.5 / 11,
-                            fontWeight: FontWeight.w600,
+                        Expanded(
+                          child: Text(
+                            '7-day streak',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.caption.copyWith(
+                              color: foreground,
+                              fontSize: 11,
+                              height: 16.5 / 11,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                        const Spacer(),
-                        const _StreakDots(),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: _StreakDots(foreground: foreground),
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -314,7 +386,9 @@ class _DailyGoalCard extends StatelessWidget {
 }
 
 class _DashedGoalRing extends StatelessWidget {
-  const _DashedGoalRing();
+  const _DashedGoalRing({required this.foreground});
+
+  final Color foreground;
 
   @override
   Widget build(BuildContext context) {
@@ -326,12 +400,12 @@ class _DashedGoalRing extends StatelessWidget {
         children: [
           CustomPaint(
             size: const Size.square(62),
-            painter: _DashedRingPainter(progress: 0.72),
+            painter: _DashedRingPainter(progress: 0.72, foreground: foreground),
           ),
           Text(
             '72%',
             style: AppTextStyles.caption.copyWith(
-              color: Colors.black,
+              color: foreground,
               fontSize: 13,
               height: 19.5 / 13,
               fontWeight: FontWeight.w700,
@@ -344,20 +418,21 @@ class _DashedGoalRing extends StatelessWidget {
 }
 
 class _DashedRingPainter extends CustomPainter {
-  const _DashedRingPainter({required this.progress});
+  const _DashedRingPainter({required this.progress, required this.foreground});
 
   final double progress;
+  final Color foreground;
 
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final basePaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.12)
+      ..color = foreground.withValues(alpha: 0.12)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round;
     final progressPaint = Paint()
-      ..color = Colors.black
+      ..color = foreground
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round;
@@ -379,12 +454,15 @@ class _DashedRingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _DashedRingPainter oldDelegate) {
-    return oldDelegate.progress != progress;
+    return oldDelegate.progress != progress ||
+        oldDelegate.foreground != foreground;
   }
 }
 
 class _StreakDots extends StatelessWidget {
-  const _StreakDots();
+  const _StreakDots({required this.foreground});
+
+  final Color foreground;
 
   static const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -399,20 +477,22 @@ class _StreakDots extends StatelessWidget {
                 width: 13,
                 height: 13,
                 decoration: BoxDecoration(
-                  color: i < 5
-                      ? Colors.black
-                      : Colors.black.withValues(alpha: 0.2),
+                  color: i < 5 ? foreground : foreground.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: i < 5
-                    ? const Icon(Icons.check, size: 8, color: Colors.white)
+                    ? Icon(
+                        Icons.check,
+                        size: 8,
+                        color: _HomePalette.of(context).background,
+                      )
                     : null,
               ),
               const SizedBox(height: 2),
               Text(
                 days[i],
                 style: AppTextStyles.caption.copyWith(
-                  color: Colors.black.withValues(alpha: 0.45),
+                  color: foreground.withValues(alpha: 0.55),
                   fontSize: 8,
                   height: 12 / 8,
                 ),
@@ -431,11 +511,13 @@ class _WordOfTheDayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _HomePalette.of(context);
+    final foreground = palette.isDark ? AppColors.onSurface : Colors.black;
     return Container(
-      height: 225,
+      constraints: const BoxConstraints(minHeight: 225),
       padding: const EdgeInsets.fromLTRB(19, 18, 19, 17),
       decoration: BoxDecoration(
-        color: const Color(0xFFC5B0F4),
+        color: palette.wordOfTheDay,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -447,7 +529,7 @@ class _WordOfTheDayCard extends StatelessWidget {
               Text(
                 'WORD OF THE DAY',
                 style: AppTextStyles.caption.copyWith(
-                  color: Colors.black,
+                  color: foreground,
                   fontSize: 10,
                   height: 15 / 10,
                   letterSpacing: 0.6,
@@ -459,10 +541,14 @@ class _WordOfTheDayCard extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.35),
+                  color: foreground.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.volume_up_outlined, size: 16),
+                child: Icon(
+                  Icons.volume_up_outlined,
+                  size: 16,
+                  color: foreground,
+                ),
               ),
             ],
           ),
@@ -470,7 +556,7 @@ class _WordOfTheDayCard extends StatelessWidget {
           Text(
             'Serendipity',
             style: AppTextStyles.heading.copyWith(
-              color: Colors.black,
+              color: foreground,
               fontSize: 28,
               height: 33.6 / 28,
               letterSpacing: -0.9,
@@ -481,7 +567,7 @@ class _WordOfTheDayCard extends StatelessWidget {
           Text(
             '/ˌser.ənˈdɪp.ə.ti/ · noun',
             style: AppTextStyles.caption.copyWith(
-              color: Colors.black,
+              color: foreground,
               fontSize: 13,
               height: 19.5 / 13,
               fontStyle: FontStyle.italic,
@@ -491,19 +577,23 @@ class _WordOfTheDayCard extends StatelessWidget {
           Text(
             'The occurrence of events by chance in a happy\nor beneficial way.',
             style: AppTextStyles.caption.copyWith(
-              color: const Color(0xFF252238),
+              color: palette.isDark
+                  ? palette.secondaryText
+                  : const Color(0xFF252238),
               fontSize: 13,
               height: 19.5 / 13,
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 16),
           SizedBox(
             width: 135,
             height: 35,
             child: ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
+                backgroundColor: palette.isDark
+                    ? AppColors.primary
+                    : Colors.black,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 shape: RoundedRectangleBorder(
@@ -587,12 +677,13 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _HomePalette.of(context);
     return Container(
-      height: 105,
+      constraints: const BoxConstraints(minHeight: 105),
       padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE6E6E6), width: 1.25),
+        color: palette.surface,
+        border: Border.all(color: palette.border, width: 1.25),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -601,17 +692,17 @@ class _StatCard extends StatelessWidget {
           Container(
             width: 26,
             height: 26,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF7F7F5),
+            decoration: BoxDecoration(
+              color: palette.elevatedSurface,
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 14, color: iconColor),
           ),
-          const Spacer(),
+          const SizedBox(height: 8),
           Text(
             value,
             style: AppTextStyles.heading.copyWith(
-              color: Colors.black,
+              color: palette.text,
               fontSize: 20,
               height: 24 / 20,
               letterSpacing: -0.3,
@@ -620,7 +711,7 @@ class _StatCard extends StatelessWidget {
           Text(
             label,
             style: AppTextStyles.caption.copyWith(
-              color: const Color(0xFF888888),
+              color: palette.secondaryText,
               fontSize: 11,
               height: 16.5 / 11,
             ),

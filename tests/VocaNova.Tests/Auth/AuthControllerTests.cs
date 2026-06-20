@@ -332,6 +332,14 @@ public class AuthControllerTests
             return Task.FromResult(_profileResult);
         }
 
+        public Task<Result<UserProfileDto>> UploadAvatarAsync(
+            uint userId,
+            UploadAvatarRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_profileResult);
+        }
+
         public Task<Result<UserProfileDto>> UpdateLearningProfileAsync(
             uint userId,
             UpdateLearningProfileRequest request,
@@ -363,6 +371,21 @@ public class AuthControllerTests
 
         public Task<Result<bool>> ResetPasswordAsync(
             ResetPasswordRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Result<bool>.Ok(true));
+        }
+
+        public Task<Result<bool>> ChangePasswordAsync(
+            uint userId,
+            ChangePasswordRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Result<bool>.Ok(true));
+        }
+
+        public Task<Result<bool>> DeleteAccountAsync(
+            uint userId,
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult(Result<bool>.Ok(true));

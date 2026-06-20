@@ -24,6 +24,7 @@ dependencies:
   google_fonts: ^8.1.0
   google_sign_in: ^7.2.0
   intl: ^0.20.2
+  image_picker: ^1.2.1
   json_annotation: 4.9.0
   package_info_plus: ^10.1.0
   riverpod_annotation: 3.0.3
@@ -42,6 +43,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/avatars/
   fonts:
     - family: Nunito
       fonts:
