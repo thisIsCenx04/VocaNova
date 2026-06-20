@@ -130,4 +130,34 @@
   <data name="Chart.Monthly" xml:space="preserve">
     <value>Theo tháng</value>
   </data>
+  <data name="Overview.Eyebrow" xml:space="preserve">
+    <value>Tổng quan</value>
+  </data>
+  <data name="Stat.Users" xml:space="preserve">
+    <value>Người dùng</value>
+  </data>
+  <data name="Stat.Words" xml:space="preserve">
+    <value>Từ vựng</value>
+  </data>
+  <data name="Stat.SessionsToday" xml:space="preserve">
+    <value>Lượt làm hôm nay</value>
+  </data>
+  <data name="Stat.Accuracy7d" xml:space="preserve">
+    <value>Độ chính xác (7 ngày)</value>
+  </data>
+  <data name="Chart.Activity7d" xml:space="preserve">
+    <value>Hoạt động — 7 ngày qua</value>
+  </data>
+  <data name="Chart.MasteryDistribution" xml:space="preserve">
+    <value>Phân bố mức thành thạo</value>
+  </data>
+  <data name="State.WaitingData.Title" xml:space="preserve">
+    <value>Đang chờ dữ liệu</value>
+  </data>
+  <data name="State.WaitingData.Msg" xml:space="preserve">
+    <value>Phần này sẽ hiển thị khi API sẵn sàng.</value>
+  </data>
+  <data name="State.LoadError" xml:space="preserve">
+    <value>Không tải được dữ liệu. Tải lại để thử lại.</value>
+  </data>
 </root>
