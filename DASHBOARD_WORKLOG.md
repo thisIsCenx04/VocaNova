@@ -13,7 +13,7 @@
 |---|---|---|---|---|---|
 | F055 | Cookie auth + layout + login | `feature/dashboard/auth-layout` | ✅ | (trước) | đã có sẵn |
 | **F055.1** | **Authenticated API client + refresh** | `feature/dashboard/api-client` | ✅ (S5 verify ở F056) | 2026-06-21 | code xong, build sạch |
-| F055.2 | Theme dark/light scaffold (R1) | `feature/dashboard/theme` | ⬜ | | token `[data-theme]` + toggle + cookie |
+| F055.2 | Theme dark/light scaffold (R1) | `feature/dashboard/theme` | ✅ | 2026-06-21 | tokens + `<html data-theme>` từ cookie + toggle topbar |
 | F055.3 | i18n EN/VI scaffold (R2) | `feature/dashboard/i18n` | ⬜ | | `IStringLocalizer` + `.resx` + middleware |
 | — | Shared components (_DataTable, _Badge, _FilterBar, _StateBlock, _Toast, _Modal, _ChartCard) | `feature/dashboard/shared-ui` | ⬜ | | Chart.js self-host |
 | F056 | Overview (stat cards + charts) | `feature/dashboard/overview` | ⬜ | | cần F055.1 |
@@ -46,6 +46,11 @@
 ## Nhật ký (mới nhất ở trên)
 
 ### 2026-06-21
+- **F055.2 xong** (nhánh `feature/dashboard/theme`):
+  - step1: `site.css` tách token `[data-theme="light"]`/`[data-theme="dark"]` + status + thang CEFR + `--accent-soft`/`--auth-gradient`.
+  - step2: `_Layout.cshtml` đọc cookie `VocaNova.Dashboard.Theme` → `<html data-theme="...">` server-side.
+  - step3: nút `#theme-toggle` ở topbar (moon/sun) + `site.js` đổi `data-theme` & ghi cookie; đổi màu hardcode (focus, avatar, auth gradient) sang biến; transition mượt + reduced-motion.
+  - Build → 0 warning, 0 error. Commit gợi ý: `feat(dashboard): add theme toggle + persist`.
 - Khởi tạo worklog. Bắt đầu `F055.1`.
 - **S1 xong:** tạo `Services/Api/ApiJson.cs` (JSON SnakeCaseLower dùng chung) + `Services/Api/ApiResult.cs` (`ApiEnvelope<T>` internal, `PaginationInfo`, `ApiResult<T>`, `PagedApiResult<T>`). `dotnet build` Dashboard → 0 warning, 0 error.
 - **S2 xong:** tạo `Services/Api/BearerTokenHandler.cs` (DelegatingHandler: gắn Bearer từ cookie → 401 thì `POST /api/auth/refresh` → `StoreTokens` + `SignInAsync` cập nhật cookie → retry request 1 lần; buffer body để retry POST/PUT; refresh fail giữ 401). Chưa wire DI (để S4). Build → 0 warning, 0 error.
