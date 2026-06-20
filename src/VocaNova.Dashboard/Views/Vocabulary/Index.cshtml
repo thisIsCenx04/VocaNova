@@ -1,0 +1,127 @@
+@model VocaNova.Dashboard.Models.Vocabulary.VocabularyListViewModel
+@{
+    ViewData["Title"] = L["Nav.Vocabulary"];
+    var levels = new[] { "A1", "A2", "B1", "B2", "C1", "C2" };
+    string PageUrl(int p) => Url.Action("Index", new
+    {
+        q = Model.Query.Q,
+        cefr = Model.Query.Cefr,
+        topicId = Model.Query.TopicId,
+        includeDeleted = Model.Query.IncludeDeleted,
+        page = p,
+        limit = Model.Query.Limit,
+    }) ?? "#";
+}
+
+<div class="page-header">
+    <div>
+        <p class="eyebrow">@L["Vocab.Eyebrow"]</p>
+        <h1>@L["Nav.Vocabulary"]</h1>
+    </div>
+</div>
+
+<form class="filter-bar" method="get" asp-controller="Vocabulary" asp-action="Index">
+    <input class="form-control" type="search" name="q" value="@Model.Query.Q" placeholder="@L["Common.Search"]" />
+    <select class="form-select" name="cefr">
+        <option value="">@L["Filter.AllCefr"]</option>
+        @foreach (var lvl in levels)
+        {
+            <option value="@lvl" selected="@(string.Equals(Model.Query.Cefr, lvl, StringComparison.OrdinalIgnoreCase))">@lvl</option>
+        }
+    </select>
+    <select class="form-select" name="topicId">
+        <option value="">@L["Filter.AllTopics"]</option>
+        @foreach (var t in Model.Topics)
+        {
+            <option value="@t.TopicId" selected="@(Model.Query.TopicId == t.TopicId)">@(string.IsNullOrEmpty(t.NameVi) ? t.Name : t.NameVi)</option>
+        }
+    </select>
+    <label class="d-inline-flex align-items-center gap-2" style="color: var(--muted);">
+        <input type="checkbox" name="includeDeleted" value="true" checked="@Model.Query.IncludeDeleted" disabled="@(!Model.AdminListAvailable)" />
+        @L["Filter.ShowDeleted"]
+    </label>
+    <button class="btn btn-primary" type="submit">@L["Common.Apply"]</button>
+</form>
+
+@if (!Model.Loaded)
+{
+    <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Error, Title = L["State.LoadError"].Value })" />
+}
+else if (Model.Words.Count == 0)
+{
+    <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Empty, Title = L["Vocab.Empty.Title"].Value, Message = L["Vocab.Empty.Msg"].Value })" />
+}
+else
+{
+    <div class="data-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>@L["Tbl.Word"]</th>
+                    <th>@L["Tbl.Level"]</th>
+                    <th>@L["Tbl.Meaning"]</th>
+                    @if (Model.AdminListAvailable)
+                    {
+                        <th>@L["Tbl.Status"]</th>
+                    }
+                    <th>@L["Tbl.Actions"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var w in Model.Words)
+                {
+                    <tr>
+                        <td>
+                            <strong>@w.Word</strong>
+                            @if (!string.IsNullOrEmpty(w.Phonetic))
+                            {
+                                <span class="mono" style="color: var(--muted);"> @w.Phonetic</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(w.Cefr))
+                            {
+                                <partial name="Components/_Badge" model="@(new BadgeViewModel { Text = w.Cefr!, Modifier = BadgeModifiers.Cefr(w.Cefr) })" />
+                            }
+                        </td>
+                        <td>@w.PrimaryMeaning</td>
+                        @if (Model.AdminListAvailable)
+                        {
+                            <td>
+                                @if (!string.IsNullOrEmpty(w.Status))
+                                {
+                                    <partial name="Components/_Badge" model="@(new BadgeViewModel { Text = w.Status!, Modifier = BadgeModifiers.Status(w.Status) })" />
+                                }
+                            </td>
+                        }
+                        <td>
+                            <div class="row-actions">
+                                <a class="btn btn-sm btn-secondary" href="/vocabulary/@w.WordId">@L["Common.Edit"]</a>
+                                @if (User.IsInRole("super_admin"))
+                                {
+                                    if (string.Equals(w.Status, "deleted", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <button type="button" class="btn btn-sm btn-secondary"
+                                                data-confirm-url="/vocabulary/@w.WordId/restore"
+                                                data-confirm-message="@L["Common.Restore"]"
+                                                data-confirm-ok="@L["Common.Restore"]">@L["Common.Restore"]</button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-sm btn-danger"
+                                                data-confirm-url="/vocabulary/@w.WordId/delete"
+                                                data-confirm-message="@L["Confirm.DeleteWord"]"
+                                                data-confirm-variant="danger"
+                                                data-confirm-ok="@L["Common.Delete"]">@L["Common.Delete"]</button>
+                                    }
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <partial name="Components/_Pagination" model="@(new PaginationViewModel { Page = Model.Pagination?.Page ?? 1, TotalPages = Model.Pagination?.TotalPages ?? 1, TotalItems = Model.Pagination?.TotalItems ?? Model.Words.Count, PageUrl = PageUrl })" />
+}

@@ -160,4 +160,64 @@
   <data name="State.LoadError" xml:space="preserve">
     <value>Couldn't load data. Refresh to try again.</value>
   </data>
+  <data name="Vocab.Eyebrow" xml:space="preserve">
+    <value>Vocabulary bank</value>
+  </data>
+  <data name="Common.Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="Common.Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="Common.Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Common.Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Filter.AllCefr" xml:space="preserve">
+    <value>All levels</value>
+  </data>
+  <data name="Filter.AllTopics" xml:space="preserve">
+    <value>All topics</value>
+  </data>
+  <data name="Filter.ShowDeleted" xml:space="preserve">
+    <value>Show deleted</value>
+  </data>
+  <data name="Tbl.Word" xml:space="preserve">
+    <value>Word</value>
+  </data>
+  <data name="Tbl.Level" xml:space="preserve">
+    <value>Level</value>
+  </data>
+  <data name="Tbl.Meaning" xml:space="preserve">
+    <value>Meaning</value>
+  </data>
+  <data name="Tbl.Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Tbl.Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="Vocab.Empty.Title" xml:space="preserve">
+    <value>No words found</value>
+  </data>
+  <data name="Vocab.Empty.Msg" xml:space="preserve">
+    <value>Try adjusting the filters, or import vocabulary.</value>
+  </data>
+  <data name="Common.Restore" xml:space="preserve">
+    <value>Restore</value>
+  </data>
+  <data name="Confirm.DeleteWord" xml:space="preserve">
+    <value>Delete this word? It will be soft-deleted and can be restored later.</value>
+  </data>
+  <data name="Toast.WordDeleted" xml:space="preserve">
+    <value>Word deleted</value>
+  </data>
+  <data name="Toast.WordRestored" xml:space="preserve">
+    <value>Word restored</value>
+  </data>
+  <data name="Toast.ActionFailed" xml:space="preserve">
+    <value>Action failed. Try again.</value>
+  </data>
 </root>

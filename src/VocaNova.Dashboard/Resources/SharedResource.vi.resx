@@ -160,4 +160,64 @@
   <data name="State.LoadError" xml:space="preserve">
     <value>Không tải được dữ liệu. Tải lại để thử lại.</value>
   </data>
+  <data name="Vocab.Eyebrow" xml:space="preserve">
+    <value>Kho từ vựng</value>
+  </data>
+  <data name="Common.Search" xml:space="preserve">
+    <value>Tìm kiếm</value>
+  </data>
+  <data name="Common.Apply" xml:space="preserve">
+    <value>Áp dụng</value>
+  </data>
+  <data name="Common.Edit" xml:space="preserve">
+    <value>Sửa</value>
+  </data>
+  <data name="Common.Delete" xml:space="preserve">
+    <value>Xóa</value>
+  </data>
+  <data name="Filter.AllCefr" xml:space="preserve">
+    <value>Mọi cấp độ</value>
+  </data>
+  <data name="Filter.AllTopics" xml:space="preserve">
+    <value>Mọi chủ đề</value>
+  </data>
+  <data name="Filter.ShowDeleted" xml:space="preserve">
+    <value>Hiện đã xóa</value>
+  </data>
+  <data name="Tbl.Word" xml:space="preserve">
+    <value>Từ</value>
+  </data>
+  <data name="Tbl.Level" xml:space="preserve">
+    <value>Cấp độ</value>
+  </data>
+  <data name="Tbl.Meaning" xml:space="preserve">
+    <value>Nghĩa</value>
+  </data>
+  <data name="Tbl.Status" xml:space="preserve">
+    <value>Trạng thái</value>
+  </data>
+  <data name="Tbl.Actions" xml:space="preserve">
+    <value>Thao tác</value>
+  </data>
+  <data name="Vocab.Empty.Title" xml:space="preserve">
+    <value>Chưa có từ nào</value>
+  </data>
+  <data name="Vocab.Empty.Msg" xml:space="preserve">
+    <value>Thử đổi bộ lọc, hoặc import từ vựng.</value>
+  </data>
+  <data name="Common.Restore" xml:space="preserve">
+    <value>Khôi phục</value>
+  </data>
+  <data name="Confirm.DeleteWord" xml:space="preserve">
+    <value>Xóa từ này? Từ sẽ bị xóa mềm và có thể khôi phục sau.</value>
+  </data>
+  <data name="Toast.WordDeleted" xml:space="preserve">
+    <value>Đã xóa từ</value>
+  </data>
+  <data name="Toast.WordRestored" xml:space="preserve">
+    <value>Đã khôi phục từ</value>
+  </data>
+  <data name="Toast.ActionFailed" xml:space="preserve">
+    <value>Thao tác thất bại. Thử lại.</value>
+  </data>
 </root>
