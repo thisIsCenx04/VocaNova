@@ -13,6 +13,9 @@ public sealed class StatCardViewModel
 
     public string Value { get; init; } = string.Empty;
 
+    /// <summary>Id cho phần tử giá trị (để JS auto-refresh cập nhật). Null → không render id.</summary>
+    public string? ValueId { get; init; }
+
     public string? Delta { get; init; }
 
     public StatDelta Direction { get; init; } = StatDelta.None;

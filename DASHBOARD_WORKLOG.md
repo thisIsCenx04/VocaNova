@@ -16,7 +16,7 @@
 | F055.2 | Theme dark/light scaffold (R1) | `feature/dashboard/theme` | ✅ | 2026-06-21 | tokens + `<html data-theme>` từ cookie + toggle topbar |
 | F055.3 | i18n EN/VI scaffold (R2) | `feature/dashboard/i18n` | ✅ | 2026-06-21 | localization + `_LangSwitch` + nav/login localized |
 | F055.4 | Shared components + Chart.js | `feature/dashboard/shared-ui` | ✅ | 2026-06-21 | CSS + partials + modals/toast/JS; Chart.js cần `libman restore` |
-| F056 | Overview (stat cards + charts) | `feature/dashboard/overview` | ⬜ | | cần F055.1 |
+| F056 | Overview (stat cards + charts) | `feature/dashboard/overview` | ✅ | 2026-06-21 | 4 stat card + line chart + pie(empty G2) + auto-refresh; smoke-test F055.1 khi chạy |
 | F057 | Vocabulary list & filter | `feature/dashboard/vocab-list` | ⬜ | | API word list 🟥 G1 (An) |
 | F058 | Vocabulary detail & sense mgmt | `feature/dashboard/vocab-detail` | ⬜ | | |
 | F059 | Vocabulary CSV import | `feature/dashboard/vocab-import` | ⬜ | | |
@@ -46,6 +46,12 @@
 ## Nhật ký (mới nhất ở trên)
 
 ### 2026-06-21
+- **F056 xong** (nhánh `feature/dashboard/overview`):
+  - DTOs `Models/Api/Stats/AdminStatsDtos.cs` (dashboard/learning/trend/wrong-word, `[JsonPropertyName]` tường minh).
+  - `DashboardController.Index` gọi `GET /api/admin/stats/dashboard` + `/learning`; action `/dashboard/stats-json` cho auto-refresh; `DashboardOverviewViewModel`.
+  - `Views/Dashboard/Index.cshtml`: 4 `_StatCard` (có ValueId), `_ChartCard` line (Chart.js, data=total_count proxy G3), pie mastery = `_StateBlock` Empty (G2), auto-refresh 5'. Keys `Overview.*`/`Stat.*`/`Chart.*`/`State.*`. `StatCardViewModel` thêm `ValueId`.
+  - Build → 0 warning, 0 error. **Smoke-test F055.1** (token+refresh) sẽ xác nhận khi chạy app + login.
+  - Commit gợi ý: `feat(dashboard): add overview page with stats and activity chart`.
 - **F055.4 xong** (nhánh `feature/dashboard/shared-ui`):
   - step1: CSS toàn bộ component vào `site.css` (stat card, badge status+CEFR, filter bar, data table sticky, pagination, state block + skeleton, modal theming, toast, chart card).
   - step2: `Models/Components/ComponentViewModels.cs` (+ `BadgeModifiers`) + partials `Components/_Badge`, `_StatCard`, `_StateBlock`, `_Pagination`; `_ViewImports` thêm `@using ...Models.Components`.

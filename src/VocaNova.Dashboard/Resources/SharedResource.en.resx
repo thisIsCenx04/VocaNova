@@ -130,4 +130,34 @@
   <data name="Chart.Monthly" xml:space="preserve">
     <value>Monthly</value>
   </data>
+  <data name="Overview.Eyebrow" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="Stat.Users" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="Stat.Words" xml:space="preserve">
+    <value>Words</value>
+  </data>
+  <data name="Stat.SessionsToday" xml:space="preserve">
+    <value>Sessions today</value>
+  </data>
+  <data name="Stat.Accuracy7d" xml:space="preserve">
+    <value>Accuracy (7 days)</value>
+  </data>
+  <data name="Chart.Activity7d" xml:space="preserve">
+    <value>Activity — last 7 days</value>
+  </data>
+  <data name="Chart.MasteryDistribution" xml:space="preserve">
+    <value>Mastery distribution</value>
+  </data>
+  <data name="State.WaitingData.Title" xml:space="preserve">
+    <value>Waiting for data</value>
+  </data>
+  <data name="State.WaitingData.Msg" xml:space="preserve">
+    <value>This panel lights up once the API endpoint is ready.</value>
+  </data>
+  <data name="State.LoadError" xml:space="preserve">
+    <value>Couldn't load data. Refresh to try again.</value>
+  </data>
 </root>

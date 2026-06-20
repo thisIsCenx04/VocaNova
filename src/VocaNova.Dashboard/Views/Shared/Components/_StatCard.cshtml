@@ -1,7 +1,7 @@
 @model StatCardViewModel
 <div class="stat-card">
     <p class="eyebrow">@Model.Eyebrow</p>
-    <div class="stat-value">@Model.Value</div>
+    <div class="stat-value" id="@Model.ValueId">@Model.Value</div>
     @if (!string.IsNullOrEmpty(Model.Delta))
     {
         var cls = Model.Direction switch

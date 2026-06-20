@@ -1,15 +1,104 @@
+@model VocaNova.Dashboard.Models.Dashboard.DashboardOverviewViewModel
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = L["Nav.Dashboard"];
+    var s = Model.Stats;
+    double Pct(double v) => v <= 1 ? v * 100 : v;
+    var trendJson = System.Text.Json.JsonSerializer.Serialize(Model.Trend);
 }
 
 <div class="page-header">
     <div>
-        <p class="eyebrow">Overview</p>
-        <h1>Dashboard</h1>
+        <p class="eyebrow">@L["Overview.Eyebrow"]</p>
+        <h1>@L["Nav.Dashboard"]</h1>
     </div>
 </div>
 
-<section class="empty-state">
-    <h2>Ready for F056</h2>
-    <p>Authentication and layout are in place. Overview cards and charts can now consume the admin stats API.</p>
-</section>
+@if (!Model.StatsLoaded)
+{
+    <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Error, Title = L["State.LoadError"].Value })" />
+}
+else
+{
+    <div class="stat-grid">
+        <partial name="Components/_StatCard" model="@(new StatCardViewModel { Eyebrow = L["Stat.Users"].Value, Value = s!.TotalUsers.ToString("N0"), ValueId = "stat-users" })" />
+        <partial name="Components/_StatCard" model="@(new StatCardViewModel { Eyebrow = L["Stat.Words"].Value, Value = s.TotalWords.ToString("N0"), ValueId = "stat-words" })" />
+        <partial name="Components/_StatCard" model="@(new StatCardViewModel { Eyebrow = L["Stat.SessionsToday"].Value, Value = s.SessionsToday.ToString("N0"), ValueId = "stat-sessions" })" />
+        <partial name="Components/_StatCard" model="@(new StatCardViewModel { Eyebrow = L["Stat.Accuracy7d"].Value, Value = Pct(s.AvgAccuracy7d).ToString("0.#") + "%", ValueId = "stat-accuracy" })" />
+    </div>
+}
+
+<div class="row g-3 mt-1">
+    <div class="col-12 col-xl-8">
+        <partial name="Components/_ChartCard" model="@(new ChartCardViewModel { Title = L["Chart.Activity7d"].Value, CanvasId = "activityChart" })" />
+    </div>
+    <div class="col-12 col-xl-4">
+        @* G2: mastery distribution toàn hệ thống chưa có API → empty state, tự sáng đèn sau. *@
+        <div class="chart-card">
+            <header>
+                <h2>@L["Chart.MasteryDistribution"]</h2>
+            </header>
+            <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Empty, Title = L["State.WaitingData.Title"].Value, Message = L["State.WaitingData.Msg"].Value })" />
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/chart/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            var trend = @Html.Raw(trendJson);
+            var accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+            var canvas = document.getElementById('activityChart');
+            var chart = null;
+
+            if (canvas && window.Chart) {
+                chart = new Chart(canvas, {
+                    type: 'line',
+                    data: {
+                        labels: trend.map(function (t) { return t.date; }),
+                        datasets: [{
+                            label: '@L["Chart.Activity7d"]',
+                            data: trend.map(function (t) { return t.total_count; }),
+                            borderColor: accent,
+                            backgroundColor: accent,
+                            tension: 0.3,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            function setText(id, val) {
+                var el = document.getElementById(id);
+                if (el) { el.textContent = (typeof val === 'number') ? val.toLocaleString() : val; }
+            }
+
+            // Auto-refresh mỗi 5 phút.
+            setInterval(function () {
+                fetch('/dashboard/stats-json', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function (r) { return r.json(); })
+                    .then(function (d) {
+                        if (d.stats) {
+                            setText('stat-users', d.stats.total_users);
+                            setText('stat-words', d.stats.total_words);
+                            setText('stat-sessions', d.stats.sessions_today);
+                            var acc = d.stats.avg_accuracy_7d || 0;
+                            if (acc <= 1) { acc = acc * 100; }
+                            setText('stat-accuracy', (Math.round(acc * 10) / 10) + '%');
+                        }
+                        if (d.trend && chart) {
+                            chart.data.labels = d.trend.map(function (t) { return t.date; });
+                            chart.data.datasets[0].data = d.trend.map(function (t) { return t.total_count; });
+                            chart.update();
+                        }
+                    })
+                    .catch(function () { });
+            }, 300000);
+        })();
+    </script>
+}
