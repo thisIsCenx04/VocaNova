@@ -383,5 +383,12 @@ public class AuthControllerTests
         {
             return Task.FromResult(Result<bool>.Ok(true));
         }
+
+        public Task<Result<bool>> DeleteAccountAsync(
+            uint userId,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Result<bool>.Ok(true));
+        }
     }
 }

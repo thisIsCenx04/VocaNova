@@ -228,6 +228,25 @@ class AuthNotifier extends _$AuthNotifier {
     }
   }
 
+  Future<bool> deleteAccount() async {
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
+    try {
+      await ref.read(authRepositoryProvider).deleteAccount();
+      await ref.read(secureStorageProvider).clearTokens();
+      await ref.read(localStorageProvider).clearAll();
+      state = const AuthState(status: AuthStatus.unauthenticated);
+      ref.read(appRouterProvider).router.go(AppRoutes.login);
+      return true;
+    } catch (error) {
+      state = AuthState(
+        status: AuthStatus.error,
+        user: state.user,
+        errorMessage: _errorMessage(error),
+      );
+      return false;
+    }
+  }
+
   Future<bool> _authenticate(Future<AuthTokens> Function() request) async {
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
     try {

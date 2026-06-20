@@ -15,6 +15,10 @@ void main() {
   });
 
   testWidgets('shows profile and updates display name', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     final notifier = FakeAuthNotifier();
     await tester.pumpWidget(
       ProviderScope(
@@ -26,6 +30,7 @@ void main() {
       ),
     );
     await tester.pump();
+    expect(tester.takeException(), isNull, reason: 'initial profile layout');
 
     expect(find.text('090*****67'), findsOneWidget);
     expect(find.byKey(const Key('profile-avatar')), findsOneWidget);
@@ -33,6 +38,7 @@ void main() {
 
     await tester.tap(find.text('Nhut'));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull, reason: 'edit profile sheet layout');
     final fieldContext = tester.element(
       find.byKey(const Key('display-name-field')),
     );
@@ -60,8 +66,11 @@ void main() {
     expect(notifier.uploadedAvatarName, 'cat.png');
     expect(notifier.uploadedAvatarBytes, isNotEmpty);
 
-    await tester.ensureVisible(find.byKey(const Key('change-password-button')));
+    await tester.ensureVisible(find.byKey(const Key('edit-profile-button')));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('edit-profile-button')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('change-password-button')));
     await tester.tap(find.byKey(const Key('change-password-button')));
     await tester.pumpAndSettle();
     await tester.enterText(

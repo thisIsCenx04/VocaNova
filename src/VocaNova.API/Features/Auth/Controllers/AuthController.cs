@@ -248,6 +248,24 @@ public sealed class AuthController : ControllerBase
     }
 
     [Authorize]
+    [HttpDelete("me")]
+    public async Task<IActionResult> DeleteMe(CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return this.ErrorResult(Result<bool>.Unauthorized("Unauthorized."));
+        }
+
+        var result = await _authService.DeleteAccountAsync(userId, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value, "Account deleted successfully.");
+    }
+
+    [Authorize]
     [HttpPut("me/profile")]
     public async Task<IActionResult> UpdateProfile(
         [FromBody] UpdateUserProfileRequest request,

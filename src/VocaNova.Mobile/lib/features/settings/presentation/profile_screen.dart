@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
+import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 import 'package:vocanova_mobile/app/theme/app_theme.dart';
@@ -12,6 +13,8 @@ import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
 import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
 import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_validators.dart';
+import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
+import 'package:vocanova_mobile/features/progress/domain/progress_summary.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -27,14 +30,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (ref.read(authProvider).user == null) {
       Future.microtask(ref.read(authProvider.notifier).loadCurrentUser);
     }
+    Future.microtask(ref.read(progressOverviewProvider.notifier).load);
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
     final user = auth.user;
+    final progress = ref.watch(progressOverviewProvider);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _ProfilePalette.of(context).surface,
       body: SafeArea(
         bottom: false,
         child: user == null
@@ -46,6 +51,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             : _ProfileContent(
                 user: user,
                 isLoading: auth.status == AuthStatus.loading,
+                summary: progress.summary,
               ),
       ),
     );
@@ -53,10 +59,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 }
 
 class _ProfileContent extends ConsumerWidget {
-  const _ProfileContent({required this.user, required this.isLoading});
+  const _ProfileContent({
+    required this.user,
+    required this.isLoading,
+    required this.summary,
+  });
 
   final UserProfile user;
   final bool isLoading;
+  final ProgressSummary? summary;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -65,6 +76,7 @@ class _ProfileContent extends ConsumerWidget {
       children: [
         _ProfileHeader(
           user: user,
+          summary: summary,
           onEdit: isLoading
               ? null
               : () => _showEditProfileSheet(context, ref, user),
@@ -84,10 +96,11 @@ class _ProfileContent extends ConsumerWidget {
               subtitle: 'Progress & analytics',
               onTap: () => context.push(AppRoutes.progressCharts),
             ),
-            const _ProfileMenuRow(
+            _ProfileMenuRow(
               icon: Icons.history,
               title: 'Test history',
               subtitle: 'Past practice sessions',
+              onTap: () => context.push(AppRoutes.progressCharts),
             ),
             _ProfileMenuRow(
               key: const Key('edit-learning-profile'),
@@ -110,32 +123,16 @@ class _ProfileContent extends ConsumerWidget {
                   ? null
                   : () => _showEditProfileSheet(context, ref, user),
             ),
-            _ProfileMenuRow(
-              key: const Key('change-password-button'),
-              icon: Icons.lock_outline,
-              title: 'Change password',
-              subtitle: 'Keep your account secure',
-              onTap: isLoading
-                  ? null
-                  : () => _showChangePasswordSheet(context, ref),
-            ),
-            _ProfileMenuRow(
-              icon: Icons.notifications_none,
-              title: 'Notifications',
-              subtitle: 'Daily reminders on',
-              trailing: const _StatusBadge(),
+            _ProfilePreferenceRow(
+              type: _ProfilePreference.notifications,
               onTap: () => context.push(AppRoutes.settings),
             ),
-            _ProfileMenuRow(
-              icon: Icons.translate,
-              title: 'Language',
-              subtitle: 'Vietnamese / English',
+            _ProfilePreferenceRow(
+              type: _ProfilePreference.language,
               onTap: () => context.push(AppRoutes.settings),
             ),
-            _ProfileMenuRow(
-              icon: Icons.light_mode_outlined,
-              title: 'Theme',
-              subtitle: 'System default',
+            _ProfilePreferenceRow(
+              type: _ProfilePreference.theme,
               onTap: () => context.push(AppRoutes.settings),
             ),
           ],
@@ -149,15 +146,27 @@ class _ProfileContent extends ConsumerWidget {
               subtitle: 'Audio, storage, sync',
               onTap: () => context.push(AppRoutes.settings),
             ),
-            const _ProfileMenuRow(
+            _ProfileMenuRow(
               icon: Icons.shield_outlined,
               title: 'Privacy & data',
               subtitle: 'Manage your data',
+              onTap: () => _showInformationSheet(
+                context,
+                title: 'Privacy & data',
+                body:
+                    'VocaNova stores your profile and learning progress so your vocabulary can stay synchronized across sessions.',
+              ),
             ),
-            const _ProfileMenuRow(
+            _ProfileMenuRow(
               icon: Icons.help_outline,
               title: 'Help & feedback',
               subtitle: 'FAQs and support',
+              onTap: () => _showInformationSheet(
+                context,
+                title: 'Help & feedback',
+                body:
+                    'Need a hand? Share the issue, the screen you were using, and the steps that caused it with the VocaNova support team.',
+              ),
             ),
           ],
         ),
@@ -203,6 +212,7 @@ class _ProfileContent extends ConsumerWidget {
     WidgetRef ref,
     UserProfile user,
   ) async {
+    var changePasswordRequested = false;
     final result = await showModalBottomSheet<_EditProfileResult>(
       context: context,
       isScrollControlled: true,
@@ -211,9 +221,20 @@ class _ProfileContent extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => _EditProfileSheet(user: user),
+      builder: (sheetContext) => _EditProfileSheet(
+        user: user,
+        onChangePassword: () {
+          changePasswordRequested = true;
+          Navigator.pop(sheetContext);
+        },
+      ),
     );
-    if (result == null || !context.mounted) return;
+    if (!context.mounted) return;
+    if (changePasswordRequested) {
+      await _showChangePasswordSheet(context, ref);
+      return;
+    }
+    if (result == null) return;
 
     var avatarUrl = result.avatarUrl;
     if (result.avatarBytes != null && result.avatarFileName != null) {
@@ -281,6 +302,34 @@ class _ProfileContent extends ConsumerWidget {
     }
   }
 
+  Future<void> _showInformationSheet(
+    BuildContext context, {
+    required String title,
+    required String body,
+  }) => showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(body),
+            const SizedBox(height: 22),
+            FilledButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Done'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -306,21 +355,55 @@ class _ProfileContent extends ConsumerWidget {
   }
 }
 
+class _ProfilePalette {
+  const _ProfilePalette({
+    required this.surface,
+    required this.text,
+    required this.secondaryText,
+    required this.muted,
+    required this.divider,
+    required this.iconBackground,
+  });
+
+  final Color surface;
+  final Color text;
+  final Color secondaryText;
+  final Color muted;
+  final Color divider;
+  final Color iconBackground;
+
+  factory _ProfilePalette.of(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return _ProfilePalette(
+      surface: dark ? const Color(0xFF1F1F1F) : Colors.white,
+      text: dark ? const Color(0xFFF5F2FF) : const Color(0xFF14142B),
+      secondaryText: dark ? const Color(0xFFC3BECE) : const Color(0xFF444444),
+      muted: dark ? const Color(0xFF918A9F) : const Color(0xFF9C99B5),
+      divider: dark ? const Color(0xFF34313B) : const Color(0xFFECEAF4),
+      iconBackground: dark ? const Color(0xFF30284D) : const Color(0xFFF1EEFF),
+    );
+  }
+}
+
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({required this.user, required this.onEdit});
+  const _ProfileHeader({
+    required this.user,
+    required this.summary,
+    required this.onEdit,
+  });
 
   final UserProfile user;
+  final ProgressSummary? summary;
   final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
+    final palette = _ProfilePalette.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 21),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFECEAF4), width: 1.25),
-        ),
+      decoration: BoxDecoration(
+        color: palette.surface,
+        border: Border(bottom: BorderSide(color: palette.divider, width: 1.25)),
       ),
       child: Column(
         children: [
@@ -339,7 +422,7 @@ class _ProfileHeader extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.heading.copyWith(
-                          color: const Color(0xFF14142B),
+                          color: palette.text,
                           fontSize: 18,
                           height: 27 / 18,
                         ),
@@ -351,27 +434,36 @@ class _ProfileHeader extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.caption.copyWith(
-                          color: const Color(0xFF444444),
+                          color: palette.secondaryText,
                           fontSize: 13,
                           height: 19.5 / 13,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Row(
-                        children: [
-                          _ProfileChip(
-                            label: 'B2 level',
-                            background: Color(0xFFF1EEFF),
-                            foreground: AppColors.primary,
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const _ProfileChip(
+                                label: 'B2 level',
+                                background: Color(0xFFF1EEFF),
+                                foreground: AppColors.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              _ProfileChip(
+                                label:
+                                    '${summary?.currentStreakDays ?? 0}-day streak',
+                                icon: Icons.local_fire_department,
+                                background: const Color(0xFFFFF1D9),
+                                foreground: const Color(0xFFC2410C),
+                              ),
+                            ],
                           ),
-                          SizedBox(width: 8),
-                          _ProfileChip(
-                            label: '7-day streak',
-                            icon: Icons.local_fire_department,
-                            background: Color(0xFFFFF1D9),
-                            foreground: Color(0xFFC2410C),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
@@ -380,14 +472,14 @@ class _ProfileHeader extends StatelessWidget {
                   key: const Key('profile-edit-action'),
                   onPressed: onEdit,
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF9C99B5),
+                    foregroundColor: palette.muted,
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     minimumSize: const Size(28, 36),
                   ),
                   child: Text(
                     'Edit',
                     style: AppTextStyles.label.copyWith(
-                      color: const Color(0xFF9C99B5),
+                      color: palette.muted,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -399,17 +491,28 @@ class _ProfileHeader extends StatelessWidget {
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.only(top: 16),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(
-                top: BorderSide(color: Color(0xFFECEAF4), width: 1.25),
+                top: BorderSide(color: palette.divider, width: 1.25),
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                _ProfileStat(value: '248', label: 'Words'),
-                _ProfileStat(value: '84%', label: 'Accuracy'),
-                _ProfileStat(value: '7', label: 'Streak'),
-                _ProfileStat(value: '12', label: 'Badges', last: true),
+                _ProfileStat(
+                  value: summary?.totalWordsInProgress.toString() ?? '—',
+                  label: 'Words',
+                ),
+                _ProfileStat(
+                  value: summary == null
+                      ? '—'
+                      : '${summary!.accuracy7Days.round()}%',
+                  label: 'Accuracy',
+                ),
+                _ProfileStat(
+                  value: summary?.currentStreakDays.toString() ?? '—',
+                  label: 'Streak',
+                ),
+                const _ProfileStat(value: '—', label: 'Badges', last: true),
               ],
             ),
           ),
@@ -475,7 +578,10 @@ class _ProfileAvatar extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFF16A34A),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 1.25),
+              border: Border.all(
+                color: _ProfilePalette.of(context).surface,
+                width: 1.25,
+              ),
             ),
           ),
         ),
@@ -541,22 +647,21 @@ class _ProfileStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _ProfilePalette.of(context);
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
           border: last
               ? null
-              : const Border(
-                  right: BorderSide(color: Color(0xFFECEAF4), width: 1.25),
-                ),
+              : Border(right: BorderSide(color: palette.divider, width: 1.25)),
         ),
         child: Column(
           children: [
             Text(
               value,
               style: AppTextStyles.heading.copyWith(
-                color: const Color(0xFF14142B),
+                color: palette.text,
                 fontSize: 18,
                 height: 27 / 18,
               ),
@@ -564,7 +669,7 @@ class _ProfileStat extends StatelessWidget {
             Text(
               label,
               style: AppTextStyles.caption.copyWith(
-                color: const Color(0xFF444444),
+                color: palette.secondaryText,
                 fontSize: 11,
                 height: 16.5 / 11,
               ),
@@ -584,14 +689,15 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _ProfilePalette.of(context);
     return Container(
-      color: Colors.white,
+      color: palette.surface,
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Text(
         label,
         style: AppTextStyles.caption.copyWith(
-          color: muted ? const Color(0xFF9C99B5) : const Color(0xFF444444),
+          color: muted ? palette.muted : palette.secondaryText,
           fontFamily: 'JetBrains Mono',
           fontSize: 11,
           height: 16.5 / 11,
@@ -606,15 +712,16 @@ class _SectionLabel extends StatelessWidget {
 class _ProfileMenuGroup extends StatelessWidget {
   const _ProfileMenuGroup({required this.children});
 
-  final List<_ProfileMenuRow> children;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
+    final palette = _ProfilePalette.of(context);
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: palette.surface,
         border: Border.symmetric(
-          horizontal: BorderSide(color: Color(0xFFECEAF4), width: 1.25),
+          horizontal: BorderSide(color: palette.divider, width: 1.25),
         ),
       ),
       child: Column(
@@ -638,12 +745,11 @@ class _MenuRowWithDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _ProfilePalette.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
         border: showDivider
-            ? const Border(
-                bottom: BorderSide(color: Color(0xFFECEAF4), width: 1.25),
-              )
+            ? Border(bottom: BorderSide(color: palette.divider, width: 1.25))
             : null,
       ),
       child: child,
@@ -669,6 +775,7 @@ class _ProfileMenuRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = _ProfilePalette.of(context);
     return InkWell(
       onTap: onTap,
       child: ConstrainedBox(
@@ -681,7 +788,7 @@ class _ProfileMenuRow extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1EEFF),
+                  color: palette.iconBackground,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(icon, size: 16, color: AppColors.primary),
@@ -697,7 +804,7 @@ class _ProfileMenuRow extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.label.copyWith(
-                        color: const Color(0xFF14142B),
+                        color: palette.text,
                         fontSize: 14,
                         height: 21 / 14,
                         fontWeight: FontWeight.w500,
@@ -708,7 +815,7 @@ class _ProfileMenuRow extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.caption.copyWith(
-                        color: const Color(0xFF444444),
+                        color: palette.secondaryText,
                         fontSize: 12,
                         height: 18 / 12,
                         fontWeight: FontWeight.w500,
@@ -719,11 +826,7 @@ class _ProfileMenuRow extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               trailing ??
-                  const Icon(
-                    Icons.chevron_right,
-                    color: Color(0xFF9C99B5),
-                    size: 17,
-                  ),
+                  Icon(Icons.chevron_right, color: palette.muted, size: 17),
             ],
           ),
         ),
@@ -733,20 +836,22 @@ class _ProfileMenuRow extends StatelessWidget {
 }
 
 class _StatusBadge extends StatelessWidget {
-  const _StatusBadge();
+  const _StatusBadge({required this.enabled});
+
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFDCFCE7),
+        color: enabled ? const Color(0xFFDCFCE7) : const Color(0xFFF1F0F8),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
-        'ON',
+        enabled ? 'ON' : 'OFF',
         style: AppTextStyles.caption.copyWith(
-          color: const Color(0xFF16A34A),
+          color: enabled ? const Color(0xFF16A34A) : const Color(0xFF77738D),
           fontSize: 12,
           height: 16 / 12,
           fontWeight: FontWeight.w600,
@@ -756,10 +861,59 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
+enum _ProfilePreference { notifications, language, theme }
+
+class _ProfilePreferenceRow extends StatelessWidget {
+  const _ProfilePreferenceRow({required this.type, required this.onTap});
+
+  final _ProfilePreference type;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: AppSettingsNotifier.instance,
+      builder: (context, _) {
+        final settings = AppSettingsNotifier.instance.state;
+        return switch (type) {
+          _ProfilePreference.notifications => _ProfileMenuRow(
+            icon: Icons.notifications_none,
+            title: 'Notifications',
+            subtitle: settings.dailyReminder
+                ? 'Daily reminders on'
+                : 'Daily reminders off',
+            trailing: _StatusBadge(enabled: settings.dailyReminder),
+            onTap: onTap,
+          ),
+          _ProfilePreference.language => _ProfileMenuRow(
+            icon: Icons.language,
+            title: 'Language',
+            subtitle: settings.locale.languageCode == 'en'
+                ? 'English'
+                : 'Vietnamese',
+            onTap: onTap,
+          ),
+          _ProfilePreference.theme => _ProfileMenuRow(
+            icon: Icons.dark_mode_outlined,
+            title: 'Theme',
+            subtitle: switch (settings.themeMode) {
+              ThemeMode.dark => 'Dark mode',
+              ThemeMode.light => 'Light mode',
+              ThemeMode.system => 'System default',
+            },
+            onTap: onTap,
+          ),
+        };
+      },
+    );
+  }
+}
+
 class _EditProfileSheet extends StatefulWidget {
-  const _EditProfileSheet({required this.user});
+  const _EditProfileSheet({required this.user, required this.onChangePassword});
 
   final UserProfile user;
+  final VoidCallback onChangePassword;
 
   @override
   State<_EditProfileSheet> createState() => _EditProfileSheetState();
@@ -862,6 +1016,15 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 initialValue: widget.user.phone ?? 'Not linked',
                 enabled: false,
                 decoration: const InputDecoration(),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('change-password-button'),
+                onPressed: widget.onChangePassword,
+                icon: const Icon(Icons.lock_outline, size: 18),
+                label: const Text('Change password'),
               ),
             ),
             const SizedBox(height: 24),

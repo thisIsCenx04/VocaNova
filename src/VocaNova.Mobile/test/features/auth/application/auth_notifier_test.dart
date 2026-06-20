@@ -266,6 +266,22 @@ void main() {
     verify(() => secureStorage.clearTokens()).called(1);
     verify(() => goRouter.go(AppRoutes.login)).called(1);
   });
+
+  test('delete account clears local data after the API succeeds', () async {
+    await localStorage.set(StorageKeys.userProfileJson, '{}');
+    when(() => repository.deleteAccount()).thenAnswer((_) async {});
+    when(() => secureStorage.clearTokens()).thenAnswer((_) async {});
+    when(() => goRouter.go(AppRoutes.login)).thenReturn(null);
+
+    final deleted = await container.read(authProvider.notifier).deleteAccount();
+
+    expect(deleted, isTrue);
+    expect(container.read(authProvider).status, AuthStatus.unauthenticated);
+    expect(preferences.getKeys(), isEmpty);
+    verify(() => repository.deleteAccount()).called(1);
+    verify(() => secureStorage.clearTokens()).called(1);
+    verify(() => goRouter.go(AppRoutes.login)).called(1);
+  });
 }
 
 class MockAuthRepository extends Mock implements AuthRepository {}

@@ -39,6 +39,32 @@ public class LogoutProfileFeatureTests
     }
 
     [Fact]
+    public async Task DeleteAccountAsync_Should_SoftDelete_User_Clear_Auth_And_Revoke_Tokens()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserAsync(dbContext);
+        await SeedRefreshTokenAsync(dbContext);
+        var service = CreateAuthService(dbContext);
+
+        var result = await service.DeleteAccountAsync(1);
+
+        result.IsSuccess.Should().BeTrue();
+        var user = await dbContext.Users
+            .Include(entity => entity.UserAuth)
+            .SingleAsync(entity => entity.UserId == 1);
+        user.Status.Should().Be(UserStatus.Deleted);
+        user.UserAuth.Should().NotBeNull();
+        user.UserAuth!.Phone.Should().BeNull();
+        user.UserAuth.PasswordHash.Should().BeNull();
+        user.UserAuth.IsPhoneVerified.Should().BeFalse();
+        user.UserAuth.GoogleUid.Should().BeNull();
+        user.UserAuth.GoogleEmail.Should().BeNull();
+        user.UserAuth.Username.Should().BeNull();
+        var refreshToken = await dbContext.RefreshTokens.SingleAsync();
+        refreshToken.RevokedAt.Should().NotBeNull();
+    }
+
+    [Fact]
     public async Task GetProfileAsync_Should_Return_And_Cache_Profile()
     {
         await using var dbContext = CreateDbContext();
@@ -271,6 +297,10 @@ public class LogoutProfileFeatureTests
             {
                 UserId = 1,
                 Phone = "0912345678",
+                IsPhoneVerified = true,
+                GoogleUid = "google-user-1",
+                GoogleEmail = "user@example.com",
+                Username = "existing-user",
                 PasswordHash = PasswordHelper.Hash("Password1"),
                 UpdatedAt = DateTime.UtcNow,
             },

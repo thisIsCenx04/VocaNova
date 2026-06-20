@@ -366,6 +366,45 @@ public sealed class AuthService : IAuthService
         return Result<UserProfileDto>.Ok(profile);
     }
 
+    public async Task<Result<bool>> DeleteAccountAsync(
+        uint userId,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await _authRepository.FindByIdAsync(userId, cancellationToken);
+        if (user is null || user.Status == UserStatus.Deleted)
+        {
+            return Result<bool>.Unauthorized("Invalid user.");
+        }
+
+        var now = DateTime.UtcNow;
+        user.Status = UserStatus.Deleted;
+        user.UpdatedAt = now;
+
+        if (user.UserAuth is not null)
+        {
+            user.UserAuth.Phone = null;
+            user.UserAuth.PasswordHash = null;
+            user.UserAuth.IsPhoneVerified = false;
+            user.UserAuth.GoogleUid = null;
+            user.UserAuth.GoogleEmail = null;
+            user.UserAuth.Username = null;
+            user.UserAuth.UpdatedAt = now;
+        }
+
+        var activeTokens = await _dbContext.RefreshTokens
+            .Where(token => token.UserId == userId && token.RevokedAt == null)
+            .ToListAsync(cancellationToken);
+        foreach (var token in activeTokens)
+        {
+            token.RevokedAt = now;
+        }
+
+        await _authRepository.SaveChangesAsync(cancellationToken);
+        await RemoveCachedProfileAsync(userId, cancellationToken);
+        await RemoveCachedKnnTopicRecommendationsAsync(userId, cancellationToken);
+        return Result<bool>.Ok(true);
+    }
+
     public async Task<Result<UserProfileDto>> UpdateProfileAsync(
         uint userId,
         UpdateUserProfileRequest request,

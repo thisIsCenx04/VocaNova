@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
+import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/features/dictionary/application/audio_playback_service.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_detail_notifier.dart';
@@ -21,6 +22,7 @@ class WordDetailScreen extends ConsumerStatefulWidget {
 
 class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
   String _accent = 'UK';
+  bool _hasAutoPlayed = false;
 
   @override
   void initState() {
@@ -58,6 +60,16 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
     final word = state.word;
     if (word == null) {
       return Center(child: Text(state.errorMessage ?? 'Không tìm thấy từ.'));
+    }
+    if (!_hasAutoPlayed &&
+        AppSettingsNotifier.instance.state.autoPlayPronunciation &&
+        word.audio.isNotEmpty) {
+      _hasAutoPlayed = true;
+      final preferred = word.audio.where(
+        (item) => item.accent.toUpperCase() == _accent,
+      );
+      final audio = preferred.isEmpty ? word.audio.first : preferred.first;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _play(audio.url));
     }
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 104),

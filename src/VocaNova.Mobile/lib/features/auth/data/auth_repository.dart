@@ -153,6 +153,10 @@ class AuthRepository {
     );
   }
 
+  Future<void> deleteAccount() async {
+    await _dio.delete<Map<String, dynamic>>(ApiEndpoints.deleteAccount);
+  }
+
   Map<String, dynamic> _responseData(Response<Map<String, dynamic>> response) {
     final data = response.data?['data'];
     if (data is! Map<String, dynamic>) {

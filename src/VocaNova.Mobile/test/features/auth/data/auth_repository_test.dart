@@ -245,6 +245,21 @@ void main() {
 
     expect(user.avatarUrl, 'https://res.cloudinary.com/demo/cat.png');
   });
+
+  test('deleteAccount calls the authenticated account endpoint', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      expect(options.path, ApiEndpoints.deleteAccount);
+      expect(options.method, 'DELETE');
+      return jsonResponse({
+        'success': true,
+        'data': true,
+        'errors': <String>[],
+      });
+    });
+
+    await AuthRepository(dio: dio).deleteAccount();
+  });
 }
 
 typedef AdapterCallback = ResponseBody Function(RequestOptions options);

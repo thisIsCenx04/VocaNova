@@ -72,4 +72,8 @@ public interface IAuthService
         uint userId,
         ChangePasswordRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<Result<bool>> DeleteAccountAsync(
+        uint userId,
+        CancellationToken cancellationToken = default);
 }
