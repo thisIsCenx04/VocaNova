@@ -1,7 +1,7 @@
 @model VocaNova.Dashboard.Models.Auth.LoginViewModel
 
 @{
-    ViewData["Title"] = "Login";
+    ViewData["Title"] = L["Login.Title"];
 }
 
 <section class="login-panel" aria-labelledby="login-title">
@@ -9,7 +9,7 @@
         <span class="brand-mark">VN</span>
         <div>
             <h1 id="login-title">VocaNova Dashboard</h1>
-            <p>Admin console</p>
+            <p>@L["Login.Subtitle"]</p>
         </div>
     </div>
 
@@ -30,7 +30,7 @@
             <span asp-validation-for="Password" class="text-danger small"></span>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100">Sign in</button>
+        <button type="submit" class="btn btn-primary w-100">@L["Login.Submit"]</button>
     </form>
 </section>
 
