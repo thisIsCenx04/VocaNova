@@ -18,7 +18,7 @@
 | F056 | Overview (stat cards + charts) | `feature/dashboard/overview` | ✅ | 21/06 |
 | F057 | Vocabulary list & filter | `feature/dashboard/vocab-list` | ✅ | 21/06 |
 | F058 | Vocabulary detail & sense mgmt | `feature/dashboard/vocab-detail` | ✅ | 22/06 |
-| F059 | Vocabulary CSV import | `feature/dashboard/vocab-import` | ⬜ | |
+| F059 | Vocabulary CSV import | `feature/dashboard/vocab-import` | ✅ | 22/06 |
 | F061 | Topic management | `feature/dashboard/topic-management` | ⬜ | |
 | F060 | User management (+ G4/G8 khung) | `feature/dashboard/user-management` | ⬜ | |
 | F062 | Statistics | `feature/dashboard/statistics` | ⬜ | |
@@ -95,6 +95,16 @@
 - Verify: `dotnet build src/VocaNova.Dashboard/VocaNova.Dashboard.csproj --no-restore` → **0 warning, 0 error**. HTTP smoke: `/vocabulary/1` → 302 `/login?ReturnUrl=...`; `/login` → 200. Không chạy smoke dữ liệu thật vì API `:5013` không hoạt động trong phiên.
 - Commit: `feat(dashboard): add vocabulary detail and sense management`
 
+### F059 — Vocabulary CSV import
+- `Models/Api/Dictionary/DictionaryDtos.cs`: thêm `BulkImportResultDto`/`BulkImportErrorDto` khớp response `imported_words`, `imported_senses`, `skipped`, `errors`; `VocabularyImportViewModel` giữ giới hạn file/template URL.
+- `VocabularyController`: `GET/POST /vocabulary/import`; validate `.csv` + 5 MB, gửi multipart qua `IVocaNovaApiClient` tới `POST /api/admin/words/import`, trả JSON rõ success/message/data/errors cho AJAX.
+- `Views/Vocabulary/Import.cshtml`: pipeline 3 bước, drag-drop + file picker, hướng dẫn đúng contract bảy cột, download template, summary imported/skipped/errors và bảng lỗi Row#/Column/Message. `Views/Vocabulary/Index.cshtml` thêm lối vào màn import.
+- `wwwroot/js/vocabulary-import.js`: validate file phía client, upload AJAX, render report an toàn bằng `textContent`, highlight error rows và xuất `vocabulary-import-errors.csv` có BOM UTF-8; xóa file đã chọn sau thành công để tránh import trùng khi bấm lại.
+- `wwwroot/templates/words-import-template.csv`: header chính xác `word,cefr_level,phonetic_uk,phonetic_us,word_class,english_definition,vietnamese_meaning` + dữ liệu mẫu nhiều nghĩa; `site.css` responsive/dark-light/reduced-motion; resource EN+VI đầy đủ.
+- API **đã đủ**, không thêm gap. Đã đối chiếu trực tiếp `WordService.RequiredCsvColumns()`; lưu ý contract thật dùng `cefr_level`.
+- Verify: Dashboard build **0 warning, 0 error**; `AdminWordCrudFeatureTests.ImportCsvAsync_Should_Import_Valid_Rows_And_Collect_Row_Errors` **pass 1/1**; JS syntax + RESX XML pass; HTTP `/vocabulary/import` → 302 login đúng policy, template → **200 text/csv**. Không smoke import dữ liệu thật vì API `:5013` không chạy và browser tích hợp không kết nối được trong phiên.
+- Commit: `feat(dashboard): add vocabulary CSV import workflow`
+
 ---
 
 ## Gap chờ API (An làm) — dashboard đã dựng khung, tự sáng đèn khi có
@@ -116,4 +126,4 @@
 ---
 
 ## Tiếp theo
-**F059 — Vocabulary CSV Import** (nhánh `feature/dashboard/vocab-import`): drag-drop CSV + template + bảng kết quả import/skipped/errors theo `POST /api/admin/words/import`.
+**F061 — Topic Management** (nhánh `feature/dashboard/topic-management`): list + CRUD modal + delete guard theo `word_count`; restore dựng khung chờ G6.

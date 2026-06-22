@@ -281,4 +281,51 @@
   <data name="Toast.AudioDeleted" xml:space="preserve"><value>Audio deleted</value></data>
   <data name="Toast.ImageUploaded" xml:space="preserve"><value>Image uploaded</value></data>
   <data name="Toast.ImageUpdated" xml:space="preserve"><value>Image URL updated</value></data>
+  <data name="Import.Title" xml:space="preserve"><value>Import vocabulary</value></data>
+  <data name="Import.Eyebrow" xml:space="preserve"><value>CSV intake</value></data>
+  <data name="Import.Subtitle" xml:space="preserve"><value>Add words and senses in bulk, then review every skipped row.</value></data>
+  <data name="Import.Steps.Label" xml:space="preserve"><value>Import progress</value></data>
+  <data name="Import.Step.Select" xml:space="preserve"><value>Select file</value></data>
+  <data name="Import.Step.Validate" xml:space="preserve"><value>Import data</value></data>
+  <data name="Import.Step.Review" xml:space="preserve"><value>Review results</value></data>
+  <data name="Import.Upload.Title" xml:space="preserve"><value>Choose your data file</value></data>
+  <data name="Import.Upload.Subtitle" xml:space="preserve"><value>Use the template to keep column names and encoding predictable.</value></data>
+  <data name="Import.Drop.Title" xml:space="preserve"><value>Drop the CSV file here</value></data>
+  <data name="Import.Drop.Message" xml:space="preserve"><value>or choose it from your computer</value></data>
+  <data name="Import.ChooseFile" xml:space="preserve"><value>Choose CSV file</value></data>
+  <data name="Import.FileHint" xml:space="preserve"><value>CSV only · maximum 5 MB · UTF-8 recommended</value></data>
+  <data name="Import.RemoveFile" xml:space="preserve"><value>Remove</value></data>
+  <data name="Import.DownloadTemplate" xml:space="preserve"><value>Download CSV template</value></data>
+  <data name="Import.Start" xml:space="preserve"><value>Import vocabulary</value></data>
+  <data name="Import.Format.Title" xml:space="preserve"><value>File checklist</value></data>
+  <data name="Import.Format.Subtitle" xml:space="preserve"><value>Three details prevent most import errors.</value></data>
+  <data name="Import.Rule.Header.Title" xml:space="preserve"><value>Keep the exact header</value></data>
+  <data name="Import.Rule.Header.Message" xml:space="preserve"><value>All seven columns are required, even when optional cells are empty.</value></data>
+  <data name="Import.Rule.Sense.Title" xml:space="preserve"><value>One row equals one sense</value></data>
+  <data name="Import.Rule.Sense.Message" xml:space="preserve"><value>Repeat a word on another row to add another meaning.</value></data>
+  <data name="Import.Rule.Cefr.Title" xml:space="preserve"><value>Use standard CEFR values</value></data>
+  <data name="Import.Rule.Cefr.Message" xml:space="preserve"><value>Use A1, A2, B1, B2, C1, C2, or leave the cell empty.</value></data>
+  <data name="Import.RequiredColumns" xml:space="preserve"><value>Required columns</value></data>
+  <data name="Import.Results.Eyebrow" xml:space="preserve"><value>Import report</value></data>
+  <data name="Import.Results.Title" xml:space="preserve"><value>Import results</value></data>
+  <data name="Import.ViewVocabulary" xml:space="preserve"><value>View vocabulary</value></data>
+  <data name="Import.Stat.Words" xml:space="preserve"><value>Words created</value></data>
+  <data name="Import.Stat.Senses" xml:space="preserve"><value>Senses created</value></data>
+  <data name="Import.Stat.Skipped" xml:space="preserve"><value>Rows skipped</value></data>
+  <data name="Import.Stat.Errors" xml:space="preserve"><value>Errors</value></data>
+  <data name="Import.Errors.Title" xml:space="preserve"><value>Rows that need attention</value></data>
+  <data name="Import.Errors.Subtitle" xml:space="preserve"><value>Fix these cells in the source file, then import it again.</value></data>
+  <data name="Import.DownloadErrors" xml:space="preserve"><value>Download errors as CSV</value></data>
+  <data name="Import.Error.Row" xml:space="preserve"><value>Row #</value></data>
+  <data name="Import.Error.Column" xml:space="preserve"><value>Column</value></data>
+  <data name="Import.Error.Message" xml:space="preserve"><value>Message</value></data>
+  <data name="Import.Success.Title" xml:space="preserve"><value>Every row was accepted</value></data>
+  <data name="Import.Success.Message" xml:space="preserve"><value>The imported vocabulary is ready to review.</value></data>
+  <data name="Import.Working" xml:space="preserve"><value>Importing vocabulary. Keep this page open...</value></data>
+  <data name="Import.Failed" xml:space="preserve"><value>The import could not be completed. Check the file and try again.</value></data>
+  <data name="Import.Validation.Required" xml:space="preserve"><value>Choose a CSV file to import.</value></data>
+  <data name="Import.Validation.CsvOnly" xml:space="preserve"><value>Choose a file with the .csv extension.</value></data>
+  <data name="Import.Validation.TooLarge" xml:space="preserve"><value>The CSV file must be 5 MB or smaller.</value></data>
+  <data name="Import.Toast.Completed" xml:space="preserve"><value>Vocabulary import completed</value></data>
+  <data name="Import.ErrorFileName" xml:space="preserve"><value>vocabulary-import-errors.csv</value></data>
 </root>
