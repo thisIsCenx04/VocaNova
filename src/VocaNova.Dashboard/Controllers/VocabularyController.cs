@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Localization;
+using System.Net.Http.Headers;
 using VocaNova.Dashboard.Models.Api.Dictionary;
 using VocaNova.Dashboard.Models.Vocabulary;
 using VocaNova.Dashboard.Services.Api;
@@ -52,6 +53,130 @@ public sealed class VocabularyController : Controller
         return View(model);
     }
 
+    [HttpGet("/vocabulary/{id:long}")]
+    public async Task<IActionResult> Detail(uint id, CancellationToken cancellationToken)
+    {
+        var result = await _api.GetAsync<WordDetailDto>($"api/words/{id}", cancellationToken);
+        var model = new VocabularyDetailViewModel
+        {
+            Word = result.IsSuccess ? result.Data : null,
+            Loaded = result.IsSuccess && result.Data is not null,
+            ErrorMessage = result.Message,
+            SenseDeleteAvailable = false,
+            ExampleMutationAvailable = false,
+        };
+
+        return View(model);
+    }
+
+    [HttpPost("/vocabulary/{id:long}/senses")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateSense(uint id, [FromForm] SenseInputModel input, CancellationToken cancellationToken)
+    {
+        var validation = ValidateSense(input);
+        if (validation is not null)
+        {
+            return BadRequest(new { message = validation });
+        }
+
+        var result = await _api.PostAsync<WordSenseDto>($"api/admin/words/{id}/senses", input, cancellationToken);
+        return MutationResult(result, "Toast.SenseCreated", id);
+    }
+
+    [HttpPost("/vocabulary/{id:long}/senses/{senseId:long}/edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateSense(uint id, uint senseId, [FromForm] SenseInputModel input, CancellationToken cancellationToken)
+    {
+        var validation = ValidateSense(input);
+        if (validation is not null)
+        {
+            return BadRequest(new { message = validation });
+        }
+
+        var result = await _api.PutAsync<WordSenseDto>($"api/admin/words/{id}/senses/{senseId}", input, cancellationToken);
+        return MutationResult(result, "Toast.SenseUpdated", id);
+    }
+
+    // Kept ready for the existing API contract. The UI remains disabled until the API
+    // service/database support sense soft-delete (tracked in DASHBOARD_WORKLOG.md).
+    [HttpPost("/vocabulary/{id:long}/senses/{senseId:long}/delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteSense(uint id, uint senseId, CancellationToken cancellationToken)
+    {
+        var result = await _api.DeleteAsync<object>($"api/admin/words/{id}/senses/{senseId}", cancellationToken);
+        return MutationResult(result, "Toast.SenseDeleted", id);
+    }
+
+    [HttpPost("/vocabulary/{id:long}/senses/{senseId:long}/restore")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RestoreSense(uint id, uint senseId, CancellationToken cancellationToken)
+    {
+        var result = await _api.PatchAsync<object>($"api/admin/words/{id}/senses/{senseId}/restore", null, cancellationToken);
+        return MutationResult(result, "Toast.SenseRestored", id);
+    }
+
+    [HttpPost("/vocabulary/{id:long}/audio")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UploadAudio(uint id, IFormFile? file, string? accent, CancellationToken cancellationToken)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(new { message = _l["Validation.AudioRequired"].Value });
+        }
+
+        using var content = new MultipartFormDataContent();
+        await using var stream = file.OpenReadStream();
+        using var fileContent = new StreamContent(stream);
+        if (!string.IsNullOrWhiteSpace(file.ContentType))
+        {
+            fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(file.ContentType);
+        }
+        content.Add(fileContent, "File", file.FileName);
+        content.Add(new StringContent(accent ?? string.Empty), "Accent");
+
+        var result = await _api.PostFormAsync<WordAudioDto>($"api/admin/words/{id}/audio", content, cancellationToken);
+        return MutationResult(result, "Toast.AudioUploaded", id);
+    }
+
+    [HttpPost("/vocabulary/{id:long}/audio/{audioId:long}/delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAudio(uint id, uint audioId, CancellationToken cancellationToken)
+    {
+        var result = await _api.DeleteAsync<object>($"api/admin/words/{id}/audio/{audioId}", cancellationToken);
+        SetToast(result.IsSuccess, "Toast.AudioDeleted", result.Message);
+        return RedirectToAction(nameof(Detail), new { id });
+    }
+
+    [HttpPost("/vocabulary/{id:long}/image")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UploadImage(uint id, IFormFile? file, CancellationToken cancellationToken)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(new { message = _l["Validation.ImageRequired"].Value });
+        }
+
+        using var content = new MultipartFormDataContent();
+        await using var stream = file.OpenReadStream();
+        using var fileContent = new StreamContent(stream);
+        if (!string.IsNullOrWhiteSpace(file.ContentType))
+        {
+            fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(file.ContentType);
+        }
+        content.Add(fileContent, "File", file.FileName);
+
+        var result = await _api.PostFormAsync<WordDetailDto>($"api/admin/words/{id}/image", content, cancellationToken);
+        return MutationResult(result, "Toast.ImageUploaded", id);
+    }
+
+    [HttpPost("/vocabulary/{id:long}/image-url")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateImageUrl(uint id, string? imageUrl, CancellationToken cancellationToken)
+    {
+        var result = await _api.PutAsync<WordDetailDto>($"api/admin/words/{id}/image", new { imageUrl }, cancellationToken);
+        return MutationResult(result, "Toast.ImageUpdated", id);
+    }
+
     [HttpPost("/vocabulary/{id:long}/delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(uint id, CancellationToken cancellationToken)
@@ -78,6 +203,47 @@ public sealed class VocabularyController : Controller
             ? _l[successKey].Value
             : (string.IsNullOrWhiteSpace(errorMessage) ? _l["Toast.ActionFailed"].Value : errorMessage);
     }
+
+    private IActionResult MutationResult<T>(ApiResult<T> result, string successKey, uint wordId)
+    {
+        var message = result.IsSuccess
+            ? _l[successKey].Value
+            : (string.IsNullOrWhiteSpace(result.Message) ? _l["Toast.ActionFailed"].Value : result.Message);
+
+        if (Request.Headers.XRequestedWith == "XMLHttpRequest")
+        {
+            return StatusCode(result.IsSuccess ? StatusCodes.Status200OK : NormalizeErrorStatus(result.StatusCode), new
+            {
+                success = result.IsSuccess,
+                message,
+                errors = result.Errors,
+            });
+        }
+
+        SetToast(result.IsSuccess, successKey, result.Message);
+        return RedirectToAction(nameof(Detail), new { id = wordId });
+    }
+
+    private string? ValidateSense(SenseInputModel input)
+    {
+        if (input.SenseOrder < 1)
+        {
+            return _l["Validation.SenseOrder"].Value;
+        }
+        if (string.IsNullOrWhiteSpace(input.WordClass))
+        {
+            return _l["Validation.WordClassRequired"].Value;
+        }
+        if (string.IsNullOrWhiteSpace(input.EnglishDefinition))
+        {
+            return _l["Validation.EnglishDefinitionRequired"].Value;
+        }
+
+        return null;
+    }
+
+    private static int NormalizeErrorStatus(int statusCode)
+        => statusCode is >= 400 and <= 599 ? statusCode : StatusCodes.Status400BadRequest;
 
     private static string BuildWordsUrl(VocabularyListQuery q, bool admin)
     {

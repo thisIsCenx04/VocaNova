@@ -17,7 +17,7 @@
 | F055.4 | Shared UI components + Chart.js | `feature/dashboard/shared-ui` | ✅ | 21/06 |
 | F056 | Overview (stat cards + charts) | `feature/dashboard/overview` | ✅ | 21/06 |
 | F057 | Vocabulary list & filter | `feature/dashboard/vocab-list` | ✅ | 21/06 |
-| F058 | Vocabulary detail & sense mgmt | `feature/dashboard/vocab-detail` | ⬜ | |
+| F058 | Vocabulary detail & sense mgmt | `feature/dashboard/vocab-detail` | ✅ | 22/06 |
 | F059 | Vocabulary CSV import | `feature/dashboard/vocab-import` | ⬜ | |
 | F061 | Topic management | `feature/dashboard/topic-management` | ⬜ | |
 | F060 | User management (+ G4/G8 khung) | `feature/dashboard/user-management` | ⬜ | |
@@ -85,6 +85,16 @@
 - Sidebar Vocabulary → `/vocabulary`.
 - Commit: `feat(dashboard): add vocabulary list with filters and soft-delete`
 
+### F058 — Vocabulary detail & sense management
+- `Models/Api/Dictionary/DictionaryDtos.cs`: thêm DTO detail khớp `GET /api/words/{id}` (senses + examples + relations + audio + topics); `VocabularyDetailViewModel` giữ capability flags cho phần API còn thiếu.
+- `VocabularyController`: detail BFF + AJAX create/update sense; dựng sẵn action delete/restore sense theo contract; upload/delete audio, upload ảnh và cập nhật image URL — tất cả qua `IVocaNovaApiClient`.
+- `Views/Vocabulary/Detail.cshtml`: bento header theo Figma (word/image/CEFR/topic + audio UK/US), accordion timeline senses edit inline, examples inline read-only, relations table view-only, media upload và confirm xóa audio. Video tiếp tục ẩn theo G11.
+- `wwwroot/js/vocabulary-detail.js`: submit form AJAX + toast + audio quick-play; `site.css`: layout responsive, dark/light token, focus/reduced-motion theo nền sẵn có.
+- `Resources/SharedResource.{en,vi}.resx`: toàn bộ chuỗi mới có EN+VI.
+- **Khung chờ API:** nút xóa sense disabled vì API route hiện trả `Sense soft delete is not supported by current database schema` (G13); examples hiển thị được nhưng nút thêm disabled do chưa có mutation endpoints (G14). Action/proxy và vị trí UI đã sẵn để bật khi API hoàn thiện.
+- Verify: `dotnet build src/VocaNova.Dashboard/VocaNova.Dashboard.csproj --no-restore` → **0 warning, 0 error**. HTTP smoke: `/vocabulary/1` → 302 `/login?ReturnUrl=...`; `/login` → 200. Không chạy smoke dữ liệu thật vì API `:5013` không hoạt động trong phiên.
+- Commit: `feat(dashboard): add vocabulary detail and sense management`
+
 ---
 
 ## Gap chờ API (An làm) — dashboard đã dựng khung, tự sáng đèn khi có
@@ -100,8 +110,10 @@
 | G7 | stats granularity | F062 |
 | G9 | admin-accounts CRUD | FD-04 |
 | G10a | `GET /api/admin/roles` | FE-11 (roles read-only) |
+| G13 | Sense soft-delete/restore: routes đã có nhưng service luôn fail do schema `word_senses` chưa có trạng thái xóa | F058 (nút delete/restore disabled; proxy action đã dựng) |
+| G14 | Example mutation: cần `POST /api/admin/words/{id}/senses/{senseId}/examples` + `DELETE .../examples/{exampleId}` | F058 (đang view-only; nút Add disabled) |
 
 ---
 
 ## Tiếp theo
-**F058 — Vocabulary Detail & Sense Management** (nhánh `feature/dashboard/vocab-detail`): trang chi tiết 1 từ — info + ảnh + audio + accordion senses CRUD inline AJAX + examples + relations view-only. API đã đủ.
+**F059 — Vocabulary CSV Import** (nhánh `feature/dashboard/vocab-import`): drag-drop CSV + template + bảng kết quả import/skipped/errors theo `POST /api/admin/words/import`.
