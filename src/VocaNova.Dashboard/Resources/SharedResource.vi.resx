@@ -220,4 +220,65 @@
   <data name="Toast.ActionFailed" xml:space="preserve">
     <value>Thao tác thất bại. Thử lại.</value>
   </data>
+  <data name="Common.Back" xml:space="preserve"><value>Quay lại</value></data>
+  <data name="Common.NotAvailable" xml:space="preserve"><value>Chưa có</value></data>
+  <data name="Common.SaveChanges" xml:space="preserve"><value>Lưu thay đổi</value></data>
+  <data name="Common.Working" xml:space="preserve"><value>Đang xử lý...</value></data>
+  <data name="Vocab.Detail.Title" xml:space="preserve"><value>Chi tiết từ vựng</value></data>
+  <data name="Vocab.Detail.Eyebrow" xml:space="preserve"><value>Không gian biên tập từ vựng</value></data>
+  <data name="Vocab.Detail.Subtitle" xml:space="preserve"><value>Kiểm tra nghĩa, quan hệ, phát âm và media tại một nơi.</value></data>
+  <data name="Vocab.Detail.LoadError.Title" xml:space="preserve"><value>Không tải được từ này</value></data>
+  <data name="Vocab.Detail.Word" xml:space="preserve"><value>Từ</value></data>
+  <data name="Vocab.Detail.Phrase" xml:space="preserve"><value>Cụm từ</value></data>
+  <data name="Vocab.Detail.Topics" xml:space="preserve"><value>Chủ đề</value></data>
+  <data name="Audio.Play" xml:space="preserve"><value>Phát âm giọng {0}</value></data>
+  <data name="Sense.SectionTitle" xml:space="preserve"><value>Nghĩa và ví dụ</value></data>
+  <data name="Sense.SectionSubtitle" xml:space="preserve"><value>Sửa từng nghĩa ngay trên trang mà không rời khỏi từ.</value></data>
+  <data name="Sense.Add" xml:space="preserve"><value>Thêm nghĩa</value></data>
+  <data name="Sense.Create" xml:space="preserve"><value>Tạo nghĩa</value></data>
+  <data name="Sense.Order" xml:space="preserve"><value>Thứ tự</value></data>
+  <data name="Sense.WordClass" xml:space="preserve"><value>Từ loại</value></data>
+  <data name="Sense.EnglishDefinition" xml:space="preserve"><value>Định nghĩa tiếng Anh</value></data>
+  <data name="Sense.VietnameseMeaning" xml:space="preserve"><value>Nghĩa tiếng Việt</value></data>
+  <data name="Sense.Empty.Title" xml:space="preserve"><value>Chưa có nghĩa</value></data>
+  <data name="Sense.Empty.Message" xml:space="preserve"><value>Thêm nghĩa đầu tiên để hoàn thiện mục từ này.</value></data>
+  <data name="Sense.DeletePending" xml:space="preserve"><value>Đang chờ API và lược đồ cơ sở dữ liệu hỗ trợ xóa mềm nghĩa.</value></data>
+  <data name="Example.Title" xml:space="preserve"><value>Ví dụ minh họa</value></data>
+  <data name="Example.Add" xml:space="preserve"><value>Thêm ví dụ</value></data>
+  <data name="Example.Empty" xml:space="preserve"><value>Chưa có ví dụ gắn với nghĩa này.</value></data>
+  <data name="Example.ApiPending" xml:space="preserve"><value>API thêm và xóa ví dụ chưa sẵn sàng.</value></data>
+  <data name="Relation.Title" xml:space="preserve"><value>Quan hệ từ vựng</value></data>
+  <data name="Relation.Subtitle" xml:space="preserve"><value>Các từ đồng nghĩa và trái nghĩa đang liên kết với mục từ.</value></data>
+  <data name="Relation.Empty" xml:space="preserve"><value>Chưa liên kết từ đồng nghĩa hoặc trái nghĩa.</value></data>
+  <data name="Relation.Type" xml:space="preserve"><value>Loại</value></data>
+  <data name="Relation.Word" xml:space="preserve"><value>Từ liên quan</value></data>
+  <data name="Relation.Scope" xml:space="preserve"><value>Phạm vi</value></data>
+  <data name="Relation.WholeWord" xml:space="preserve"><value>Toàn bộ từ</value></data>
+  <data name="Relation.Sense" xml:space="preserve"><value>Một nghĩa cụ thể</value></data>
+  <data name="Image.Title" xml:space="preserve"><value>Ảnh minh họa</value></data>
+  <data name="Image.Subtitle" xml:space="preserve"><value>Tải ảnh gợi nhớ cho từ này.</value></data>
+  <data name="Image.Choose" xml:space="preserve"><value>Chọn ảnh</value></data>
+  <data name="Image.Hint" xml:space="preserve"><value>JPG, PNG hoặc WebP. Tối đa 5 MB.</value></data>
+  <data name="Image.Upload" xml:space="preserve"><value>Tải ảnh lên</value></data>
+  <data name="Image.UseUrl" xml:space="preserve"><value>Dùng URL ảnh thay thế</value></data>
+  <data name="Audio.Title" xml:space="preserve"><value>Âm thanh phát âm</value></data>
+  <data name="Audio.Subtitle" xml:space="preserve"><value>Quản lý tệp phát âm giọng Anh và Mỹ.</value></data>
+  <data name="Audio.Accent" xml:space="preserve"><value>Giọng</value></data>
+  <data name="Audio.Choose" xml:space="preserve"><value>Chọn tệp âm thanh</value></data>
+  <data name="Audio.Hint" xml:space="preserve"><value>MP3, WAV hoặc OGG. Tối đa 5 MB.</value></data>
+  <data name="Audio.Upload" xml:space="preserve"><value>Tải âm thanh lên</value></data>
+  <data name="Validation.AudioRequired" xml:space="preserve"><value>Chọn tệp âm thanh để tải lên.</value></data>
+  <data name="Validation.ImageRequired" xml:space="preserve"><value>Chọn ảnh để tải lên.</value></data>
+  <data name="Validation.SenseOrder" xml:space="preserve"><value>Thứ tự nghĩa phải từ 1 trở lên.</value></data>
+  <data name="Validation.WordClassRequired" xml:space="preserve"><value>Nhập từ loại.</value></data>
+  <data name="Validation.EnglishDefinitionRequired" xml:space="preserve"><value>Nhập định nghĩa tiếng Anh.</value></data>
+  <data name="Confirm.DeleteAudio" xml:space="preserve"><value>Xóa tệp âm thanh này? Tệp sẽ không còn hiển thị trong mục từ.</value></data>
+  <data name="Toast.SenseCreated" xml:space="preserve"><value>Đã tạo nghĩa</value></data>
+  <data name="Toast.SenseUpdated" xml:space="preserve"><value>Đã cập nhật nghĩa</value></data>
+  <data name="Toast.SenseDeleted" xml:space="preserve"><value>Đã xóa nghĩa</value></data>
+  <data name="Toast.SenseRestored" xml:space="preserve"><value>Đã khôi phục nghĩa</value></data>
+  <data name="Toast.AudioUploaded" xml:space="preserve"><value>Đã tải âm thanh lên</value></data>
+  <data name="Toast.AudioDeleted" xml:space="preserve"><value>Đã xóa âm thanh</value></data>
+  <data name="Toast.ImageUploaded" xml:space="preserve"><value>Đã tải ảnh lên</value></data>
+  <data name="Toast.ImageUpdated" xml:space="preserve"><value>Đã cập nhật URL ảnh</value></data>
 </root>

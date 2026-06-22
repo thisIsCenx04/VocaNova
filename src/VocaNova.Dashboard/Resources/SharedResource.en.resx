@@ -220,4 +220,65 @@
   <data name="Toast.ActionFailed" xml:space="preserve">
     <value>Action failed. Try again.</value>
   </data>
+  <data name="Common.Back" xml:space="preserve"><value>Back</value></data>
+  <data name="Common.NotAvailable" xml:space="preserve"><value>Not available</value></data>
+  <data name="Common.SaveChanges" xml:space="preserve"><value>Save changes</value></data>
+  <data name="Common.Working" xml:space="preserve"><value>Working...</value></data>
+  <data name="Vocab.Detail.Title" xml:space="preserve"><value>Vocabulary details</value></data>
+  <data name="Vocab.Detail.Eyebrow" xml:space="preserve"><value>Lexical workspace</value></data>
+  <data name="Vocab.Detail.Subtitle" xml:space="preserve"><value>Review meaning, relationships, pronunciation, and media in one place.</value></data>
+  <data name="Vocab.Detail.LoadError.Title" xml:space="preserve"><value>Couldn't load this word</value></data>
+  <data name="Vocab.Detail.Word" xml:space="preserve"><value>Word</value></data>
+  <data name="Vocab.Detail.Phrase" xml:space="preserve"><value>Phrase</value></data>
+  <data name="Vocab.Detail.Topics" xml:space="preserve"><value>Topics</value></data>
+  <data name="Audio.Play" xml:space="preserve"><value>Play {0} pronunciation</value></data>
+  <data name="Sense.SectionTitle" xml:space="preserve"><value>Meanings and examples</value></data>
+  <data name="Sense.SectionSubtitle" xml:space="preserve"><value>Edit each sense inline without leaving the word.</value></data>
+  <data name="Sense.Add" xml:space="preserve"><value>Add sense</value></data>
+  <data name="Sense.Create" xml:space="preserve"><value>Create sense</value></data>
+  <data name="Sense.Order" xml:space="preserve"><value>Order</value></data>
+  <data name="Sense.WordClass" xml:space="preserve"><value>Word class</value></data>
+  <data name="Sense.EnglishDefinition" xml:space="preserve"><value>English definition</value></data>
+  <data name="Sense.VietnameseMeaning" xml:space="preserve"><value>Vietnamese meaning</value></data>
+  <data name="Sense.Empty.Title" xml:space="preserve"><value>No senses yet</value></data>
+  <data name="Sense.Empty.Message" xml:space="preserve"><value>Add the first meaning to make this entry useful.</value></data>
+  <data name="Sense.DeletePending" xml:space="preserve"><value>Waiting for sense soft-delete support in the API database schema.</value></data>
+  <data name="Example.Title" xml:space="preserve"><value>Illustrative examples</value></data>
+  <data name="Example.Add" xml:space="preserve"><value>Add example</value></data>
+  <data name="Example.Empty" xml:space="preserve"><value>No examples are attached to this sense.</value></data>
+  <data name="Example.ApiPending" xml:space="preserve"><value>Example mutation endpoints are not available yet.</value></data>
+  <data name="Relation.Title" xml:space="preserve"><value>Word relationships</value></data>
+  <data name="Relation.Subtitle" xml:space="preserve"><value>Synonyms and antonyms currently linked to this entry.</value></data>
+  <data name="Relation.Empty" xml:space="preserve"><value>No synonyms or antonyms are linked yet.</value></data>
+  <data name="Relation.Type" xml:space="preserve"><value>Type</value></data>
+  <data name="Relation.Word" xml:space="preserve"><value>Related word</value></data>
+  <data name="Relation.Scope" xml:space="preserve"><value>Scope</value></data>
+  <data name="Relation.WholeWord" xml:space="preserve"><value>Whole word</value></data>
+  <data name="Relation.Sense" xml:space="preserve"><value>Specific sense</value></data>
+  <data name="Image.Title" xml:space="preserve"><value>Illustrative image</value></data>
+  <data name="Image.Subtitle" xml:space="preserve"><value>Upload a visual cue for this word.</value></data>
+  <data name="Image.Choose" xml:space="preserve"><value>Choose an image</value></data>
+  <data name="Image.Hint" xml:space="preserve"><value>JPG, PNG, or WebP. Maximum 5 MB.</value></data>
+  <data name="Image.Upload" xml:space="preserve"><value>Upload image</value></data>
+  <data name="Image.UseUrl" xml:space="preserve"><value>Use an image URL instead</value></data>
+  <data name="Audio.Title" xml:space="preserve"><value>Pronunciation audio</value></data>
+  <data name="Audio.Subtitle" xml:space="preserve"><value>Manage UK and US pronunciation files.</value></data>
+  <data name="Audio.Accent" xml:space="preserve"><value>Accent</value></data>
+  <data name="Audio.Choose" xml:space="preserve"><value>Choose an audio file</value></data>
+  <data name="Audio.Hint" xml:space="preserve"><value>MP3, WAV, or OGG. Maximum 5 MB.</value></data>
+  <data name="Audio.Upload" xml:space="preserve"><value>Upload audio</value></data>
+  <data name="Validation.AudioRequired" xml:space="preserve"><value>Choose an audio file to upload.</value></data>
+  <data name="Validation.ImageRequired" xml:space="preserve"><value>Choose an image to upload.</value></data>
+  <data name="Validation.SenseOrder" xml:space="preserve"><value>Sense order must be at least 1.</value></data>
+  <data name="Validation.WordClassRequired" xml:space="preserve"><value>Enter a word class.</value></data>
+  <data name="Validation.EnglishDefinitionRequired" xml:space="preserve"><value>Enter an English definition.</value></data>
+  <data name="Confirm.DeleteAudio" xml:space="preserve"><value>Delete this audio file? This action hides it from the word.</value></data>
+  <data name="Toast.SenseCreated" xml:space="preserve"><value>Sense created</value></data>
+  <data name="Toast.SenseUpdated" xml:space="preserve"><value>Sense updated</value></data>
+  <data name="Toast.SenseDeleted" xml:space="preserve"><value>Sense deleted</value></data>
+  <data name="Toast.SenseRestored" xml:space="preserve"><value>Sense restored</value></data>
+  <data name="Toast.AudioUploaded" xml:space="preserve"><value>Audio uploaded</value></data>
+  <data name="Toast.AudioDeleted" xml:space="preserve"><value>Audio deleted</value></data>
+  <data name="Toast.ImageUploaded" xml:space="preserve"><value>Image uploaded</value></data>
+  <data name="Toast.ImageUpdated" xml:space="preserve"><value>Image URL updated</value></data>
 </root>
