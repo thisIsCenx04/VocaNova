@@ -1,7 +1,7 @@
 using VocaNova.API.Common.Results;
-using VocaNova.API.Features.Knn.DTOs;
+using VocaNova.API.Features.Admin.DTOs;
 
-namespace VocaNova.API.Features.Knn.Services;
+namespace VocaNova.API.Features.Admin.Services;
 
 public interface IAdminKnnLookupService
 {

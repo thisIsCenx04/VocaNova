@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace VocaNova.API.Features.Knn.DTOs;
+namespace VocaNova.API.Features.Admin.DTOs;
 
 public sealed record KnnLookupQuery(
     [property: JsonPropertyName("page")] int Page = 1,
@@ -109,10 +109,6 @@ public sealed record KnnLearningConfigDto(
     [property: JsonPropertyName("recommendation_count")] int RecommendationCount,
     [property: JsonPropertyName("rebuild_interval_hours")] int RebuildIntervalHours,
     [property: JsonPropertyName("cache_ttl_minutes")] int CacheTtlMinutes);
-
-public sealed record KnnRebuildStatusDto(
-    [property: JsonPropertyName("last_rebuild_at")] DateTime? LastRebuildAt,
-    [property: JsonPropertyName("is_running")] bool IsRunning);
 
 public sealed record TriggerKnnRebuildResponse(
     [property: JsonPropertyName("message")] string Message,

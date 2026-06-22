@@ -1,8 +1,8 @@
 using VocaNova.API.Common.Results;
-using VocaNova.API.Features.Knn.DTOs;
+using VocaNova.API.Features.Admin.DTOs;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
-namespace VocaNova.API.Features.Knn.Repositories;
+namespace VocaNova.API.Features.Admin.Repositories;
 
 public interface IAdminKnnLookupRepository
 {

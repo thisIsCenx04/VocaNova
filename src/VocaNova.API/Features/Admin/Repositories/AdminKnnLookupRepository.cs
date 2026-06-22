@@ -2,11 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Extensions;
 using VocaNova.API.Common.Results;
-using VocaNova.API.Features.Knn.DTOs;
+using VocaNova.API.Features.Admin.DTOs;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
-namespace VocaNova.API.Features.Knn.Repositories;
+namespace VocaNova.API.Features.Admin.Repositories;
 
 public sealed class AdminKnnLookupRepository : IAdminKnnLookupRepository
 {

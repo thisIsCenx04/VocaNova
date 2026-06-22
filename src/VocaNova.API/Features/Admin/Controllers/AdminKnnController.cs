@@ -4,13 +4,16 @@ using Microsoft.Extensions.Options;
 using VocaNova.API.Common.Extensions;
 using VocaNova.API.Common.Responses;
 using VocaNova.API.Common.Results;
+using VocaNova.API.Features.Admin.DTOs;
+using VocaNova.API.Features.Admin.Services;
+using VocaNova.API.Features.Knn;
 using VocaNova.API.Features.Knn.DTOs;
 using VocaNova.API.Features.Knn.Services;
 using VocaNova.API.Infrastructure.Authentication;
 using VocaNova.API.Infrastructure.Auditing;
 using VocaNova.API.Infrastructure.RateLimiting;
 
-namespace VocaNova.API.Features.Knn.Controllers;
+namespace VocaNova.API.Features.Admin.Controllers;
 
 [ApiController]
 [Authorize(Policy = JwtAuthenticationExtensions.AdminPolicy)]

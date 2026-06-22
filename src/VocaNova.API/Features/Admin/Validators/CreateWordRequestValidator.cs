@@ -2,11 +2,11 @@ using FluentValidation;
 using VocaNova.API.Common.Validation;
 using VocaNova.API.Features.Dictionary.DTOs;
 
-namespace VocaNova.API.Features.Dictionary.Validators;
+namespace VocaNova.API.Features.Admin.Validators;
 
-public sealed class UpdateWordRequestValidator : AbstractValidator<UpdateWordRequest>
+public sealed class CreateWordRequestValidator : AbstractValidator<CreateWordRequest>
 {
-    public UpdateWordRequestValidator()
+    public CreateWordRequestValidator()
     {
         RuleFor(request => request.Word)
             .NotEmpty()
