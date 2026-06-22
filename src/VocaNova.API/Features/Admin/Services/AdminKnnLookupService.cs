@@ -1,11 +1,11 @@
 using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Results;
-using VocaNova.API.Features.Knn.DTOs;
-using VocaNova.API.Features.Knn.Repositories;
+using VocaNova.API.Features.Admin.DTOs;
+using VocaNova.API.Features.Admin.Repositories;
 using VocaNova.API.Infrastructure.Caching;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
-namespace VocaNova.API.Features.Knn.Services;
+namespace VocaNova.API.Features.Admin.Services;
 
 public sealed class AdminKnnLookupService : IAdminKnnLookupService
 {

@@ -1,11 +1,11 @@
 using FluentValidation;
 using VocaNova.API.Features.Dictionary.DTOs;
 
-namespace VocaNova.API.Features.Dictionary.Validators;
+namespace VocaNova.API.Features.Admin.Validators;
 
-public sealed class CreateTopicRequestValidator : AbstractValidator<CreateTopicRequest>
+public sealed class UpdateTopicRequestValidator : AbstractValidator<UpdateTopicRequest>
 {
-    public CreateTopicRequestValidator()
+    public UpdateTopicRequestValidator()
     {
         RuleFor(request => request.TopicName)
             .NotEmpty()

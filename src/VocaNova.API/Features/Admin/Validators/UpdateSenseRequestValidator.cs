@@ -1,11 +1,11 @@
 using FluentValidation;
 using VocaNova.API.Features.Dictionary.DTOs;
 
-namespace VocaNova.API.Features.Dictionary.Validators;
+namespace VocaNova.API.Features.Admin.Validators;
 
-public sealed class CreateSenseRequestValidator : AbstractValidator<CreateSenseRequest>
+public sealed class UpdateSenseRequestValidator : AbstractValidator<UpdateSenseRequest>
 {
-    public CreateSenseRequestValidator()
+    public UpdateSenseRequestValidator()
     {
         RuleFor(request => request.SenseOrder)
             .GreaterThan(0);

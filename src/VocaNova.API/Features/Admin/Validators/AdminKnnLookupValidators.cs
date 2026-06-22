@@ -1,9 +1,9 @@
 using FluentValidation;
 using System.Linq.Expressions;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Knn.DTOs;
+using VocaNova.API.Features.Admin.DTOs;
 
-namespace VocaNova.API.Features.Knn.Validators;
+namespace VocaNova.API.Features.Admin.Validators;
 
 public sealed class KnnLookupQueryValidator : AbstractValidator<KnnLookupQuery>
 {

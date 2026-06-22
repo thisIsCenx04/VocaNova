@@ -6,7 +6,7 @@ using VocaNova.API.Features.Dictionary.Services;
 using VocaNova.API.Infrastructure.Authentication;
 using VocaNova.API.Infrastructure.Auditing;
 
-namespace VocaNova.API.Features.Dictionary.Controllers;
+namespace VocaNova.API.Features.Admin.Controllers;
 
 [ApiController]
 [Authorize(Policy = JwtAuthenticationExtensions.AdminPolicy)]
