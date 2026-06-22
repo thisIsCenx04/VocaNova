@@ -69,6 +69,54 @@ public sealed class VocabularyController : Controller
         return View(model);
     }
 
+    [HttpGet("/vocabulary/import")]
+    public IActionResult Import()
+    {
+        return View(new VocabularyImportViewModel());
+    }
+
+    [HttpPost("/vocabulary/import")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ImportCsv(IFormFile? file, CancellationToken cancellationToken)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(new { success = false, message = _l["Import.Validation.Required"].Value });
+        }
+
+        if (!string.Equals(Path.GetExtension(file.FileName), ".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { success = false, message = _l["Import.Validation.CsvOnly"].Value });
+        }
+
+        if (file.Length > VocabularyImportViewModel.MaxFileBytes)
+        {
+            return BadRequest(new { success = false, message = _l["Import.Validation.TooLarge"].Value });
+        }
+
+        using var content = new MultipartFormDataContent();
+        await using var stream = file.OpenReadStream();
+        using var fileContent = new StreamContent(stream);
+        if (MediaTypeHeaderValue.TryParse(file.ContentType, out var contentType))
+        {
+            fileContent.Headers.ContentType = contentType;
+        }
+        content.Add(fileContent, "File", file.FileName);
+
+        var result = await _api.PostFormAsync<BulkImportResultDto>("api/admin/words/import", content, cancellationToken);
+        var message = result.IsSuccess
+            ? _l["Import.Toast.Completed"].Value
+            : (string.IsNullOrWhiteSpace(result.Message) ? _l["Toast.ActionFailed"].Value : result.Message);
+
+        return StatusCode(result.IsSuccess ? StatusCodes.Status200OK : NormalizeErrorStatus(result.StatusCode), new
+        {
+            success = result.IsSuccess,
+            message,
+            data = result.Data,
+            errors = result.Errors,
+        });
+    }
+
     [HttpPost("/vocabulary/{id:long}/senses")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateSense(uint id, [FromForm] SenseInputModel input, CancellationToken cancellationToken)

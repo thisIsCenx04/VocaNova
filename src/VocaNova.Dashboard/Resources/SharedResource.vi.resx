@@ -281,4 +281,51 @@
   <data name="Toast.AudioDeleted" xml:space="preserve"><value>Đã xóa âm thanh</value></data>
   <data name="Toast.ImageUploaded" xml:space="preserve"><value>Đã tải ảnh lên</value></data>
   <data name="Toast.ImageUpdated" xml:space="preserve"><value>Đã cập nhật URL ảnh</value></data>
+  <data name="Import.Title" xml:space="preserve"><value>Import từ vựng</value></data>
+  <data name="Import.Eyebrow" xml:space="preserve"><value>Nhập dữ liệu CSV</value></data>
+  <data name="Import.Subtitle" xml:space="preserve"><value>Thêm hàng loạt từ và nghĩa, sau đó kiểm tra từng dòng bị bỏ qua.</value></data>
+  <data name="Import.Steps.Label" xml:space="preserve"><value>Tiến trình import</value></data>
+  <data name="Import.Step.Select" xml:space="preserve"><value>Chọn tệp</value></data>
+  <data name="Import.Step.Validate" xml:space="preserve"><value>Import dữ liệu</value></data>
+  <data name="Import.Step.Review" xml:space="preserve"><value>Kiểm tra kết quả</value></data>
+  <data name="Import.Upload.Title" xml:space="preserve"><value>Chọn tệp dữ liệu</value></data>
+  <data name="Import.Upload.Subtitle" xml:space="preserve"><value>Dùng tệp mẫu để giữ đúng tên cột và bảng mã.</value></data>
+  <data name="Import.Drop.Title" xml:space="preserve"><value>Thả tệp CSV vào đây</value></data>
+  <data name="Import.Drop.Message" xml:space="preserve"><value>hoặc chọn tệp từ máy tính</value></data>
+  <data name="Import.ChooseFile" xml:space="preserve"><value>Chọn tệp CSV</value></data>
+  <data name="Import.FileHint" xml:space="preserve"><value>Chỉ CSV · tối đa 5 MB · nên dùng UTF-8</value></data>
+  <data name="Import.RemoveFile" xml:space="preserve"><value>Bỏ tệp</value></data>
+  <data name="Import.DownloadTemplate" xml:space="preserve"><value>Tải tệp CSV mẫu</value></data>
+  <data name="Import.Start" xml:space="preserve"><value>Import từ vựng</value></data>
+  <data name="Import.Format.Title" xml:space="preserve"><value>Kiểm tra định dạng</value></data>
+  <data name="Import.Format.Subtitle" xml:space="preserve"><value>Ba chi tiết giúp tránh phần lớn lỗi import.</value></data>
+  <data name="Import.Rule.Header.Title" xml:space="preserve"><value>Giữ nguyên dòng tiêu đề</value></data>
+  <data name="Import.Rule.Header.Message" xml:space="preserve"><value>Phải có đủ bảy cột dù một số ô có thể để trống.</value></data>
+  <data name="Import.Rule.Sense.Title" xml:space="preserve"><value>Mỗi dòng là một nghĩa</value></data>
+  <data name="Import.Rule.Sense.Message" xml:space="preserve"><value>Lặp lại từ ở dòng khác để thêm một nghĩa mới.</value></data>
+  <data name="Import.Rule.Cefr.Title" xml:space="preserve"><value>Dùng đúng cấp độ CEFR</value></data>
+  <data name="Import.Rule.Cefr.Message" xml:space="preserve"><value>Dùng A1, A2, B1, B2, C1, C2 hoặc để trống ô.</value></data>
+  <data name="Import.RequiredColumns" xml:space="preserve"><value>Các cột bắt buộc</value></data>
+  <data name="Import.Results.Eyebrow" xml:space="preserve"><value>Báo cáo import</value></data>
+  <data name="Import.Results.Title" xml:space="preserve"><value>Kết quả import</value></data>
+  <data name="Import.ViewVocabulary" xml:space="preserve"><value>Xem kho từ vựng</value></data>
+  <data name="Import.Stat.Words" xml:space="preserve"><value>Từ đã tạo</value></data>
+  <data name="Import.Stat.Senses" xml:space="preserve"><value>Nghĩa đã tạo</value></data>
+  <data name="Import.Stat.Skipped" xml:space="preserve"><value>Dòng bị bỏ qua</value></data>
+  <data name="Import.Stat.Errors" xml:space="preserve"><value>Lỗi</value></data>
+  <data name="Import.Errors.Title" xml:space="preserve"><value>Các dòng cần xử lý</value></data>
+  <data name="Import.Errors.Subtitle" xml:space="preserve"><value>Sửa các ô này trong tệp nguồn rồi import lại.</value></data>
+  <data name="Import.DownloadErrors" xml:space="preserve"><value>Tải lỗi dạng CSV</value></data>
+  <data name="Import.Error.Row" xml:space="preserve"><value>Dòng #</value></data>
+  <data name="Import.Error.Column" xml:space="preserve"><value>Cột</value></data>
+  <data name="Import.Error.Message" xml:space="preserve"><value>Thông báo</value></data>
+  <data name="Import.Success.Title" xml:space="preserve"><value>Tất cả các dòng đều hợp lệ</value></data>
+  <data name="Import.Success.Message" xml:space="preserve"><value>Dữ liệu vừa import đã sẵn sàng để kiểm tra.</value></data>
+  <data name="Import.Working" xml:space="preserve"><value>Đang import từ vựng. Hãy giữ trang này mở...</value></data>
+  <data name="Import.Failed" xml:space="preserve"><value>Không thể hoàn tất import. Kiểm tra tệp rồi thử lại.</value></data>
+  <data name="Import.Validation.Required" xml:space="preserve"><value>Chọn tệp CSV để import.</value></data>
+  <data name="Import.Validation.CsvOnly" xml:space="preserve"><value>Hãy chọn tệp có phần mở rộng .csv.</value></data>
+  <data name="Import.Validation.TooLarge" xml:space="preserve"><value>Tệp CSV không được lớn hơn 5 MB.</value></data>
+  <data name="Import.Toast.Completed" xml:space="preserve"><value>Đã hoàn tất import từ vựng</value></data>
+  <data name="Import.ErrorFileName" xml:space="preserve"><value>loi-import-tu-vung.csv</value></data>
 </root>

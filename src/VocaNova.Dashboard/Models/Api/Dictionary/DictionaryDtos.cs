@@ -97,3 +97,18 @@ public sealed class WordTopicDto
     public string? Icon { get; set; }
     public bool IsPrimary { get; set; }
 }
+
+public sealed class BulkImportResultDto
+{
+    public int ImportedWords { get; set; }
+    public int ImportedSenses { get; set; }
+    public int Skipped { get; set; }
+    public IReadOnlyList<BulkImportErrorDto> Errors { get; set; } = Array.Empty<BulkImportErrorDto>();
+}
+
+public sealed class BulkImportErrorDto
+{
+    public int Row { get; set; }
+    public string Column { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+}

@@ -1,0 +1,143 @@
+@model VocaNova.Dashboard.Models.Vocabulary.VocabularyImportViewModel
+@{
+    ViewData["Title"] = L["Import.Title"];
+}
+
+<div class="detail-breadcrumb">
+    <a href="/vocabulary">@L["Vocab.Eyebrow"]</a>
+    <span aria-hidden="true">/</span>
+    <span>@L["Import.Title"]</span>
+</div>
+
+<div class="page-header detail-page-header">
+    <div>
+        <span class="eyebrow">@L["Import.Eyebrow"]</span>
+        <h1>@L["Import.Title"]</h1>
+        <p>@L["Import.Subtitle"]</p>
+    </div>
+    <a class="btn btn-secondary" href="/vocabulary">@L["Common.Back"]</a>
+</div>
+
+<ol class="import-pipeline" aria-label="@L["Import.Steps.Label"]">
+    <li class="is-active"><span>1</span><strong>@L["Import.Step.Select"]</strong></li>
+    <li><span>2</span><strong>@L["Import.Step.Validate"]</strong></li>
+    <li><span>3</span><strong>@L["Import.Step.Review"]</strong></li>
+</ol>
+
+<div class="import-layout">
+    <section class="detail-panel import-upload-panel" aria-labelledby="upload-title">
+        <div class="detail-panel__header compact">
+            <div>
+                <h2 id="upload-title">@L["Import.Upload.Title"]</h2>
+                <p>@L["Import.Upload.Subtitle"]</p>
+            </div>
+            <span class="file-type-mark">CSV</span>
+        </div>
+
+        <form id="csv-import-form" action="/vocabulary/import" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <label class="csv-drop-zone" id="csv-drop-zone" for="csv-file">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 7 8h3v6h4V8h3l-5-5Zm-7 9h3v6h8v-6h3v8H5v-8Z" /></svg>
+                <strong>@L["Import.Drop.Title"]</strong>
+                <span>@L["Import.Drop.Message"]</span>
+                <span class="btn btn-secondary">@L["Import.ChooseFile"]</span>
+                <small>@L["Import.FileHint"]</small>
+                <input id="csv-file" type="file" name="file" accept=".csv,text/csv" required />
+            </label>
+
+            <div class="selected-file" id="selected-file" hidden>
+                <div class="selected-file__icon">CSV</div>
+                <div>
+                    <strong id="selected-file-name"></strong>
+                    <span id="selected-file-size"></span>
+                </div>
+                <button class="btn btn-sm btn-secondary" id="clear-csv-file" type="button">@L["Import.RemoveFile"]</button>
+            </div>
+
+            <div class="import-actions">
+                <a class="btn btn-secondary" href="@Model.TemplateUrl" download>@L["Import.DownloadTemplate"]</a>
+                <button class="btn btn-primary" id="import-submit" type="submit" disabled>@L["Import.Start"]</button>
+            </div>
+        </form>
+
+        <div class="import-feedback" id="import-feedback" role="status" aria-live="polite" hidden></div>
+    </section>
+
+    <aside class="detail-panel import-guide" aria-labelledby="format-title">
+        <div class="detail-panel__header compact">
+            <div>
+                <h2 id="format-title">@L["Import.Format.Title"]</h2>
+                <p>@L["Import.Format.Subtitle"]</p>
+            </div>
+        </div>
+        <div class="format-rule">
+            <span>01</span>
+            <div><strong>@L["Import.Rule.Header.Title"]</strong><p>@L["Import.Rule.Header.Message"]</p></div>
+        </div>
+        <div class="format-rule">
+            <span>02</span>
+            <div><strong>@L["Import.Rule.Sense.Title"]</strong><p>@L["Import.Rule.Sense.Message"]</p></div>
+        </div>
+        <div class="format-rule">
+            <span>03</span>
+            <div><strong>@L["Import.Rule.Cefr.Title"]</strong><p>@L["Import.Rule.Cefr.Message"]</p></div>
+        </div>
+        <div class="column-contract">
+            <strong>@L["Import.RequiredColumns"]</strong>
+            <div>
+                @foreach (var column in new[] { "word", "cefr_level", "phonetic_uk", "phonetic_us", "word_class", "english_definition", "vietnamese_meaning" })
+                {
+                    <code>@column</code>
+                }
+            </div>
+        </div>
+    </aside>
+</div>
+
+<section class="detail-panel import-results" id="import-results" aria-labelledby="results-title" hidden>
+    <div class="detail-panel__header">
+        <div>
+            <span class="eyebrow">@L["Import.Results.Eyebrow"]</span>
+            <h2 id="results-title">@L["Import.Results.Title"]</h2>
+            <p id="import-results-message"></p>
+        </div>
+        <a class="btn btn-secondary" href="/vocabulary">@L["Import.ViewVocabulary"]</a>
+    </div>
+
+    <div class="import-stat-grid">
+        <div class="import-stat is-ok"><span>@L["Import.Stat.Words"]</span><strong id="stat-imported-words">0</strong></div>
+        <div class="import-stat is-info"><span>@L["Import.Stat.Senses"]</span><strong id="stat-imported-senses">0</strong></div>
+        <div class="import-stat is-warn"><span>@L["Import.Stat.Skipped"]</span><strong id="stat-skipped">0</strong></div>
+        <div class="import-stat is-err"><span>@L["Import.Stat.Errors"]</span><strong id="stat-errors">0</strong></div>
+    </div>
+
+    <div id="import-errors-panel" hidden>
+        <div class="errors-toolbar">
+            <div><h3>@L["Import.Errors.Title"]</h3><p>@L["Import.Errors.Subtitle"]</p></div>
+            <button class="btn btn-secondary" id="download-import-errors" type="button">@L["Import.DownloadErrors"]</button>
+        </div>
+        <div class="data-table-wrap">
+            <table class="data-table import-error-table">
+                <thead><tr><th>@L["Import.Error.Row"]</th><th>@L["Import.Error.Column"]</th><th>@L["Import.Error.Message"]</th></tr></thead>
+                <tbody id="import-error-rows"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="import-success-state" id="import-success-state" hidden>
+        <strong>@L["Import.Success.Title"]</strong>
+        <span>@L["Import.Success.Message"]</span>
+    </div>
+</section>
+
+<div id="import-page-config" hidden
+     data-working="@L["Import.Working"]"
+     data-failed="@L["Import.Failed"]"
+     data-file-too-large="@L["Import.Validation.TooLarge"]"
+     data-csv-only="@L["Import.Validation.CsvOnly"]"
+     data-error-file-name="@L["Import.ErrorFileName"]"
+     data-max-file-bytes="@VocaNova.Dashboard.Models.Vocabulary.VocabularyImportViewModel.MaxFileBytes"></div>
+
+@section Scripts {
+    <script src="~/js/vocabulary-import.js" asp-append-version="true"></script>
+}
