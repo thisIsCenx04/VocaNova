@@ -25,7 +25,7 @@
 | F063 | KNN management (5 lookup) | `feature/dashboard/knn-management` | ✅ | 23/06 |
 | FD-01 | Forgot password | `feature/dashboard/forgot-password` | ✅ | 23/06 |
 | FD-02 | Profile & Settings | `feature/dashboard/profile-settings` | ✅ | 23/06 |
-| FD-03 | Activity logs | `feature/dashboard/activity-logs` | ⬜ | |
+| FD-03 | Activity logs | `feature/dashboard/activity-logs` | ✅ | 23/06 |
 | FD-04 | Admin accounts (khung) | `feature/dashboard/admin-accounts` | ⬜ | |
 
 > **Không làm v1:** FE-11 permissions (❌), FE-07 video / G11 (⏸), FE-08 auto-suggest media / G12 (⏸). Xem `DASHBOARD_PLAN.md` §0.
@@ -164,6 +164,15 @@
 - Verify: `dotnet build` Dashboard → **0 warning, 0 error**.
 - Commit: *(chờ user yêu cầu)*
 
+### FD-03 — Activity logs
+- `Models/Api/Audit/AuditLogDto.cs` (map `GET /api/admin/audit-logs`: log_id, user_id, action, entity_type, entity_id, payload_before/after, ip_address, created_at) + `Models/Activity/ActivityLogViewModels.cs` (`ActivityLogQuery` user_id/entity/page/limit + `ActivityLogViewModel`).
+- `ActivityLogsController`: `GET /activity-logs` → `GET /api/admin/audit-logs?user_id=&entity=&page=&limit=`, fail mềm.
+- `Views/ActivityLogs/Index.cshtml`: filter (user_id number + entity search) + data-table (time `.mono`, user→link `/users/{id}`, action, entity_type `.mono`, entity_id, ip) + pagination + empty/error.
+- Sidebar Activity Logs → `/activity-logs`. Resource EN+VI (`Activity.*`). **Lưu ý:** audit DTO chỉ có `user_id` (không kèm tên) → cột User hiển thị `#id` link sang `/users/{id}`.
+- Tái dùng được cho tab "Activity Log" của F060 khi G5 sẵn. API **đã đủ** → không thêm gap.
+- Verify: `dotnet build` Dashboard → **0 warning, 0 error**.
+- Commit: *(chờ user yêu cầu)*
+
 ---
 
 ## Gap chờ API (An làm) — dashboard đã dựng khung, tự sáng đèn khi có
@@ -185,4 +194,4 @@
 ---
 
 ## Tiếp theo
-**FD-03 — Activity Logs** (nhánh `feature/dashboard/activity-logs`, API có sẵn): `/activity-logs` `_DataTable` (created_at, user, action, entity_type `.mono`, entity_id, ip) + filter user_id/entity_type (`GET /api/admin/audit-logs`). Tái dùng cho tab "Activity Log" của F060 khi G5 sẵn.
+**FD-04 — Admin Account Management (khung)** (nhánh `feature/dashboard/admin-accounts`, super_admin): UI đầy đủ list + create/edit `_FormModal` + delete confirm theo contract **G9** (`/api/admin/admin-accounts`); chưa có API → `_StateBlock` Empty/disabled, tự sáng đèn khi An deploy. Sidebar "Admin Accounts" (super_admin) trỏ vào đây. **Đây là task cuối cùng** của kế hoạch dashboard.

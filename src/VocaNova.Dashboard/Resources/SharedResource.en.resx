@@ -577,4 +577,15 @@
   <data name="Settings.Theme.Dark" xml:space="preserve"><value>Dark</value></data>
   <data name="Settings.Language.Title" xml:space="preserve"><value>Language</value></data>
   <data name="Settings.Toast.Saved" xml:space="preserve"><value>Settings saved</value></data>
+  <data name="Activity.Eyebrow" xml:space="preserve"><value>Audit trail</value></data>
+  <data name="Activity.Filter.UserId" xml:space="preserve"><value>User ID</value></data>
+  <data name="Activity.Filter.Entity" xml:space="preserve"><value>Entity type (e.g. users)</value></data>
+  <data name="Activity.Empty.Title" xml:space="preserve"><value>No activity found</value></data>
+  <data name="Activity.Empty.Msg" xml:space="preserve"><value>Adjust the filters and try again.</value></data>
+  <data name="Activity.Col.Time" xml:space="preserve"><value>Time</value></data>
+  <data name="Activity.Col.User" xml:space="preserve"><value>User</value></data>
+  <data name="Activity.Col.Action" xml:space="preserve"><value>Action</value></data>
+  <data name="Activity.Col.Entity" xml:space="preserve"><value>Entity</value></data>
+  <data name="Activity.Col.EntityId" xml:space="preserve"><value>Entity ID</value></data>
+  <data name="Activity.Col.Ip" xml:space="preserve"><value>IP address</value></data>
 </root>
