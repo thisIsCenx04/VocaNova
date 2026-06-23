@@ -460,4 +460,68 @@
   <data name="Stats.Demo.Occupation" xml:space="preserve"><value>Occupation</value></data>
   <data name="Stats.Demo.Education" xml:space="preserve"><value>Education level</value></data>
   <data name="Stats.Demo.Empty.Title" xml:space="preserve"><value>No data yet</value></data>
+  <data name="Knn.Eyebrow" xml:space="preserve"><value>Recommendation engine</value></data>
+  <data name="Knn.Nav.Overview" xml:space="preserve"><value>Overview</value></data>
+  <data name="Knn.AgeRanges" xml:space="preserve"><value>Age ranges</value></data>
+  <data name="Knn.AgeRange" xml:space="preserve"><value>age range</value></data>
+  <data name="Knn.Regions" xml:space="preserve"><value>Regions</value></data>
+  <data name="Knn.Region" xml:space="preserve"><value>region</value></data>
+  <data name="Knn.Occupations" xml:space="preserve"><value>Occupations</value></data>
+  <data name="Knn.Occupation" xml:space="preserve"><value>occupation</value></data>
+  <data name="Knn.EducationLevels" xml:space="preserve"><value>Education levels</value></data>
+  <data name="Knn.EducationLevel" xml:space="preserve"><value>education level</value></data>
+  <data name="Knn.LearningPurposes" xml:space="preserve"><value>Learning purposes</value></data>
+  <data name="Knn.LearningPurpose" xml:space="preserve"><value>learning purpose</value></data>
+  <data name="Knn.New" xml:space="preserve"><value>New {0}</value></data>
+  <data name="Knn.Empty.Title" xml:space="preserve"><value>Nothing here yet</value></data>
+  <data name="Knn.Empty.Msg" xml:space="preserve"><value>Create the first entry, or adjust your search.</value></data>
+  <data name="Knn.NotFound" xml:space="preserve"><value>This entry could not be found.</value></data>
+  <data name="Knn.Col.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Knn.Col.Code" xml:space="preserve"><value>Code</value></data>
+  <data name="Knn.Col.Parent" xml:space="preserve"><value>Parent</value></data>
+  <data name="Knn.Col.MinAge" xml:space="preserve"><value>Min age</value></data>
+  <data name="Knn.Col.MaxAge" xml:space="preserve"><value>Max age</value></data>
+  <data name="Knn.Col.Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Knn.Col.Order" xml:space="preserve"><value>Order</value></data>
+  <data name="Knn.Field.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Knn.Field.Code" xml:space="preserve"><value>Code</value></data>
+  <data name="Knn.Field.Code.Hint" xml:space="preserve"><value>Letters, numbers, hyphen and underscore only (max 10).</value></data>
+  <data name="Knn.Field.Parent" xml:space="preserve"><value>Parent region</value></data>
+  <data name="Knn.Field.Parent.None" xml:space="preserve"><value>None (top level)</value></data>
+  <data name="Knn.Field.MinAge" xml:space="preserve"><value>Min age</value></data>
+  <data name="Knn.Field.MaxAge" xml:space="preserve"><value>Max age</value></data>
+  <data name="Knn.Field.Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Knn.Field.Order" xml:space="preserve"><value>Display order</value></data>
+  <data name="Knn.Delete.Confirm" xml:space="preserve"><value>Delete this entry? It will be hidden from onboarding.</value></data>
+  <data name="Knn.Restore.Confirm" xml:space="preserve"><value>Restore this entry?</value></data>
+  <data name="Knn.Validation.NameRequired" xml:space="preserve"><value>Enter a name.</value></data>
+  <data name="Knn.Validation.NameMax" xml:space="preserve"><value>Name must be {0} characters or fewer.</value></data>
+  <data name="Knn.Validation.CodeRequired" xml:space="preserve"><value>Enter a code.</value></data>
+  <data name="Knn.Validation.CodeMax" xml:space="preserve"><value>Code must be 10 characters or fewer.</value></data>
+  <data name="Knn.Validation.CodePattern" xml:space="preserve"><value>Code may contain only letters, numbers, underscore and hyphen.</value></data>
+  <data name="Knn.Validation.AgeNonNegative" xml:space="preserve"><value>Age values cannot be negative.</value></data>
+  <data name="Knn.Validation.AgeOrder" xml:space="preserve"><value>Min age must be less than or equal to max age.</value></data>
+  <data name="Knn.Validation.DescriptionMax" xml:space="preserve"><value>Description must be 255 characters or fewer.</value></data>
+  <data name="Knn.Validation.OrderNonNegative" xml:space="preserve"><value>Display order cannot be negative.</value></data>
+  <data name="Knn.Toast.Created" xml:space="preserve"><value>Entry created</value></data>
+  <data name="Knn.Toast.Updated" xml:space="preserve"><value>Entry updated</value></data>
+  <data name="Knn.Toast.Deleted" xml:space="preserve"><value>Entry deleted</value></data>
+  <data name="Knn.Toast.Restored" xml:space="preserve"><value>Entry restored</value></data>
+  <data name="Knn.Toast.RebuildQueued" xml:space="preserve"><value>KNN rebuild queued</value></data>
+  <data name="Knn.Rebuild.Title" xml:space="preserve"><value>Model rebuild</value></data>
+  <data name="Knn.Rebuild.Running" xml:space="preserve"><value>Running</value></data>
+  <data name="Knn.Rebuild.Idle" xml:space="preserve"><value>Idle</value></data>
+  <data name="Knn.Rebuild.LastAt" xml:space="preserve"><value>Last rebuilt</value></data>
+  <data name="Knn.Rebuild.Never" xml:space="preserve"><value>Never</value></data>
+  <data name="Knn.Rebuild.Trigger" xml:space="preserve"><value>Trigger rebuild</value></data>
+  <data name="Knn.Rebuild.Triggering" xml:space="preserve"><value>Queuing…</value></data>
+  <data name="Knn.Config.Onboarding" xml:space="preserve"><value>Onboarding</value></data>
+  <data name="Knn.Config.Learning" xml:space="preserve"><value>Learning</value></data>
+  <data name="Knn.Config.KValue" xml:space="preserve"><value>K value</value></data>
+  <data name="Knn.Config.DefaultTopicLimit" xml:space="preserve"><value>Default topic limit</value></data>
+  <data name="Knn.Config.MinSimilarity" xml:space="preserve"><value>Min similarity</value></data>
+  <data name="Knn.Config.CacheTtl" xml:space="preserve"><value>Cache TTL (minutes)</value></data>
+  <data name="Knn.Config.MinSessions" xml:space="preserve"><value>Min sessions</value></data>
+  <data name="Knn.Config.RecommendationCount" xml:space="preserve"><value>Recommendation count</value></data>
+  <data name="Knn.Config.RebuildInterval" xml:space="preserve"><value>Rebuild interval (hours)</value></data>
 </root>

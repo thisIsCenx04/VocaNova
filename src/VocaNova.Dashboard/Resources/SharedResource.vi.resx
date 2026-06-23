@@ -460,4 +460,68 @@
   <data name="Stats.Demo.Occupation" xml:space="preserve"><value>Nghề nghiệp</value></data>
   <data name="Stats.Demo.Education" xml:space="preserve"><value>Trình độ học vấn</value></data>
   <data name="Stats.Demo.Empty.Title" xml:space="preserve"><value>Chưa có dữ liệu</value></data>
+  <data name="Knn.Eyebrow" xml:space="preserve"><value>Hệ gợi ý</value></data>
+  <data name="Knn.Nav.Overview" xml:space="preserve"><value>Tổng quan</value></data>
+  <data name="Knn.AgeRanges" xml:space="preserve"><value>Nhóm tuổi</value></data>
+  <data name="Knn.AgeRange" xml:space="preserve"><value>nhóm tuổi</value></data>
+  <data name="Knn.Regions" xml:space="preserve"><value>Khu vực</value></data>
+  <data name="Knn.Region" xml:space="preserve"><value>khu vực</value></data>
+  <data name="Knn.Occupations" xml:space="preserve"><value>Nghề nghiệp</value></data>
+  <data name="Knn.Occupation" xml:space="preserve"><value>nghề nghiệp</value></data>
+  <data name="Knn.EducationLevels" xml:space="preserve"><value>Trình độ học vấn</value></data>
+  <data name="Knn.EducationLevel" xml:space="preserve"><value>trình độ học vấn</value></data>
+  <data name="Knn.LearningPurposes" xml:space="preserve"><value>Mục đích học</value></data>
+  <data name="Knn.LearningPurpose" xml:space="preserve"><value>mục đích học</value></data>
+  <data name="Knn.New" xml:space="preserve"><value>Thêm {0}</value></data>
+  <data name="Knn.Empty.Title" xml:space="preserve"><value>Chưa có mục nào</value></data>
+  <data name="Knn.Empty.Msg" xml:space="preserve"><value>Tạo mục đầu tiên, hoặc điều chỉnh từ khóa tìm kiếm.</value></data>
+  <data name="Knn.NotFound" xml:space="preserve"><value>Không tìm thấy mục này.</value></data>
+  <data name="Knn.Col.Name" xml:space="preserve"><value>Tên</value></data>
+  <data name="Knn.Col.Code" xml:space="preserve"><value>Mã</value></data>
+  <data name="Knn.Col.Parent" xml:space="preserve"><value>Khu vực cha</value></data>
+  <data name="Knn.Col.MinAge" xml:space="preserve"><value>Tuổi tối thiểu</value></data>
+  <data name="Knn.Col.MaxAge" xml:space="preserve"><value>Tuổi tối đa</value></data>
+  <data name="Knn.Col.Description" xml:space="preserve"><value>Mô tả</value></data>
+  <data name="Knn.Col.Order" xml:space="preserve"><value>Thứ tự</value></data>
+  <data name="Knn.Field.Name" xml:space="preserve"><value>Tên</value></data>
+  <data name="Knn.Field.Code" xml:space="preserve"><value>Mã</value></data>
+  <data name="Knn.Field.Code.Hint" xml:space="preserve"><value>Chỉ gồm chữ, số, gạch ngang và gạch dưới (tối đa 10).</value></data>
+  <data name="Knn.Field.Parent" xml:space="preserve"><value>Khu vực cha</value></data>
+  <data name="Knn.Field.Parent.None" xml:space="preserve"><value>Không (cấp cao nhất)</value></data>
+  <data name="Knn.Field.MinAge" xml:space="preserve"><value>Tuổi tối thiểu</value></data>
+  <data name="Knn.Field.MaxAge" xml:space="preserve"><value>Tuổi tối đa</value></data>
+  <data name="Knn.Field.Description" xml:space="preserve"><value>Mô tả</value></data>
+  <data name="Knn.Field.Order" xml:space="preserve"><value>Thứ tự hiển thị</value></data>
+  <data name="Knn.Delete.Confirm" xml:space="preserve"><value>Xóa mục này? Mục sẽ bị ẩn khỏi quá trình onboarding.</value></data>
+  <data name="Knn.Restore.Confirm" xml:space="preserve"><value>Khôi phục mục này?</value></data>
+  <data name="Knn.Validation.NameRequired" xml:space="preserve"><value>Nhập tên.</value></data>
+  <data name="Knn.Validation.NameMax" xml:space="preserve"><value>Tên không được vượt quá {0} ký tự.</value></data>
+  <data name="Knn.Validation.CodeRequired" xml:space="preserve"><value>Nhập mã.</value></data>
+  <data name="Knn.Validation.CodeMax" xml:space="preserve"><value>Mã không được vượt quá 10 ký tự.</value></data>
+  <data name="Knn.Validation.CodePattern" xml:space="preserve"><value>Mã chỉ gồm chữ, số, gạch dưới và gạch ngang.</value></data>
+  <data name="Knn.Validation.AgeNonNegative" xml:space="preserve"><value>Giá trị tuổi không được âm.</value></data>
+  <data name="Knn.Validation.AgeOrder" xml:space="preserve"><value>Tuổi tối thiểu phải nhỏ hơn hoặc bằng tuổi tối đa.</value></data>
+  <data name="Knn.Validation.DescriptionMax" xml:space="preserve"><value>Mô tả không được vượt quá 255 ký tự.</value></data>
+  <data name="Knn.Validation.OrderNonNegative" xml:space="preserve"><value>Thứ tự hiển thị không được âm.</value></data>
+  <data name="Knn.Toast.Created" xml:space="preserve"><value>Đã tạo mục</value></data>
+  <data name="Knn.Toast.Updated" xml:space="preserve"><value>Đã cập nhật mục</value></data>
+  <data name="Knn.Toast.Deleted" xml:space="preserve"><value>Đã xóa mục</value></data>
+  <data name="Knn.Toast.Restored" xml:space="preserve"><value>Đã khôi phục mục</value></data>
+  <data name="Knn.Toast.RebuildQueued" xml:space="preserve"><value>Đã xếp hàng dựng lại KNN</value></data>
+  <data name="Knn.Rebuild.Title" xml:space="preserve"><value>Dựng lại mô hình</value></data>
+  <data name="Knn.Rebuild.Running" xml:space="preserve"><value>Đang chạy</value></data>
+  <data name="Knn.Rebuild.Idle" xml:space="preserve"><value>Rảnh</value></data>
+  <data name="Knn.Rebuild.LastAt" xml:space="preserve"><value>Lần dựng gần nhất</value></data>
+  <data name="Knn.Rebuild.Never" xml:space="preserve"><value>Chưa từng</value></data>
+  <data name="Knn.Rebuild.Trigger" xml:space="preserve"><value>Dựng lại ngay</value></data>
+  <data name="Knn.Rebuild.Triggering" xml:space="preserve"><value>Đang xếp hàng…</value></data>
+  <data name="Knn.Config.Onboarding" xml:space="preserve"><value>Onboarding</value></data>
+  <data name="Knn.Config.Learning" xml:space="preserve"><value>Học tập</value></data>
+  <data name="Knn.Config.KValue" xml:space="preserve"><value>Giá trị K</value></data>
+  <data name="Knn.Config.DefaultTopicLimit" xml:space="preserve"><value>Giới hạn chủ đề mặc định</value></data>
+  <data name="Knn.Config.MinSimilarity" xml:space="preserve"><value>Độ tương đồng tối thiểu</value></data>
+  <data name="Knn.Config.CacheTtl" xml:space="preserve"><value>TTL cache (phút)</value></data>
+  <data name="Knn.Config.MinSessions" xml:space="preserve"><value>Số phiên tối thiểu</value></data>
+  <data name="Knn.Config.RecommendationCount" xml:space="preserve"><value>Số lượng gợi ý</value></data>
+  <data name="Knn.Config.RebuildInterval" xml:space="preserve"><value>Chu kỳ dựng lại (giờ)</value></data>
 </root>

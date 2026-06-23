@@ -1811,3 +1811,43 @@ body {
   font-size: 1.15rem;
   font-weight: 800;
 }
+
+/* ============================================================
+   KNN management (F063) — pill sub-nav across the 5 lookups.
+   ============================================================ */
+.knn-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.knn-nav__link {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 140ms ease, border-color 140ms ease, background-color 140ms ease;
+}
+
+.knn-nav__link:hover {
+  color: var(--ink);
+  border-color: var(--accent);
+}
+
+.knn-nav__link.is-active {
+  color: var(--surface);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .knn-nav__link {
+    transition: none;
+  }
+}
