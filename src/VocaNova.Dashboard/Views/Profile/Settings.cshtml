@@ -1,0 +1,68 @@
+@model VocaNova.Dashboard.Models.Profile.SettingsViewModel
+@{
+    ViewData["Title"] = L["Nav.Settings"];
+    var returnUrl = "/settings";
+}
+
+<div class="page-header">
+    <div>
+        <p class="eyebrow">@L["Settings.Eyebrow"]</p>
+        <h1>@L["Nav.Settings"]</h1>
+    </div>
+    <a class="btn btn-secondary" href="/profile">@L["Profile.Title"]</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-6">
+        <div class="detail-panel">
+            <div class="detail-panel__header compact"><h2>@L["Settings.Theme.Title"]</h2></div>
+            <form method="post" asp-controller="Profile" asp-action="SetTheme" id="theme-form">
+                @Html.AntiForgeryToken()
+                <div class="settings-options">
+                    <label class="settings-option">
+                        <input type="radio" name="theme" value="light" checked="@(Model.Theme == "light")" />
+                        <span>@L["Settings.Theme.Light"]</span>
+                    </label>
+                    <label class="settings-option">
+                        <input type="radio" name="theme" value="dark" checked="@(Model.Theme == "dark")" />
+                        <span>@L["Settings.Theme.Dark"]</span>
+                    </label>
+                </div>
+                <div class="d-flex justify-content-end mt-3">
+                    <button type="submit" class="btn btn-primary">@L["Common.Save"]</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="detail-panel">
+            <div class="detail-panel__header compact"><h2>@L["Settings.Language.Title"]</h2></div>
+            <div class="settings-options">
+                <form method="post" asp-controller="Culture" asp-action="Set">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="culture" value="en" />
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <button type="submit" class="settings-lang @(Model.Culture == "en" ? "is-active" : null)">@L["Lang.English"]</button>
+                </form>
+                <form method="post" asp-controller="Culture" asp-action="Set">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="culture" value="vi" />
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                    <button type="submit" class="settings-lang @(Model.Culture == "vi" ? "is-active" : null)">@L["Lang.Vietnamese"]</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Áp theme ngay khi chọn radio (đồng bộ với toggle ở topbar), submit vẫn lưu cookie server-side.
+        document.querySelectorAll('#theme-form input[name="theme"]').forEach(function (r) {
+            r.addEventListener('change', function () {
+                document.documentElement.setAttribute('data-theme', r.value);
+            });
+        });
+    </script>
+}

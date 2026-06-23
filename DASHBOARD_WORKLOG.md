@@ -24,7 +24,7 @@
 | F062 | Statistics | `feature/dashboard/statistics` | ✅ | 23/06 |
 | F063 | KNN management (5 lookup) | `feature/dashboard/knn-management` | ✅ | 23/06 |
 | FD-01 | Forgot password | `feature/dashboard/forgot-password` | ✅ | 23/06 |
-| FD-02 | Profile & Settings | `feature/dashboard/profile-settings` | ⬜ | |
+| FD-02 | Profile & Settings | `feature/dashboard/profile-settings` | ✅ | 23/06 |
 | FD-03 | Activity logs | `feature/dashboard/activity-logs` | ⬜ | |
 | FD-04 | Admin accounts (khung) | `feature/dashboard/admin-accounts` | ⬜ | |
 
@@ -155,6 +155,15 @@
 - Verify: `dotnet build` Dashboard → **0 warning, 0 error**.
 - Commit: *(chờ user yêu cầu)*
 
+### FD-02 — Profile & Settings
+- `Models/Api/Auth/AuthProfileDto.cs` (map `GET /api/auth/me`) + `Models/Profile/ProfileViewModels.cs` (`ProfileViewModel`, `SettingsViewModel`).
+- `ProfileController`: `GET /profile`; `POST /profile` sửa display_name (`PUT /api/auth/me/profile`); `POST /profile/avatar` upload (`POST /api/auth/me/avatar` multipart); `POST /profile/password` đổi mật khẩu (`PUT /api/auth/me/password`); `GET /settings`; `POST /settings/theme` ghi cookie `VocaNova.Dashboard.Theme`. Sau update profile/avatar **re-issue cookie claims** (SignInAsync giữ token) để topbar cập nhật tên/ảnh ngay. Validate mirror backend: display_name 2–150, password ≥8 hoa/thường/số + confirm khớp, current bắt buộc.
+- `Views/Profile/Index.cshtml` (avatar upload + sửa tên + đổi mật khẩu + read-only phone/role/status), `Views/Profile/Settings.cshtml` (theme Light/Dark lưu cookie + áp ngay bằng JS; ngôn ngữ EN/VI qua `CultureController` returnUrl=/settings — R1/R2).
+- `_Layout`: account block → link `/profile`, thêm icon ⚙ → `/settings`. `site.css`: `.account-link`/`.profile-avatar`/`.settings-options`/`.settings-lang`. Resource EN+VI (`Profile.*`, `Settings.*`, `Nav.Settings`).
+- API **đã đủ** (me/profile/avatar/password + theme/culture cookie sẵn) → không thêm gap.
+- Verify: `dotnet build` Dashboard → **0 warning, 0 error**.
+- Commit: *(chờ user yêu cầu)*
+
 ---
 
 ## Gap chờ API (An làm) — dashboard đã dựng khung, tự sáng đèn khi có
@@ -176,4 +185,4 @@
 ---
 
 ## Tiếp theo
-**FD-02 — Profile & Settings** (nhánh `feature/dashboard/profile-settings`, API có sẵn): `/profile` xem/sửa display_name (`PUT /api/auth/me/profile`) + upload avatar (`POST /api/auth/me/avatar`) + đổi mật khẩu (`PUT /api/auth/me/password`); `/settings` chọn theme (R1) + ngôn ngữ (R2) lưu cookie.
+**FD-03 — Activity Logs** (nhánh `feature/dashboard/activity-logs`, API có sẵn): `/activity-logs` `_DataTable` (created_at, user, action, entity_type `.mono`, entity_id, ip) + filter user_id/entity_type (`GET /api/admin/audit-logs`). Tái dùng cho tab "Activity Log" của F060 khi G5 sẵn.
