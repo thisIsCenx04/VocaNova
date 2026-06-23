@@ -13,6 +13,11 @@
         </div>
     </div>
 
+    @if (TempData["AuthInfo"] is string authInfo && !string.IsNullOrEmpty(authInfo))
+    {
+        <div class="auth-info small mb-2">@authInfo</div>
+    }
+
     <form asp-action="Login" asp-controller="Auth" method="post" class="login-form">
         @Html.AntiForgeryToken()
         <input asp-for="ReturnUrl" type="hidden" />
@@ -32,6 +37,10 @@
 
         <button type="submit" class="btn btn-primary w-100">@L["Login.Submit"]</button>
     </form>
+
+    <p class="auth-back">
+        <a href="/forgot-password">@L["Login.ForgotPassword"]</a>
+    </p>
 </section>
 
 @section Scripts {

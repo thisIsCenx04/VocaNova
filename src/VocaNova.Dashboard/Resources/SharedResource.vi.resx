@@ -524,4 +524,30 @@
   <data name="Knn.Config.MinSessions" xml:space="preserve"><value>Số phiên tối thiểu</value></data>
   <data name="Knn.Config.RecommendationCount" xml:space="preserve"><value>Số lượng gợi ý</value></data>
   <data name="Knn.Config.RebuildInterval" xml:space="preserve"><value>Chu kỳ dựng lại (giờ)</value></data>
+  <data name="Login.ForgotPassword" xml:space="preserve"><value>Quên mật khẩu?</value></data>
+  <data name="Forgot.Title" xml:space="preserve"><value>Đặt lại mật khẩu</value></data>
+  <data name="Forgot.Subtitle.Request" xml:space="preserve"><value>Nhập số điện thoại để nhận mã đặt lại.</value></data>
+  <data name="Forgot.Subtitle.Reset" xml:space="preserve"><value>Nhập mã đã gửi và chọn mật khẩu mới.</value></data>
+  <data name="Forgot.Step.Request" xml:space="preserve"><value>Yêu cầu mã</value></data>
+  <data name="Forgot.Step.Reset" xml:space="preserve"><value>Đặt mật khẩu</value></data>
+  <data name="Forgot.Field.Phone" xml:space="preserve"><value>Số điện thoại</value></data>
+  <data name="Forgot.Field.Otp" xml:space="preserve"><value>Mã xác thực</value></data>
+  <data name="Forgot.Field.NewPassword" xml:space="preserve"><value>Mật khẩu mới</value></data>
+  <data name="Forgot.Field.ConfirmPassword" xml:space="preserve"><value>Xác nhận mật khẩu</value></data>
+  <data name="Forgot.SendCode" xml:space="preserve"><value>Gửi mã đặt lại</value></data>
+  <data name="Forgot.ResetPassword" xml:space="preserve"><value>Đặt lại mật khẩu</value></data>
+  <data name="Forgot.BackToLogin" xml:space="preserve"><value>Quay lại đăng nhập</value></data>
+  <data name="Forgot.OtpSent" xml:space="preserve"><value>Đã gửi mã đặt lại tới số điện thoại của bạn.</value></data>
+  <data name="Forgot.OtpExpiry" xml:space="preserve"><value>Mã hết hạn sau khoảng {0} phút.</value></data>
+  <data name="Forgot.PasswordHint" xml:space="preserve"><value>Tối thiểu 8 ký tự, có chữ hoa, chữ thường và số.</value></data>
+  <data name="Forgot.ResetSuccess" xml:space="preserve"><value>Đã đặt lại mật khẩu. Đăng nhập bằng mật khẩu mới.</value></data>
+  <data name="Forgot.Validation.Phone" xml:space="preserve"><value>Nhập số điện thoại Việt Nam hợp lệ.</value></data>
+  <data name="Forgot.Validation.Otp" xml:space="preserve"><value>Nhập mã gồm 6 chữ số.</value></data>
+  <data name="Forgot.Validation.Password" xml:space="preserve"><value>Mật khẩu tối thiểu 8 ký tự, có chữ hoa, chữ thường và số.</value></data>
+  <data name="Forgot.Validation.Confirm" xml:space="preserve"><value>Mật khẩu xác nhận không khớp.</value></data>
+  <data name="Forgot.Error.RateLimit" xml:space="preserve"><value>Quá nhiều yêu cầu. Vui lòng đợi một lát rồi thử lại.</value></data>
+  <data name="Forgot.Error.InvalidOtp" xml:space="preserve"><value>Mã không đúng hoặc đã hết hạn.</value></data>
+  <data name="Forgot.Error.OtpUsed" xml:space="preserve"><value>Mã này đã được dùng. Hãy yêu cầu mã mới.</value></data>
+  <data name="Forgot.Error.NotFound" xml:space="preserve"><value>Không có tài khoản nào dùng số điện thoại này.</value></data>
+  <data name="Forgot.Error.Generic" xml:space="preserve"><value>Đã có lỗi xảy ra. Vui lòng thử lại.</value></data>
 </root>

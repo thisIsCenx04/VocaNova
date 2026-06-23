@@ -23,7 +23,7 @@
 | F060 | User management (+ G4/G8 khung) | `feature/dashboard/user-management` | ✅ | 23/06 |
 | F062 | Statistics | `feature/dashboard/statistics` | ✅ | 23/06 |
 | F063 | KNN management (5 lookup) | `feature/dashboard/knn-management` | ✅ | 23/06 |
-| FD-01 | Forgot password | `feature/dashboard/forgot-password` | ⬜ | |
+| FD-01 | Forgot password | `feature/dashboard/forgot-password` | ✅ | 23/06 |
 | FD-02 | Profile & Settings | `feature/dashboard/profile-settings` | ⬜ | |
 | FD-03 | Activity logs | `feature/dashboard/activity-logs` | ⬜ | |
 | FD-04 | Admin accounts (khung) | `feature/dashboard/admin-accounts` | ⬜ | |
@@ -145,6 +145,16 @@
 - Verify: `dotnet build` Dashboard → **0 warning, 0 error** (Razor views compile lúc build).
 - Commit: *(chờ user yêu cầu)*
 
+### FD-01 — Forgot password
+- `Services/Auth/DashboardActionResult.cs`: result phẳng (IsSuccess/Message/StatusCode/ExpiresIn) cho call auth ẩn danh.
+- `IDashboardAuthService` + `DashboardAuthService`: thêm `ForgotPasswordAsync` (`POST /api/auth/forgot-password`) + `ResetPasswordAsync` (`POST /api/auth/reset-password`) — dùng HttpClient **không token** (giống login). Bắt status 429/401/409/404.
+- `Models/Auth/ForgotPasswordViewModel.cs`: Step(request|reset) + Phone/OtpCode/NewPassword/ConfirmPassword + ExpiresIn + Info.
+- `AuthController`: `GET /forgot-password`, `POST /forgot-password` (bước 1 gửi OTP → sang bước 2), `POST /forgot-password/reset` (bước 2 đặt lại → redirect /login + TempData). Validate mirror backend: phone VN `^0[3-9]\d{8}$`, OTP 6 số, password ≥8 có hoa/thường/số, confirm khớp. `MapError` đổi 429→rate limit, 401→OTP sai/hết hạn, 409→OTP đã dùng, 404→không có tài khoản.
+- `Views/Auth/ForgotPassword.cshtml`: auth-shell 2 bước (stepper) theo `Step`; `Login.cshtml` thêm link "Quên mật khẩu?" + hiện `TempData[AuthInfo]` sau reset. `site.css`: `.auth-steps`/`.auth-info`/`.auth-back`. Resource EN+VI (`Forgot.*`, `Login.ForgotPassword`).
+- **Lệch plan có chủ đích:** plan ghi dùng `otp/verify` + `reset-password`, nhưng `VerifyOtpAsync` tìm OTP với `userId=null` (OTP reset tạo với userId≠null) **và** set `IsUsed=true` → gọi verify sẽ không thấy OTP / tiêu mất OTP làm reset fail. ⟹ Luồng đúng: **forgot-password → reset-password** (reset tự validate OTP). API **đã đủ**, không thêm gap.
+- Verify: `dotnet build` Dashboard → **0 warning, 0 error**.
+- Commit: *(chờ user yêu cầu)*
+
 ---
 
 ## Gap chờ API (An làm) — dashboard đã dựng khung, tự sáng đèn khi có
@@ -166,4 +176,4 @@
 ---
 
 ## Tiếp theo
-**FD-01 — Forgot Password** (nhánh `feature/dashboard/forgot-password`, API có sẵn): `/forgot-password` 3 bước — nhập phone (`POST /api/auth/forgot-password`) → nhập OTP + mật khẩu mới (`/api/auth/otp/verify` + `/api/auth/reset-password`); hiển thị rate-limit/expired rõ; quay lại `/login` sau reset.
+**FD-02 — Profile & Settings** (nhánh `feature/dashboard/profile-settings`, API có sẵn): `/profile` xem/sửa display_name (`PUT /api/auth/me/profile`) + upload avatar (`POST /api/auth/me/avatar`) + đổi mật khẩu (`PUT /api/auth/me/password`); `/settings` chọn theme (R1) + ngôn ngữ (R2) lưu cookie.
