@@ -1,0 +1,70 @@
+@model VocaNova.Dashboard.Models.Topics.TopicListViewModel
+@{
+    ViewData["Title"] = L["Nav.Topics"];
+}
+
+<div class="page-header">
+    <div>
+        <p class="eyebrow">@L["Topics.Eyebrow"]</p>
+        <h1>@L["Nav.Topics"]</h1>
+    </div>
+    <button type="button" class="btn btn-primary" data-form-url="/topics/create" data-form-title="@L["Topic.Create"]">
+        @L["Topic.Create"]
+    </button>
+</div>
+
+@if (!Model.Loaded)
+{
+    <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Error, Title = L["State.LoadError"].Value })" />
+}
+else if (Model.Topics.Count == 0)
+{
+    <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Empty, Title = L["Topic.Empty.Title"].Value, Message = L["Topic.Empty.Msg"].Value })" />
+}
+else
+{
+    <div class="data-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>@L["Topic.Col.Icon"]</th>
+                    <th>@L["Topic.Col.Name"]</th>
+                    <th>@L["Topic.Col.NameVi"]</th>
+                    <th>@L["Topic.Col.Words"]</th>
+                    <th>@L["Tbl.Actions"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model.Topics)
+                {
+                    <tr>
+                        <td><span aria-hidden="true">@(string.IsNullOrWhiteSpace(t.Icon) ? "—" : t.Icon)</span></td>
+                        <td><strong>@t.Name</strong></td>
+                        <td>@(string.IsNullOrWhiteSpace(t.NameVi) ? "—" : t.NameVi)</td>
+                        <td><span class="badge-chip badge--info">@t.WordCount.ToString("N0")</span></td>
+                        <td>
+                            <div class="row-actions">
+                                <button type="button" class="btn btn-sm btn-secondary"
+                                        data-form-url="/topics/@t.TopicId/edit"
+                                        data-form-title="@L["Topic.Edit"]">@L["Common.Edit"]</button>
+                                @if (t.WordCount > 0)
+                                {
+                                    <button type="button" class="btn btn-sm btn-danger" disabled
+                                            title="@L["Topic.Delete.Blocked", t.WordCount]">@L["Common.Delete"]</button>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                            data-confirm-url="/topics/@t.TopicId/delete"
+                                            data-confirm-message="@L["Topic.Delete.Confirm"]"
+                                            data-confirm-variant="danger"
+                                            data-confirm-ok="@L["Common.Delete"]">@L["Common.Delete"]</button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
