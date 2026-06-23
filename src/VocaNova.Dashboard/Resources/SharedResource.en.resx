@@ -442,4 +442,22 @@
   <data name="Toast.UserRestored" xml:space="preserve"><value>User restored</value></data>
   <data name="Toast.UserLocked" xml:space="preserve"><value>User locked</value></data>
   <data name="Toast.UserUnlocked" xml:space="preserve"><value>User unlocked</value></data>
+  <data name="Statistics.Eyebrow" xml:space="preserve"><value>Insights</value></data>
+  <data name="Stats.Chart.Trend" xml:space="preserve"><value>Activity &amp; accuracy</value></data>
+  <data name="Stats.Chart.Accuracy" xml:space="preserve"><value>Accuracy (%)</value></data>
+  <data name="Stats.Chart.Volume" xml:space="preserve"><value>Answers</value></data>
+  <data name="Stats.Trend.Empty.Title" xml:space="preserve"><value>No learning activity yet</value></data>
+  <data name="Stats.Trend.Empty.Msg" xml:space="preserve"><value>Trends appear once learners start practicing.</value></data>
+  <data name="Stats.TopWrong.Title" xml:space="preserve"><value>Top wrong words</value></data>
+  <data name="Stats.TopWrong.Empty.Title" xml:space="preserve"><value>No wrong answers recorded</value></data>
+  <data name="Stats.TopWrong.Empty.Msg" xml:space="preserve"><value>This list fills in as learners answer questions.</value></data>
+  <data name="Stats.Col.Word" xml:space="preserve"><value>Word</value></data>
+  <data name="Stats.Col.Wrong" xml:space="preserve"><value>Wrong</value></data>
+  <data name="Stats.Col.Total" xml:space="preserve"><value>Attempts</value></data>
+  <data name="Stats.Col.Accuracy" xml:space="preserve"><value>Accuracy</value></data>
+  <data name="Stats.Demo.Title" xml:space="preserve"><value>Learner demographics</value></data>
+  <data name="Stats.Demo.Age" xml:space="preserve"><value>Age range</value></data>
+  <data name="Stats.Demo.Occupation" xml:space="preserve"><value>Occupation</value></data>
+  <data name="Stats.Demo.Education" xml:space="preserve"><value>Education level</value></data>
+  <data name="Stats.Demo.Empty.Title" xml:space="preserve"><value>No data yet</value></data>
 </root>

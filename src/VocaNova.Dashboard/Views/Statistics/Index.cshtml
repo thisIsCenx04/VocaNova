@@ -1,0 +1,237 @@
+@model VocaNova.Dashboard.Models.Statistics.StatisticsViewModel
+@using VocaNova.Dashboard.Models.Components
+@{
+    ViewData["Title"] = L["Nav.Statistics"];
+    double Pct(double v) => v <= 1 ? v * 100 : v;
+
+    var trend = Model.Learning?.AccuracyTrend ?? new List<VocaNova.Dashboard.Models.Api.Stats.AdminAccuracyTrendPointDto>();
+    var wrongWords = Model.Learning?.TopWrongWords ?? new List<VocaNova.Dashboard.Models.Api.Stats.AdminWrongWordDto>();
+    var demo = Model.Demographics;
+
+    var trendJson = System.Text.Json.JsonSerializer.Serialize(trend);
+    var ageJson = System.Text.Json.JsonSerializer.Serialize(demo?.AgeRanges ?? new List<VocaNova.Dashboard.Models.Api.Stats.AdminDemographicGroupDto>());
+    var occJson = System.Text.Json.JsonSerializer.Serialize(demo?.Occupations ?? new List<VocaNova.Dashboard.Models.Api.Stats.AdminDemographicGroupDto>());
+    var eduJson = System.Text.Json.JsonSerializer.Serialize(demo?.EducationLevels ?? new List<VocaNova.Dashboard.Models.Api.Stats.AdminDemographicGroupDto>());
+}
+
+<div class="page-header">
+    <div>
+        <p class="eyebrow">@L["Statistics.Eyebrow"]</p>
+        <h1>@L["Nav.Statistics"]</h1>
+    </div>
+</div>
+
+@* ── Learning trend ───────────────────────────────────────── *@
+<div class="chart-card">
+    <header>
+        <h2>@L["Stats.Chart.Trend"]</h2>
+        @* G7: granularity chưa có API → dropdown disabled "Sắp có", tạm fix daily. *@
+        <select class="form-select" style="max-width: 160px;" disabled title="@L["Common.ComingSoon"]">
+            <option value="daily" selected>@L["Chart.Daily"]</option>
+            <option value="weekly">@L["Chart.Weekly"]</option>
+            <option value="monthly">@L["Chart.Monthly"]</option>
+        </select>
+    </header>
+    @if (!Model.LearningLoaded)
+    {
+        <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Error, Title = L["State.LoadError"].Value })" />
+    }
+    else if (trend.Count == 0)
+    {
+        <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Empty, Title = L["Stats.Trend.Empty.Title"].Value, Message = L["Stats.Trend.Empty.Msg"].Value })" />
+    }
+    else
+    {
+        <div class="chart-canvas-wrap">
+            <canvas id="trendChart"></canvas>
+        </div>
+    }
+</div>
+
+@* ── Top wrong words ──────────────────────────────────────── *@
+<div class="detail-panel mt-3">
+    <div class="detail-panel__header compact">
+        <h2>@L["Stats.TopWrong.Title"]</h2>
+    </div>
+    @if (!Model.LearningLoaded)
+    {
+        <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Error, Title = L["State.LoadError"].Value })" />
+    }
+    else if (wrongWords.Count == 0)
+    {
+        <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Empty, Title = L["Stats.TopWrong.Empty.Title"].Value, Message = L["Stats.TopWrong.Empty.Msg"].Value })" />
+    }
+    else
+    {
+        <div class="data-table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>@L["Stats.Col.Word"]</th>
+                        <th>@L["Stats.Col.Wrong"]</th>
+                        <th>@L["Stats.Col.Total"]</th>
+                        <th>@L["Stats.Col.Accuracy"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ var rank = 0; }
+                    @foreach (var w in wrongWords)
+                    {
+                        rank++;
+                        var acc = Pct(w.Accuracy);
+                        var mod = acc >= 80 ? "ok" : acc >= 50 ? "warn" : "err";
+                        <tr>
+                            <td class="mono" style="color: var(--muted);">@rank</td>
+                            <td><a href="/vocabulary/@w.WordId"><strong>@w.Word</strong></a></td>
+                            <td class="mono">@w.WrongCount.ToString("N0")</td>
+                            <td class="mono" style="color: var(--muted);">@w.TotalCount.ToString("N0")</td>
+                            <td><partial name="Components/_Badge" model="@(new BadgeViewModel { Text = acc.ToString("0.#") + "%", Modifier = mod })" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@* ── Demographics ─────────────────────────────────────────── *@
+<h2 class="stats-section-title">@L["Stats.Demo.Title"]</h2>
+@if (!Model.DemographicsLoaded)
+{
+    <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Error, Title = L["State.LoadError"].Value })" />
+}
+else
+{
+    <div class="row g-3">
+        <div class="col-12 col-lg-4">
+            <div class="chart-card">
+                <header><h2>@L["Stats.Demo.Age"]</h2></header>
+                @if ((demo?.AgeRanges.Count ?? 0) == 0)
+                {
+                    <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Empty, Title = L["Stats.Demo.Empty.Title"].Value })" />
+                }
+                else
+                {
+                    <div class="chart-canvas-wrap"><canvas id="ageChart"></canvas></div>
+                }
+            </div>
+        </div>
+        <div class="col-12 col-lg-4">
+            <div class="chart-card">
+                <header><h2>@L["Stats.Demo.Occupation"]</h2></header>
+                @if ((demo?.Occupations.Count ?? 0) == 0)
+                {
+                    <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Empty, Title = L["Stats.Demo.Empty.Title"].Value })" />
+                }
+                else
+                {
+                    <div class="chart-canvas-wrap"><canvas id="occupationChart"></canvas></div>
+                }
+            </div>
+        </div>
+        <div class="col-12 col-lg-4">
+            <div class="chart-card">
+                <header><h2>@L["Stats.Demo.Education"]</h2></header>
+                @if ((demo?.EducationLevels.Count ?? 0) == 0)
+                {
+                    <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Empty, Title = L["Stats.Demo.Empty.Title"].Value })" />
+                }
+                else
+                {
+                    <div class="chart-canvas-wrap"><canvas id="educationChart"></canvas></div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script src="~/lib/chart/chart.umd.min.js"></script>
+    <script>
+        (function () {
+            if (!window.Chart) { return; }
+
+            var css = getComputedStyle(document.documentElement);
+            var accent = css.getPropertyValue('--accent').trim();
+            var ink = css.getPropertyValue('--ink').trim();
+            var muted = css.getPropertyValue('--muted').trim();
+            var line = css.getPropertyValue('--line').trim();
+            // Bảng màu cố định cho doughnut (đủ tương phản ở cả light/dark).
+            var palette = ['#0f766e', '#175cd3', '#7c3aed', '#b54708', '#067647', '#9333ea', '#0369a1', '#b42318', '#4338ca', '#15803d'];
+
+            Chart.defaults.color = muted;
+            Chart.defaults.font.family = "Inter, system-ui, sans-serif";
+
+            function pct(v) { return v <= 1 ? v * 100 : v; }
+
+            // ── Trend: accuracy (line, %) + activity volume (bar) ──
+            var trend = @Html.Raw(trendJson);
+            var trendCanvas = document.getElementById('trendChart');
+            if (trendCanvas && trend.length) {
+                new Chart(trendCanvas, {
+                    data: {
+                        labels: trend.map(function (t) { return t.date; }),
+                        datasets: [
+                            {
+                                type: 'bar',
+                                label: '@L["Stats.Chart.Volume"]',
+                                data: trend.map(function (t) { return t.total_count; }),
+                                backgroundColor: line,
+                                yAxisID: 'y',
+                                order: 2
+                            },
+                            {
+                                type: 'line',
+                                label: '@L["Stats.Chart.Accuracy"]',
+                                data: trend.map(function (t) { return Math.round(pct(t.accuracy) * 10) / 10; }),
+                                borderColor: accent,
+                                backgroundColor: accent,
+                                tension: 0.3,
+                                yAxisID: 'y1',
+                                order: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: { legend: { display: true } },
+                        scales: {
+                            y: { position: 'left', beginAtZero: true, title: { display: true, text: '@L["Stats.Chart.Volume"]' } },
+                            y1: { position: 'right', beginAtZero: true, max: 100, grid: { drawOnChartArea: false }, title: { display: true, text: '%' } }
+                        }
+                    }
+                });
+            }
+
+            // ── Demographics doughnuts ──
+            function doughnut(id, rows) {
+                var canvas = document.getElementById(id);
+                if (!canvas || !rows || !rows.length) { return; }
+                new Chart(canvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: rows.map(function (r) { return r.name; }),
+                        datasets: [{
+                            data: rows.map(function (r) { return r.user_count; }),
+                            backgroundColor: rows.map(function (_, i) { return palette[i % palette.length]; }),
+                            borderColor: css.getPropertyValue('--surface').trim(),
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+
+            doughnut('ageChart', @Html.Raw(ageJson));
+            doughnut('occupationChart', @Html.Raw(occJson));
+            doughnut('educationChart', @Html.Raw(eduJson));
+        })();
+    </script>
+}
