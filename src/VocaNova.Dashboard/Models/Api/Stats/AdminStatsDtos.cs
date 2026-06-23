@@ -66,3 +66,27 @@ public sealed class AdminLearningStatsDto
     [JsonPropertyName("accuracy_trend")]
     public List<AdminAccuracyTrendPointDto> AccuracyTrend { get; set; } = new();
 }
+
+public sealed class AdminDemographicsDto
+{
+    [JsonPropertyName("age_ranges")]
+    public List<AdminDemographicGroupDto> AgeRanges { get; set; } = new();
+
+    [JsonPropertyName("occupations")]
+    public List<AdminDemographicGroupDto> Occupations { get; set; } = new();
+
+    [JsonPropertyName("education_levels")]
+    public List<AdminDemographicGroupDto> EducationLevels { get; set; } = new();
+}
+
+public sealed class AdminDemographicGroupDto
+{
+    [JsonPropertyName("id")]
+    public uint Id { get; set; }
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("user_count")]
+    public int UserCount { get; set; }
+}

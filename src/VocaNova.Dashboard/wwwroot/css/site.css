@@ -1802,3 +1802,12 @@ body {
     transition: none;
   }
 }
+
+/* ============================================================
+   Statistics (F062) — section heading above demographics grid.
+   ============================================================ */
+.stats-section-title {
+  margin: 28px 0 14px;
+  font-size: 1.15rem;
+  font-weight: 800;
+}

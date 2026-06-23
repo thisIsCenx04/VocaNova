@@ -21,7 +21,7 @@
 | F059 | Vocabulary CSV import | `feature/dashboard/vocab-import` | ✅ | 22/06 |
 | F061 | Topic management | `feature/dashboard/topic-management` | ✅ | 23/06 |
 | F060 | User management (+ G4/G8 khung) | `feature/dashboard/user-management` | ✅ | 23/06 |
-| F062 | Statistics | `feature/dashboard/statistics` | ⬜ | |
+| F062 | Statistics | `feature/dashboard/statistics` | ✅ | 23/06 |
 | F063 | KNN management (5 lookup) | `feature/dashboard/knn-management` | ⬜ | |
 | FD-01 | Forgot password | `feature/dashboard/forgot-password` | ⬜ | |
 | FD-02 | Profile & Settings | `feature/dashboard/profile-settings` | ⬜ | |
@@ -123,6 +123,16 @@
 - `site.css`: `.user-cell`, `.user-detail-header`, `.user-detail-avatar`, `.tabs`/`.tab-*` (CSS radio tabs), `.kv-grid` — dark/light token + responsive + reduced-motion. Sidebar Users → `/users`. Resource EN+VI đầy đủ (`Users.*`, `User.*`, `Common.View`, `Common.ComingSoon`, `Toast.User*`).
 - **Khung chờ API:** G4 (lock/unlock) + G8 (create/update user) → nút disabled "Sắp có"; G5 (test-history/activity admin) → tab Empty. Cờ trong `UserDetailViewModel` + action proxy (Lock/Unlock) đã sẵn, bật khi An deploy.
 - Verify: `dotnet build` Dashboard → **0 warning, 0 error**.
+- Commit: `feat(dashboard): add user management with detail tabs and status actions` (PR #89).
+
+### F062 — Statistics
+- `Models/Api/Stats/AdminStatsDtos.cs`: thêm `AdminDemographicsDto` (`age_ranges`/`occupations`/`education_levels`) + `AdminDemographicGroupDto` (`id`,`name`,`user_count`), `[JsonPropertyName]` tường minh. DTO learning (`AdminLearningStatsDto`: `top_wrong_words` + `accuracy_trend`) tái dùng từ F056.
+- `Models/Statistics/StatisticsViewModel.cs`: giữ learning + demographics + cờ loaded; cờ `GranularityAvailable`=false do G7.
+- `StatisticsController`: `Index` (`/statistics`) gọi `GET /api/admin/stats/learning` + `GET /api/admin/stats/demographics`, fail mềm → state error giữ trang sống.
+- `Views/Statistics/Index.cshtml`: chart combo accuracy(%) line + activity volume bar (2 trục); bảng **Top wrong words** (rank, word link→/vocabulary/{id}, wrong, attempts, accuracy badge ok/warn/err); 3 doughnut demographics (age/occupation/education). Mỗi block có empty/error state riêng. Dropdown granularity (G7) **disabled** tooltip "Sắp có", fix daily.
+- `site.css`: `.stats-section-title` (tái dùng `.chart-card`/`.chart-canvas-wrap`/`.data-table`). Sidebar Statistics → `/statistics`. Resource EN+VI đầy đủ (`Statistics.*`, `Stats.*`).
+- API **đã đủ** cho list/trend/demographics — chỉ G7 (granularity) còn thiếu → khung dropdown sẵn.
+- Verify: `dotnet build` Dashboard → **0 warning, 0 error**.
 - Commit: *(chờ user yêu cầu)*
 
 ---
@@ -137,7 +147,7 @@
 | G4/G8 | user lock-unlock / create-update | F060 |
 | G5 | user test-history / activity cho admin | F060 |
 | G6 | `GET /api/admin/topics?includeDeleted=` (liệt kê topic đã xóa) | F061 — **khung restore đã dựng**: action `POST /topics/{id}/restore` + cờ `RestoreAvailable` sẵn, bật khi có endpoint |
-| G7 | stats granularity | F062 |
+| G7 | `GET /api/admin/stats/learning?granularity=daily\|weekly\|monthly` | F062 — **khung dropdown đã dựng**: select disabled "Sắp có", cờ `GranularityAvailable` sẵn, bật khi có param |
 | G9 | admin-accounts CRUD | FD-04 |
 | G10a | `GET /api/admin/roles` | FE-11 (roles read-only) |
 | G13 | Sense soft-delete/restore: routes đã có nhưng service luôn fail do schema `word_senses` chưa có trạng thái xóa | F058 (nút delete/restore disabled; proxy action đã dựng) |
@@ -146,4 +156,4 @@
 ---
 
 ## Tiếp theo
-**F062 — Statistics** (nhánh `feature/dashboard/statistics`): chart sessions/time + accuracy trend (`GET /api/admin/stats/learning`), bảng Top 20 wrong words, 3 chart demographics (`GET /api/admin/stats/demographics`); dropdown granularity (G7) tạm fix 1 mức.
+**F063 — KNN Management** (nhánh `feature/dashboard/knn-management`): submenu 5 lookup CRUD + soft delete/restore (`/api/admin/knn/{age-ranges|regions|occupations|education-levels|learning-purposes}`) — mỗi trang `_FilterBar`+`_DataTable`+`_FormModal`+`_ConfirmModal`; trang tổng quan config read-only + Trigger Rebuild. Validation mirror backend (name max, region code, parent không cycle). Tái dùng CRUD-modal pattern từ F061.
