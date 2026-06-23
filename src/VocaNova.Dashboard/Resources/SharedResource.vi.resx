@@ -550,4 +550,31 @@
   <data name="Forgot.Error.OtpUsed" xml:space="preserve"><value>Mã này đã được dùng. Hãy yêu cầu mã mới.</value></data>
   <data name="Forgot.Error.NotFound" xml:space="preserve"><value>Không có tài khoản nào dùng số điện thoại này.</value></data>
   <data name="Forgot.Error.Generic" xml:space="preserve"><value>Đã có lỗi xảy ra. Vui lòng thử lại.</value></data>
+  <data name="Nav.Settings" xml:space="preserve"><value>Cài đặt</value></data>
+  <data name="Profile.Title" xml:space="preserve"><value>Hồ sơ của tôi</value></data>
+  <data name="Profile.Eyebrow" xml:space="preserve"><value>Tài khoản</value></data>
+  <data name="Profile.Avatar.Title" xml:space="preserve"><value>Ảnh đại diện</value></data>
+  <data name="Profile.Avatar.Choose" xml:space="preserve"><value>Chọn ảnh</value></data>
+  <data name="Profile.Avatar.Upload" xml:space="preserve"><value>Tải ảnh lên</value></data>
+  <data name="Profile.Account.Title" xml:space="preserve"><value>Thông tin tài khoản</value></data>
+  <data name="Profile.Field.DisplayName" xml:space="preserve"><value>Tên hiển thị</value></data>
+  <data name="Profile.Password.Title" xml:space="preserve"><value>Đổi mật khẩu</value></data>
+  <data name="Profile.Password.Change" xml:space="preserve"><value>Đổi mật khẩu</value></data>
+  <data name="Profile.Field.CurrentPassword" xml:space="preserve"><value>Mật khẩu hiện tại</value></data>
+  <data name="Profile.Field.NewPassword" xml:space="preserve"><value>Mật khẩu mới</value></data>
+  <data name="Profile.Field.ConfirmPassword" xml:space="preserve"><value>Xác nhận mật khẩu mới</value></data>
+  <data name="Profile.Validation.Name" xml:space="preserve"><value>Tên hiển thị phải từ 2 đến 150 ký tự.</value></data>
+  <data name="Profile.Validation.Avatar" xml:space="preserve"><value>Chọn ảnh để tải lên.</value></data>
+  <data name="Profile.Validation.CurrentPasswordRequired" xml:space="preserve"><value>Nhập mật khẩu hiện tại.</value></data>
+  <data name="Profile.Validation.NewPassword" xml:space="preserve"><value>Mật khẩu mới tối thiểu 8 ký tự, có chữ hoa, chữ thường và số.</value></data>
+  <data name="Profile.Validation.Confirm" xml:space="preserve"><value>Mật khẩu xác nhận không khớp.</value></data>
+  <data name="Profile.Toast.Updated" xml:space="preserve"><value>Đã cập nhật hồ sơ</value></data>
+  <data name="Profile.Toast.AvatarUpdated" xml:space="preserve"><value>Đã cập nhật ảnh đại diện</value></data>
+  <data name="Profile.Toast.PasswordChanged" xml:space="preserve"><value>Đã đổi mật khẩu</value></data>
+  <data name="Settings.Eyebrow" xml:space="preserve"><value>Tùy chọn</value></data>
+  <data name="Settings.Theme.Title" xml:space="preserve"><value>Giao diện</value></data>
+  <data name="Settings.Theme.Light" xml:space="preserve"><value>Sáng</value></data>
+  <data name="Settings.Theme.Dark" xml:space="preserve"><value>Tối</value></data>
+  <data name="Settings.Language.Title" xml:space="preserve"><value>Ngôn ngữ</value></data>
+  <data name="Settings.Toast.Saved" xml:space="preserve"><value>Đã lưu cài đặt</value></data>
 </root>

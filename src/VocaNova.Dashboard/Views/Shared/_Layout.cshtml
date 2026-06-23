@@ -81,18 +81,23 @@
                             <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" /></svg>
                             <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19" /></svg>
                         </button>
-                        @if (!string.IsNullOrWhiteSpace(avatarUrl))
-                        {
-                            <img src="@avatarUrl" alt="" />
-                        }
-                        else
-                        {
-                            <span class="account-avatar">@avatarFallback</span>
-                        }
-                        <div>
-                            <span class="account-name">@displayName</span>
-                            <span class="account-role">@role.Replace("_", " ")</span>
-                        </div>
+                        <a class="account-link" href="/profile" title="@L["Profile.Title"]">
+                            @if (!string.IsNullOrWhiteSpace(avatarUrl))
+                            {
+                                <img src="@avatarUrl" alt="" />
+                            }
+                            else
+                            {
+                                <span class="account-avatar">@avatarFallback</span>
+                            }
+                            <div>
+                                <span class="account-name">@displayName</span>
+                                <span class="account-role">@role.Replace("_", " ")</span>
+                            </div>
+                        </a>
+                        <a class="icon-button" href="/settings" aria-label="@L["Nav.Settings"]" title="@L["Nav.Settings"]">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm8.9 4 1.9 1.5-1.9 3.3-2.3-.7a7.7 7.7 0 0 1-1.6.9l-.3 2.5h-3.8l-.3-2.5a7.7 7.7 0 0 1-1.6-.9l-2.3.7L3 13.5 4.9 12 3 10.5l1.9-3.3 2.3.7c.5-.4 1-.7 1.6-.9l.3-2.5h3.8l.3 2.5c.6.2 1.1.5 1.6.9l2.3-.7L22.8 10.5 20.9 12Z" /></svg>
+                        </a>
                         <form asp-controller="Auth" asp-action="Logout" method="post">
                             @Html.AntiForgeryToken()
                             <button type="submit" class="icon-button" aria-label="@L["Account.SignOut"]">
