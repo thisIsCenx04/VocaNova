@@ -577,4 +577,15 @@
   <data name="Settings.Theme.Dark" xml:space="preserve"><value>Tối</value></data>
   <data name="Settings.Language.Title" xml:space="preserve"><value>Ngôn ngữ</value></data>
   <data name="Settings.Toast.Saved" xml:space="preserve"><value>Đã lưu cài đặt</value></data>
+  <data name="Activity.Eyebrow" xml:space="preserve"><value>Nhật ký kiểm toán</value></data>
+  <data name="Activity.Filter.UserId" xml:space="preserve"><value>ID người dùng</value></data>
+  <data name="Activity.Filter.Entity" xml:space="preserve"><value>Loại thực thể (vd: users)</value></data>
+  <data name="Activity.Empty.Title" xml:space="preserve"><value>Không có hoạt động nào</value></data>
+  <data name="Activity.Empty.Msg" xml:space="preserve"><value>Điều chỉnh bộ lọc rồi thử lại.</value></data>
+  <data name="Activity.Col.Time" xml:space="preserve"><value>Thời gian</value></data>
+  <data name="Activity.Col.User" xml:space="preserve"><value>Người dùng</value></data>
+  <data name="Activity.Col.Action" xml:space="preserve"><value>Hành động</value></data>
+  <data name="Activity.Col.Entity" xml:space="preserve"><value>Thực thể</value></data>
+  <data name="Activity.Col.EntityId" xml:space="preserve"><value>ID thực thể</value></data>
+  <data name="Activity.Col.Ip" xml:space="preserve"><value>Địa chỉ IP</value></data>
 </root>
