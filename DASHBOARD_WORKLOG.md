@@ -22,7 +22,7 @@
 | F061 | Topic management | `feature/dashboard/topic-management` | ✅ | 23/06 |
 | F060 | User management (+ G4/G8 khung) | `feature/dashboard/user-management` | ✅ | 23/06 |
 | F062 | Statistics | `feature/dashboard/statistics` | ✅ | 23/06 |
-| F063 | KNN management (5 lookup) | `feature/dashboard/knn-management` | ⬜ | |
+| F063 | KNN management (5 lookup) | `feature/dashboard/knn-management` | ✅ | 23/06 |
 | FD-01 | Forgot password | `feature/dashboard/forgot-password` | ⬜ | |
 | FD-02 | Profile & Settings | `feature/dashboard/profile-settings` | ⬜ | |
 | FD-03 | Activity logs | `feature/dashboard/activity-logs` | ⬜ | |
@@ -135,6 +135,16 @@
 - Verify: `dotnet build` Dashboard → **0 warning, 0 error**.
 - Commit: *(chờ user yêu cầu)*
 
+### F063 — KNN management
+- `Models/Api/Knn/KnnDtos.cs`: `KnnItemDto` **hợp nhất** cho cả 5 lookup (gộp id riêng từng bảng về `Id`; có name/code/parent/min-max age/display_order/description/status) + `KnnConfigDto`/`KnnOnboardingConfigDto`/`KnnLearningConfigDto` + `KnnRebuildStatusDto`. Map SnakeCaseLower (không field số).
+- `Models/Knn/KnnViewModels.cs`: `KnnTypeDescriptor` + registry `KnnTypes.All` (5 type: key=route+path API, cờ HasCode/HasParent/HasAge/HasDisplayOrder/HasDescription, NameMaxLength 50/100) — **driver** đổi cột bảng + field form, tránh lặp. + `KnnListQuery`/`KnnListViewModel`/`KnnFormViewModel`/`KnnOverviewViewModel`.
+- `KnnController` (generic theo `{type}`): `Overview` (`/knn` → config + rebuild-status), `TriggerRebuild` (`POST trigger-rebuild`, bắt 202/429), `Index` (`GET {type}?q=&include_deleted=&page=&limit=`), create/edit AJAX `_FormModal` (`POST/PUT {type}` — body dựng theo type), delete (bắt 409), restore (PATCH). Validate **mirror backend** (`AdminKnnLookupValidators`): name bắt buộc ≤50(age)/≤100, region code ≤10 + regex `^[A-Za-z0-9_-]+$`, age min≤max & ≥0, description ≤255, display_order ≥0. Unknown type → 404.
+- Views: `Knn/Overview.cshtml` (rebuild status badge + nút Trigger loading + config read-only 2 cột onboarding/learning), `Knn/Index.cshtml` (filter search + toggle deleted, data-table cột động theo descriptor, edit/delete/restore), `Knn/_KnnForm.cshtml` (field hiện theo type, region có dropdown parent loại chính nó), `Knn/_KnnNav.cshtml` (pill sub-nav: Overview + 5 lookup). Region code `.mono`.
+- `site.css`: `.knn-nav`/`.knn-nav__link` pill (dark/light + reduced-motion), tái dùng `.detail-panel`/`.kv-grid`/`.data-table`. Sidebar KNN → `/knn`. Resource EN+VI đầy đủ (`Knn.*`).
+- **Quyết định UI:** "submenu 5 lookup" hiện thực bằng **pill sub-nav** trong khu vực KNN (sidebar phẳng → không lồng menu) — sạch hơn và đủ ý. API KNN **đã đủ toàn bộ** (CRUD + soft delete/restore + config + rebuild) → không thêm gap.
+- Verify: `dotnet build` Dashboard → **0 warning, 0 error** (Razor views compile lúc build).
+- Commit: *(chờ user yêu cầu)*
+
 ---
 
 ## Gap chờ API (An làm) — dashboard đã dựng khung, tự sáng đèn khi có
@@ -156,4 +166,4 @@
 ---
 
 ## Tiếp theo
-**F063 — KNN Management** (nhánh `feature/dashboard/knn-management`): submenu 5 lookup CRUD + soft delete/restore (`/api/admin/knn/{age-ranges|regions|occupations|education-levels|learning-purposes}`) — mỗi trang `_FilterBar`+`_DataTable`+`_FormModal`+`_ConfirmModal`; trang tổng quan config read-only + Trigger Rebuild. Validation mirror backend (name max, region code, parent không cycle). Tái dùng CRUD-modal pattern từ F061.
+**FD-01 — Forgot Password** (nhánh `feature/dashboard/forgot-password`, API có sẵn): `/forgot-password` 3 bước — nhập phone (`POST /api/auth/forgot-password`) → nhập OTP + mật khẩu mới (`/api/auth/otp/verify` + `/api/auth/reset-password`); hiển thị rate-limit/expired rõ; quay lại `/login` sau reset.
