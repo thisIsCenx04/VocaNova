@@ -524,4 +524,30 @@
   <data name="Knn.Config.MinSessions" xml:space="preserve"><value>Min sessions</value></data>
   <data name="Knn.Config.RecommendationCount" xml:space="preserve"><value>Recommendation count</value></data>
   <data name="Knn.Config.RebuildInterval" xml:space="preserve"><value>Rebuild interval (hours)</value></data>
+  <data name="Login.ForgotPassword" xml:space="preserve"><value>Forgot password?</value></data>
+  <data name="Forgot.Title" xml:space="preserve"><value>Reset password</value></data>
+  <data name="Forgot.Subtitle.Request" xml:space="preserve"><value>Enter your phone number to receive a reset code.</value></data>
+  <data name="Forgot.Subtitle.Reset" xml:space="preserve"><value>Enter the code we sent and choose a new password.</value></data>
+  <data name="Forgot.Step.Request" xml:space="preserve"><value>Request code</value></data>
+  <data name="Forgot.Step.Reset" xml:space="preserve"><value>Set password</value></data>
+  <data name="Forgot.Field.Phone" xml:space="preserve"><value>Phone number</value></data>
+  <data name="Forgot.Field.Otp" xml:space="preserve"><value>Verification code</value></data>
+  <data name="Forgot.Field.NewPassword" xml:space="preserve"><value>New password</value></data>
+  <data name="Forgot.Field.ConfirmPassword" xml:space="preserve"><value>Confirm password</value></data>
+  <data name="Forgot.SendCode" xml:space="preserve"><value>Send reset code</value></data>
+  <data name="Forgot.ResetPassword" xml:space="preserve"><value>Reset password</value></data>
+  <data name="Forgot.BackToLogin" xml:space="preserve"><value>Back to sign in</value></data>
+  <data name="Forgot.OtpSent" xml:space="preserve"><value>We sent a reset code to your phone.</value></data>
+  <data name="Forgot.OtpExpiry" xml:space="preserve"><value>The code expires in about {0} minutes.</value></data>
+  <data name="Forgot.PasswordHint" xml:space="preserve"><value>At least 8 characters with uppercase, lowercase and a digit.</value></data>
+  <data name="Forgot.ResetSuccess" xml:space="preserve"><value>Password reset. Sign in with your new password.</value></data>
+  <data name="Forgot.Validation.Phone" xml:space="preserve"><value>Enter a valid Vietnamese phone number.</value></data>
+  <data name="Forgot.Validation.Otp" xml:space="preserve"><value>Enter the 6-digit code.</value></data>
+  <data name="Forgot.Validation.Password" xml:space="preserve"><value>Password must be at least 8 characters with uppercase, lowercase and a digit.</value></data>
+  <data name="Forgot.Validation.Confirm" xml:space="preserve"><value>The passwords do not match.</value></data>
+  <data name="Forgot.Error.RateLimit" xml:space="preserve"><value>Too many requests. Please wait a moment and try again.</value></data>
+  <data name="Forgot.Error.InvalidOtp" xml:space="preserve"><value>The code is invalid or has expired.</value></data>
+  <data name="Forgot.Error.OtpUsed" xml:space="preserve"><value>This code has already been used. Request a new one.</value></data>
+  <data name="Forgot.Error.NotFound" xml:space="preserve"><value>No account uses this phone number.</value></data>
+  <data name="Forgot.Error.Generic" xml:space="preserve"><value>Something went wrong. Please try again.</value></data>
 </root>
