@@ -208,6 +208,75 @@
   <data name="Common.Restore" xml:space="preserve">
     <value>Restore</value>
   </data>
+  <data name="Topics.Eyebrow" xml:space="preserve">
+    <value>Catalog</value>
+  </data>
+  <data name="Topic.Create" xml:space="preserve">
+    <value>New topic</value>
+  </data>
+  <data name="Topic.Edit" xml:space="preserve">
+    <value>Edit topic</value>
+  </data>
+  <data name="Topic.NotFound" xml:space="preserve">
+    <value>Topic not found.</value>
+  </data>
+  <data name="Topic.Col.Icon" xml:space="preserve">
+    <value>Icon</value>
+  </data>
+  <data name="Topic.Col.Name" xml:space="preserve">
+    <value>Topic</value>
+  </data>
+  <data name="Topic.Col.NameVi" xml:space="preserve">
+    <value>Vietnamese name</value>
+  </data>
+  <data name="Topic.Col.Words" xml:space="preserve">
+    <value>Words</value>
+  </data>
+  <data name="Topic.Field.Name" xml:space="preserve">
+    <value>Name (English)</value>
+  </data>
+  <data name="Topic.Field.NameVi" xml:space="preserve">
+    <value>Name (Vietnamese)</value>
+  </data>
+  <data name="Topic.Field.Icon" xml:space="preserve">
+    <value>Icon (optional)</value>
+  </data>
+  <data name="Topic.Delete.Confirm" xml:space="preserve">
+    <value>Delete this topic? It will be soft-deleted.</value>
+  </data>
+  <data name="Topic.Delete.Blocked" xml:space="preserve">
+    <value>Can't delete — {0} word(s) still use this topic</value>
+  </data>
+  <data name="Topic.Empty.Title" xml:space="preserve">
+    <value>No topics yet</value>
+  </data>
+  <data name="Topic.Empty.Msg" xml:space="preserve">
+    <value>Create the first topic to organize vocabulary.</value>
+  </data>
+  <data name="Topic.Validation.NameRequired" xml:space="preserve">
+    <value>Topic name is required.</value>
+  </data>
+  <data name="Topic.Validation.NameMax" xml:space="preserve">
+    <value>Topic name must be 50 characters or fewer.</value>
+  </data>
+  <data name="Topic.Validation.NameViMax" xml:space="preserve">
+    <value>Vietnamese name must be 50 characters or fewer.</value>
+  </data>
+  <data name="Topic.Validation.IconMax" xml:space="preserve">
+    <value>Icon must be 20 characters or fewer.</value>
+  </data>
+  <data name="Toast.TopicCreated" xml:space="preserve">
+    <value>Topic created</value>
+  </data>
+  <data name="Toast.TopicUpdated" xml:space="preserve">
+    <value>Topic updated</value>
+  </data>
+  <data name="Toast.TopicDeleted" xml:space="preserve">
+    <value>Topic deleted</value>
+  </data>
+  <data name="Toast.TopicRestored" xml:space="preserve">
+    <value>Topic restored</value>
+  </data>
   <data name="Confirm.DeleteWord" xml:space="preserve">
     <value>Delete this word? It will be soft-deleted and can be restored later.</value>
   </data>

@@ -208,6 +208,75 @@
   <data name="Common.Restore" xml:space="preserve">
     <value>Khôi phục</value>
   </data>
+  <data name="Topics.Eyebrow" xml:space="preserve">
+    <value>Danh mục</value>
+  </data>
+  <data name="Topic.Create" xml:space="preserve">
+    <value>Thêm chủ đề</value>
+  </data>
+  <data name="Topic.Edit" xml:space="preserve">
+    <value>Sửa chủ đề</value>
+  </data>
+  <data name="Topic.NotFound" xml:space="preserve">
+    <value>Không tìm thấy chủ đề.</value>
+  </data>
+  <data name="Topic.Col.Icon" xml:space="preserve">
+    <value>Biểu tượng</value>
+  </data>
+  <data name="Topic.Col.Name" xml:space="preserve">
+    <value>Chủ đề</value>
+  </data>
+  <data name="Topic.Col.NameVi" xml:space="preserve">
+    <value>Tên tiếng Việt</value>
+  </data>
+  <data name="Topic.Col.Words" xml:space="preserve">
+    <value>Số từ</value>
+  </data>
+  <data name="Topic.Field.Name" xml:space="preserve">
+    <value>Tên (tiếng Anh)</value>
+  </data>
+  <data name="Topic.Field.NameVi" xml:space="preserve">
+    <value>Tên (tiếng Việt)</value>
+  </data>
+  <data name="Topic.Field.Icon" xml:space="preserve">
+    <value>Biểu tượng (tùy chọn)</value>
+  </data>
+  <data name="Topic.Delete.Confirm" xml:space="preserve">
+    <value>Xóa chủ đề này? Sẽ bị xóa mềm.</value>
+  </data>
+  <data name="Topic.Delete.Blocked" xml:space="preserve">
+    <value>Không thể xóa — còn {0} từ đang dùng chủ đề này</value>
+  </data>
+  <data name="Topic.Empty.Title" xml:space="preserve">
+    <value>Chưa có chủ đề</value>
+  </data>
+  <data name="Topic.Empty.Msg" xml:space="preserve">
+    <value>Tạo chủ đề đầu tiên để tổ chức từ vựng.</value>
+  </data>
+  <data name="Topic.Validation.NameRequired" xml:space="preserve">
+    <value>Tên chủ đề là bắt buộc.</value>
+  </data>
+  <data name="Topic.Validation.NameMax" xml:space="preserve">
+    <value>Tên chủ đề tối đa 50 ký tự.</value>
+  </data>
+  <data name="Topic.Validation.NameViMax" xml:space="preserve">
+    <value>Tên tiếng Việt tối đa 50 ký tự.</value>
+  </data>
+  <data name="Topic.Validation.IconMax" xml:space="preserve">
+    <value>Biểu tượng tối đa 20 ký tự.</value>
+  </data>
+  <data name="Toast.TopicCreated" xml:space="preserve">
+    <value>Đã tạo chủ đề</value>
+  </data>
+  <data name="Toast.TopicUpdated" xml:space="preserve">
+    <value>Đã cập nhật chủ đề</value>
+  </data>
+  <data name="Toast.TopicDeleted" xml:space="preserve">
+    <value>Đã xóa chủ đề</value>
+  </data>
+  <data name="Toast.TopicRestored" xml:space="preserve">
+    <value>Đã khôi phục chủ đề</value>
+  </data>
   <data name="Confirm.DeleteWord" xml:space="preserve">
     <value>Xóa từ này? Từ sẽ bị xóa mềm và có thể khôi phục sau.</value>
   </data>

@@ -19,7 +19,7 @@
 | F057 | Vocabulary list & filter | `feature/dashboard/vocab-list` | ✅ | 21/06 |
 | F058 | Vocabulary detail & sense mgmt | `feature/dashboard/vocab-detail` | ✅ | 22/06 |
 | F059 | Vocabulary CSV import | `feature/dashboard/vocab-import` | ✅ | 22/06 |
-| F061 | Topic management | `feature/dashboard/topic-management` | ⬜ | |
+| F061 | Topic management | `feature/dashboard/topic-management` | ✅ | 23/06 |
 | F060 | User management (+ G4/G8 khung) | `feature/dashboard/user-management` | ⬜ | |
 | F062 | Statistics | `feature/dashboard/statistics` | ⬜ | |
 | F063 | KNN management (5 lookup) | `feature/dashboard/knn-management` | ⬜ | |
@@ -105,6 +105,15 @@
 - Verify: Dashboard build **0 warning, 0 error**; `AdminWordCrudFeatureTests.ImportCsvAsync_Should_Import_Valid_Rows_And_Collect_Row_Errors` **pass 1/1**; JS syntax + RESX XML pass; HTTP `/vocabulary/import` → 302 login đúng policy, template → **200 text/csv**. Không smoke import dữ liệu thật vì API `:5013` không chạy và browser tích hợp không kết nối được trong phiên.
 - Commit: `feat(dashboard): add vocabulary CSV import workflow`
 
+### F061 — Topic management
+- `Models/Topics/TopicViewModels.cs`: `TopicListViewModel` (+ cờ `RestoreAvailable`=false do G6) + `TopicFormViewModel` (create/edit dùng chung).
+- `TopicsController`: `Index` (GET `/api/topics`), create/edit qua AJAX `_FormModal` (`GET _TopicForm` → `POST /api/admin/topics` & `PUT /api/admin/topics/{id}`), delete (`DELETE`, bắt 409 hiển thị toast), restore (khung — PATCH có sẵn). Validate mirror backend: name bắt buộc ≤50, name_vi ≤50, icon ≤20.
+- `Views/Topics/Index.cshtml`: data-table (icon, name, name_vi, word_count badge, actions) + nút "New topic"; nút Delete **disabled khi `word_count>0`** kèm tooltip "{0} từ"; empty/error state. `Views/Topics/_TopicForm.cshtml`: form modal create/edit.
+- Sidebar Topics → `/topics`. Resource EN+VI đầy đủ (`Topic.*`, `Topics.Eyebrow`, `Toast.Topic*`).
+- **Khung chờ API:** nút **Restore không hiện** vì G6 (chưa liệt kê được topic đã xóa) — action `POST /topics/{id}/restore` + cờ `RestoreAvailable` đã sẵn, chỉ cần bật khi có admin topic list `includeDeleted`.
+- Verify: `dotnet build` Dashboard → **0 warning, 0 error**.
+- Commit: `feat(dashboard): add topic management with CRUD and delete guard`
+
 ---
 
 ## Gap chờ API (An làm) — dashboard đã dựng khung, tự sáng đèn khi có
@@ -116,7 +125,7 @@
 | G3 | sessions/ngày trong `stats/dashboard` | F056 line (đang dùng `total_count`) |
 | G4/G8 | user lock-unlock / create-update | F060 |
 | G5 | user test-history / activity cho admin | F060 |
-| G6 | admin topic list includeDeleted | F061 |
+| G6 | `GET /api/admin/topics?includeDeleted=` (liệt kê topic đã xóa) | F061 — **khung restore đã dựng**: action `POST /topics/{id}/restore` + cờ `RestoreAvailable` sẵn, bật khi có endpoint |
 | G7 | stats granularity | F062 |
 | G9 | admin-accounts CRUD | FD-04 |
 | G10a | `GET /api/admin/roles` | FE-11 (roles read-only) |
@@ -126,4 +135,4 @@
 ---
 
 ## Tiếp theo
-**F061 — Topic Management** (nhánh `feature/dashboard/topic-management`): list + CRUD modal + delete guard theo `word_count`; restore dựng khung chờ G6.
+**F060 — User Management** (nhánh `feature/dashboard/user-management`): list + filter status + detail tabs (Profile/Learning/Test History/Activity). API có sẵn list/detail/deactivate/restore; lock-unlock (G4) + create/update (G8) + test-history/activity (G5) dựng khung chờ API.

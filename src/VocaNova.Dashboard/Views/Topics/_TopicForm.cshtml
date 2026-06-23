@@ -1,0 +1,30 @@
+@model VocaNova.Dashboard.Models.Topics.TopicFormViewModel
+@{
+    var action = Model.IsEdit ? "Edit" : "Create";
+}
+<form asp-controller="Topics" asp-action="@action" asp-route-id="@Model.TopicId" method="post">
+    @Html.AntiForgeryToken()
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="text-danger small mb-3">@Model.Error</div>
+    }
+
+    <div class="form-field mb-3">
+        <label for="topic-name">@L["Topic.Field.Name"]</label>
+        <input id="topic-name" class="form-control" name="TopicName" value="@Model.TopicName" maxlength="50" required autofocus />
+    </div>
+    <div class="form-field mb-3">
+        <label for="topic-name-vi">@L["Topic.Field.NameVi"]</label>
+        <input id="topic-name-vi" class="form-control" name="TopicNameVi" value="@Model.TopicNameVi" maxlength="50" />
+    </div>
+    <div class="form-field mb-3">
+        <label for="topic-icon">@L["Topic.Field.Icon"]</label>
+        <input id="topic-icon" class="form-control" name="Icon" value="@Model.Icon" maxlength="20" />
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@L["Common.Cancel"]</button>
+        <button type="submit" class="btn btn-primary">@L["Common.Save"]</button>
+    </div>
+</form>
