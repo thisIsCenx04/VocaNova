@@ -1,0 +1,132 @@
+@model VocaNova.Dashboard.Models.Users.UserDetailViewModel
+@using VocaNova.Dashboard.Models.Components
+@{
+    ViewData["Title"] = Model.User?.DisplayName ?? L["Nav.Users"].Value;
+    var isSuper = User.IsInRole("super_admin");
+    var u = Model.User;
+    string Or(string? value) => string.IsNullOrWhiteSpace(value) ? "—" : value!;
+    string Date(DateTime? value) => value.HasValue ? value.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm") : "—";
+}
+
+<nav class="detail-breadcrumb" aria-label="Breadcrumb">
+    <a href="/users">@L["Nav.Users"]</a>
+    <span aria-hidden="true">/</span>
+    <span>@(u?.DisplayName ?? "—")</span>
+</nav>
+
+@if (!Model.Loaded || u is null)
+{
+    <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Error, Title = L["State.LoadError"].Value, Message = Model.ErrorMessage })" />
+}
+else
+{
+    <header class="user-detail-header">
+        <div class="user-detail-header__identity">
+            @if (!string.IsNullOrWhiteSpace(u.AvatarUrl))
+            {
+                <img class="user-detail-avatar" src="@u.AvatarUrl" alt="" />
+            }
+            else
+            {
+                <span class="user-detail-avatar user-detail-avatar--fallback">@(string.IsNullOrWhiteSpace(u.DisplayName) ? "?" : u.DisplayName[..1].ToUpperInvariant())</span>
+            }
+            <div>
+                <h1>@u.DisplayName</h1>
+                <div class="user-detail-header__meta">
+                    <span>@u.Role.Replace("_", " ")</span>
+                    <partial name="Components/_Badge" model="@(new BadgeViewModel { Text = L["User.Status." + u.Status].Value, Modifier = BadgeModifiers.Status(u.Status) })" />
+                </div>
+            </div>
+        </div>
+
+        <div class="row-actions">
+            @* G8: chỉnh sửa user chưa có API → disabled tới khi An deploy. *@
+            <button type="button" class="btn btn-secondary" disabled title="@L["Common.ComingSoon"]">@L["Common.Edit"]</button>
+
+            @if (isSuper)
+            {
+                @* G4: lock/unlock chưa có API → disabled. *@
+                if (string.Equals(u.Status, "locked", StringComparison.OrdinalIgnoreCase))
+                {
+                    <button type="button" class="btn btn-secondary" disabled title="@L["Common.ComingSoon"]">@L["User.Action.Unlock"]</button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-secondary" disabled title="@L["Common.ComingSoon"]">@L["User.Action.Lock"]</button>
+                }
+
+                @* Deactivate/Restore: API có sẵn (super_admin). *@
+                if (string.Equals(u.Status, "deleted", StringComparison.OrdinalIgnoreCase))
+                {
+                    <button type="button" class="btn btn-primary"
+                            data-confirm-url="/users/@u.UserId/restore"
+                            data-confirm-message="@L["User.Restore.Confirm"]"
+                            data-confirm-ok="@L["User.Action.Restore"]">@L["User.Action.Restore"]</button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-danger"
+                            data-confirm-url="/users/@u.UserId/deactivate"
+                            data-confirm-message="@L["User.Deactivate.Confirm"]"
+                            data-confirm-variant="danger"
+                            data-confirm-ok="@L["User.Action.Deactivate"]">@L["User.Action.Deactivate"]</button>
+                }
+            }
+        </div>
+    </header>
+
+    <div class="tabs">
+        <input class="tab-radio" type="radio" name="user-tab" id="tab-profile" checked />
+        <input class="tab-radio" type="radio" name="user-tab" id="tab-learning" />
+        <input class="tab-radio" type="radio" name="user-tab" id="tab-tests" />
+        <input class="tab-radio" type="radio" name="user-tab" id="tab-activity" />
+
+        <div class="tab-list" role="tablist">
+            <label class="tab-label" for="tab-profile">@L["User.Tab.Profile"]</label>
+            <label class="tab-label" for="tab-learning">@L["User.Tab.Learning"]</label>
+            <label class="tab-label" for="tab-tests">@L["User.Tab.Tests"]</label>
+            <label class="tab-label" for="tab-activity">@L["User.Tab.Activity"]</label>
+        </div>
+
+        @* Tab: Profile *@
+        <section class="tab-panel tab-panel--profile detail-panel" role="tabpanel">
+            <dl class="kv-grid">
+                <div><dt>@L["User.Field.Phone"]</dt><dd class="mono">@Or(u.Phone)</dd></div>
+                <div><dt>@L["User.Field.GoogleEmail"]</dt><dd>@Or(u.GoogleEmail)</dd></div>
+                <div><dt>@L["User.Field.Username"]</dt><dd>@Or(u.Username)</dd></div>
+                <div><dt>@L["User.Field.Role"]</dt><dd>@u.Role.Replace("_", " ")</dd></div>
+                <div><dt>@L["User.Field.CreatedAt"]</dt><dd>@Date(u.CreatedAt)</dd></div>
+                <div><dt>@L["User.Field.UpdatedAt"]</dt><dd>@Date(u.UpdatedAt)</dd></div>
+                <div><dt>@L["User.Field.LastLogin"]</dt><dd>@Date(u.LastLoginAt)</dd></div>
+            </dl>
+        </section>
+
+        @* Tab: Learning Profile *@
+        <section class="tab-panel tab-panel--learning detail-panel" role="tabpanel">
+            @if (u.LearningProfile is null)
+            {
+                <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Empty, Title = L["User.Learning.Empty.Title"].Value, Message = L["User.Learning.Empty.Msg"].Value })" />
+            }
+            else
+            {
+                <dl class="kv-grid">
+                    <div><dt>@L["User.Learning.AgeRange"]</dt><dd>@Or(u.LearningProfile.AgeRangeName)</dd></div>
+                    <div><dt>@L["User.Learning.Region"]</dt><dd>@Or(u.LearningProfile.RegionName)</dd></div>
+                    <div><dt>@L["User.Learning.Occupation"]</dt><dd>@Or(u.LearningProfile.OccupationName)</dd></div>
+                    <div><dt>@L["User.Learning.Education"]</dt><dd>@Or(u.LearningProfile.EducationLevelName)</dd></div>
+                    <div><dt>@L["User.Learning.Purpose"]</dt><dd>@Or(u.LearningProfile.LearningPurposeName)</dd></div>
+                </dl>
+            }
+        </section>
+
+        @* Tab: Test History — G5: chưa có API. *@
+        <section class="tab-panel tab-panel--tests detail-panel" role="tabpanel">
+            <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Empty, Title = L["User.Tests.Empty.Title"].Value, Message = L["User.ComingSoon.Msg"].Value })" />
+        </section>
+
+        @* Tab: Activity Log — G5: chưa có API. *@
+        <section class="tab-panel tab-panel--activity detail-panel" role="tabpanel">
+            <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Empty, Title = L["User.Activity.Empty.Title"].Value, Message = L["User.ComingSoon.Msg"].Value })" />
+        </section>
+    </div>
+}
