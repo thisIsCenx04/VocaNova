@@ -1,0 +1,52 @@
+@model VocaNova.Dashboard.Models.AdminAccounts.AdminAccountFormViewModel
+@{
+    var action = Model.IsEdit ? "Edit" : "Create";
+}
+<form asp-controller="AdminAccounts" asp-action="@action" asp-route-id="@Model.Id" method="post">
+    @Html.AntiForgeryToken()
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="text-danger small mb-3">@Model.Error</div>
+    }
+
+    <div class="form-field mb-3">
+        <label for="acc-name">@L["AdminAcc.Field.Name"]</label>
+        <input id="acc-name" class="form-control" name="DisplayName" value="@Model.DisplayName" minlength="2" maxlength="150" required autofocus />
+    </div>
+
+    @if (!Model.IsEdit)
+    {
+        <div class="form-field mb-3">
+            <label for="acc-phone">@L["AdminAcc.Field.Phone"]</label>
+            <input id="acc-phone" class="form-control mono" name="Phone" value="@Model.Phone" pattern="0[3-9][0-9]{8}" inputmode="tel" required />
+        </div>
+        <div class="form-field mb-3">
+            <label for="acc-password">@L["AdminAcc.Field.Password"]</label>
+            <input id="acc-password" type="password" class="form-control" name="Password" autocomplete="new-password" required />
+            <small style="color: var(--muted);">@L["Forgot.PasswordHint"]</small>
+        </div>
+    }
+    else
+    {
+        <div class="form-field mb-3">
+            <label>@L["AdminAcc.Field.Phone"]</label>
+            <input class="form-control mono" value="@Model.Phone" disabled />
+        </div>
+    }
+
+    <div class="form-field mb-3">
+        <label for="acc-role">@L["AdminAcc.Field.Role"]</label>
+        <select id="acc-role" class="form-select" name="Role">
+            @foreach (var r in VocaNova.Dashboard.Models.AdminAccounts.AdminAccountListViewModel.RoleOptions)
+            {
+                <option value="@r" selected="@(Model.Role == r)">@r.Replace("_", " ")</option>
+            }
+        </select>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@L["Common.Cancel"]</button>
+        <button type="submit" class="btn btn-primary">@L["Common.Save"]</button>
+    </div>
+</form>

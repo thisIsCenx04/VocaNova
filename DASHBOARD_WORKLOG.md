@@ -26,7 +26,7 @@
 | FD-01 | Forgot password | `feature/dashboard/forgot-password` | ✅ | 23/06 |
 | FD-02 | Profile & Settings | `feature/dashboard/profile-settings` | ✅ | 23/06 |
 | FD-03 | Activity logs | `feature/dashboard/activity-logs` | ✅ | 23/06 |
-| FD-04 | Admin accounts (khung) | `feature/dashboard/admin-accounts` | ⬜ | |
+| FD-04 | Admin accounts (khung) | `feature/dashboard/admin-accounts` | ✅ | 23/06 |
 
 > **Không làm v1:** FE-11 permissions (❌), FE-07 video / G11 (⏸), FE-08 auto-suggest media / G12 (⏸). Xem `DASHBOARD_PLAN.md` §0.
 
@@ -173,6 +173,17 @@
 - Verify: `dotnet build` Dashboard → **0 warning, 0 error**.
 - Commit: *(chờ user yêu cầu)*
 
+### FD-04 — Admin account management (khung G9)
+- `Models/Api/AdminAccounts/AdminAccountDto.cs` (contract G9 mình định nghĩa rõ trong comment: GET/POST/PUT/DELETE `/api/admin/admin-accounts`) + `Models/AdminAccounts/AdminAccountViewModels.cs` (list + cờ `ApiAvailable`, form, query, RoleOptions admin/super_admin).
+- `AdminAccountsController` **[Authorize(Roles="super_admin")]** (R3): Index (GET, **404 → `ApiAvailable=false`**), create/edit AJAX `_FormModal`, delete confirm. Validate mirror contract: phone VN, name 2–150, password Strong (khi tạo), role hợp lệ. 404 ở mutation → message "Sắp có".
+- `Views/AdminAccounts/Index.cshtml`: khi `!ApiAvailable` → nút New **disabled** + `_StateBlock` "Sắp có"; khi có API → filter + data-table (name, phone, role badge, status badge, created, edit/delete) + pagination. `_AdminAccountForm.cshtml`: tạo (phone+password+role) / sửa (name+role, phone read-only).
+- Sidebar "Admin Accounts" (chỉ super_admin) → `/admin-accounts`. Resource EN+VI (`AdminAcc.*`).
+- **Khung chờ API G9:** toàn bộ UI + controller + validate đã sẵn theo contract; chưa có endpoint → trang ở trạng thái "Sắp có", **tự sáng đèn** khi An deploy `/api/admin/admin-accounts` (không phải sửa UI).
+- Verify: `dotnet build` Dashboard → **0 warning, 0 error**.
+- Commit: *(chờ user yêu cầu)*
+
+> 🎉 **Hoàn thành toàn bộ kế hoạch dashboard** (F055.x → F063, FD-01 → FD-04).
+
 ---
 
 ## Gap chờ API (An làm) — dashboard đã dựng khung, tự sáng đèn khi có
@@ -186,7 +197,7 @@
 | G5 | user test-history / activity cho admin | F060 |
 | G6 | `GET /api/admin/topics?includeDeleted=` (liệt kê topic đã xóa) | F061 — **khung restore đã dựng**: action `POST /topics/{id}/restore` + cờ `RestoreAvailable` sẵn, bật khi có endpoint |
 | G7 | `GET /api/admin/stats/learning?granularity=daily\|weekly\|monthly` | F062 — **khung dropdown đã dựng**: select disabled "Sắp có", cờ `GranularityAvailable` sẵn, bật khi có param |
-| G9 | admin-accounts CRUD | FD-04 |
+| G9 | `GET/POST/PUT/DELETE /api/admin/admin-accounts` (super_admin) | FD-04 — **khung đã dựng đủ**: controller + view + validate theo contract, cờ `ApiAvailable` (404→"Sắp có"), tự sáng đèn khi deploy |
 | G10a | `GET /api/admin/roles` | FE-11 (roles read-only) |
 | G13 | Sense soft-delete/restore: routes đã có nhưng service luôn fail do schema `word_senses` chưa có trạng thái xóa | F058 (nút delete/restore disabled; proxy action đã dựng) |
 | G14 | Example mutation: cần `POST /api/admin/words/{id}/senses/{senseId}/examples` + `DELETE .../examples/{exampleId}` | F058 (đang view-only; nút Add disabled) |
@@ -194,4 +205,7 @@
 ---
 
 ## Tiếp theo
-**FD-04 — Admin Account Management (khung)** (nhánh `feature/dashboard/admin-accounts`, super_admin): UI đầy đủ list + create/edit `_FormModal` + delete confirm theo contract **G9** (`/api/admin/admin-accounts`); chưa có API → `_StateBlock` Empty/disabled, tự sáng đèn khi An deploy. Sidebar "Admin Accounts" (super_admin) trỏ vào đây. **Đây là task cuối cùng** của kế hoạch dashboard.
+✅ **Đã hoàn thành toàn bộ kế hoạch dashboard.** Không còn task ⬜ nào trong `DASHBOARD_PLAN.md`.
+
+Việc còn lại phụ thuộc **An** triển khai các API gap (bảng trên) — UI đã dựng khung sẵn, tự sáng đèn khi endpoint có:
+- G1/G2/G3 (vocab admin list, mastery pie, sessions trend), G4/G5/G8 (user lock-unlock/history/create-update), G6 (topic restore), G7 (stats granularity), G9 (admin-accounts), G10a (roles), G13/G14 (sense soft-delete / example mutation).

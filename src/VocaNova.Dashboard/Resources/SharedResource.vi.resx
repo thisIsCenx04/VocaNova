@@ -588,4 +588,28 @@
   <data name="Activity.Col.Entity" xml:space="preserve"><value>Thực thể</value></data>
   <data name="Activity.Col.EntityId" xml:space="preserve"><value>ID thực thể</value></data>
   <data name="Activity.Col.Ip" xml:space="preserve"><value>Địa chỉ IP</value></data>
+  <data name="AdminAcc.Eyebrow" xml:space="preserve"><value>Kiểm soát truy cập</value></data>
+  <data name="AdminAcc.New" xml:space="preserve"><value>Thêm quản trị viên</value></data>
+  <data name="AdminAcc.NotFound" xml:space="preserve"><value>Không tìm thấy tài khoản quản trị này.</value></data>
+  <data name="AdminAcc.ComingSoon" xml:space="preserve"><value>API tài khoản quản trị chưa khả dụng.</value></data>
+  <data name="AdminAcc.Skeleton.Title" xml:space="preserve"><value>Tài khoản quản trị sắp có</value></data>
+  <data name="AdminAcc.Skeleton.Msg" xml:space="preserve"><value>Trang đã sẵn sàng và sẽ tự kích hoạt khi API tài khoản quản trị được triển khai.</value></data>
+  <data name="AdminAcc.Empty.Title" xml:space="preserve"><value>Chưa có tài khoản quản trị</value></data>
+  <data name="AdminAcc.Empty.Msg" xml:space="preserve"><value>Tạo tài khoản quản trị đầu tiên.</value></data>
+  <data name="AdminAcc.Col.Name" xml:space="preserve"><value>Tên</value></data>
+  <data name="AdminAcc.Col.Phone" xml:space="preserve"><value>Số điện thoại</value></data>
+  <data name="AdminAcc.Col.Role" xml:space="preserve"><value>Vai trò</value></data>
+  <data name="AdminAcc.Col.Created" xml:space="preserve"><value>Ngày tạo</value></data>
+  <data name="AdminAcc.Field.Name" xml:space="preserve"><value>Tên hiển thị</value></data>
+  <data name="AdminAcc.Field.Phone" xml:space="preserve"><value>Số điện thoại</value></data>
+  <data name="AdminAcc.Field.Password" xml:space="preserve"><value>Mật khẩu ban đầu</value></data>
+  <data name="AdminAcc.Field.Role" xml:space="preserve"><value>Vai trò</value></data>
+  <data name="AdminAcc.Delete.Confirm" xml:space="preserve"><value>Xóa tài khoản quản trị này? Họ sẽ mất quyền truy cập dashboard.</value></data>
+  <data name="AdminAcc.Validation.Phone" xml:space="preserve"><value>Nhập số điện thoại Việt Nam hợp lệ.</value></data>
+  <data name="AdminAcc.Validation.Name" xml:space="preserve"><value>Tên hiển thị phải từ 2 đến 150 ký tự.</value></data>
+  <data name="AdminAcc.Validation.Password" xml:space="preserve"><value>Mật khẩu tối thiểu 8 ký tự, có chữ hoa, chữ thường và số.</value></data>
+  <data name="AdminAcc.Validation.Role" xml:space="preserve"><value>Chọn vai trò hợp lệ.</value></data>
+  <data name="AdminAcc.Toast.Created" xml:space="preserve"><value>Đã tạo tài khoản quản trị</value></data>
+  <data name="AdminAcc.Toast.Updated" xml:space="preserve"><value>Đã cập nhật tài khoản quản trị</value></data>
+  <data name="AdminAcc.Toast.Deleted" xml:space="preserve"><value>Đã xóa tài khoản quản trị</value></data>
 </root>
