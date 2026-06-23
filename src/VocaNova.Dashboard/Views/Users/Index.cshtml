@@ -1,0 +1,88 @@
+@model VocaNova.Dashboard.Models.Users.UserListViewModel
+@using VocaNova.Dashboard.Models.Components
+@{
+    ViewData["Title"] = L["Nav.Users"];
+    string PageUrl(int p) => Url.Action("Index", new
+    {
+        search = Model.Query.Search,
+        status = Model.Query.Status,
+        page = p,
+        limit = Model.Query.Limit,
+    }) ?? "#";
+}
+
+<div class="page-header">
+    <div>
+        <p class="eyebrow">@L["Users.Eyebrow"]</p>
+        <h1>@L["Nav.Users"]</h1>
+    </div>
+</div>
+
+<form class="filter-bar" method="get" asp-controller="Users" asp-action="Index">
+    <input class="form-control" type="search" name="search" value="@Model.Query.Search" placeholder="@L["Users.SearchPlaceholder"]" />
+    <select class="form-select" name="status">
+        <option value="">@L["Users.Filter.AllStatus"]</option>
+        @foreach (var s in VocaNova.Dashboard.Models.Users.UserListViewModel.StatusOptions)
+        {
+            <option value="@s" selected="@(string.Equals(Model.Query.Status, s, StringComparison.OrdinalIgnoreCase))">@L["User.Status." + s]</option>
+        }
+    </select>
+    <button class="btn btn-primary" type="submit">@L["Common.Apply"]</button>
+</form>
+
+@if (!Model.Loaded)
+{
+    <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Error, Title = L["State.LoadError"].Value })" />
+}
+else if (Model.Users.Count == 0)
+{
+    <partial name="Components/_StateBlock" model="@(new StateBlockViewModel { State = BlockState.Empty, Title = L["Users.Empty.Title"].Value, Message = L["Users.Empty.Msg"].Value })" />
+}
+else
+{
+    <div class="data-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>@L["Users.Col.User"]</th>
+                    <th>@L["Users.Col.Phone"]</th>
+                    <th>@L["Users.Col.Role"]</th>
+                    <th>@L["Tbl.Status"]</th>
+                    <th>@L["Users.Col.LastLogin"]</th>
+                    <th>@L["Tbl.Actions"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model.Users)
+                {
+                    <tr>
+                        <td>
+                            <div class="user-cell">
+                                @if (!string.IsNullOrWhiteSpace(u.AvatarUrl))
+                                {
+                                    <img class="user-cell__avatar" src="@u.AvatarUrl" alt="" />
+                                }
+                                else
+                                {
+                                    <span class="user-cell__avatar user-cell__avatar--fallback">@(string.IsNullOrWhiteSpace(u.DisplayName) ? "?" : u.DisplayName[..1].ToUpperInvariant())</span>
+                                }
+                                <strong>@u.DisplayName</strong>
+                            </div>
+                        </td>
+                        <td><span class="mono">@(string.IsNullOrWhiteSpace(u.Phone) ? "—" : u.Phone)</span></td>
+                        <td>@u.Role.Replace("_", " ")</td>
+                        <td><partial name="Components/_Badge" model="@(new BadgeViewModel { Text = L["User.Status." + u.Status].Value, Modifier = BadgeModifiers.Status(u.Status) })" /></td>
+                        <td>@(u.LastLoginAt.HasValue ? u.LastLoginAt.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm") : "—")</td>
+                        <td>
+                            <div class="row-actions">
+                                <a class="btn btn-sm btn-secondary" href="/users/@u.UserId">@L["Common.View"]</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <partial name="Components/_Pagination" model="@(new PaginationViewModel { Page = Model.Pagination?.Page ?? 1, TotalPages = Model.Pagination?.TotalPages ?? 1, TotalItems = Model.Pagination?.TotalItems ?? Model.Users.Count, PageUrl = PageUrl })" />
+}

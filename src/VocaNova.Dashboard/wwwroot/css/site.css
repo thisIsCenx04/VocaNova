@@ -1645,3 +1645,160 @@ body {
     transition: none;
   }
 }
+
+/* ============================================================
+   User management (F060) — list cell, detail header + CSS tabs.
+   ============================================================ */
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-cell__avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-cell__avatar--fallback,
+.user-detail-avatar--fallback {
+  display: grid;
+  place-items: center;
+  color: var(--surface);
+  background: var(--accent);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.user-detail-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.user-detail-header__identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-detail-avatar {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  font-size: 1.4rem;
+}
+
+.user-detail-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.user-detail-header__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 5px;
+  color: var(--muted);
+  text-transform: capitalize;
+}
+
+/* CSS-only tabs (radio + :checked sibling), không cần JS. */
+.tabs {
+  display: grid;
+}
+
+.tab-radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.tab-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tab-label {
+  padding: 10px 16px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.tab-label:hover {
+  color: var(--ink);
+}
+
+.tab-radio:focus-visible + .tab-list .tab-label {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tab-panel {
+  display: none;
+}
+
+#tab-profile:checked ~ .tab-list label[for="tab-profile"],
+#tab-learning:checked ~ .tab-list label[for="tab-learning"],
+#tab-tests:checked ~ .tab-list label[for="tab-tests"],
+#tab-activity:checked ~ .tab-list label[for="tab-activity"] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+#tab-profile:checked ~ .tab-panel--profile,
+#tab-learning:checked ~ .tab-panel--learning,
+#tab-tests:checked ~ .tab-panel--tests,
+#tab-activity:checked ~ .tab-panel--activity {
+  display: block;
+}
+
+.kv-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 28px;
+  margin: 0;
+}
+
+.kv-grid dt {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.kv-grid dd {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+@media (max-width: 700px) {
+  .kv-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-label {
+    transition: none;
+  }
+}

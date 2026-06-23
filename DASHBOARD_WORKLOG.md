@@ -20,7 +20,7 @@
 | F058 | Vocabulary detail & sense mgmt | `feature/dashboard/vocab-detail` | ✅ | 22/06 |
 | F059 | Vocabulary CSV import | `feature/dashboard/vocab-import` | ✅ | 22/06 |
 | F061 | Topic management | `feature/dashboard/topic-management` | ✅ | 23/06 |
-| F060 | User management (+ G4/G8 khung) | `feature/dashboard/user-management` | ⬜ | |
+| F060 | User management (+ G4/G8 khung) | `feature/dashboard/user-management` | ✅ | 23/06 |
 | F062 | Statistics | `feature/dashboard/statistics` | ⬜ | |
 | F063 | KNN management (5 lookup) | `feature/dashboard/knn-management` | ⬜ | |
 | FD-01 | Forgot password | `feature/dashboard/forgot-password` | ⬜ | |
@@ -114,6 +114,17 @@
 - Verify: `dotnet build` Dashboard → **0 warning, 0 error**.
 - Commit: `feat(dashboard): add topic management with CRUD and delete guard`
 
+### F060 — User management
+- `Models/Api/Users/AdminUserDtos.cs`: `AdminUserSummaryDto` / `AdminUserDetailDto` / `AdminUserLearningProfileDto` khớp đúng API (`AdminUsersController` + `AdminUserDtos`); map qua `ApiJson.Default` SnakeCaseLower (không field số → không cần `[JsonPropertyName]`).
+- `Models/Users/UserViewModels.cs`: `UserListQuery` (search/status/page/limit) + `UserListViewModel` (StatusOptions active/locked/deleted) + `UserDetailViewModel` (cờ `LockUnlockAvailable`/`EditAvailable`/`HistoryAvailable`=false do G4/G8/G5).
+- `UsersController`: `Index` (`GET /api/admin/users?search=&status=&page=&limit=`, lọc status không hợp lệ để giữ trang sống), `Detail` (`GET /api/admin/users/{id}`), `Deactivate`/`Restore` (`PATCH .../deactivate|restore`, super_admin — API enforce policy, 403 hiện qua toast). Khung sẵn `Lock`/`Unlock` theo contract G4.
+- `Views/Users/Index.cshtml`: filter bar (search + dropdown status) + data-table (avatar/tên, phone mono, role, status badge, last login) + pagination; empty/error state.
+- `Views/Users/Detail.cshtml`: header (avatar, role, status badge) + 4 CSS-only tab (radio, không JS): Profile · Learning profile · Test history · Activity log. Deactivate/Restore (super_admin) qua `_ConfirmModal`; nút **Edit (G8)** + **Lock/Unlock (G4)** disabled tooltip "Sắp có"; tab Test history/Activity (G5) = `_StateBlock` Empty; Learning profile null → Empty. Ẩn nút super-only với admin thường (R3).
+- `site.css`: `.user-cell`, `.user-detail-header`, `.user-detail-avatar`, `.tabs`/`.tab-*` (CSS radio tabs), `.kv-grid` — dark/light token + responsive + reduced-motion. Sidebar Users → `/users`. Resource EN+VI đầy đủ (`Users.*`, `User.*`, `Common.View`, `Common.ComingSoon`, `Toast.User*`).
+- **Khung chờ API:** G4 (lock/unlock) + G8 (create/update user) → nút disabled "Sắp có"; G5 (test-history/activity admin) → tab Empty. Cờ trong `UserDetailViewModel` + action proxy (Lock/Unlock) đã sẵn, bật khi An deploy.
+- Verify: `dotnet build` Dashboard → **0 warning, 0 error**.
+- Commit: *(chờ user yêu cầu)*
+
 ---
 
 ## Gap chờ API (An làm) — dashboard đã dựng khung, tự sáng đèn khi có
@@ -135,4 +146,4 @@
 ---
 
 ## Tiếp theo
-**F060 — User Management** (nhánh `feature/dashboard/user-management`): list + filter status + detail tabs (Profile/Learning/Test History/Activity). API có sẵn list/detail/deactivate/restore; lock-unlock (G4) + create/update (G8) + test-history/activity (G5) dựng khung chờ API.
+**F062 — Statistics** (nhánh `feature/dashboard/statistics`): chart sessions/time + accuracy trend (`GET /api/admin/stats/learning`), bảng Top 20 wrong words, 3 chart demographics (`GET /api/admin/stats/demographics`); dropdown granularity (G7) tạm fix 1 mức.

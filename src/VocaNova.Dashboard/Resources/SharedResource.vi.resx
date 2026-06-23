@@ -397,4 +397,49 @@
   <data name="Import.Validation.TooLarge" xml:space="preserve"><value>Tệp CSV không được lớn hơn 5 MB.</value></data>
   <data name="Import.Toast.Completed" xml:space="preserve"><value>Đã hoàn tất import từ vựng</value></data>
   <data name="Import.ErrorFileName" xml:space="preserve"><value>loi-import-tu-vung.csv</value></data>
+  <data name="Common.View" xml:space="preserve"><value>Xem</value></data>
+  <data name="Common.ComingSoon" xml:space="preserve"><value>Sắp có</value></data>
+  <data name="Users.Eyebrow" xml:space="preserve"><value>Người dùng</value></data>
+  <data name="Users.SearchPlaceholder" xml:space="preserve"><value>Tìm theo số điện thoại hoặc tên</value></data>
+  <data name="Users.Filter.AllStatus" xml:space="preserve"><value>Tất cả trạng thái</value></data>
+  <data name="Users.Empty.Title" xml:space="preserve"><value>Không tìm thấy người dùng</value></data>
+  <data name="Users.Empty.Msg" xml:space="preserve"><value>Điều chỉnh từ khóa hoặc bộ lọc rồi thử lại.</value></data>
+  <data name="Users.Col.User" xml:space="preserve"><value>Người dùng</value></data>
+  <data name="Users.Col.Phone" xml:space="preserve"><value>Số điện thoại</value></data>
+  <data name="Users.Col.Role" xml:space="preserve"><value>Vai trò</value></data>
+  <data name="Users.Col.LastLogin" xml:space="preserve"><value>Đăng nhập gần nhất</value></data>
+  <data name="User.Status.active" xml:space="preserve"><value>Đang hoạt động</value></data>
+  <data name="User.Status.locked" xml:space="preserve"><value>Đã khóa</value></data>
+  <data name="User.Status.deleted" xml:space="preserve"><value>Đã xóa</value></data>
+  <data name="User.Action.Lock" xml:space="preserve"><value>Khóa</value></data>
+  <data name="User.Action.Unlock" xml:space="preserve"><value>Mở khóa</value></data>
+  <data name="User.Action.Deactivate" xml:space="preserve"><value>Vô hiệu hóa</value></data>
+  <data name="User.Action.Restore" xml:space="preserve"><value>Khôi phục</value></data>
+  <data name="User.Deactivate.Confirm" xml:space="preserve"><value>Vô hiệu hóa người dùng này? Họ sẽ bị đăng xuất và mất quyền truy cập.</value></data>
+  <data name="User.Restore.Confirm" xml:space="preserve"><value>Khôi phục người dùng này về trạng thái hoạt động?</value></data>
+  <data name="User.Tab.Profile" xml:space="preserve"><value>Hồ sơ</value></data>
+  <data name="User.Tab.Learning" xml:space="preserve"><value>Hồ sơ học tập</value></data>
+  <data name="User.Tab.Tests" xml:space="preserve"><value>Lịch sử kiểm tra</value></data>
+  <data name="User.Tab.Activity" xml:space="preserve"><value>Nhật ký hoạt động</value></data>
+  <data name="User.Field.Phone" xml:space="preserve"><value>Số điện thoại</value></data>
+  <data name="User.Field.GoogleEmail" xml:space="preserve"><value>Email Google</value></data>
+  <data name="User.Field.Username" xml:space="preserve"><value>Tên đăng nhập</value></data>
+  <data name="User.Field.Role" xml:space="preserve"><value>Vai trò</value></data>
+  <data name="User.Field.CreatedAt" xml:space="preserve"><value>Ngày tham gia</value></data>
+  <data name="User.Field.UpdatedAt" xml:space="preserve"><value>Cập nhật gần nhất</value></data>
+  <data name="User.Field.LastLogin" xml:space="preserve"><value>Đăng nhập gần nhất</value></data>
+  <data name="User.Learning.AgeRange" xml:space="preserve"><value>Nhóm tuổi</value></data>
+  <data name="User.Learning.Region" xml:space="preserve"><value>Khu vực</value></data>
+  <data name="User.Learning.Occupation" xml:space="preserve"><value>Nghề nghiệp</value></data>
+  <data name="User.Learning.Education" xml:space="preserve"><value>Trình độ học vấn</value></data>
+  <data name="User.Learning.Purpose" xml:space="preserve"><value>Mục đích học</value></data>
+  <data name="User.Learning.Empty.Title" xml:space="preserve"><value>Chưa có hồ sơ học tập</value></data>
+  <data name="User.Learning.Empty.Msg" xml:space="preserve"><value>Người dùng này chưa hoàn tất thiết lập ban đầu.</value></data>
+  <data name="User.Tests.Empty.Title" xml:space="preserve"><value>Lịch sử kiểm tra chưa khả dụng</value></data>
+  <data name="User.Activity.Empty.Title" xml:space="preserve"><value>Nhật ký hoạt động chưa khả dụng</value></data>
+  <data name="User.ComingSoon.Msg" xml:space="preserve"><value>Dữ liệu này sẽ hiển thị khi endpoint quản trị được triển khai.</value></data>
+  <data name="Toast.UserDeactivated" xml:space="preserve"><value>Đã vô hiệu hóa người dùng</value></data>
+  <data name="Toast.UserRestored" xml:space="preserve"><value>Đã khôi phục người dùng</value></data>
+  <data name="Toast.UserLocked" xml:space="preserve"><value>Đã khóa người dùng</value></data>
+  <data name="Toast.UserUnlocked" xml:space="preserve"><value>Đã mở khóa người dùng</value></data>
 </root>

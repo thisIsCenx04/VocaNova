@@ -397,4 +397,49 @@
   <data name="Import.Validation.TooLarge" xml:space="preserve"><value>The CSV file must be 5 MB or smaller.</value></data>
   <data name="Import.Toast.Completed" xml:space="preserve"><value>Vocabulary import completed</value></data>
   <data name="Import.ErrorFileName" xml:space="preserve"><value>vocabulary-import-errors.csv</value></data>
+  <data name="Common.View" xml:space="preserve"><value>View</value></data>
+  <data name="Common.ComingSoon" xml:space="preserve"><value>Coming soon</value></data>
+  <data name="Users.Eyebrow" xml:space="preserve"><value>People</value></data>
+  <data name="Users.SearchPlaceholder" xml:space="preserve"><value>Search by phone or name</value></data>
+  <data name="Users.Filter.AllStatus" xml:space="preserve"><value>All statuses</value></data>
+  <data name="Users.Empty.Title" xml:space="preserve"><value>No users found</value></data>
+  <data name="Users.Empty.Msg" xml:space="preserve"><value>Adjust your search or filters and try again.</value></data>
+  <data name="Users.Col.User" xml:space="preserve"><value>User</value></data>
+  <data name="Users.Col.Phone" xml:space="preserve"><value>Phone</value></data>
+  <data name="Users.Col.Role" xml:space="preserve"><value>Role</value></data>
+  <data name="Users.Col.LastLogin" xml:space="preserve"><value>Last login</value></data>
+  <data name="User.Status.active" xml:space="preserve"><value>Active</value></data>
+  <data name="User.Status.locked" xml:space="preserve"><value>Locked</value></data>
+  <data name="User.Status.deleted" xml:space="preserve"><value>Deleted</value></data>
+  <data name="User.Action.Lock" xml:space="preserve"><value>Lock</value></data>
+  <data name="User.Action.Unlock" xml:space="preserve"><value>Unlock</value></data>
+  <data name="User.Action.Deactivate" xml:space="preserve"><value>Deactivate</value></data>
+  <data name="User.Action.Restore" xml:space="preserve"><value>Restore</value></data>
+  <data name="User.Deactivate.Confirm" xml:space="preserve"><value>Deactivate this user? They will be signed out and lose access.</value></data>
+  <data name="User.Restore.Confirm" xml:space="preserve"><value>Restore this user to active status?</value></data>
+  <data name="User.Tab.Profile" xml:space="preserve"><value>Profile</value></data>
+  <data name="User.Tab.Learning" xml:space="preserve"><value>Learning profile</value></data>
+  <data name="User.Tab.Tests" xml:space="preserve"><value>Test history</value></data>
+  <data name="User.Tab.Activity" xml:space="preserve"><value>Activity log</value></data>
+  <data name="User.Field.Phone" xml:space="preserve"><value>Phone</value></data>
+  <data name="User.Field.GoogleEmail" xml:space="preserve"><value>Google email</value></data>
+  <data name="User.Field.Username" xml:space="preserve"><value>Username</value></data>
+  <data name="User.Field.Role" xml:space="preserve"><value>Role</value></data>
+  <data name="User.Field.CreatedAt" xml:space="preserve"><value>Joined</value></data>
+  <data name="User.Field.UpdatedAt" xml:space="preserve"><value>Last updated</value></data>
+  <data name="User.Field.LastLogin" xml:space="preserve"><value>Last login</value></data>
+  <data name="User.Learning.AgeRange" xml:space="preserve"><value>Age range</value></data>
+  <data name="User.Learning.Region" xml:space="preserve"><value>Region</value></data>
+  <data name="User.Learning.Occupation" xml:space="preserve"><value>Occupation</value></data>
+  <data name="User.Learning.Education" xml:space="preserve"><value>Education level</value></data>
+  <data name="User.Learning.Purpose" xml:space="preserve"><value>Learning purpose</value></data>
+  <data name="User.Learning.Empty.Title" xml:space="preserve"><value>No learning profile yet</value></data>
+  <data name="User.Learning.Empty.Msg" xml:space="preserve"><value>This user has not completed onboarding.</value></data>
+  <data name="User.Tests.Empty.Title" xml:space="preserve"><value>Test history not available yet</value></data>
+  <data name="User.Activity.Empty.Title" xml:space="preserve"><value>Activity log not available yet</value></data>
+  <data name="User.ComingSoon.Msg" xml:space="preserve"><value>This data will appear once the admin endpoint ships.</value></data>
+  <data name="Toast.UserDeactivated" xml:space="preserve"><value>User deactivated</value></data>
+  <data name="Toast.UserRestored" xml:space="preserve"><value>User restored</value></data>
+  <data name="Toast.UserLocked" xml:space="preserve"><value>User locked</value></data>
+  <data name="Toast.UserUnlocked" xml:space="preserve"><value>User unlocked</value></data>
 </root>
