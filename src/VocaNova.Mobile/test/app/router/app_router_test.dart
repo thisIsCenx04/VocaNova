@@ -79,7 +79,9 @@ void main() {
     await pumpRouter(tester, router, settle: false);
 
     expect(router.state.matchedLocation, AppRoutes.wordDetail('42'));
-    expect(find.text('Chi tiết từ'), findsOneWidget);
+    expect(find.byKey(const Key('word-detail-screen')), findsOneWidget);
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Search'), findsOneWidget);
   });
 }
 

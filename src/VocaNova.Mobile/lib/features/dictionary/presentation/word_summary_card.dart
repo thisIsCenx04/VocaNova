@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:vocanova_mobile/app/theme/app_colors.dart';
+import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 
 class WordSummaryCard extends StatelessWidget {
@@ -9,13 +11,24 @@ class WordSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final surface = dark ? AppColors.surface : Colors.white;
+    final text = dark ? AppColors.onSurface : AppColors.lightOnSurface;
+    final secondary = dark ? const Color(0xFFAAA6B3) : AppColors.lightLabel;
+    final border = dark ? const Color(0xFF3A3A3A) : AppColors.lightBorder;
+    return Material(
+      color: surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: border, width: 1.25),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         key: Key('word-card-${word.wordId}'),
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(14),
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.fromLTRB(14, 13, 12, 13),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -28,8 +41,12 @@ class WordSummaryCard extends StatelessWidget {
                         Flexible(
                           child: Text(
                             word.word,
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(fontWeight: FontWeight.w800),
+                            style: AppTextStyles.button.copyWith(
+                              color: text,
+                              fontSize: 17,
+                              height: 23.8 / 17,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                         if (word.cefr != null) ...[
@@ -42,8 +59,9 @@ class WordSummaryCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         word.phonetic!,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.primary,
+                          fontSize: 13,
                         ),
                       ),
                     ],
@@ -53,13 +71,17 @@ class WordSummaryCard extends StatelessWidget {
                         word.primaryMeaning!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.caption.copyWith(
+                          color: secondary,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ],
                 ),
               ),
               const SizedBox(width: 12),
-              const Icon(Icons.chevron_right),
+              Icon(Icons.chevron_right, size: 18, color: secondary),
             ],
           ),
         ),
@@ -77,15 +99,17 @@ class _CefrBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(10),
+        color: AppColors.primary.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         child: Text(
           level,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: Theme.of(context).colorScheme.primary,
+          style: AppTextStyles.caption.copyWith(
+            color: AppColors.primary,
+            fontSize: 11,
+            height: 16.5 / 11,
             fontWeight: FontWeight.w800,
           ),
         ),

@@ -37,16 +37,42 @@ void main() {
       expect(options.data, {
         'word_id': 7,
         'add_method': 'manual',
-        'note': null,
+        'note': 'Review tomorrow',
       });
       return jsonResponse({'word_id': 7});
     });
     final repository = WordDetailRepository(dio: dio);
 
     expect((await repository.getLists()).single.listName, 'Favorites');
-    await repository.addWordToList(listId: 3, wordId: 7);
+    await repository.addWordToList(
+      listId: 3,
+      wordId: 7,
+      note: 'Review tomorrow',
+    );
     expect(requests, 2);
   });
+
+  test(
+    'createList sends the list contract and parses the created list',
+    () async {
+      final dio = Dio();
+      dio.httpClientAdapter = CallbackAdapter((options) {
+        expect(options.method, 'POST');
+        expect(options.path, ApiEndpoints.lists);
+        expect(options.data, {'list_name': 'Study'});
+        return jsonResponse({
+          'list_id': 9,
+          'list_name': 'Study',
+          'word_count': 0,
+        });
+      });
+
+      final list = await WordDetailRepository(dio: dio).createList('Study');
+
+      expect(list.listId, 9);
+      expect(list.listName, 'Study');
+    },
+  );
 }
 
 typedef AdapterCallback = ResponseBody Function(RequestOptions options);
@@ -113,7 +139,6 @@ const wordJson = <String, dynamic>{
       'name': 'Communication',
       'name_vi': 'Giao tiếp',
       'icon': null,
-      'is_primary': true,
     },
   ],
 };

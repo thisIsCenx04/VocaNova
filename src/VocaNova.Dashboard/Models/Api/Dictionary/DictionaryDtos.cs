@@ -95,5 +95,4 @@ public sealed class WordTopicDto
     public string Name { get; set; } = string.Empty;
     public string? NameVi { get; set; }
     public string? Icon { get; set; }
-    public bool IsPrimary { get; set; }
 }

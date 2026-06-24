@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -101,6 +102,31 @@ void main() {
       ),
     );
   });
+
+  test(
+    'clearing the query resets filters and ignores an in-flight request',
+    () async {
+      final response = Completer<List<WordSummary>>();
+      when(() => connectivity.isOnline).thenAnswer((_) async => true);
+      when(
+        () => repository.search(query: 'hello', cefr: 'A1', topicId: null),
+      ).thenAnswer((_) => response.future);
+
+      final notifier = container.read(wordSearchProvider.notifier);
+      notifier.queryChanged('hello');
+      final pendingSearch = notifier.selectCefr('A1');
+      await Future<void>.delayed(Duration.zero);
+      notifier.queryChanged('');
+      response.complete(const [WordSummary(wordId: 1, word: 'hello')]);
+      await pendingSearch;
+
+      final state = container.read(wordSearchProvider);
+      expect(state.query, isEmpty);
+      expect(state.selectedCefr, isNull);
+      expect(state.selectedTopicId, isNull);
+      expect(state.results, isEmpty);
+    },
+  );
 }
 
 class MockWordSearchRepository extends Mock implements WordSearchRepository {}

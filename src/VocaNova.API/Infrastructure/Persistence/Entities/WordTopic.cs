@@ -9,8 +9,6 @@ public partial class WordTopic
 
     public uint TopicId { get; set; }
 
-    public bool IsPrimary { get; set; }
-
     public virtual Topic Topic { get; set; } = null!;
 
     public virtual Word Word { get; set; } = null!;

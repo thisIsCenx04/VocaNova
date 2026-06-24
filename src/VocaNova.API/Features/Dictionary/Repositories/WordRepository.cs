@@ -484,14 +484,12 @@ public sealed class WordRepository : IWordRepository
                     idiom.MeaningVi))
                 .ToArray(),
             word.WordTopics
-                .OrderByDescending(wordTopic => wordTopic.IsPrimary)
-                .ThenBy(wordTopic => wordTopic.Topic.TopicName)
+                .OrderBy(wordTopic => wordTopic.Topic.TopicName)
                 .Select(wordTopic => new WordTopicDto(
                     wordTopic.TopicId,
                     wordTopic.Topic.TopicName,
                     wordTopic.Topic.TopicNameVi,
-                    wordTopic.Topic.Icon,
-                    wordTopic.IsPrimary))
+                    wordTopic.Topic.Icon))
                 .ToArray());
     }
 
