@@ -40,44 +40,90 @@ void main() {
       ],
     );
     when(
-      () => repository.addWordToList(listId: 3, wordId: 7),
+      () => repository.addWordToList(
+        listId: 3,
+        wordId: 7,
+        note: any(named: 'note'),
+      ),
     ).thenAnswer((_) async {});
+    when(() => repository.createList('Study')).thenAnswer(
+      (_) async =>
+          const UserListSummary(listId: 9, listName: 'Study', wordCount: 0),
+    );
     when(() => audio.play(any())).thenAnswer((_) async {});
   });
 
-  testWidgets('renders detail, switches accent, plays audio and saves word', (
+  testWidgets('renders the Figma detail sections, audio and bookmark action', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await pumpDetail(tester, repository, connectivity, storage, audio);
 
     expect(find.text('hello'), findsOneWidget);
     expect(find.text('/həˈləʊ/'), findsOneWidget);
+    expect(find.text('/həˈloʊ/'), findsOneWidget);
+    expect(find.text('DEFINITION'), findsOneWidget);
+    expect(find.text('TIẾNG VIỆT'), findsOneWidget);
+    expect(find.text('EXAMPLE'), findsOneWidget);
     expect(find.text('xin chào'), findsOneWidget);
 
-    await tester.tap(find.text('US'));
-    await tester.pump();
-    expect(find.text('/həˈloʊ/'), findsOneWidget);
     await tester.tap(find.byKey(const Key('play-us')));
     verify(() => audio.play('https://audio.test/us.mp3')).called(1);
 
     await tester.tap(find.byKey(const Key('save-word-book')));
     await tester.pump();
-    expect(find.text('Đã lưu vào sách từ'), findsOneWidget);
+    expect(find.byIcon(Icons.bookmark), findsOneWidget);
 
     await tester.scrollUntilVisible(find.byKey(const Key('word-topic-2')), 300);
-    expect(find.text('Giao tiếp'), findsOneWidget);
+    expect(find.text('Communication'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
-  testWidgets('FAB opens AddToListSheet and adds word', (tester) async {
+  testWidgets('fixed action opens Figma sheet and saves list with a note', (
+    tester,
+  ) async {
     await pumpDetail(tester, repository, connectivity, storage, audio);
 
     await tester.tap(find.byKey(const Key('add-to-list-fab')));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('add-to-list-sheet')), findsOneWidget);
+    expect(find.text('Add to list'), findsWidgets);
     expect(find.text('Favorites'), findsOneWidget);
     await tester.tap(find.byKey(const Key('add-to-list-3')));
+    await tester.enterText(
+      find.byKey(const Key('add-to-list-note')),
+      'Review tomorrow',
+    );
+    await tester.tap(find.byKey(const Key('save-add-to-list')));
     await tester.pumpAndSettle();
 
-    verify(() => repository.addWordToList(listId: 3, wordId: 7)).called(1);
+    verify(
+      () => repository.addWordToList(
+        listId: 3,
+        wordId: 7,
+        note: 'Review tomorrow',
+      ),
+    ).called(1);
+  });
+
+  testWidgets('Add to list sheet creates and selects a new list', (
+    tester,
+  ) async {
+    await pumpDetail(tester, repository, connectivity, storage, audio);
+
+    await tester.tap(find.byKey(const Key('add-to-list-fab')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('new-list-from-word')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('new-list-name')), 'Study');
+    await tester.tap(find.byKey(const Key('create-list-from-word')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Study'), findsOneWidget);
+    verify(() => repository.createList('Study')).called(1);
   });
 }
 

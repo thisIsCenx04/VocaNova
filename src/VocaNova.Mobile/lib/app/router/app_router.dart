@@ -80,6 +80,12 @@ class AppRouter {
                 path: AppRoutes.search,
                 builder: (_, _) => const WordSearchScreen(),
               ),
+              GoRoute(
+                path: AppRoutes.word,
+                builder: (_, state) => WordDetailScreen(
+                  wordId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
             ],
           ),
           StatefulShellBranch(
@@ -119,11 +125,6 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.progressCharts,
         builder: (_, _) => const ProgressChartsScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.word,
-        builder: (_, state) =>
-            WordDetailScreen(wordId: int.parse(state.pathParameters['id']!)),
       ),
       GoRoute(
         path: AppRoutes.list,

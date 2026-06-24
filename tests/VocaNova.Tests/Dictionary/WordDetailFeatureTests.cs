@@ -266,7 +266,6 @@ public class WordDetailFeatureTests
         {
             WordId = 1,
             TopicId = 1,
-            IsPrimary = true,
         });
 
         await dbContext.SaveChangesAsync();

@@ -24,10 +24,26 @@ class WordDetailRepository {
         .toList(growable: false);
   }
 
-  Future<void> addWordToList({required int listId, required int wordId}) async {
+  Future<UserListSummary> createList(String name) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.lists,
+      data: {'list_name': name},
+    );
+    return UserListSummary.fromJson(_dataMap(response));
+  }
+
+  Future<void> addWordToList({
+    required int listId,
+    required int wordId,
+    String? note,
+  }) async {
     await _dio.post<Map<String, dynamic>>(
       ApiEndpoints.listWords(listId),
-      data: {'word_id': wordId, 'add_method': 'manual', 'note': null},
+      data: {
+        'word_id': wordId,
+        'add_method': 'manual',
+        'note': note?.trim().isEmpty == true ? null : note,
+      },
     );
   }
 

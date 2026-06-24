@@ -37,8 +37,13 @@ class WordSearchRepository {
   List<Map<String, dynamic>> _dataList(
     Response<Map<String, dynamic>> response,
   ) {
-    final data = response.data?['data'];
-    if (data is! List) {
+    final payload = response.data?['data'];
+    final data = switch (payload) {
+      List<dynamic> value => value,
+      Map<String, dynamic> value => value['items'] ?? value['Items'],
+      _ => null,
+    };
+    if (data is! List<dynamic>) {
       throw const FormatException('API response data is invalid.');
     }
     return data.whereType<Map<String, dynamic>>().toList(growable: false);

@@ -62,13 +62,17 @@ class WordSearchNotifier extends _$WordSearchNotifier {
 
   void queryChanged(String query) {
     _debounce?.cancel();
+    _requestId++;
+    final isEmpty = query.trim().isEmpty;
     state = state.copyWith(
       query: query,
-      results: query.trim().isEmpty ? const [] : state.results,
+      results: isEmpty ? const [] : state.results,
       isLoading: false,
+      clearCefr: isEmpty,
+      clearTopic: isEmpty,
       clearError: true,
     );
-    if (query.trim().isEmpty) {
+    if (isEmpty) {
       return;
     }
     _debounce = Timer(debounceDuration, search);
@@ -95,7 +99,7 @@ class WordSearchNotifier extends _$WordSearchNotifier {
   Future<void> search() async {
     _debounce?.cancel();
     final query = state.query.trim();
-    if (query.isEmpty) {
+    if (query.isEmpty && state.selectedTopicId == null) {
       state = state.copyWith(results: const [], isLoading: false);
       return;
     }
@@ -202,11 +206,15 @@ class WordSearchNotifier extends _$WordSearchNotifier {
   }
 
   Future<void> _cacheWords(List<WordSummary> words) async {
-    final byId = <int, WordSummary>{
-      for (final word in _cachedWords) word.wordId: word,
-    };
+    final byId = <int, WordSummary>{};
     for (final word in words) {
-      byId[word.wordId] = byId[word.wordId]?.merge(word) ?? word;
+      final cached = _cachedWords
+          .where((item) => item.wordId == word.wordId)
+          .firstOrNull;
+      byId[word.wordId] = cached?.merge(word) ?? word;
+    }
+    for (final word in _cachedWords) {
+      byId.putIfAbsent(word.wordId, () => word);
     }
     _cachedWords = byId.values.take(maxCachedWords).toList(growable: false);
     await ref
@@ -223,7 +231,7 @@ class WordSearchNotifier extends _$WordSearchNotifier {
           .whereType<String>()
           .take(maxHistoryItems)
           .toList(growable: false);
-    } on FormatException {
+    } on Object {
       return const [];
     }
   }
@@ -234,7 +242,7 @@ class WordSearchNotifier extends _$WordSearchNotifier {
           .whereType<Map<String, dynamic>>()
           .map(WordSummary.fromJson)
           .toList(growable: false);
-    } on FormatException {
+    } on Object {
       return const [];
     }
   }
@@ -245,7 +253,7 @@ class WordSearchNotifier extends _$WordSearchNotifier {
           .whereType<Map<String, dynamic>>()
           .map(TopicSummary.fromJson)
           .toList(growable: false);
-    } on FormatException {
+    } on Object {
       return const [];
     }
   }

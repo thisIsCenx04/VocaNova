@@ -6,5 +6,4 @@ public sealed record WordTopicDto(
     [property: JsonPropertyName("topic_id")] uint TopicId,
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("name_vi")] string? NameVi,
-    [property: JsonPropertyName("icon")] string? Icon,
-    [property: JsonPropertyName("is_primary")] bool IsPrimary);
+    [property: JsonPropertyName("icon")] string? Icon);

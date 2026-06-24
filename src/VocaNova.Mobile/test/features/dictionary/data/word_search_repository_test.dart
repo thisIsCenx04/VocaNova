@@ -18,16 +18,22 @@ void main() {
         'cefr': 'A1',
         'topicId': 2,
       });
-      return jsonResponse([
-        {
-          'word_id': 1,
-          'word': 'hello',
-          'phonetic': '/həˈləʊ/',
-          'cefr': 'A1',
-          'primary_meaning': 'xin chào',
-          'image_url': null,
-        },
-      ]);
+      return jsonResponse({
+        'items': [
+          {
+            'word_id': 1,
+            'word': 'hello',
+            'phonetic': '/həˈləʊ/',
+            'cefr': 'A1',
+            'primary_meaning': 'xin chào',
+            'image_url': null,
+          },
+        ],
+        'page': 1,
+        'limit': 50,
+        'totalItems': 1,
+        'totalPages': 1,
+      });
     });
 
     final words = await WordSearchRepository(
@@ -80,7 +86,7 @@ class CallbackAdapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-ResponseBody jsonResponse(List<Map<String, dynamic>> data) {
+ResponseBody jsonResponse(Object data) {
   return ResponseBody.fromString(
     jsonEncode({'success': true, 'data': data, 'errors': <String>[]}),
     200,
