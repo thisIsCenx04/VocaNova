@@ -165,6 +165,56 @@ public sealed class VocabularyController : Controller
         return JsonResultFor(result, "Image uploaded.");
     }
 
+    // ---- F059: CSV import ----
+
+    [HttpGet("/vocabulary/import")]
+    public IActionResult Import()
+    {
+        return View();
+    }
+
+    [HttpPost("/vocabulary/import")]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    public async Task<IActionResult> Import(IFormFile? file, CancellationToken cancellationToken)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return Json(new { success = false, message = "Please choose a CSV file." });
+        }
+
+        await using var stream = file.OpenReadStream();
+        var result = await _apiClient.ImportWordsAsync(
+            new FileUpload(stream, file.FileName, string.IsNullOrWhiteSpace(file.ContentType) ? "text/csv" : file.ContentType),
+            cancellationToken);
+
+        if (!result.IsSuccess || result.Data is null)
+        {
+            var message = result.StatusCode switch
+            {
+                401 or 403 => "You do not have permission to import words.",
+                400 => result.Message ?? "The CSV file is invalid.",
+                _ => result.Message ?? "Import failed.",
+            };
+            return Json(new { success = false, message });
+        }
+
+        return Json(new { success = true, result = result.Data });
+    }
+
+    [HttpGet("/vocabulary/import/template")]
+    public IActionResult ImportTemplate()
+    {
+        const string csv =
+            "word,cefr_level,phonetic_uk,phonetic_us,word_class,english_definition,vietnamese_meaning\n" +
+            "run,A1,/rʌn/,/rʌn/,verb,to move fast on foot,chạy\n" +
+            "happy,A2,/ˈhæp.i/,/ˈhæp.i/,adjective,feeling pleasure,vui vẻ\n";
+        var bytes = System.Text.Encoding.UTF8.GetPreamble()
+            .Concat(System.Text.Encoding.UTF8.GetBytes(csv))
+            .ToArray();
+        return File(bytes, "text/csv", "vocabulary-import-template.csv");
+    }
+
     // Chuẩn hóa kết quả AJAX: { success, message }.
     private IActionResult JsonResultFor(ApiActionResult result, string successMessage)
     {

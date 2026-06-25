@@ -88,6 +88,36 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         return SendMultipartActionAsync(HttpMethod.Post, $"api/admin/words/{wordId}/image", content, cancellationToken);
     }
 
+    public async Task<ImportWordsResult> ImportWordsAsync(FileUpload upload, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            var file = new StreamContent(upload.Content);
+            file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(upload.ContentType);
+            content.Add(file, "file", upload.FileName);
+
+            using var response = await _httpClient.PostAsync("api/admin/words/import", content, cancellationToken);
+            var statusCode = (int)response.StatusCode;
+
+            var envelope = await response.Content
+                .ReadFromJsonAsync<ApiEnvelope<Models.Api.Dictionary.BulkImportResult>>(ApiJson.Default, cancellationToken);
+
+            if (response.IsSuccessStatusCode && envelope?.Data is not null)
+            {
+                return ImportWordsResult.Ok(envelope.Data);
+            }
+
+            LogNonSuccess("api/admin/words/import", statusCode);
+            return ImportWordsResult.Fail(statusCode, envelope?.Message ?? envelope?.Errors.FirstOrDefault());
+        }
+        catch (Exception ex) when (ex is HttpRequestException or System.Text.Json.JsonException or NotSupportedException or TaskCanceledException)
+        {
+            _logger.LogWarning(ex, "VocaNova.API import words failed.");
+            return ImportWordsResult.Fail(0, null);
+        }
+    }
+
     private static object SensePayload(SenseInput input) => new
     {
         input.SenseOrder,

@@ -23,9 +23,12 @@
     string StatusBadgeClass(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
 }
 
-<div class="page-header">
-    <h1 class="page-title">Vocabulary</h1>
-    <p class="page-subtitle">@Model.TotalItems word(s). Search and filter the dictionary.</p>
+<div class="page-header page-header-row">
+    <div>
+        <h1 class="page-title">Vocabulary</h1>
+        <p class="page-subtitle">@Model.TotalItems word(s). Search and filter the dictionary.</p>
+    </div>
+    <a href="/vocabulary/import" class="btn-primary">Import CSV</a>
 </div>
 
 @if (TempData["VocabSuccess"] is string okMsg)

@@ -36,6 +36,9 @@ public interface IVocaNovaApiClient
     Task<ApiActionResult> DeleteAudioAsync(uint wordId, uint audioId, CancellationToken cancellationToken = default);
 
     Task<ApiActionResult> UploadImageAsync(uint wordId, ImageUpload upload, CancellationToken cancellationToken = default);
+
+    // F059 — CSV import. Trả về kết quả import (imported/skipped/errors) hoặc lỗi.
+    Task<ImportWordsResult> ImportWordsAsync(FileUpload upload, CancellationToken cancellationToken = default);
 }
 
 /// <summary>Payload tạo/cập nhật sense (khớp CreateSenseRequest/UpdateSenseRequest của API).</summary>
@@ -44,6 +47,16 @@ public sealed record SenseInput(int SenseOrder, string? WordClass, string? Engli
 public sealed record AudioUpload(string Accent, Stream Content, string FileName, string ContentType);
 
 public sealed record ImageUpload(Stream Content, string FileName, string ContentType);
+
+public sealed record FileUpload(Stream Content, string FileName, string ContentType);
+
+/// <summary>Kết quả import CSV: thành công kèm dữ liệu, hoặc lỗi kèm message.</summary>
+public sealed record ImportWordsResult(bool IsSuccess, int StatusCode, string? Message, Models.Api.Dictionary.BulkImportResult? Data)
+{
+    public static ImportWordsResult Ok(Models.Api.Dictionary.BulkImportResult data) => new(true, 200, null, data);
+
+    public static ImportWordsResult Fail(int statusCode, string? message) => new(false, statusCode, message, null);
+}
 
 /// <summary>Tham số lọc danh sách từ vựng gửi tới API (F057).</summary>
 public sealed record WordListFilter(
