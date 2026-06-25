@@ -8,6 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
+// Cho phép AJAX (fetch) gửi antiforgery token qua header (F058 sense/audio inline edit).
+builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
+
 // Cấu hình endpoint API backend (F055: dashboard là BFF, mọi data đi qua VocaNova.API).
 builder.Services.Configure<DashboardApiOptions>(
     builder.Configuration.GetSection(DashboardApiOptions.SectionName));

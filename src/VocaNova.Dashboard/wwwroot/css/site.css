@@ -713,3 +713,213 @@ a {
     color: var(--text-muted);
     font-size: 14px;
 }
+
+/* ----- Vocabulary detail (F058) ----- */
+.back-link {
+    display: inline-block;
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.back-link:hover {
+    color: var(--accent);
+}
+
+.detail-header .page-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.phonetics {
+    display: flex;
+    gap: 16px;
+    color: var(--text-muted);
+    font-size: 14px;
+    margin: 6px 0;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    align-items: start;
+}
+
+.detail-main,
+.detail-side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.detail-grid .panel {
+    padding: 20px;
+}
+
+.badge-muted {
+    background: #f1f5f9;
+    color: var(--text-muted);
+    text-transform: capitalize;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.sense-item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    padding: 4px 12px;
+}
+
+.sense-item summary {
+    cursor: pointer;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 14px;
+}
+
+.sense-order {
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.sense-class {
+    font-style: italic;
+    color: var(--text-muted);
+}
+
+.sense-def {
+    font-weight: 500;
+}
+
+.sense-body {
+    padding: 6px 0 12px;
+    border-top: 1px dashed var(--border);
+    margin-top: 4px;
+}
+
+.sense-vi {
+    margin: 8px 0;
+}
+
+.example-list {
+    margin: 6px 0;
+    padding-left: 18px;
+}
+
+.example-list li {
+    margin-bottom: 6px;
+}
+
+.ex-en {
+    display: block;
+}
+
+.ex-vi {
+    display: block;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.sense-edit-form,
+.sense-add-form,
+.upload-form {
+    margin-top: 12px;
+}
+
+.form-row {
+    margin-bottom: 10px;
+}
+
+.form-row label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.form-row textarea.form-control {
+    resize: vertical;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.form-grid input:nth-child(3),
+.form-grid input:nth-child(4) {
+    grid-column: 1 / -1;
+}
+
+.form-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.sense-add-form {
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+    margin-top: 16px;
+}
+
+.word-image {
+    width: 100%;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+}
+
+.upload-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.audio-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+}
+
+.audio-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.audio-item audio {
+    height: 34px;
+    max-width: 180px;
+}
+
+.detail-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 12px 18px;
+    border-radius: var(--radius);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
+    z-index: 50;
+}
+
+.toast-ok { background: var(--accent); }
+.toast-err { background: var(--danger); }
+
+@media (max-width: 992px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
