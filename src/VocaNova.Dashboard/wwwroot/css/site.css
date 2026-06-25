@@ -1,22 +1,69 @@
 /* VocaNova Dashboard — base styles (F055). Single light theme; no dark/i18n per Phase 2 scope. */
 
 :root {
-    --accent: #0f766e;
-    --accent-hover: #0d655e;
-    --sidebar-bg: #111827;
-    --sidebar-fg: #cbd5e1;
-    --sidebar-fg-active: #ffffff;
-    --page-bg: #f1f5f9;
+    /* Light theme (default). Palette dẫn xuất từ logo VocaNova: indigo-violet + cyan. */
+    --accent: #6c5ce7;
+    --accent-hover: #5b49d6;
+    --accent-soft: rgba(108, 92, 231, 0.10);
+    --accent-2: #22b8d6;
+    --sidebar-bg: #ffffff;
+    --sidebar-fg: #6b7185;
+    --sidebar-fg-active: #6c5ce7;
+    --sidebar-active-bg: rgba(108, 92, 231, 0.10);
+    --topbar-bg: #ffffff;
+    --page-bg: #f4f5fb;
     --surface: #ffffff;
-    --border: #e2e8f0;
-    --text: #1e293b;
-    --text-muted: #64748b;
-    --danger: #b91c1c;
-    --danger-bg: #fef2f2;
-    --radius: 8px;
-    --sidebar-w: 248px;
-    --topbar-h: 64px;
+    --surface-2: #fafbff;
+    --surface-3: #f4f5fa;
+    --border: #ebecf3;
+    --border-strong: #e0e2ee;
+    --text: #1b1e2e;
+    --text-muted: #868ba1;
+    --text-soft: #a7abc0;
+    --danger: #e5484d;
+    --danger-bg: #fdecee;
+    --success: #1aa658;
+    --success-bg: #e8f7ee;
+    --warning: #e08a1e;
+    --warning-bg: #fdf1e0;
+    --shadow-card: 0 1px 2px rgba(20, 28, 55, 0.04), 0 4px 16px rgba(20, 28, 55, 0.05);
+    --shadow-pop: 0 12px 32px rgba(20, 28, 55, 0.14);
+    --radius: 10px;
+    --radius-lg: 16px;
+    --sidebar-w: 256px;
+    --topbar-h: 68px;
     --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Dark theme — chỉ override token; component dùng var() nên tự đổi theo. */
+[data-theme="dark"] {
+    --accent: #7c6cff;
+    --accent-hover: #6a59ff;
+    --accent-soft: rgba(124, 108, 255, 0.16);
+    --accent-2: #34d3ee;
+    --sidebar-bg: #0e1322;
+    --sidebar-fg: #9aa1ba;
+    --sidebar-fg-active: #c9c0ff;
+    --sidebar-active-bg: rgba(124, 108, 255, 0.16);
+    --topbar-bg: #0e1322;
+    --page-bg: #0b0f1c;
+    --surface: #141a2b;
+    --surface-2: #111729;
+    --surface-3: #1a2138;
+    --border: #232b42;
+    --border-strong: #2c3550;
+    --text: #e7eaf5;
+    --text-muted: #99a0bb;
+    --text-soft: #727a98;
+    --danger: #ff6b70;
+    --danger-bg: rgba(229, 72, 77, 0.16);
+    --success: #34d17a;
+    --success-bg: rgba(26, 166, 88, 0.18);
+    --warning: #f0a83c;
+    --warning-bg: rgba(224, 138, 30, 0.18);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-pop: 0 14px 34px rgba(0, 0, 0, 0.55);
 }
 
 * {
@@ -35,11 +82,23 @@ body {
     background: var(--page-bg);
     font-size: 15px;
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
 a {
     color: inherit;
     text-decoration: none;
+}
+
+h1, h2, h3, h4, .page-title, .panel-title {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+}
+
+/* Đổi theme mượt cho các bề mặt chính. */
+.sidebar, .topbar, .panel, .stat-card, .knn-card, .data-table th, .sidebar-link {
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 /* ----- App shell ----- */
@@ -64,41 +123,45 @@ a {
     bottom: 0;
     left: 0;
     z-index: 30;
+    border-right: 1px solid var(--border);
 }
 
 .sidebar-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 20px 22px;
-    font-size: 18px;
-    font-weight: 700;
-    color: #fff;
+    gap: 11px;
+    padding: 22px 22px 18px;
+    font-size: 19px;
+    font-weight: 800;
 }
 
-.brand-mark {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius);
-    background: var(--accent);
-    color: #fff;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
+.brand-logo {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.brand-word {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    background: linear-gradient(100deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
 }
 
 .sidebar-nav {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 8px 12px;
+    padding: 8px 14px;
     overflow-y: auto;
+    flex: 1;
 }
 
 .sidebar-link {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -106,17 +169,30 @@ a {
     border-radius: var(--radius);
     color: var(--sidebar-fg);
     font-weight: 500;
+    font-size: 14.5px;
     transition: background 0.15s, color 0.15s;
 }
 
 .sidebar-link:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--sidebar-active-bg);
     color: var(--sidebar-fg-active);
 }
 
 .sidebar-link.active {
+    background: var(--sidebar-active-bg);
+    color: var(--sidebar-fg-active);
+    font-weight: 600;
+}
+
+.sidebar-link.active::before {
+    content: "";
+    position: absolute;
+    left: -14px;
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
     background: var(--accent);
-    color: #fff;
 }
 
 .sidebar-link svg {
@@ -124,6 +200,33 @@ a {
     height: 20px;
     fill: currentColor;
     flex-shrink: 0;
+}
+
+.sidebar-footer {
+    padding: 12px 14px 18px;
+    border-top: 1px solid var(--border);
+}
+
+.sidebar-footer form {
+    margin: 0;
+}
+
+.sidebar-logout {
+    width: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 14.5px;
+    color: var(--danger);
+}
+
+.sidebar-logout:hover {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.sidebar-scrim {
+    display: none;
 }
 
 .content-shell {
@@ -140,8 +243,8 @@ a {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 24px;
-    background: var(--surface);
+    padding: 0 28px;
+    background: var(--topbar-bg);
     border-bottom: 1px solid var(--border);
     position: sticky;
     top: 0;
@@ -172,21 +275,38 @@ a {
     fill: currentColor;
 }
 
-.topbar .icon-button:first-child {
+.menu-button {
     display: none;
 }
 
 .account-summary {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     margin-left: auto;
+}
+
+.account-summary .icon-button {
+    position: relative;
+}
+
+.notif-dot {
+    position: absolute;
+    top: 9px;
+    right: 10px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--danger);
+    border: 2px solid var(--topbar-bg);
 }
 
 .account-link {
     display: flex;
     align-items: center;
     gap: 10px;
+    padding-left: 12px;
+    border-left: 1px solid var(--border);
 }
 
 .account-link img,
@@ -247,8 +367,9 @@ a {
 .panel {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-lg);
     padding: 24px;
+    box-shadow: var(--shadow-card);
 }
 
 .panel-muted {
@@ -263,7 +384,7 @@ a {
     align-items: center;
     justify-content: center;
     padding: 24px;
-    background: linear-gradient(135deg, #0f766e 0%, #111827 100%);
+    background: linear-gradient(135deg, #6c5ce7 0%, #22b8d6 100%);
 }
 
 .auth-card {
@@ -315,10 +436,15 @@ a {
     font-family: inherit;
 }
 
+.form-control {
+    background: var(--surface);
+    color: var(--text);
+}
+
 .form-control:focus {
     outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+    box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .btn-primary {
@@ -378,25 +504,68 @@ a {
 .stat-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 18px 20px;
+    border-radius: var(--radius-lg);
+    padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    box-shadow: var(--shadow-card);
+}
+
+/* Khi có icon chip → layout ngang (trang Dashboard). */
+.stat-card:has(.stat-icon) {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+}
+
+.stat-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.stat-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+.stat-icon.tone-violet { background: rgba(108, 92, 231, 0.12); color: #6c5ce7; }
+.stat-icon.tone-cyan { background: rgba(34, 184, 214, 0.14); color: #1597b3; }
+.stat-icon.tone-green { background: rgba(26, 166, 88, 0.14); color: #1aa658; }
+.stat-icon.tone-amber { background: rgba(224, 138, 30, 0.16); color: #d2820f; }
+
+.stat-main {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
 }
 
 .stat-label {
     font-size: 13px;
     font-weight: 600;
     color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
 }
 
 .stat-value {
-    font-size: 28px;
-    font-weight: 700;
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 800;
     color: var(--text);
+    letter-spacing: -0.01em;
+}
+
+.stat-sub {
+    font-size: 12px;
+    color: var(--text-soft);
 }
 
 .chart-grid {
@@ -448,8 +617,16 @@ a {
         margin-left: 0;
     }
 
-    .topbar .icon-button:first-child {
+    .menu-button {
         display: inline-flex;
+    }
+
+    .sidebar-toggle:checked ~ .sidebar-scrim {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(8, 12, 24, 0.5);
+        z-index: 29;
     }
 
     .main-content {
@@ -1184,12 +1361,12 @@ code {
 }
 
 .sidebar-sublink:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--sidebar-active-bg);
     color: var(--sidebar-fg-active);
 }
 
 .sidebar-sublink.active {
-    color: #fff;
+    color: var(--sidebar-fg-active);
     font-weight: 600;
 }
 
@@ -1202,4 +1379,225 @@ code {
     .detail-list dd {
         margin-bottom: 8px;
     }
+}
+
+/* =================================================================
+   Theme-adaptive overrides (token-based) — đặt cuối để thắng các
+   giá trị hardcode trước đó; nhờ đó light + dark đều đúng.
+   ================================================================= */
+.data-table th { background: var(--surface-3); color: var(--text-muted); }
+.data-table th, .data-table td { border-bottom-color: var(--border); }
+.data-table tbody tr:hover { background: var(--surface-3); }
+.chip { background: var(--surface-3); border-color: var(--border); color: var(--text); }
+.edit-row > td { background: var(--surface-3); }
+code { background: var(--surface-3); color: var(--text); }
+
+.badge-success { background: var(--success-bg); color: var(--success); }
+.badge-danger { background: var(--danger-bg); color: var(--danger); }
+.badge-warning { background: var(--warning-bg); color: var(--warning); }
+.badge-muted { background: var(--surface-3); color: var(--text-muted); }
+
+.alert { border: 1px solid transparent; }
+.alert-success { background: var(--success-bg); color: var(--success); }
+.alert-danger { background: var(--danger-bg); color: var(--danger); }
+
+.btn-secondary { background: var(--surface); color: var(--text); border-color: var(--border); }
+.btn-secondary:hover { background: var(--surface-3); }
+.btn-icon { background: var(--surface); color: var(--text); border-color: var(--border); }
+.btn-icon:hover { background: var(--surface-3); }
+.btn-icon.btn-danger { color: var(--danger); border-color: var(--border); }
+.btn-icon.btn-danger:hover { background: var(--danger-bg); }
+.btn-icon.btn-success { color: var(--success); border-color: var(--border); }
+.btn-icon.btn-success:hover { background: var(--success-bg); }
+
+.pager-link { background: var(--surface); border-color: var(--border); color: var(--text); }
+.pager-link:hover { background: var(--surface-3); }
+
+.auth-error { border-color: transparent; }
+
+/* =================================================================
+   Dashboard overview (redesign theo Figma)
+   ================================================================= */
+.stat-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 99px;
+    align-self: flex-start;
+}
+
+.stat-trend.up { background: var(--success-bg); color: var(--success); }
+.stat-trend.down { background: var(--danger-bg); color: var(--danger); }
+
+/* Card header có dropdown (Learning Progress Analytics) */
+.chart-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chart-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 2px 0 0;
+}
+
+.chart-legend {
+    display: flex;
+    gap: 16px;
+    margin: 0 0 4px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+}
+
+.chart-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* "Most Difficult Words" — failure-rate bar + rank */
+.rank-pill {
+    font-family: var(--font-display);
+    font-weight: 800;
+    color: var(--text-muted);
+}
+
+.rate-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rate-bar {
+    flex: 1;
+    min-width: 90px;
+    max-width: 170px;
+    height: 7px;
+    border-radius: 99px;
+    background: var(--surface-3);
+    overflow: hidden;
+}
+
+.rate-fill {
+    height: 100%;
+    border-radius: 99px;
+}
+
+.rate-fill.sev-critical { background: var(--danger); }
+.rate-fill.sev-warning { background: var(--warning); }
+.rate-fill.sev-improving { background: var(--success); }
+
+.rate-pct {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    font-size: 13px;
+    min-width: 40px;
+    text-align: right;
+}
+
+/* Right-column list (mastery legend / events style) */
+.mini-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mini-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.mini-list .mini-key {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--text-muted);
+}
+
+.mini-list .mini-val {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Settings — theme picker */
+.theme-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 220px));
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.theme-option {
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    cursor: pointer;
+    display: block;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.theme-option:hover { border-color: var(--border-strong); }
+
+.theme-option input { position: absolute; opacity: 0; }
+
+.theme-option.is-active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.theme-swatch {
+    height: 78px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.theme-swatch .sw-side { width: 34%; }
+.theme-swatch .sw-main { flex: 1; padding: 10px; }
+.theme-swatch .sw-bar { height: 8px; border-radius: 99px; margin-bottom: 6px; }
+
+.swatch-light .sw-side { background: #ffffff; border-right: 1px solid #ebecf3; }
+.swatch-light .sw-main { background: #f4f5fb; }
+.swatch-light .sw-bar { background: #e4e7f2; }
+.swatch-light .sw-bar.accent { background: #6c5ce7; width: 60%; }
+
+.swatch-dark .sw-side { background: #0e1322; border-right: 1px solid #232b42; }
+.swatch-dark .sw-main { background: #0b0f1c; }
+.swatch-dark .sw-bar { background: #232b42; }
+.swatch-dark .sw-bar.accent { background: #7c6cff; width: 60%; }
+
+.theme-option-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+}
+
+.theme-current {
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 700;
+}
+
+@media (max-width: 992px) {
+    .theme-options { grid-template-columns: 1fr; }
 }

@@ -1,0 +1,73 @@
+@{
+    ViewData["Title"] = "Settings";
+    var theme = (ViewData["Theme"] as string) ?? "light";
+}
+
+<div class="page-header">
+    <h1 class="page-title">Settings</h1>
+    <p class="page-subtitle">Personalize how the dashboard looks.</p>
+</div>
+
+@if (TempData["SettingsSaved"] is string saved)
+{
+    <div class="alert alert-success">@saved</div>
+}
+
+<div class="panel">
+    <div class="panel-head"><h2 class="panel-title">Appearance</h2></div>
+    <p class="panel-muted" style="margin-bottom:6px;">Choose a theme for the dashboard. Light is the default.</p>
+
+    <form method="post" action="/settings/theme" id="theme-form">
+        @Html.AntiForgeryToken()
+        <div class="theme-options">
+            <label class="theme-option swatch-light @(theme == "light" ? "is-active" : "")">
+                <input type="radio" name="theme" value="light" checked="@(theme == "light")" />
+                <div class="theme-swatch">
+                    <div class="sw-side"></div>
+                    <div class="sw-main">
+                        <div class="sw-bar accent"></div>
+                        <div class="sw-bar"></div>
+                        <div class="sw-bar" style="width:80%"></div>
+                    </div>
+                </div>
+                <div class="theme-option-label">
+                    <span>Light</span>
+                    @if (theme == "light")
+                    {
+                        <span class="theme-current">Current</span>
+                    }
+                </div>
+            </label>
+
+            <label class="theme-option swatch-dark @(theme == "dark" ? "is-active" : "")">
+                <input type="radio" name="theme" value="dark" checked="@(theme == "dark")" />
+                <div class="theme-swatch">
+                    <div class="sw-side"></div>
+                    <div class="sw-main">
+                        <div class="sw-bar accent"></div>
+                        <div class="sw-bar"></div>
+                        <div class="sw-bar" style="width:80%"></div>
+                    </div>
+                </div>
+                <div class="theme-option-label">
+                    <span>Dark</span>
+                    @if (theme == "dark")
+                    {
+                        <span class="theme-current">Current</span>
+                    }
+                </div>
+            </label>
+        </div>
+
+        <button type="submit" class="btn-primary" style="margin-top:18px;">Save theme</button>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Đổi theme là submit ngay khi chọn radio (mượt hơn), vẫn có nút Save dự phòng.
+        document.querySelectorAll('#theme-form input[name="theme"]').forEach(function (el) {
+            el.addEventListener('change', function () { document.getElementById('theme-form').submit(); });
+        });
+    </script>
+}

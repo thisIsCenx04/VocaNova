@@ -4,11 +4,13 @@
     var displayName = User.FindFirstValue(ClaimTypes.Name) ?? "Admin";
     var avatarFallback = string.IsNullOrWhiteSpace(displayName) ? "A" : displayName[..1].ToUpperInvariant();
     var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
+    var phone = User.FindFirstValue("phone");
     var avatarUrl = User.FindFirstValue("avatar_url");
-    // Role-based sidebar: chỉ super_admin thấy các mục quản trị tài khoản admin (F055).
     var isSuperAdmin = string.Equals(role, "super_admin", StringComparison.Ordinal);
 
-    // Xác định mục đang active để tô đậm trên sidebar.
+    // Theme đọc từ cookie để render server-side (không nhấp nháy). Mặc định light; đổi ở trang Settings.
+    var theme = Context.Request.Cookies["VocaNova.Dashboard.Theme"] == "dark" ? "dark" : "light";
+
     var path = Context.Request.Path.Value?.ToLowerInvariant() ?? "/";
     string NavActive(string prefix) =>
         (prefix == "/" ? path == "/" || path.StartsWith("/dashboard") : path.StartsWith(prefix))
@@ -16,11 +18,14 @@
             : "sidebar-link";
 }
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="@theme">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - VocaNova Dashboard</title>
+    <title>@ViewData["Title"] · VocaNova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
@@ -29,10 +34,11 @@
     {
         <div class="app-shell">
             <input class="sidebar-toggle" type="checkbox" id="sidebar-toggle" aria-label="Toggle navigation" />
+            <label class="sidebar-scrim" for="sidebar-toggle" aria-hidden="true"></label>
             <aside class="sidebar" aria-label="Primary navigation">
                 <div class="sidebar-brand">
-                    <span class="brand-mark">VN</span>
-                    <span>VocaNova</span>
+                    <img class="brand-logo" src="~/img/logo.png" alt="" />
+                    <span class="brand-word">VocaNova</span>
                 </div>
 
                 <nav class="sidebar-nav">
@@ -82,16 +88,34 @@
                             <span>Admin Accounts</span>
                         </a>
                     }
+                    <a class="@NavActive("/settings")" href="/settings">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm8.9 4 1.9 1.5-1.9 3.3-2.3-.7a7.7 7.7 0 0 1-1.6.9l-.3 2.5h-3.8l-.3-2.5a7.7 7.7 0 0 1-1.6-.9l-2.3.7L3 13.5 4.9 12 3 10.5l1.9-3.3 2.3.7c.5-.4 1-.7 1.6-.9l.3-2.5h3.8l.3 2.5c.6.2 1.1.5 1.6.9l2.3-.7L22.8 10.5 20.9 12Z" /></svg>
+                        <span>Settings</span>
+                    </a>
                 </nav>
+
+                <div class="sidebar-footer">
+                    <form asp-controller="Auth" asp-action="Logout" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="sidebar-link sidebar-logout">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4h10v16H10v-2h8V6h-8V4Zm1 4 5 4-5 4v-3H4v-2h7V8Z" /></svg>
+                            <span>Logout</span>
+                        </button>
+                    </form>
+                </div>
             </aside>
 
             <div class="content-shell">
                 <header class="topbar">
-                    <label class="icon-button" for="sidebar-toggle" aria-label="Toggle navigation">
+                    <label class="icon-button menu-button" for="sidebar-toggle" aria-label="Toggle navigation">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4V6Zm0 5h16v2H4v-2Zm0 5h16v2H4v-2Z" /></svg>
                     </label>
 
                     <div class="account-summary">
+                        <span class="icon-button" aria-hidden="true" title="Notifications">
+                            <svg viewBox="0 0 24 24"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-5-1.5-1.6V11a5.5 5.5 0 0 0-4-5.3V5a1.5 1.5 0 0 0-3 0v.7A5.5 5.5 0 0 0 6.5 11v4.4L5 17v1h14v-1Z" /></svg>
+                            <span class="notif-dot" aria-hidden="true"></span>
+                        </span>
                         <div class="account-link">
                             @if (!string.IsNullOrWhiteSpace(avatarUrl))
                             {
@@ -103,15 +127,9 @@
                             }
                             <div>
                                 <span class="account-name">@displayName</span>
-                                <span class="account-role">@role.Replace("_", " ")</span>
+                                <span class="account-role">@(string.IsNullOrWhiteSpace(phone) ? role.Replace("_", " ") : phone)</span>
                             </div>
                         </div>
-                        <form asp-controller="Auth" asp-action="Logout" method="post">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="icon-button" aria-label="Sign out" title="Sign out">
-                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4h10v16H10v-2h8V6h-8V4Zm1 4 5 4-5 4v-3H4v-2h7V8Z" /></svg>
-                            </button>
-                        </form>
                     </div>
                 </header>
 

@@ -8,6 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
+// Đăng ký route constraint {id:uint} (dùng trong nhiều route dashboard).
+builder.Services.Configure<Microsoft.AspNetCore.Routing.RouteOptions>(options =>
+    options.ConstraintMap["uint"] = typeof(VocaNova.Dashboard.Routing.UIntRouteConstraint));
+
 // Cho phép AJAX (fetch) gửi antiforgery token qua header (F058 sense/audio inline edit).
 builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
 
