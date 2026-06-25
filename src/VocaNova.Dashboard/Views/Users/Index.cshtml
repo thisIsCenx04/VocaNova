@@ -1,0 +1,116 @@
+@using VocaNova.Dashboard.Models.Api.Users
+@model VocaNova.Dashboard.Models.Users.UserListViewModel
+@{
+    ViewData["Title"] = "Users";
+
+    string PageUrl(int page)
+    {
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(Model.Search)) qs.Add($"search={Uri.EscapeDataString(Model.Search)}");
+        if (!string.IsNullOrWhiteSpace(Model.Status)) qs.Add($"status={Model.Status}");
+        if (Model.IncludeDeleted) qs.Add("includeDeleted=true");
+        qs.Add($"page={page}");
+        return "/users?" + string.Join("&", qs);
+    }
+
+    string StatusBadge(string status) => status switch
+    {
+        "active" => "badge badge-success",
+        "locked" => "badge badge-warning",
+        "deleted" => "badge badge-danger",
+        _ => "badge badge-muted",
+    };
+}
+
+<div class="page-header">
+    <h1 class="page-title">Users</h1>
+    <p class="page-subtitle">@Model.TotalItems user(s).</p>
+</div>
+
+@if (TempData["UserSuccess"] is string okMsg)
+{
+    <div class="alert alert-success">@okMsg</div>
+}
+@if (TempData["UserError"] is string errMsg)
+{
+    <div class="alert alert-danger">@errMsg</div>
+}
+
+<form method="get" action="/users" class="filter-bar">
+    <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="Search phone or name..." />
+    <select name="status" class="form-control">
+        <option value="">Any status</option>
+        @foreach (var s in VocaNova.Dashboard.Models.Users.UserListViewModel.Statuses)
+        {
+            <option value="@s" selected="@(Model.Status == s)">@s</option>
+        }
+    </select>
+    <label class="checkbox-inline">
+        <input type="checkbox" name="includeDeleted" value="true" checked="@Model.IncludeDeleted" />
+        Show deleted
+    </label>
+    <button type="submit" class="btn-primary">Filter</button>
+    <a href="/users" class="btn-secondary">Reset</a>
+</form>
+
+<div class="panel table-panel">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Phone</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Last login</th>
+                <th class="col-actions"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="6" class="empty-row">No users found.</td></tr>
+            }
+            else
+            {
+                foreach (var user in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            <div class="user-cell">
+                                @if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
+                                {
+                                    <img class="user-avatar" src="@user.AvatarUrl" alt="" />
+                                }
+                                else
+                                {
+                                    <span class="user-avatar user-avatar-fallback">@(string.IsNullOrWhiteSpace(user.DisplayName) ? "?" : user.DisplayName[..1].ToUpperInvariant())</span>
+                                }
+                                <span class="word-text">@user.DisplayName</span>
+                            </div>
+                        </td>
+                        <td>@(user.Phone ?? "—")</td>
+                        <td><span class="badge badge-muted">@user.Role.Replace("_", " ")</span></td>
+                        <td><span class="@StatusBadge(user.Status)">@user.Status</span></td>
+                        <td>@(user.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                        <td class="col-actions"><a class="btn-icon" href="/users/@user.UserId">Detail</a></td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <nav class="pager" aria-label="Pagination">
+        @if (Model.HasPrevious)
+        {
+            <a class="pager-link" href="@PageUrl(Model.Page - 1)">‹ Prev</a>
+        }
+        <span class="pager-info">Page @Model.Page / @Model.TotalPages</span>
+        @if (Model.HasNext)
+        {
+            <a class="pager-link" href="@PageUrl(Model.Page + 1)">Next ›</a>
+        }
+    </nav>
+}

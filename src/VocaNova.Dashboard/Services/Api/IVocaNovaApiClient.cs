@@ -1,5 +1,6 @@
 using VocaNova.Dashboard.Models.Api.Dictionary;
 using VocaNova.Dashboard.Models.Api.Stats;
+using VocaNova.Dashboard.Models.Api.Users;
 
 namespace VocaNova.Dashboard.Services.Api;
 
@@ -39,7 +40,23 @@ public interface IVocaNovaApiClient
 
     // F059 — CSV import. Trả về kết quả import (imported/skipped/errors) hoặc lỗi.
     Task<ImportWordsResult> ImportWordsAsync(FileUpload upload, CancellationToken cancellationToken = default);
+
+    // F060 — User management.
+    Task<PagedData<AdminUserSummary>> GetUsersAsync(UserListFilter filter, CancellationToken cancellationToken = default);
+
+    Task<AdminUserDetail?> GetUserDetailAsync(uint userId, CancellationToken cancellationToken = default);
+
+    Task<PagedData<AdminUserTestSession>> GetUserTestHistoryAsync(uint userId, int page, int limit, CancellationToken cancellationToken = default);
+
+    Task<PagedData<AuditLog>> GetUserAuditLogsAsync(uint userId, int page, int limit, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> DeactivateUserAsync(uint userId, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> RestoreUserAsync(uint userId, CancellationToken cancellationToken = default);
 }
+
+/// <summary>Bộ lọc danh sách user (F060).</summary>
+public sealed record UserListFilter(string? Status, string? Search, bool IncludeDeleted, int Page, int Limit);
 
 /// <summary>Payload tạo/cập nhật sense (khớp CreateSenseRequest/UpdateSenseRequest của API).</summary>
 public sealed record SenseInput(int SenseOrder, string? WordClass, string? EnglishDefinition, string? VietnameseMeaning);

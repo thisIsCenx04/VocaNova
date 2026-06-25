@@ -118,6 +118,38 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         }
     }
 
+    public Task<PagedData<Models.Api.Users.AdminUserSummary>> GetUsersAsync(UserListFilter filter, CancellationToken cancellationToken = default)
+    {
+        var queryParams = new Dictionary<string, string?>
+        {
+            ["page"] = filter.Page.ToString(CultureInfo.InvariantCulture),
+            ["limit"] = filter.Limit.ToString(CultureInfo.InvariantCulture),
+            ["includeDeleted"] = filter.IncludeDeleted ? "true" : "false",
+        };
+        if (!string.IsNullOrWhiteSpace(filter.Status)) queryParams["status"] = filter.Status;
+        if (!string.IsNullOrWhiteSpace(filter.Search)) queryParams["search"] = filter.Search;
+
+        var uri = QueryHelpers.AddQueryString("api/admin/users", queryParams);
+        return GetPagedAsync<Models.Api.Users.AdminUserSummary>(uri, filter.Page, filter.Limit, cancellationToken);
+    }
+
+    public Task<Models.Api.Users.AdminUserDetail?> GetUserDetailAsync(uint userId, CancellationToken cancellationToken = default) =>
+        GetDataAsync<Models.Api.Users.AdminUserDetail>($"api/admin/users/{userId}", cancellationToken);
+
+    public Task<PagedData<Models.Api.Users.AdminUserTestSession>> GetUserTestHistoryAsync(uint userId, int page, int limit, CancellationToken cancellationToken = default) =>
+        GetPagedAsync<Models.Api.Users.AdminUserTestSession>(
+            $"api/admin/users/{userId}/test-history?page={page}&limit={limit}", page, limit, cancellationToken);
+
+    public Task<PagedData<Models.Api.Users.AuditLog>> GetUserAuditLogsAsync(uint userId, int page, int limit, CancellationToken cancellationToken = default) =>
+        GetPagedAsync<Models.Api.Users.AuditLog>(
+            $"api/admin/audit-logs?userId={userId}&page={page}&limit={limit}", page, limit, cancellationToken);
+
+    public Task<ApiActionResult> DeactivateUserAsync(uint userId, CancellationToken cancellationToken = default) =>
+        SendActionAsync(HttpMethod.Patch, $"api/admin/users/{userId}/deactivate", cancellationToken);
+
+    public Task<ApiActionResult> RestoreUserAsync(uint userId, CancellationToken cancellationToken = default) =>
+        SendActionAsync(HttpMethod.Patch, $"api/admin/users/{userId}/restore", cancellationToken);
+
     private static object SensePayload(SenseInput input) => new
     {
         input.SenseOrder,

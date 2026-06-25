@@ -48,6 +48,22 @@ public sealed class AdminUsersController : ControllerBase
             : this.ErrorResult(result);
     }
 
+    [HttpGet("{id:uint}/test-history")]
+    public async Task<IActionResult> GetTestHistory(
+        [FromRoute] uint id,
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _adminUserService.GetTestHistoryAsync(id, page, limit, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return Ok(ApiResponseFormatter.Paged(result.Value!, "User test history loaded successfully."));
+    }
+
     [Authorize(Policy = JwtAuthenticationExtensions.SuperAdminPolicy)]
     [HttpPatch("{id:uint}/deactivate")]
     public async Task<IActionResult> Deactivate(

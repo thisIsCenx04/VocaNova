@@ -13,6 +13,12 @@ public interface IAdminUserService
         uint userId,
         CancellationToken cancellationToken = default);
 
+    Task<Result<PagedResult<AdminUserTestSessionDto>>> GetTestHistoryAsync(
+        uint userId,
+        int page,
+        int limit,
+        CancellationToken cancellationToken = default);
+
     Task<Result<bool>> DeactivateAsync(
         uint userId,
         CancellationToken cancellationToken = default);

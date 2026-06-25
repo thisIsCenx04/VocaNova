@@ -1,0 +1,113 @@
+using Microsoft.AspNetCore.Mvc;
+using VocaNova.Dashboard.Models.Users;
+using VocaNova.Dashboard.Services.Api;
+
+namespace VocaNova.Dashboard.Controllers;
+
+// F060 — User Management. List/filter + detail tabs (Profile/Learning/Test History/Activity).
+// Deactivate/Restore yêu cầu super_admin (API enforce SuperAdminPolicy).
+public sealed class UsersController : Controller
+{
+    private const int PageSize = 20;
+    private const int TabPageSize = 10;
+
+    private readonly IVocaNovaApiClient _apiClient;
+
+    public UsersController(IVocaNovaApiClient apiClient)
+    {
+        _apiClient = apiClient;
+    }
+
+    [HttpGet("/users")]
+    public async Task<IActionResult> Index(
+        string? status,
+        string? search,
+        bool includeDeleted = false,
+        int page = 1,
+        CancellationToken cancellationToken = default)
+    {
+        if (page < 1)
+        {
+            page = 1;
+        }
+
+        var filter = new UserListFilter(
+            Status: string.IsNullOrWhiteSpace(status) ? null : status,
+            Search: string.IsNullOrWhiteSpace(search) ? null : search.Trim(),
+            IncludeDeleted: includeDeleted,
+            Page: page,
+            Limit: PageSize);
+
+        var users = await _apiClient.GetUsersAsync(filter, cancellationToken);
+
+        var model = new UserListViewModel
+        {
+            Items = users.Items,
+            Status = filter.Status,
+            Search = filter.Search,
+            IncludeDeleted = includeDeleted,
+            Page = users.Page,
+            TotalItems = users.TotalItems,
+            TotalPages = users.TotalPages,
+        };
+
+        return View(model);
+    }
+
+    [HttpGet("/users/{id:uint}")]
+    public async Task<IActionResult> Detail(uint id, CancellationToken cancellationToken)
+    {
+        var detail = await _apiClient.GetUserDetailAsync(id, cancellationToken);
+        if (detail is null)
+        {
+            return NotFound();
+        }
+
+        var testHistory = await _apiClient.GetUserTestHistoryAsync(id, 1, TabPageSize, cancellationToken);
+        var auditLogs = await _apiClient.GetUserAuditLogsAsync(id, 1, TabPageSize, cancellationToken);
+
+        var model = new UserDetailViewModel
+        {
+            Detail = detail,
+            TestHistory = testHistory,
+            AuditLogs = auditLogs,
+        };
+
+        return View(model);
+    }
+
+    [HttpPost("/users/{id:uint}/deactivate")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Deactivate(uint id, CancellationToken cancellationToken)
+    {
+        var result = await _apiClient.DeactivateUserAsync(id, cancellationToken);
+        SetFeedback(result, "User deactivated.");
+        return RedirectToAction(nameof(Detail), new { id });
+    }
+
+    [HttpPost("/users/{id:uint}/restore")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Restore(uint id, CancellationToken cancellationToken)
+    {
+        var result = await _apiClient.RestoreUserAsync(id, cancellationToken);
+        SetFeedback(result, "User restored.");
+        return RedirectToAction(nameof(Detail), new { id });
+    }
+
+    private void SetFeedback(ApiActionResult result, string successMessage)
+    {
+        if (result.IsSuccess)
+        {
+            TempData["UserSuccess"] = successMessage;
+            return;
+        }
+
+        TempData["UserError"] = result.StatusCode switch
+        {
+            401 or 403 => "You do not have permission (super admin required).",
+            404 => "User not found.",
+            409 => result.Message ?? "User is not in a state that allows this action.",
+            _ => result.Message ?? "The request could not be completed.",
+        };
+    }
+}
