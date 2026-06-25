@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VocaNova.API.Common.Extensions;
+using VocaNova.API.Common.Responses;
 using VocaNova.API.Features.Dictionary.DTOs;
 using VocaNova.API.Features.Dictionary.Services;
 using VocaNova.API.Infrastructure.Authentication;
@@ -20,6 +21,20 @@ public sealed class AdminWordsController : ControllerBase
     public AdminWordsController(IWordService wordService)
     {
         _wordService = wordService;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> List(
+        [FromQuery] AdminWordQuery query,
+        CancellationToken cancellationToken)
+    {
+        var result = await _wordService.SearchAdminAsync(query, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return Ok(ApiResponseFormatter.Paged(result.Value!, "Words loaded successfully."));
     }
 
     [HttpPost]

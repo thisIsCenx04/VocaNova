@@ -101,6 +101,56 @@ public sealed class WordService : IWordService
         return Result<PagedResult<WordSummaryDto>>.Ok(result);
     }
 
+    public async Task<Result<PagedResult<AdminWordListItemDto>>> SearchAdminAsync(
+        AdminWordQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        if (query.Page <= 0)
+        {
+            return Result<PagedResult<AdminWordListItemDto>>.Fail("Page must be greater than zero.");
+        }
+
+        if (query.Limit <= 0 || query.Limit > AppSettings.MaxPageLimit)
+        {
+            return Result<PagedResult<AdminWordListItemDto>>.Fail($"Limit must be between 1 and {AppSettings.MaxPageLimit}.");
+        }
+
+        var cefr = string.IsNullOrWhiteSpace(query.Cefr)
+            ? null
+            : query.Cefr.Trim().ToUpperInvariant();
+        if (cefr is not null && !CefrLevel.All.Contains(cefr))
+        {
+            return Result<PagedResult<AdminWordListItemDto>>.Fail("Cefr must be one of: A1, A2, B1, B2, C1, C2.");
+        }
+
+        var status = string.IsNullOrWhiteSpace(query.Status)
+            ? null
+            : query.Status.Trim().ToLowerInvariant();
+        if (status is not null && status != UserStatus.Active && status != UserStatus.Deleted)
+        {
+            return Result<PagedResult<AdminWordListItemDto>>.Fail("Status must be 'active' or 'deleted'.");
+        }
+
+        // Lọc status='deleted' chỉ có ý nghĩa khi đã bỏ global filter.
+        var includeDeleted = query.IncludeDeleted || status == UserStatus.Deleted;
+
+        var normalizedQuery = string.IsNullOrWhiteSpace(query.Q)
+            ? null
+            : query.Q.NormalizeWord();
+
+        var result = await _wordRepository.SearchAdminAsync(
+            normalizedQuery,
+            query.Page,
+            query.Limit,
+            cefr,
+            query.TopicId,
+            status,
+            includeDeleted,
+            cancellationToken);
+
+        return Result<PagedResult<AdminWordListItemDto>>.Ok(result);
+    }
+
     public async Task<Result<WordDetailDto>> GetByIdAsync(
         uint wordId,
         CancellationToken cancellationToken = default)

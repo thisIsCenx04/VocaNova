@@ -66,6 +66,66 @@ public sealed class WordRepository : IWordRepository
             .ToPagedResultAsync(page, limit, cancellationToken);
     }
 
+    public Task<PagedResult<AdminWordListItemDto>> SearchAdminAsync(
+        string? normalizedQuery,
+        int page,
+        int limit,
+        string? cefr,
+        uint? topicId,
+        string? status,
+        bool includeDeleted,
+        CancellationToken cancellationToken = default)
+    {
+        // includeDeleted = bỏ global query filter để thấy cả từ status='deleted'.
+        var query = includeDeleted
+            ? _dbContext.Words.IgnoreQueryFilters().AsNoTracking()
+            : _dbContext.Words.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(normalizedQuery))
+        {
+            query = query.Where(word => EF.Functions.Like(word.WordKey, normalizedQuery + "%"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(cefr))
+        {
+            query = query.Where(word => word.CefrLevel == cefr);
+        }
+
+        if (topicId.HasValue)
+        {
+            query = query.Where(word => word.WordTopics.Any(wordTopic => wordTopic.TopicId == topicId.Value));
+        }
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            query = query.Where(word => word.Status == status);
+        }
+
+        return query
+            .OrderBy(word => word.WordKey)
+            .ThenBy(word => word.WordId)
+            .Select(word => new AdminWordListItemDto(
+                word.WordId,
+                word.Word1,
+                word.CefrLevel,
+                word.PhoneticUs ?? word.PhoneticUk,
+                word.Status,
+                word.ImageUrl,
+                word.WordSenses
+                    .OrderBy(sense => sense.SenseOrder)
+                    .Select(sense => sense.VietnameseMeaning)
+                    .FirstOrDefault(),
+                word.WordTopics
+                    .OrderBy(wordTopic => wordTopic.Topic.TopicName)
+                    .Select(wordTopic => new WordTopicDto(
+                        wordTopic.TopicId,
+                        wordTopic.Topic.TopicName,
+                        wordTopic.Topic.TopicNameVi,
+                        wordTopic.Topic.Icon))
+                    .ToList()))
+            .ToPagedResultAsync(page, limit, cancellationToken);
+    }
+
     public async Task<WordDetailDto?> FindDetailAsync(
         uint wordId,
         CancellationToken cancellationToken = default)

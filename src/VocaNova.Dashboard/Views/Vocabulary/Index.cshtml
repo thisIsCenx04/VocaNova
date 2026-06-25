@@ -1,0 +1,169 @@
+@using System.Security.Claims
+@using VocaNova.Dashboard.Models.Api.Dictionary
+@model VocaNova.Dashboard.Models.Vocabulary.VocabularyListViewModel
+@{
+    ViewData["Title"] = "Vocabulary";
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
+    var canManage = string.Equals(role, "super_admin", StringComparison.Ordinal);
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+
+    // Dựng URL phân trang giữ nguyên bộ lọc hiện tại.
+    string PageUrl(int page)
+    {
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(Model.Q)) qs.Add($"q={Uri.EscapeDataString(Model.Q)}");
+        if (!string.IsNullOrWhiteSpace(Model.Cefr)) qs.Add($"cefr={Uri.EscapeDataString(Model.Cefr)}");
+        if (Model.TopicId is { } tid) qs.Add($"topicId={tid}");
+        if (!string.IsNullOrWhiteSpace(Model.Status)) qs.Add($"status={Uri.EscapeDataString(Model.Status)}");
+        if (Model.IncludeDeleted) qs.Add("includeDeleted=true");
+        qs.Add($"page={page}");
+        return "/vocabulary?" + string.Join("&", qs);
+    }
+
+    string StatusBadgeClass(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
+}
+
+<div class="page-header">
+    <h1 class="page-title">Vocabulary</h1>
+    <p class="page-subtitle">@Model.TotalItems word(s). Search and filter the dictionary.</p>
+</div>
+
+@if (TempData["VocabSuccess"] is string okMsg)
+{
+    <div class="alert alert-success">@okMsg</div>
+}
+@if (TempData["VocabError"] is string errMsg)
+{
+    <div class="alert alert-danger">@errMsg</div>
+}
+
+<form method="get" action="/vocabulary" class="filter-bar">
+    <input type="text" name="q" value="@Model.Q" class="form-control" placeholder="Search word..." />
+
+    <select name="cefr" class="form-control">
+        <option value="">All CEFR</option>
+        @foreach (var level in VocaNova.Dashboard.Models.Vocabulary.VocabularyListViewModel.CefrLevels)
+        {
+            <option value="@level" selected="@(string.Equals(Model.Cefr, level, StringComparison.OrdinalIgnoreCase))">@level</option>
+        }
+    </select>
+
+    <select name="topicId" class="form-control">
+        <option value="">All topics</option>
+        @foreach (var topic in Model.Topics)
+        {
+            <option value="@topic.TopicId" selected="@(Model.TopicId == topic.TopicId)">@topic.Name</option>
+        }
+    </select>
+
+    <select name="status" class="form-control">
+        <option value="">Any status</option>
+        <option value="active" selected="@(Model.Status == "active")">Active</option>
+        <option value="deleted" selected="@(Model.Status == "deleted")">Deleted</option>
+    </select>
+
+    <label class="checkbox-inline">
+        <input type="checkbox" name="includeDeleted" value="true" checked="@Model.IncludeDeleted" />
+        Show deleted
+    </label>
+
+    <button type="submit" class="btn-primary">Filter</button>
+    <a href="/vocabulary" class="btn-secondary">Reset</a>
+</form>
+
+<div class="panel table-panel">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Word</th>
+                <th>CEFR</th>
+                <th>Topics</th>
+                <th>Status</th>
+                <th class="col-actions">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="5" class="empty-row">No words found.</td></tr>
+            }
+            else
+            {
+                foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            <div class="word-cell">
+                                <span class="word-text">@item.Word</span>
+                                @if (!string.IsNullOrWhiteSpace(item.Phonetic))
+                                {
+                                    <span class="word-phonetic">@item.Phonetic</span>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(item.Cefr))
+                            {
+                                <span class="badge cefr cefr-@item.Cefr.ToLowerInvariant()">@item.Cefr</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="chip-list">
+                                @foreach (var topic in item.Topics)
+                                {
+                                    <span class="chip">@topic.Name</span>
+                                }
+                            </div>
+                        </td>
+                        <td><span class="@StatusBadgeClass(item.Status)">@item.Status</span></td>
+                        <td class="col-actions">
+                            <a class="btn-icon" href="/vocabulary/@item.WordId" title="Edit">Edit</a>
+                            @if (canManage && item.Status == "active")
+                            {
+                                <form method="post" action="/vocabulary/delete" class="inline-form js-confirm"
+                                      data-confirm="Delete '@item.Word'? It will be soft-deleted.">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.WordId" />
+                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                    <button type="submit" class="btn-icon btn-danger">Delete</button>
+                                </form>
+                            }
+                            @if (canManage && item.Status == "deleted")
+                            {
+                                <form method="post" action="/vocabulary/restore" class="inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.WordId" />
+                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                    <button type="submit" class="btn-icon btn-success">Restore</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <nav class="pager" aria-label="Pagination">
+        @if (Model.HasPrevious)
+        {
+            <a class="pager-link" href="@PageUrl(Model.Page - 1)">‹ Prev</a>
+        }
+        <span class="pager-info">Page @Model.Page / @Model.TotalPages</span>
+        @if (Model.HasNext)
+        {
+            <a class="pager-link" href="@PageUrl(Model.Page + 1)">Next ›</a>
+        }
+    </nav>
+}
+
+@section Scripts {
+    <script src="~/js/vocabulary-list.js" asp-append-version="true"></script>
+}
