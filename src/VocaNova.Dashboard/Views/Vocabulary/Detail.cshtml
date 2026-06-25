@@ -1,0 +1,217 @@
+@using VocaNova.Dashboard.Models.Api.Dictionary
+@model WordDetail
+@{
+    ViewData["Title"] = Model.Word;
+    var allRelations = Model.Relations
+        .Concat(Model.Senses.SelectMany(s => s.Relations))
+        .ToList();
+}
+
+@Html.AntiForgeryToken()
+<div data-word-id="@Model.WordId" id="detail-root">
+
+    <div class="page-header detail-header">
+        <div>
+            <a class="back-link" href="/vocabulary">‹ Back to vocabulary</a>
+            <h1 class="page-title">
+                @Model.Word
+                @if (!string.IsNullOrWhiteSpace(Model.Cefr))
+                {
+                    <span class="badge cefr cefr-@Model.Cefr.ToLowerInvariant()">@Model.Cefr</span>
+                }
+                @if (Model.IsPhrase)
+                {
+                    <span class="badge badge-muted">phrase</span>
+                }
+            </h1>
+            <div class="phonetics">
+                @if (!string.IsNullOrWhiteSpace(Model.PhoneticUk))
+                {
+                    <span>UK @Model.PhoneticUk</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.PhoneticUs))
+                {
+                    <span>US @Model.PhoneticUs</span>
+                }
+            </div>
+            <div class="chip-list">
+                @foreach (var topic in Model.Topics)
+                {
+                    <span class="chip">@topic.Name</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-grid">
+        <div class="detail-main">
+            <!-- Senses -->
+            <section class="panel">
+                <div class="panel-head">
+                    <h2 class="panel-title">Senses (@Model.Senses.Count)</h2>
+                </div>
+
+                <div class="accordion" id="senses-list">
+                    @foreach (var sense in Model.Senses.OrderBy(s => s.Order))
+                    {
+                        <details class="sense-item" data-sense-id="@sense.SenseId" open>
+                            <summary>
+                                <span class="sense-order">#@sense.Order</span>
+                                <span class="sense-class">@sense.WordClass</span>
+                                <span class="sense-def js-sense-def">@sense.EnglishDefinition</span>
+                            </summary>
+                            <div class="sense-body">
+                                <p class="sense-vi"><strong>VI:</strong> <span class="js-sense-vi">@sense.VietnameseMeaning</span></p>
+
+                                <div class="sense-examples">
+                                    <h4>Examples</h4>
+                                    @if (sense.Examples.Count == 0)
+                                    {
+                                        <p class="text-muted">No examples.</p>
+                                    }
+                                    else
+                                    {
+                                        <ul class="example-list">
+                                            @foreach (var ex in sense.Examples.OrderBy(e => e.Order))
+                                            {
+                                                <li>
+                                                    <span class="ex-en">@ex.ExampleEn</span>
+                                                    @if (!string.IsNullOrWhiteSpace(ex.ExampleVi))
+                                                    {
+                                                        <span class="ex-vi">@ex.ExampleVi</span>
+                                                    }
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                </div>
+
+                                <button type="button" class="btn-secondary btn-sm js-edit-toggle">Edit</button>
+
+                                <form class="sense-edit-form js-sense-edit" hidden
+                                      data-sense-id="@sense.SenseId">
+                                    <div class="form-row">
+                                        <label>Order</label>
+                                        <input type="number" name="senseOrder" value="@sense.Order" min="1" class="form-control" />
+                                    </div>
+                                    <div class="form-row">
+                                        <label>Word class</label>
+                                        <input type="text" name="wordClass" value="@sense.WordClass" class="form-control" />
+                                    </div>
+                                    <div class="form-row">
+                                        <label>English definition</label>
+                                        <textarea name="englishDefinition" class="form-control" rows="2">@sense.EnglishDefinition</textarea>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>Vietnamese meaning</label>
+                                        <textarea name="vietnameseMeaning" class="form-control" rows="2">@sense.VietnameseMeaning</textarea>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn-primary btn-sm">Save</button>
+                                        <button type="button" class="btn-secondary btn-sm js-edit-cancel">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </details>
+                    }
+                </div>
+
+                <!-- Add sense -->
+                <form class="sense-add-form" id="add-sense-form">
+                    <h4>Add a sense</h4>
+                    <div class="form-grid">
+                        <input type="number" name="senseOrder" value="@(Model.Senses.Count + 1)" min="1" class="form-control" placeholder="Order" />
+                        <input type="text" name="wordClass" class="form-control" placeholder="Word class (noun/verb...)" required />
+                        <input type="text" name="englishDefinition" class="form-control" placeholder="English definition" required />
+                        <input type="text" name="vietnameseMeaning" class="form-control" placeholder="Vietnamese meaning" />
+                    </div>
+                    <button type="submit" class="btn-primary btn-sm">Add sense</button>
+                </form>
+            </section>
+
+            <!-- Relations -->
+            <section class="panel">
+                <div class="panel-head"><h2 class="panel-title">Relations</h2></div>
+                @if (allRelations.Count == 0)
+                {
+                    <p class="text-muted">No relations.</p>
+                }
+                else
+                {
+                    <table class="data-table">
+                        <thead><tr><th>Type</th><th>Related word</th><th>Linked</th><th>Quiz</th></tr></thead>
+                        <tbody>
+                            @foreach (var rel in allRelations)
+                            {
+                                <tr>
+                                    <td><span class="badge badge-muted">@rel.RelationType</span></td>
+                                    <td>@rel.RelatedWord</td>
+                                    <td>@(rel.LinkedWordId is null ? "—" : "yes")</td>
+                                    <td>@(rel.IsQuizEligible ? "✓" : "—")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </section>
+        </div>
+
+        <div class="detail-side">
+            <!-- Image -->
+            <section class="panel">
+                <div class="panel-head"><h2 class="panel-title">Image</h2></div>
+                @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+                {
+                    <img class="word-image" src="@Model.ImageUrl" alt="@Model.Word" />
+                }
+                else
+                {
+                    <p class="text-muted">No image.</p>
+                }
+                <form class="upload-form" id="image-upload-form">
+                    <input type="file" name="file" accept="image/png,image/jpeg,image/webp" class="form-control" required />
+                    <button type="submit" class="btn-secondary btn-sm">Upload image</button>
+                </form>
+            </section>
+
+            <!-- Audio -->
+            <section class="panel">
+                <div class="panel-head"><h2 class="panel-title">Audio</h2></div>
+                @if (Model.Audio.Count == 0)
+                {
+                    <p class="text-muted">No audio.</p>
+                }
+                else
+                {
+                    <ul class="audio-list">
+                        @foreach (var audio in Model.Audio)
+                        {
+                            <li class="audio-item">
+                                <span class="badge badge-muted">@audio.Accent.ToUpperInvariant()</span>
+                                <audio controls preload="none" src="@audio.Url"></audio>
+                                <form class="inline-form js-confirm" data-confirm="Delete this audio?"
+                                      data-ajax="/vocabulary/@Model.WordId/audio/@audio.AudioId/delete">
+                                    <button type="submit" class="btn-icon btn-danger">Delete</button>
+                                </form>
+                            </li>
+                        }
+                    </ul>
+                }
+                <form class="upload-form" id="audio-upload-form">
+                    <select name="accent" class="form-control">
+                        <option value="uk">UK</option>
+                        <option value="us">US</option>
+                    </select>
+                    <input type="file" name="file" accept="audio/mpeg,audio/wav,audio/ogg" class="form-control" required />
+                    <button type="submit" class="btn-secondary btn-sm">Upload audio</button>
+                </form>
+            </section>
+        </div>
+    </div>
+
+    <div id="detail-toast" class="detail-toast" hidden></div>
+</div>
+
+@section Scripts {
+    <script src="~/js/vocabulary-detail.js" asp-append-version="true"></script>
+}

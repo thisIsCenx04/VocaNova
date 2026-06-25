@@ -23,7 +23,27 @@ public interface IVocaNovaApiClient
     Task<ApiActionResult> DeleteWordAsync(uint wordId, CancellationToken cancellationToken = default);
 
     Task<ApiActionResult> RestoreWordAsync(uint wordId, CancellationToken cancellationToken = default);
+
+    // F058 — Vocabulary detail & sense management.
+    Task<WordDetail?> GetWordDetailAsync(uint wordId, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> CreateSenseAsync(uint wordId, SenseInput input, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> UpdateSenseAsync(uint wordId, uint senseId, SenseInput input, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> UploadAudioAsync(uint wordId, AudioUpload upload, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> DeleteAudioAsync(uint wordId, uint audioId, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> UploadImageAsync(uint wordId, ImageUpload upload, CancellationToken cancellationToken = default);
 }
+
+/// <summary>Payload tạo/cập nhật sense (khớp CreateSenseRequest/UpdateSenseRequest của API).</summary>
+public sealed record SenseInput(int SenseOrder, string? WordClass, string? EnglishDefinition, string? VietnameseMeaning);
+
+public sealed record AudioUpload(string Accent, Stream Content, string FileName, string ContentType);
+
+public sealed record ImageUpload(Stream Content, string FileName, string ContentType);
 
 /// <summary>Tham số lọc danh sách từ vựng gửi tới API (F057).</summary>
 public sealed record WordListFilter(
