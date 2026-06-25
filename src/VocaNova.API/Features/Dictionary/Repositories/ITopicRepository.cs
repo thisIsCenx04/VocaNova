@@ -6,6 +6,10 @@ public interface ITopicRepository
 {
     Task<IReadOnlyCollection<TopicSummaryDto>> GetTopicsAsync(CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<AdminTopicDto>> GetAdminTopicsAsync(
+        AdminTopicQuery query,
+        CancellationToken cancellationToken = default);
+
     Task<bool> ExistsAsync(uint topicId, CancellationToken cancellationToken = default);
 
     Task<bool> TopicNameExistsAsync(

@@ -53,7 +53,21 @@ public interface IVocaNovaApiClient
     Task<ApiActionResult> DeactivateUserAsync(uint userId, CancellationToken cancellationToken = default);
 
     Task<ApiActionResult> RestoreUserAsync(uint userId, CancellationToken cancellationToken = default);
+
+    // F061 — Topic management.
+    Task<IReadOnlyList<AdminTopic>> GetAdminTopicsAsync(string? q, string? status, bool includeDeleted, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> CreateTopicAsync(TopicInput input, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> UpdateTopicAsync(uint topicId, TopicInput input, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> DeleteTopicAsync(uint topicId, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> RestoreTopicAsync(uint topicId, CancellationToken cancellationToken = default);
 }
+
+/// <summary>Payload tạo/cập nhật topic (khớp CreateTopicRequest/UpdateTopicRequest của API).</summary>
+public sealed record TopicInput(string? TopicName, string? TopicNameVi, string? Icon);
 
 /// <summary>Bộ lọc danh sách user (F060).</summary>
 public sealed record UserListFilter(string? Status, string? Search, bool IncludeDeleted, int Page, int Limit);

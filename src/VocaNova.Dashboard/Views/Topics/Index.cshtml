@@ -1,0 +1,133 @@
+@using VocaNova.Dashboard.Models.Api.Dictionary
+@model VocaNova.Dashboard.Models.Topics.TopicListViewModel
+@{
+    ViewData["Title"] = "Topics";
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+
+    string StatusBadge(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
+}
+
+<div class="page-header">
+    <h1 class="page-title">Topics</h1>
+    <p class="page-subtitle">@Model.Items.Count topic(s). Manage topics and their words.</p>
+</div>
+
+@if (TempData["TopicSuccess"] is string okMsg)
+{
+    <div class="alert alert-success">@okMsg</div>
+}
+@if (TempData["TopicError"] is string errMsg)
+{
+    <div class="alert alert-danger">@errMsg</div>
+}
+
+<form method="get" action="/topics" class="filter-bar">
+    <input type="text" name="q" value="@Model.Q" class="form-control" placeholder="Search topic..." />
+    <select name="status" class="form-control">
+        <option value="">Any status</option>
+        <option value="active" selected="@(Model.Status == "active")">Active</option>
+        <option value="deleted" selected="@(Model.Status == "deleted")">Deleted</option>
+    </select>
+    <label class="checkbox-inline">
+        <input type="checkbox" name="includeDeleted" value="true" checked="@Model.IncludeDeleted" />
+        Show deleted
+    </label>
+    <button type="submit" class="btn-primary">Filter</button>
+    <a href="/topics" class="btn-secondary">Reset</a>
+</form>
+
+<div class="panel">
+    <h4>Add a topic</h4>
+    <form method="post" action="/topics/create" class="form-grid topic-add-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+        <input type="text" name="icon" class="form-control" placeholder="Icon" />
+        <input type="text" name="topicName" class="form-control" placeholder="Topic name (EN)" required />
+        <input type="text" name="topicNameVi" class="form-control" placeholder="Tên chủ đề (VI)" />
+        <button type="submit" class="btn-primary btn-sm">Add topic</button>
+    </form>
+</div>
+
+<div class="panel table-panel">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Icon</th>
+                <th>Topic name</th>
+                <th>Tên (VI)</th>
+                <th>Status</th>
+                <th>Words</th>
+                <th class="col-actions">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="6" class="empty-row">No topics found.</td></tr>
+            }
+            else
+            {
+                foreach (var topic in Model.Items)
+                {
+                    <tr data-topic-row="@topic.TopicId">
+                        <td>@(string.IsNullOrWhiteSpace(topic.Icon) ? "—" : topic.Icon)</td>
+                        <td class="word-text">@topic.TopicName</td>
+                        <td>@(topic.TopicNameVi ?? "—")</td>
+                        <td><span class="@StatusBadge(topic.Status)">@topic.Status</span></td>
+                        <td>@topic.WordCount</td>
+                        <td class="col-actions">
+                            @if (topic.Status != "deleted")
+                            {
+                                <button type="button" class="btn-icon js-edit-topic" data-topic-id="@topic.TopicId">Edit</button>
+                                @if (topic.WordCount > 0)
+                                {
+                                    <button type="button" class="btn-icon btn-danger" disabled
+                                            title="Không thể xóa — còn @topic.WordCount từ đang dùng topic này">Delete</button>
+                                }
+                                else
+                                {
+                                    <form method="post" action="/topics/@topic.TopicId/delete" class="inline-form js-confirm"
+                                          data-confirm="Delete topic '@topic.TopicName'?">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button type="submit" class="btn-icon btn-danger">Delete</button>
+                                    </form>
+                                }
+                            }
+                            else
+                            {
+                                <form method="post" action="/topics/@topic.TopicId/restore" class="inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                    <button type="submit" class="btn-icon btn-success">Restore</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                    @if (topic.Status != "deleted")
+                    {
+                        <tr class="edit-row" id="edit-row-@topic.TopicId" hidden>
+                            <td colspan="6">
+                                <form method="post" action="/topics/@topic.TopicId/update" class="form-grid">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                    <input type="text" name="icon" value="@topic.Icon" class="form-control" placeholder="Icon" />
+                                    <input type="text" name="topicName" value="@topic.TopicName" class="form-control" placeholder="Topic name (EN)" required />
+                                    <input type="text" name="topicNameVi" value="@topic.TopicNameVi" class="form-control" placeholder="Tên chủ đề (VI)" />
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn-primary btn-sm">Save</button>
+                                        <button type="button" class="btn-secondary btn-sm js-edit-cancel" data-topic-id="@topic.TopicId">Cancel</button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script src="~/js/topics.js" asp-append-version="true"></script>
+}

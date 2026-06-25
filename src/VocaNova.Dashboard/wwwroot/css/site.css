@@ -1078,6 +1078,37 @@ code {
     padding: 12px 16px;
 }
 
+/* ----- Topic management (F061) ----- */
+.topic-add-form,
+.edit-row form.form-grid {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 12px 0 0;
+}
+
+.topic-add-form .form-control,
+.edit-row .form-control {
+    width: auto;
+    min-width: 150px;
+}
+
+.topic-add-form input[name="icon"],
+.edit-row input[name="icon"] {
+    max-width: 90px;
+    min-width: 70px;
+}
+
+.edit-row > td {
+    background: #f8fafc;
+}
+
+.btn-icon:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
     .detail-list {
         grid-template-columns: 1fr;

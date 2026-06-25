@@ -22,6 +22,17 @@ public sealed class AdminTopicsController : ControllerBase
         _topicService = topicService;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> List(
+        [FromQuery] AdminTopicQuery query,
+        CancellationToken cancellationToken)
+    {
+        var result = await _topicService.GetAdminTopicsAsync(query, cancellationToken);
+        return result.IsSuccess
+            ? this.OkResult(result.Value!, "Topics loaded successfully.")
+            : this.ErrorResult(result);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(
         [FromBody] CreateTopicRequest request,

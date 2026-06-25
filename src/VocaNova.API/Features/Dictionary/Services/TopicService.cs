@@ -44,6 +44,30 @@ public sealed class TopicService : ITopicService
         return Result<IReadOnlyCollection<TopicSummaryDto>>.Ok(topics);
     }
 
+    public async Task<Result<IReadOnlyCollection<AdminTopicDto>>> GetAdminTopicsAsync(
+        AdminTopicQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var status = string.IsNullOrWhiteSpace(query.Status)
+            ? null
+            : query.Status.Trim().ToLowerInvariant();
+        if (status is not null && status != UserStatus.Active && status != UserStatus.Deleted)
+        {
+            return Result<IReadOnlyCollection<AdminTopicDto>>.Fail("Status must be 'active' or 'deleted'.");
+        }
+
+        // Lọc status='deleted' chỉ có nghĩa khi đã bỏ global filter.
+        var normalized = new AdminTopicQuery
+        {
+            Q = string.IsNullOrWhiteSpace(query.Q) ? null : query.Q.Trim(),
+            Status = status,
+            IncludeDeleted = query.IncludeDeleted || status == UserStatus.Deleted,
+        };
+
+        var topics = await _topicRepository.GetAdminTopicsAsync(normalized, cancellationToken);
+        return Result<IReadOnlyCollection<AdminTopicDto>>.Ok(topics);
+    }
+
     public async Task<Result<PagedResult<WordSummaryDto>>> GetWordsAsync(
         uint topicId,
         TopicWordsQuery query,
