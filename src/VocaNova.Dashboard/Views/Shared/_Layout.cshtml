@@ -60,6 +60,21 @@
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm12 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM12 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm-4.7-11.3 3.3 3.3 1.4-1.4-3.3-3.3-1.4 1.4Zm9.4 0-3.3 3.3 1.4 1.4 3.3-3.3-1.4-1.4Z" /></svg>
                         <span>KNN Management</span>
                     </a>
+                    @{
+                        var knnLinks = new (string Slug, string Label)[]
+                        {
+                            ("age-ranges", "Age Ranges"),
+                            ("regions", "Regions"),
+                            ("occupations", "Occupations"),
+                            ("education-levels", "Education Levels"),
+                            ("learning-purposes", "Learning Purposes"),
+                        };
+                    }
+                    @foreach (var (slug, label) in knnLinks)
+                    {
+                        var subActive = path.StartsWith($"/knn/{slug}") ? "sidebar-sublink active" : "sidebar-sublink";
+                        <a class="@subActive" href="/knn/@slug">@label</a>
+                    }
                     @if (isSuperAdmin)
                     {
                         <a class="@NavActive("/admin-accounts")" href="/admin-accounts">

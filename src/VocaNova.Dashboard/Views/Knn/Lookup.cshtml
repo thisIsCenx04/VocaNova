@@ -1,0 +1,161 @@
+@using VocaNova.Dashboard.Models.Knn
+@model KnnLookupViewModel
+@{
+    ViewData["Title"] = Model.Title;
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var colSpan = Model.Columns.Count + 2;
+
+    string StatusBadge(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
+
+    string PageUrl(int page)
+    {
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(Model.Q)) qs.Add($"q={Uri.EscapeDataString(Model.Q)}");
+        if (!string.IsNullOrWhiteSpace(Model.Status)) qs.Add($"status={Model.Status}");
+        if (Model.IncludeDeleted) qs.Add("includeDeleted=true");
+        qs.Add($"page={page}");
+        return $"/knn/{Model.Slug}?" + string.Join("&", qs);
+    }
+}
+
+@functions {
+    string InputType(KnnFieldDef f) => f.Type == "number" ? "number" : "text";
+}
+
+<div class="page-header">
+    <a class="back-link" href="/knn">‹ Back to KNN Management</a>
+    <h1 class="page-title">@Model.Title</h1>
+    <p class="page-subtitle">@Model.TotalItems item(s).</p>
+</div>
+
+@if (TempData["KnnSuccess"] is string okMsg)
+{
+    <div class="alert alert-success">@okMsg</div>
+}
+@if (TempData["KnnError"] is string errMsg)
+{
+    <div class="alert alert-danger">@errMsg</div>
+}
+
+<form method="get" action="/knn/@Model.Slug" class="filter-bar">
+    <input type="text" name="q" value="@Model.Q" class="form-control" placeholder="Search..." />
+    <select name="status" class="form-control">
+        <option value="">Any status</option>
+        <option value="active" selected="@(Model.Status == "active")">Active</option>
+        <option value="deleted" selected="@(Model.Status == "deleted")">Deleted</option>
+    </select>
+    <label class="checkbox-inline">
+        <input type="checkbox" name="includeDeleted" value="true" checked="@Model.IncludeDeleted" />
+        Show deleted
+    </label>
+    <button type="submit" class="btn-primary">Filter</button>
+    <a href="/knn/@Model.Slug" class="btn-secondary">Reset</a>
+</form>
+
+<div class="panel">
+    <h4>Add @Model.Title.TrimEnd('s')</h4>
+    <form method="post" action="/knn/@Model.Slug/save" class="form-grid topic-add-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="0" />
+        <input type="hidden" name="returnUrl" value="@returnUrl" />
+        @foreach (var f in Model.AddFields)
+        {
+            <input type="@InputType(f)" name="@f.Name" class="form-control" placeholder="@f.Label" required="@(f.Required ? "required" : null)" />
+        }
+        <button type="submit" class="btn-primary btn-sm">Add</button>
+    </form>
+</div>
+
+<div class="panel table-panel">
+    <table class="data-table">
+        <thead>
+            <tr>
+                @foreach (var col in Model.Columns)
+                {
+                    <th>@col</th>
+                }
+                <th>Status</th>
+                <th class="col-actions">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Rows.Count == 0)
+            {
+                <tr><td colspan="@colSpan" class="empty-row">No items found.</td></tr>
+            }
+            else
+            {
+                foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        @foreach (var cell in row.Cells)
+                        {
+                            <td>@cell</td>
+                        }
+                        <td><span class="@StatusBadge(row.Status)">@row.Status</span></td>
+                        <td class="col-actions">
+                            @if (row.Status != "deleted")
+                            {
+                                <button type="button" class="btn-icon js-edit-toggle" data-row-id="@row.Id">Edit</button>
+                                <form method="post" action="/knn/@Model.Slug/delete" class="inline-form js-confirm" data-confirm="Delete this item?">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@row.Id" />
+                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                    <button type="submit" class="btn-icon btn-danger">Delete</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form method="post" action="/knn/@Model.Slug/restore" class="inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@row.Id" />
+                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                    <button type="submit" class="btn-icon btn-success">Restore</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                    @if (row.Status != "deleted")
+                    {
+                        <tr class="edit-row" id="edit-row-@row.Id" hidden>
+                            <td colspan="@colSpan">
+                                <form method="post" action="/knn/@Model.Slug/save" class="form-grid">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@row.Id" />
+                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                    @foreach (var f in row.Fields)
+                                    {
+                                        <input type="@InputType(f)" name="@f.Name" value="@f.Value" class="form-control" placeholder="@f.Label" required="@(f.Required ? "required" : null)" />
+                                    }
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn-primary btn-sm">Save</button>
+                                        <button type="button" class="btn-secondary btn-sm js-edit-cancel" data-row-id="@row.Id">Cancel</button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <nav class="pager" aria-label="Pagination">
+        @if (Model.HasPrevious)
+        {
+            <a class="pager-link" href="@PageUrl(Model.Page - 1)">‹ Prev</a>
+        }
+        <span class="pager-info">Page @Model.Page / @Model.TotalPages</span>
+        @if (Model.HasNext)
+        {
+            <a class="pager-link" href="@PageUrl(Model.Page + 1)">Next ›</a>
+        }
+    </nav>
+}
+
+@section Scripts {
+    <script src="~/js/knn.js" asp-append-version="true"></script>
+}

@@ -188,6 +188,42 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> RestoreTopicAsync(uint topicId, CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Patch, $"api/admin/topics/{topicId}/restore", cancellationToken);
 
+    public Task<Models.Api.Knn.KnnConfig?> GetKnnConfigAsync(CancellationToken cancellationToken = default) =>
+        GetDataAsync<Models.Api.Knn.KnnConfig>("api/admin/knn/config", cancellationToken);
+
+    public Task<Models.Api.Knn.KnnRebuildStatus?> GetKnnRebuildStatusAsync(CancellationToken cancellationToken = default) =>
+        GetDataAsync<Models.Api.Knn.KnnRebuildStatus>("api/admin/knn/rebuild-status", cancellationToken);
+
+    public Task<ApiActionResult> TriggerKnnRebuildAsync(CancellationToken cancellationToken = default) =>
+        SendActionAsync(HttpMethod.Post, "api/admin/knn/trigger-rebuild", cancellationToken);
+
+    public Task<PagedData<T>> GetKnnLookupPageAsync<T>(string lookup, KnnLookupFilter filter, CancellationToken cancellationToken = default)
+    {
+        var queryParams = new Dictionary<string, string?>
+        {
+            ["page"] = filter.Page.ToString(CultureInfo.InvariantCulture),
+            ["limit"] = filter.Limit.ToString(CultureInfo.InvariantCulture),
+            ["include_deleted"] = filter.IncludeDeleted ? "true" : "false",
+        };
+        if (!string.IsNullOrWhiteSpace(filter.Q)) queryParams["q"] = filter.Q;
+        if (!string.IsNullOrWhiteSpace(filter.Status)) queryParams["status"] = filter.Status;
+
+        var uri = QueryHelpers.AddQueryString($"api/admin/knn/{lookup}", queryParams);
+        return GetPagedAsync<T>(uri, filter.Page, filter.Limit, cancellationToken);
+    }
+
+    public Task<ApiActionResult> CreateKnnLookupAsync(string lookup, object payload, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Post, $"api/admin/knn/{lookup}", payload, cancellationToken);
+
+    public Task<ApiActionResult> UpdateKnnLookupAsync(string lookup, uint id, object payload, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Put, $"api/admin/knn/{lookup}/{id}", payload, cancellationToken);
+
+    public Task<ApiActionResult> DeleteKnnLookupAsync(string lookup, uint id, CancellationToken cancellationToken = default) =>
+        SendActionAsync(HttpMethod.Delete, $"api/admin/knn/{lookup}/{id}", cancellationToken);
+
+    public Task<ApiActionResult> RestoreKnnLookupAsync(string lookup, uint id, CancellationToken cancellationToken = default) =>
+        SendActionAsync(HttpMethod.Patch, $"api/admin/knn/{lookup}/{id}/restore", cancellationToken);
+
     private static object TopicPayload(TopicInput input) => new
     {
         input.TopicName,
