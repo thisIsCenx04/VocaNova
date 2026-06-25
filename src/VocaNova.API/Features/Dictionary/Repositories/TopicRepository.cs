@@ -30,6 +30,40 @@ public sealed class TopicRepository : ITopicRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<AdminTopicDto>> GetAdminTopicsAsync(
+        AdminTopicQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var source = query.IncludeDeleted
+            ? _dbContext.Topics.IgnoreQueryFilters().AsNoTracking()
+            : _dbContext.Topics.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(query.Status))
+        {
+            source = source.Where(topic => topic.Status == query.Status);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Q))
+        {
+            var term = query.Q.Trim().ToLower();
+            source = source.Where(topic =>
+                topic.TopicName.ToLower().Contains(term)
+                || (topic.TopicNameVi != null && topic.TopicNameVi.ToLower().Contains(term)));
+        }
+
+        return await source
+            .OrderBy(topic => topic.TopicName)
+            .Select(topic => new AdminTopicDto(
+                topic.TopicId,
+                topic.TopicName,
+                topic.TopicNameVi,
+                topic.Icon,
+                topic.Status,
+                // word_count = số từ active dùng topic (khớp guard xóa HasActiveWordsAsync).
+                topic.WordTopics.Count(wordTopic => wordTopic.Word.Status == UserStatus.Active)))
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<bool> ExistsAsync(uint topicId, CancellationToken cancellationToken = default)
     {
         return _dbContext.Topics.AnyAsync(topic => topic.TopicId == topicId, cancellationToken);

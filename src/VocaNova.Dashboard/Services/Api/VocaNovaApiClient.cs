@@ -150,6 +150,42 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> RestoreUserAsync(uint userId, CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Patch, $"api/admin/users/{userId}/restore", cancellationToken);
 
+    public Task<IReadOnlyList<Models.Api.Dictionary.AdminTopic>> GetAdminTopicsAsync(
+        string? q,
+        string? status,
+        bool includeDeleted,
+        CancellationToken cancellationToken = default)
+    {
+        var queryParams = new Dictionary<string, string?>
+        {
+            ["includeDeleted"] = includeDeleted ? "true" : "false",
+        };
+        if (!string.IsNullOrWhiteSpace(q)) queryParams["q"] = q;
+        if (!string.IsNullOrWhiteSpace(status)) queryParams["status"] = status;
+
+        var uri = QueryHelpers.AddQueryString("api/admin/topics", queryParams);
+        return GetListAsync<Models.Api.Dictionary.AdminTopic>(uri, cancellationToken);
+    }
+
+    public Task<ApiActionResult> CreateTopicAsync(TopicInput input, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Post, "api/admin/topics", TopicPayload(input), cancellationToken);
+
+    public Task<ApiActionResult> UpdateTopicAsync(uint topicId, TopicInput input, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Put, $"api/admin/topics/{topicId}", TopicPayload(input), cancellationToken);
+
+    public Task<ApiActionResult> DeleteTopicAsync(uint topicId, CancellationToken cancellationToken = default) =>
+        SendActionAsync(HttpMethod.Delete, $"api/admin/topics/{topicId}", cancellationToken);
+
+    public Task<ApiActionResult> RestoreTopicAsync(uint topicId, CancellationToken cancellationToken = default) =>
+        SendActionAsync(HttpMethod.Patch, $"api/admin/topics/{topicId}/restore", cancellationToken);
+
+    private static object TopicPayload(TopicInput input) => new
+    {
+        input.TopicName,
+        input.TopicNameVi,
+        input.Icon,
+    };
+
     private static object SensePayload(SenseInput input) => new
     {
         input.SenseOrder,

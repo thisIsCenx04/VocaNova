@@ -32,6 +32,49 @@ public class TopicFeatureTests
     }
 
     [Fact]
+    public async Task GetAdminTopicsAsync_Should_Return_Active_With_ActiveWordCount_By_Default()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedTopicsAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.GetAdminTopicsAsync(new AdminTopicQuery());
+
+        result.IsSuccess.Should().BeTrue();
+        var topics = result.Value!;
+        topics.Should().NotContain(topic => topic.TopicId == 3); // deleted hidden by default
+        topics.Single(topic => topic.TopicId == 1).WordCount.Should().Be(2);
+        topics.Single(topic => topic.TopicId == 2).WordCount.Should().Be(1);
+        topics.Single(topic => topic.TopicId == 4).WordCount.Should().Be(0);
+        topics.Single(topic => topic.TopicId == 1).Status.Should().Be(UserStatus.Active);
+    }
+
+    [Fact]
+    public async Task GetAdminTopicsAsync_Should_Include_Deleted_And_Filter_By_Search()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedTopicsAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var withDeleted = await service.GetAdminTopicsAsync(new AdminTopicQuery { IncludeDeleted = true });
+        withDeleted.Value!.Should().Contain(topic => topic.TopicId == 3 && topic.Status == UserStatus.Deleted);
+
+        var searched = await service.GetAdminTopicsAsync(new AdminTopicQuery { Q = "sport" });
+        searched.Value!.Select(topic => topic.TopicId).Should().Equal(2u);
+    }
+
+    [Fact]
+    public async Task GetAdminTopicsAsync_Should_Reject_Invalid_Status()
+    {
+        await using var dbContext = CreateDbContext();
+        var service = CreateService(dbContext);
+
+        var result = await service.GetAdminTopicsAsync(new AdminTopicQuery { Status = "archived" });
+
+        result.IsSuccess.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task GetWordsAsync_Should_Return_Paginated_Words_By_Topic()
     {
         await using var dbContext = CreateDbContext();

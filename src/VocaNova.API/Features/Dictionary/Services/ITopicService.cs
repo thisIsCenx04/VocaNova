@@ -8,6 +8,10 @@ public interface ITopicService
     Task<Result<IReadOnlyCollection<TopicSummaryDto>>> GetTopicsAsync(
         CancellationToken cancellationToken = default);
 
+    Task<Result<IReadOnlyCollection<AdminTopicDto>>> GetAdminTopicsAsync(
+        AdminTopicQuery query,
+        CancellationToken cancellationToken = default);
+
     Task<Result<PagedResult<WordSummaryDto>>> GetWordsAsync(
         uint topicId,
         TopicWordsQuery query,
