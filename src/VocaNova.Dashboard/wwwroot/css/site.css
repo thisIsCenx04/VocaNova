@@ -1141,6 +1141,58 @@ code {
     }
 }
 
+/* ----- KNN management (F063) ----- */
+.knn-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.knn-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.knn-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+}
+
+.knn-card-title {
+    font-weight: 700;
+    color: var(--text);
+}
+
+.knn-card-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.sidebar-sublink {
+    display: block;
+    padding: 7px 12px 7px 44px;
+    border-radius: var(--radius);
+    color: var(--sidebar-fg);
+    font-size: 13px;
+}
+
+.sidebar-sublink:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--sidebar-fg-active);
+}
+
+.sidebar-sublink.active {
+    color: #fff;
+    font-weight: 600;
+}
+
 @media (max-width: 768px) {
     .detail-list {
         grid-template-columns: 1fr;

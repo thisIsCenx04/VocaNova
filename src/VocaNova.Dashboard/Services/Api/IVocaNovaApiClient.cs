@@ -71,7 +71,27 @@ public interface IVocaNovaApiClient
     Task<ApiActionResult> DeleteTopicAsync(uint topicId, CancellationToken cancellationToken = default);
 
     Task<ApiActionResult> RestoreTopicAsync(uint topicId, CancellationToken cancellationToken = default);
+
+    // F063 — KNN management (lookup CRUD + config/rebuild). `lookup` ∈ age-ranges/regions/occupations/education-levels/learning-purposes.
+    Task<Models.Api.Knn.KnnConfig?> GetKnnConfigAsync(CancellationToken cancellationToken = default);
+
+    Task<Models.Api.Knn.KnnRebuildStatus?> GetKnnRebuildStatusAsync(CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> TriggerKnnRebuildAsync(CancellationToken cancellationToken = default);
+
+    Task<PagedData<T>> GetKnnLookupPageAsync<T>(string lookup, KnnLookupFilter filter, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> CreateKnnLookupAsync(string lookup, object payload, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> UpdateKnnLookupAsync(string lookup, uint id, object payload, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> DeleteKnnLookupAsync(string lookup, uint id, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> RestoreKnnLookupAsync(string lookup, uint id, CancellationToken cancellationToken = default);
 }
+
+/// <summary>Bộ lọc danh sách lookup KNN (F063). API dùng query key snake_case <c>include_deleted</c>.</summary>
+public sealed record KnnLookupFilter(string? Q, string? Status, bool IncludeDeleted, int Page, int Limit);
 
 /// <summary>Payload tạo/cập nhật topic (khớp CreateTopicRequest/UpdateTopicRequest của API).</summary>
 public sealed record TopicInput(string? TopicName, string? TopicNameVi, string? Icon);
