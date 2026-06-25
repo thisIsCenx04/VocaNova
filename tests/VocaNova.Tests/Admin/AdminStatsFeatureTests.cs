@@ -233,6 +233,42 @@ public class AdminStatsFeatureTests
     }
 
     [Fact]
+    public async Task GetActivityTrendAsync_Daily_Should_Return_30_Buckets_With_Sessions_And_Accuracy()
+    {
+        await using var dbContext = CreateDbContext();
+        var today = DateTime.UtcNow.Date;
+        await SeedUsersAsync(dbContext);
+        dbContext.TestSessions.AddRange(
+            CreateSession(1, 1, today.AddHours(1), 8, 2),
+            CreateSession(2, 1, today.AddHours(3), 6, 4));
+        await dbContext.SaveChangesAsync();
+        var service = CreateService(dbContext);
+
+        var result = await service.GetActivityTrendAsync("daily");
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Granularity.Should().Be("daily");
+        result.Value.Points.Should().HaveCount(30);
+        var last = result.Value.Points.Last();
+        last.Period.Should().Be(today.ToString("yyyy-MM-dd"));
+        last.SessionsCount.Should().Be(2);
+        last.CorrectCount.Should().Be(14);
+        last.TotalCount.Should().Be(20);
+        last.Accuracy.Should().Be(70);
+    }
+
+    [Fact]
+    public async Task GetActivityTrendAsync_Should_Return_Expected_Bucket_Counts_And_Reject_Invalid()
+    {
+        await using var dbContext = CreateDbContext();
+        var service = CreateService(dbContext);
+
+        (await service.GetActivityTrendAsync("weekly")).Value!.Points.Should().HaveCount(12);
+        (await service.GetActivityTrendAsync("monthly")).Value!.Points.Should().HaveCount(6);
+        (await service.GetActivityTrendAsync("yearly")).IsSuccess.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task GetAuditLogsAsync_Should_Filter_By_User_And_Entity_With_Pagination()
     {
         await using var dbContext = CreateDbContext();

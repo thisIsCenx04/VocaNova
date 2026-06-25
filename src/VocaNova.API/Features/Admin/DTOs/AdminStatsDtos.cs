@@ -84,3 +84,15 @@ public sealed record AdminMasteryLevelDto(
 public sealed record AdminMasteryCountRow(
     int Level,
     int Count);
+
+// F062: chuỗi hoạt động hệ thống theo granularity (daily/weekly/monthly) — sessions + accuracy mỗi bucket.
+public sealed record AdminActivityTrendDto(
+    [property: JsonPropertyName("granularity")] string Granularity,
+    [property: JsonPropertyName("points")] IReadOnlyCollection<AdminActivityTrendPointDto> Points);
+
+public sealed record AdminActivityTrendPointDto(
+    [property: JsonPropertyName("period")] string Period,
+    [property: JsonPropertyName("sessions_count")] int SessionsCount,
+    [property: JsonPropertyName("correct_count")] int CorrectCount,
+    [property: JsonPropertyName("total_count")] int TotalCount,
+    [property: JsonPropertyName("accuracy")] double Accuracy);

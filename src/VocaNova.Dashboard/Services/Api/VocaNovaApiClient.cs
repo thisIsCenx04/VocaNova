@@ -26,6 +26,15 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<MasteryDistribution?> GetMasteryDistributionAsync(CancellationToken cancellationToken = default) =>
         GetDataAsync<MasteryDistribution>("api/admin/stats/mastery-distribution", cancellationToken);
 
+    public Task<ActivityTrend?> GetActivityTrendAsync(string granularity, CancellationToken cancellationToken = default) =>
+        GetDataAsync<ActivityTrend>($"api/admin/stats/activity-trend?granularity={Uri.EscapeDataString(granularity)}", cancellationToken);
+
+    public Task<LearningStats?> GetLearningStatsAsync(CancellationToken cancellationToken = default) =>
+        GetDataAsync<LearningStats>("api/admin/stats/learning", cancellationToken);
+
+    public Task<Demographics?> GetDemographicsAsync(CancellationToken cancellationToken = default) =>
+        GetDataAsync<Demographics>("api/admin/stats/demographics", cancellationToken);
+
     public Task<IReadOnlyList<TopicSummary>> GetTopicsAsync(CancellationToken cancellationToken = default) =>
         GetListAsync<TopicSummary>("api/topics", cancellationToken);
 

@@ -1,0 +1,88 @@
+@using System.Text.Json
+@model VocaNova.Dashboard.Models.Statistics.StatisticsViewModel
+@{
+    ViewData["Title"] = "Statistics";
+
+    var demographics = Model.Demographics;
+    var demoJson = JsonSerializer.Serialize(new
+    {
+        age = new
+        {
+            labels = demographics?.AgeRanges.Select(g => g.Name).ToArray() ?? Array.Empty<string>(),
+            values = demographics?.AgeRanges.Select(g => g.UserCount).ToArray() ?? Array.Empty<int>(),
+        },
+        occupation = new
+        {
+            labels = demographics?.Occupations.Select(g => g.Name).ToArray() ?? Array.Empty<string>(),
+            values = demographics?.Occupations.Select(g => g.UserCount).ToArray() ?? Array.Empty<int>(),
+        },
+        education = new
+        {
+            labels = demographics?.EducationLevels.Select(g => g.Name).ToArray() ?? Array.Empty<string>(),
+            values = demographics?.EducationLevels.Select(g => g.UserCount).ToArray() ?? Array.Empty<int>(),
+        },
+    });
+    var wrongWords = Model.Learning?.TopWrongWords ?? new List<VocaNova.Dashboard.Models.Api.Stats.WrongWordStat>();
+}
+
+<div class="page-header">
+    <h1 class="page-title">Statistics</h1>
+    <p class="page-subtitle">System learning analytics.</p>
+</div>
+
+<section class="panel">
+    <div class="panel-head">
+        <h2 class="panel-title">Activity over time</h2>
+        <select id="granularity" class="form-control granularity-select">
+            <option value="daily">Daily (30 days)</option>
+            <option value="weekly">Weekly (12 weeks)</option>
+            <option value="monthly">Monthly (6 months)</option>
+        </select>
+    </div>
+    <div class="chart-grid">
+        <div class="chart-box"><canvas id="sessions-chart" height="120"></canvas></div>
+        <div class="chart-box"><canvas id="accuracy-chart" height="120"></canvas></div>
+    </div>
+</section>
+
+<div class="chart-grid stats-grid">
+    <section class="panel table-panel">
+        <div class="panel-head"><h2 class="panel-title">Top 20 wrong words</h2></div>
+        <table class="data-table">
+            <thead><tr><th>Word</th><th>Wrong</th><th>Accuracy</th></tr></thead>
+            <tbody>
+                @if (wrongWords.Count == 0)
+                {
+                    <tr><td colspan="3" class="empty-row">No data.</td></tr>
+                }
+                else
+                {
+                    foreach (var w in wrongWords)
+                    {
+                        <tr>
+                            <td class="word-text">@w.Word</td>
+                            <td>@w.WrongCount</td>
+                            <td>@w.Accuracy.ToString("0.#")%</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head"><h2 class="panel-title">Demographics</h2></div>
+        <div class="demo-charts">
+            <div class="demo-chart"><h4>Age range</h4><div class="chart-box chart-box-sm"><canvas id="age-chart"></canvas></div></div>
+            <div class="demo-chart"><h4>Occupation</h4><div class="chart-box chart-box-sm"><canvas id="occupation-chart"></canvas></div></div>
+            <div class="demo-chart"><h4>Education level</h4><div class="chart-box chart-box-sm"><canvas id="education-chart"></canvas></div></div>
+        </div>
+    </section>
+</div>
+
+<script id="demographics-data" type="application/json">@Html.Raw(demoJson)</script>
+
+@section Scripts {
+    <script src="~/lib/chart/chart.umd.min.js"></script>
+    <script src="~/js/statistics.js" asp-append-version="true"></script>
+}

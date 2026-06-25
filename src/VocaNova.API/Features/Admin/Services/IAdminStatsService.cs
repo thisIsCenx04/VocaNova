@@ -18,6 +18,10 @@ public interface IAdminStatsService
     Task<Result<AdminMasteryDistributionDto>> GetMasteryDistributionAsync(
         CancellationToken cancellationToken = default);
 
+    Task<Result<AdminActivityTrendDto>> GetActivityTrendAsync(
+        string granularity,
+        CancellationToken cancellationToken = default);
+
     Task<Result<PagedResult<AdminAuditLogDto>>> GetAuditLogsAsync(
         AdminAuditLogQuery query,
         CancellationToken cancellationToken = default);
