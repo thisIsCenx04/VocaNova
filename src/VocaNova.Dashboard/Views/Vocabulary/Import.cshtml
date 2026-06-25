@@ -1,0 +1,57 @@
+@{
+    ViewData["Title"] = "Import vocabulary";
+}
+
+@Html.AntiForgeryToken()
+
+<div class="page-header">
+    <a class="back-link" href="/vocabulary">‹ Back to vocabulary</a>
+    <h1 class="page-title">Import vocabulary (CSV)</h1>
+    <p class="page-subtitle">Upload a CSV to bulk-create words. Invalid rows are reported; valid rows still import.</p>
+</div>
+
+<div class="panel">
+    <p class="panel-muted">
+        Expected columns:
+        <code>word, cefr_level, phonetic_uk, phonetic_us, word_class, english_definition, vietnamese_meaning</code>.
+        <a href="/vocabulary/import/template">Download template CSV</a>
+    </p>
+
+    <form id="import-form">
+        <label id="drop-zone" class="drop-zone" for="csv-file">
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="drop-icon"><path d="M12 3v12m0-12 4 4m-4-4-4 4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="drop-text">Drag &amp; drop your CSV here, or click to choose a file</span>
+            <span class="drop-file" id="drop-file"></span>
+            <input type="file" id="csv-file" name="file" accept=".csv,text/csv" hidden />
+        </label>
+        <button type="submit" class="btn-primary" id="import-submit">Upload &amp; import</button>
+    </form>
+</div>
+
+<div class="panel import-result" id="import-result" hidden>
+    <div class="panel-head">
+        <h2 class="panel-title">Result</h2>
+        <button type="button" class="btn-secondary btn-sm" id="download-errors" hidden>Download errors as CSV</button>
+    </div>
+
+    <div class="stat-grid result-summary">
+        <div class="stat-card"><span class="stat-label">Imported words</span><span class="stat-value" id="r-words">0</span></div>
+        <div class="stat-card"><span class="stat-label">Imported senses</span><span class="stat-value" id="r-senses">0</span></div>
+        <div class="stat-card"><span class="stat-label">Skipped</span><span class="stat-value" id="r-skipped">0</span></div>
+        <div class="stat-card"><span class="stat-label">Errors</span><span class="stat-value" id="r-errors">0</span></div>
+    </div>
+
+    <div id="errors-block" hidden>
+        <h4>Error rows</h4>
+        <div class="table-panel">
+            <table class="data-table">
+                <thead><tr><th>Row #</th><th>Column</th><th>Message</th></tr></thead>
+                <tbody id="errors-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/vocabulary-import.js" asp-append-version="true"></script>
+}
