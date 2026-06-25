@@ -367,6 +367,71 @@ a {
     padding-left: 18px;
 }
 
+/* ----- Overview (F056): stat cards + charts ----- */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stat-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 16px;
+}
+
+.chart-panel {
+    padding: 20px;
+}
+
+.panel-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.panel-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.panel-hint {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.chart-box {
+    position: relative;
+    height: 300px;
+}
+
 /* ----- Responsive: sidebar collapses to off-canvas drawer ----- */
 @media (max-width: 992px) {
     .sidebar {
@@ -389,5 +454,13 @@ a {
 
     .main-content {
         padding: 20px 16px;
+    }
+
+    .stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .chart-grid {
+        grid-template-columns: 1fr;
     }
 }

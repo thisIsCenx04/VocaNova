@@ -1,0 +1,53 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="page-header">
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle">System overview. Auto-refreshes every 5 minutes.</p>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card">
+        <span class="stat-label">Users</span>
+        <span class="stat-value" id="stat-users">—</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Words</span>
+        <span class="stat-value" id="stat-words">—</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Sessions today</span>
+        <span class="stat-value" id="stat-sessions">—</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">Accuracy (7 days)</span>
+        <span class="stat-value" id="stat-accuracy">—</span>
+    </div>
+</div>
+
+<div class="chart-grid">
+    <div class="panel chart-panel">
+        <div class="panel-head">
+            <h2 class="panel-title">Sessions per day</h2>
+            <span class="panel-hint">Last 7 days</span>
+        </div>
+        <div class="chart-box">
+            <canvas id="sessions-chart" height="120"></canvas>
+        </div>
+    </div>
+    <div class="panel chart-panel">
+        <div class="panel-head">
+            <h2 class="panel-title">Mastery distribution</h2>
+            <span class="panel-hint" id="mastery-total"></span>
+        </div>
+        <div class="chart-box chart-box-pie">
+            <canvas id="mastery-chart" height="120"></canvas>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/chart/chart.umd.min.js"></script>
+    <script src="~/js/dashboard-overview.js" asp-append-version="true"></script>
+}

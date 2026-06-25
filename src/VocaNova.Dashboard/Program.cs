@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
+using VocaNova.Dashboard.Services.Api;
 using VocaNova.Dashboard.Services.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +21,18 @@ builder.Services.AddHttpClient<IDashboardAuthService, DashboardAuthService>((ser
 
     client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
 });
+
+// API client có Bearer token + auto-refresh khi 401 (F055.1) cho mọi lệnh gọi data admin.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<BearerTokenHandler>();
+builder.Services.AddHttpClient<IVocaNovaApiClient, VocaNovaApiClient>((serviceProvider, client) =>
+{
+    var options = serviceProvider
+        .GetRequiredService<IOptions<DashboardApiOptions>>()
+        .Value;
+
+    client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
+}).AddHttpMessageHandler<BearerTokenHandler>();
 
 // Cookie-based auth: token backend được giữ server-side trong cookie, không lộ ra trình duyệt.
 builder.Services
