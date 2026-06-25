@@ -67,7 +67,7 @@ public class AdminUserManagementFeatureTests
     }
 
     [Fact]
-    public async Task DeactivateAsync_Should_SoftDelete_User_Revoke_RefreshTokens_And_Clear_Cache()
+    public async Task DeactivateAsync_Should_Lock_User_Revoke_RefreshTokens_And_Clear_Cache()
     {
         await using var dbContext = CreateDbContext();
         await SeedUsersAsync(dbContext);
@@ -98,7 +98,7 @@ public class AdminUserManagementFeatureTests
 
         result.IsSuccess.Should().BeTrue();
         var user = await dbContext.Users.IgnoreQueryFilters().SingleAsync(entity => entity.UserId == 1);
-        user.Status.Should().Be(UserStatus.Deleted);
+        user.Status.Should().Be(UserStatus.Locked);
         var activeToken = await dbContext.RefreshTokens.SingleAsync(token => token.TokenId == 1);
         activeToken.RevokedAt.Should().NotBeNull();
         var preRevokedToken = await dbContext.RefreshTokens.SingleAsync(token => token.TokenId == 2);
@@ -172,6 +172,60 @@ public class AdminUserManagementFeatureTests
     }
 
     [Fact]
+    public async Task GetUsersAsync_Should_Expose_GoogleEmail_And_Filter_By_Role()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUsersAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var all = await service.GetUsersAsync(new AdminUserQuery());
+        all.Value!.Items.Should().Contain(item => item.UserId == 1 && item.GoogleEmail == "a@example.com");
+
+        var admins = await service.GetUsersAsync(new AdminUserQuery(Role: UserRole.Admin));
+        admins.Value!.Items.Select(item => item.UserId).Should().Equal(2u);
+    }
+
+    [Fact]
+    public async Task GetUserTopicsAsync_Should_Split_Selected_And_Suggested()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUsersAsync(dbContext);
+        dbContext.Topics.AddRange(
+            new Topic { TopicId = 1, TopicName = "Business", Status = UserStatus.Active },
+            new Topic { TopicId = 2, TopicName = "Travel", Status = UserStatus.Active },
+            new Topic { TopicId = 3, TopicName = "Science", Status = UserStatus.Active },
+            new Topic { TopicId = 4, TopicName = "Old", Status = UserStatus.Active });
+        var now = DateTime.UtcNow;
+        dbContext.UserTopicPreferences.AddRange(
+            new UserTopicPreference { UserId = 1, TopicId = 1, Source = "user_selected", Status = UserStatus.Active, CreatedAt = now },
+            new UserTopicPreference { UserId = 1, TopicId = 2, Source = "onboarding", Status = UserStatus.Active, CreatedAt = now },
+            new UserTopicPreference { UserId = 1, TopicId = 3, Source = "knn_suggested", Status = UserStatus.Active, CreatedAt = now },
+            // deleted pref bị bỏ qua
+            new UserTopicPreference { UserId = 1, TopicId = 4, Source = "user_selected", Status = UserStatus.Deleted, CreatedAt = now });
+        await dbContext.SaveChangesAsync();
+        var service = CreateService(dbContext);
+
+        var result = await service.GetUserTopicsAsync(1);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Selected.Select(t => t.Name).Should().BeEquivalentTo(new[] { "Business", "Travel" });
+        result.Value.Suggested.Select(t => t.Name).Should().Equal("Science");
+    }
+
+    [Fact]
+    public async Task GetUserTopicsAsync_Should_Return_NotFound_For_Unknown_User()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUsersAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.GetUserTopicsAsync(999);
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(404);
+    }
+
+    [Fact]
     public void AdminUserQueryValidator_Should_Reject_Invalid_Status_And_Paging()
     {
         var validator = new AdminUserQueryValidator();
@@ -221,6 +275,7 @@ public class AdminUserManagementFeatureTests
                 {
                     UserId = 1,
                     Phone = "0912345678",
+                    GoogleEmail = "a@example.com",
                     IsPhoneVerified = true,
                     UpdatedAt = DateTime.UtcNow.AddDays(-2),
                 },

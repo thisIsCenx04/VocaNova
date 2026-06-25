@@ -7,17 +7,29 @@ public sealed record AdminUserQuery(
     [property: JsonPropertyName("limit")] int Limit = 20,
     [property: JsonPropertyName("status")] string? Status = null,
     [property: JsonPropertyName("search")] string? Search = null,
-    [property: JsonPropertyName("includeDeleted")] bool IncludeDeleted = false);
+    [property: JsonPropertyName("includeDeleted")] bool IncludeDeleted = false,
+    [property: JsonPropertyName("role")] string? Role = null);
 
 public sealed record AdminUserSummaryDto(
     [property: JsonPropertyName("user_id")] uint UserId,
     [property: JsonPropertyName("phone")] string? Phone,
+    [property: JsonPropertyName("google_email")] string? GoogleEmail,
     [property: JsonPropertyName("display_name")] string DisplayName,
     [property: JsonPropertyName("avatar_url")] string? AvatarUrl,
     [property: JsonPropertyName("role")] string Role,
     [property: JsonPropertyName("status")] string Status,
     [property: JsonPropertyName("last_login_at")] DateTime? LastLoginAt,
     [property: JsonPropertyName("created_at")] DateTime CreatedAt);
+
+// F060 redesign — "Topic of Interest": chủ đề user chọn vs gợi ý KNN.
+public sealed record AdminUserTopicsDto(
+    [property: JsonPropertyName("selected")] IReadOnlyCollection<AdminTopicChipDto> Selected,
+    [property: JsonPropertyName("suggested")] IReadOnlyCollection<AdminTopicChipDto> Suggested);
+
+public sealed record AdminTopicChipDto(
+    [property: JsonPropertyName("topic_id")] uint TopicId,
+    [property: JsonPropertyName("name")] string Name,
+    [property: JsonPropertyName("name_vi")] string? NameVi);
 
 public sealed record AdminUserDetailDto(
     [property: JsonPropertyName("user_id")] uint UserId,

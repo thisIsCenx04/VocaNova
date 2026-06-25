@@ -10,9 +10,13 @@ public sealed class UserListViewModel
 
     public string? Search { get; init; }
 
+    public string? Role { get; init; }
+
     public bool IncludeDeleted { get; init; }
 
     public int Page { get; init; } = 1;
+
+    public int Limit { get; init; } = 10;
 
     public int TotalItems { get; init; }
 
@@ -23,4 +27,12 @@ public sealed class UserListViewModel
     public bool HasNext => Page < TotalPages;
 
     public static readonly IReadOnlyList<string> Statuses = new[] { "active", "locked", "deleted" };
+
+    public static readonly IReadOnlyList<(string Value, string Label)> Roles = new[]
+    {
+        ("super_admin", "Super admin"),
+        ("admin", "Admin"),
+        ("user", "User"),
+        ("guest", "Guest"),
+    };
 }

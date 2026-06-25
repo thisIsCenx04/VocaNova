@@ -137,10 +137,14 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         };
         if (!string.IsNullOrWhiteSpace(filter.Status)) queryParams["status"] = filter.Status;
         if (!string.IsNullOrWhiteSpace(filter.Search)) queryParams["search"] = filter.Search;
+        if (!string.IsNullOrWhiteSpace(filter.Role)) queryParams["role"] = filter.Role;
 
         var uri = QueryHelpers.AddQueryString("api/admin/users", queryParams);
         return GetPagedAsync<Models.Api.Users.AdminUserSummary>(uri, filter.Page, filter.Limit, cancellationToken);
     }
+
+    public Task<Models.Api.Users.AdminUserTopics?> GetUserTopicsAsync(uint userId, CancellationToken cancellationToken = default) =>
+        GetDataAsync<Models.Api.Users.AdminUserTopics>($"api/admin/users/{userId}/topics", cancellationToken);
 
     public Task<Models.Api.Users.AdminUserDetail?> GetUserDetailAsync(uint userId, CancellationToken cancellationToken = default) =>
         GetDataAsync<Models.Api.Users.AdminUserDetail>($"api/admin/users/{userId}", cancellationToken);

@@ -8,7 +8,7 @@ namespace VocaNova.Dashboard.Controllers;
 // Deactivate/Restore yêu cầu super_admin (API enforce SuperAdminPolicy).
 public sealed class UsersController : Controller
 {
-    private const int PageSize = 20;
+    private const int PageSize = 10;
     private const int TabPageSize = 10;
 
     private readonly IVocaNovaApiClient _apiClient;
@@ -22,6 +22,7 @@ public sealed class UsersController : Controller
     public async Task<IActionResult> Index(
         string? status,
         string? search,
+        string? role,
         bool includeDeleted = false,
         int page = 1,
         CancellationToken cancellationToken = default)
@@ -36,7 +37,8 @@ public sealed class UsersController : Controller
             Search: string.IsNullOrWhiteSpace(search) ? null : search.Trim(),
             IncludeDeleted: includeDeleted,
             Page: page,
-            Limit: PageSize);
+            Limit: PageSize,
+            Role: string.IsNullOrWhiteSpace(role) ? null : role);
 
         var users = await _apiClient.GetUsersAsync(filter, cancellationToken);
 
@@ -45,8 +47,10 @@ public sealed class UsersController : Controller
             Items = users.Items,
             Status = filter.Status,
             Search = filter.Search,
+            Role = filter.Role,
             IncludeDeleted = includeDeleted,
             Page = users.Page,
+            Limit = users.Limit,
             TotalItems = users.TotalItems,
             TotalPages = users.TotalPages,
         };
@@ -63,12 +67,14 @@ public sealed class UsersController : Controller
             return NotFound();
         }
 
+        var topics = await _apiClient.GetUserTopicsAsync(id, cancellationToken);
         var testHistory = await _apiClient.GetUserTestHistoryAsync(id, 1, TabPageSize, cancellationToken);
         var auditLogs = await _apiClient.GetUserAuditLogsAsync(id, 1, TabPageSize, cancellationToken);
 
         var model = new UserDetailViewModel
         {
             Detail = detail,
+            Topics = topics,
             TestHistory = testHistory,
             AuditLogs = auditLogs,
         };

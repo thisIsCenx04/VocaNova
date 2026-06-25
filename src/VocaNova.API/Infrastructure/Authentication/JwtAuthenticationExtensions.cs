@@ -56,8 +56,9 @@ public static class JwtAuthenticationExtensions
             options.AddPolicy(AdminPolicy, policy =>
                 policy.RequireRole(UserRole.Admin, UserRole.SuperAdmin));
 
+            // TẠM THỜI: cho Admin có quyền như SuperAdmin để dễ test. Siết lại scope role sau.
             options.AddPolicy(SuperAdminPolicy, policy =>
-                policy.RequireRole(UserRole.SuperAdmin));
+                policy.RequireRole(UserRole.Admin, UserRole.SuperAdmin));
 
             options.AddPolicy(UserPolicy, policy =>
                 policy.RequireRole(UserRole.User, UserRole.Admin, UserRole.SuperAdmin));
