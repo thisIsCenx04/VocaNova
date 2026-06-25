@@ -1,15 +1,10 @@
 using System.Text.Json.Serialization;
 
-namespace VocaNova.API.Features.Admin.DTOs;
+namespace VocaNova.Dashboard.Models.Api.Users;
 
-public sealed record AdminUserQuery(
-    [property: JsonPropertyName("page")] int Page = 1,
-    [property: JsonPropertyName("limit")] int Limit = 20,
-    [property: JsonPropertyName("status")] string? Status = null,
-    [property: JsonPropertyName("search")] string? Search = null,
-    [property: JsonPropertyName("includeDeleted")] bool IncludeDeleted = false);
+// Mirror các DTO admin user của VocaNova.API (F053 + test-history F060).
 
-public sealed record AdminUserSummaryDto(
+public sealed record AdminUserSummary(
     [property: JsonPropertyName("user_id")] uint UserId,
     [property: JsonPropertyName("phone")] string? Phone,
     [property: JsonPropertyName("display_name")] string DisplayName,
@@ -19,7 +14,7 @@ public sealed record AdminUserSummaryDto(
     [property: JsonPropertyName("last_login_at")] DateTime? LastLoginAt,
     [property: JsonPropertyName("created_at")] DateTime CreatedAt);
 
-public sealed record AdminUserDetailDto(
+public sealed record AdminUserDetail(
     [property: JsonPropertyName("user_id")] uint UserId,
     [property: JsonPropertyName("phone")] string? Phone,
     [property: JsonPropertyName("google_email")] string? GoogleEmail,
@@ -31,10 +26,21 @@ public sealed record AdminUserDetailDto(
     [property: JsonPropertyName("last_login_at")] DateTime? LastLoginAt,
     [property: JsonPropertyName("created_at")] DateTime CreatedAt,
     [property: JsonPropertyName("updated_at")] DateTime UpdatedAt,
-    [property: JsonPropertyName("learning_profile")] AdminUserLearningProfileDto? LearningProfile);
+    [property: JsonPropertyName("learning_profile")] AdminUserLearningProfile? LearningProfile);
 
-// F060 tab "Test History": phiên làm bài của một user do admin xem.
-public sealed record AdminUserTestSessionDto(
+public sealed record AdminUserLearningProfile(
+    [property: JsonPropertyName("age_range_id")] uint? AgeRangeId,
+    [property: JsonPropertyName("age_range_name")] string? AgeRangeName,
+    [property: JsonPropertyName("region_id")] uint? RegionId,
+    [property: JsonPropertyName("region_name")] string? RegionName,
+    [property: JsonPropertyName("occupation_id")] uint? OccupationId,
+    [property: JsonPropertyName("occupation_name")] string? OccupationName,
+    [property: JsonPropertyName("education_level_id")] uint? EducationLevelId,
+    [property: JsonPropertyName("education_level_name")] string? EducationLevelName,
+    [property: JsonPropertyName("learning_purpose_id")] uint? LearningPurposeId,
+    [property: JsonPropertyName("learning_purpose_name")] string? LearningPurposeName);
+
+public sealed record AdminUserTestSession(
     [property: JsonPropertyName("session_id")] uint SessionId,
     [property: JsonPropertyName("answer_method")] string AnswerMethod,
     [property: JsonPropertyName("mode")] string Mode,
@@ -49,14 +55,11 @@ public sealed record AdminUserTestSessionDto(
     [property: JsonPropertyName("started_at")] DateTime StartedAt,
     [property: JsonPropertyName("ended_at")] DateTime? EndedAt);
 
-public sealed record AdminUserLearningProfileDto(
-    [property: JsonPropertyName("age_range_id")] uint? AgeRangeId,
-    [property: JsonPropertyName("age_range_name")] string? AgeRangeName,
-    [property: JsonPropertyName("region_id")] uint? RegionId,
-    [property: JsonPropertyName("region_name")] string? RegionName,
-    [property: JsonPropertyName("occupation_id")] uint? OccupationId,
-    [property: JsonPropertyName("occupation_name")] string? OccupationName,
-    [property: JsonPropertyName("education_level_id")] uint? EducationLevelId,
-    [property: JsonPropertyName("education_level_name")] string? EducationLevelName,
-    [property: JsonPropertyName("learning_purpose_id")] uint? LearningPurposeId,
-    [property: JsonPropertyName("learning_purpose_name")] string? LearningPurposeName);
+public sealed record AuditLog(
+    [property: JsonPropertyName("log_id")] uint LogId,
+    [property: JsonPropertyName("user_id")] uint UserId,
+    [property: JsonPropertyName("action")] string Action,
+    [property: JsonPropertyName("entity_type")] string EntityType,
+    [property: JsonPropertyName("entity_id")] uint? EntityId,
+    [property: JsonPropertyName("ip_address")] string? IpAddress,
+    [property: JsonPropertyName("created_at")] DateTime CreatedAt);

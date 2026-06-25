@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Extensions;
 using VocaNova.API.Common.Results;
 using VocaNova.API.Features.Admin.DTOs;
@@ -28,6 +29,11 @@ public sealed class AdminUserRepository : IAdminUserRepository
         if (!string.IsNullOrWhiteSpace(query.Status))
         {
             source = source.Where(user => user.Status == query.Status);
+        }
+        else if (!query.IncludeDeleted)
+        {
+            // Mặc định ẩn user đã xóa; bật includeDeleted để xem cả deleted.
+            source = source.Where(user => user.Status != UserStatus.Deleted);
         }
 
         if (!string.IsNullOrWhiteSpace(query.Search))
@@ -76,6 +82,45 @@ public sealed class AdminUserRepository : IAdminUserRepository
             .SingleOrDefaultAsync(entity => entity.UserId == userId, cancellationToken);
 
         return user is null ? null : MapDetail(user);
+    }
+
+    public Task<bool> UserExistsAsync(
+        uint userId,
+        CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Users
+            .IgnoreQueryFilters()
+            .AnyAsync(entity => entity.UserId == userId, cancellationToken);
+    }
+
+    public Task<PagedResult<AdminUserTestSessionDto>> GetTestHistoryAsync(
+        uint userId,
+        int page,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        return _dbContext.TestSessions
+            .AsNoTracking()
+            .Where(session => session.UserId == userId)
+            .OrderByDescending(session => session.StartedAt)
+            .ThenByDescending(session => session.SessionId)
+            .Select(session => new AdminUserTestSessionDto(
+                session.SessionId,
+                session.TestType,
+                session.Mode,
+                session.QuestionType,
+                session.QuestionCount,
+                session.CorrectCount,
+                session.WrongCount,
+                session.CorrectCount + session.WrongCount == 0
+                    ? 0
+                    : (float)session.CorrectCount / (session.CorrectCount + session.WrongCount) * 100,
+                session.Score,
+                session.MaxStreak,
+                session.Status,
+                session.StartedAt,
+                session.EndedAt))
+            .ToPagedResultAsync(page, limit, cancellationToken);
     }
 
     public Task<User?> FindUserForStatusUpdateAsync(

@@ -123,6 +123,55 @@ public class AdminUserManagementFeatureTests
     }
 
     [Fact]
+    public async Task GetUsersAsync_Should_Hide_Deleted_By_Default_And_Include_When_Requested()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUsersAsync(dbContext, secondUserStatus: UserStatus.Deleted);
+        var service = CreateService(dbContext);
+
+        var hidden = await service.GetUsersAsync(new AdminUserQuery());
+        hidden.Value!.Items.Select(item => item.UserId).Should().Equal(1u);
+
+        var included = await service.GetUsersAsync(new AdminUserQuery(IncludeDeleted: true));
+        included.Value!.Items.Select(item => item.UserId).Should().BeEquivalentTo(new[] { 1u, 2u });
+    }
+
+    [Fact]
+    public async Task GetTestHistoryAsync_Should_Return_User_Sessions_Newest_First()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUsersAsync(dbContext);
+        var today = DateTime.UtcNow.Date;
+        dbContext.TestSessions.AddRange(
+            NewSession(1, userId: 1, startedAt: today.AddDays(-1), correct: 3, wrong: 1),
+            NewSession(2, userId: 1, startedAt: today, correct: 8, wrong: 2),
+            // phiên của user khác không được trả về.
+            NewSession(3, userId: 2, startedAt: today, correct: 1, wrong: 0));
+        await dbContext.SaveChangesAsync();
+        var service = CreateService(dbContext);
+
+        var result = await service.GetTestHistoryAsync(1, 1, 20);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.TotalItems.Should().Be(2);
+        result.Value.Items.Select(item => item.SessionId).Should().Equal(2u, 1u);
+        result.Value.Items.First().Accuracy.Should().BeApproximately(80f, 0.01f);
+    }
+
+    [Fact]
+    public async Task GetTestHistoryAsync_Should_Return_NotFound_For_Unknown_User()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUsersAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.GetTestHistoryAsync(999, 1, 20);
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(404);
+    }
+
+    [Fact]
     public void AdminUserQueryValidator_Should_Reject_Invalid_Status_And_Paging()
     {
         var validator = new AdminUserQueryValidator();
@@ -206,6 +255,28 @@ public class AdminUserManagementFeatureTests
             });
 
         await dbContext.SaveChangesAsync();
+    }
+
+    private static TestSession NewSession(uint sessionId, uint userId, DateTime startedAt, int correct, int wrong)
+    {
+        return new TestSession
+        {
+            SessionId = sessionId,
+            UserId = userId,
+            TestType = "multiple_choice",
+            Mode = "standard",
+            ScopeType = "all",
+            WordOrder = "random",
+            QuestionType = 1,
+            QuestionCount = correct + wrong,
+            CorrectCount = correct,
+            WrongCount = wrong,
+            Score = correct,
+            MaxStreak = correct,
+            Status = TestSessionStatus.Completed,
+            StartedAt = startedAt,
+            EndedAt = startedAt.AddMinutes(5),
+        };
     }
 
     private static async Task SeedLearningLookupsAsync(VocaNovaDbContext dbContext)

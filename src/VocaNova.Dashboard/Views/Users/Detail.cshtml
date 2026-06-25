@@ -1,0 +1,167 @@
+@using System.Security.Claims
+@using VocaNova.Dashboard.Models.Api.Users
+@model VocaNova.Dashboard.Models.Users.UserDetailViewModel
+@{
+    ViewData["Title"] = Model.Detail.DisplayName;
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
+    var isSuperAdmin = string.Equals(role, "super_admin", StringComparison.Ordinal);
+    var d = Model.Detail;
+
+    string StatusBadge(string status) => status switch
+    {
+        "active" => "badge badge-success",
+        "locked" => "badge badge-warning",
+        "deleted" => "badge badge-danger",
+        _ => "badge badge-muted",
+    };
+}
+
+@if (TempData["UserSuccess"] is string okMsg)
+{
+    <div class="alert alert-success">@okMsg</div>
+}
+@if (TempData["UserError"] is string errMsg)
+{
+    <div class="alert alert-danger">@errMsg</div>
+}
+
+<div class="page-header page-header-row">
+    <div>
+        <a class="back-link" href="/users">‹ Back to users</a>
+        <h1 class="page-title">@d.DisplayName <span class="@StatusBadge(d.Status)">@d.Status</span></h1>
+        <p class="page-subtitle">@(d.Phone ?? d.GoogleEmail ?? "—") · @d.Role.Replace("_", " ")</p>
+    </div>
+    @if (isSuperAdmin)
+    {
+        <div class="header-actions">
+            @if (d.Status != "deleted")
+            {
+                <form method="post" action="/users/@d.UserId/deactivate" class="inline-form js-confirm" data-confirm="Deactivate @d.DisplayName? This soft-deletes the account.">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-icon btn-danger">Deactivate</button>
+                </form>
+            }
+            else
+            {
+                <form method="post" action="/users/@d.UserId/restore" class="inline-form">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-icon btn-success">Restore</button>
+                </form>
+            }
+        </div>
+    }
+</div>
+
+<div class="tabs" id="user-tabs">
+    <div class="tab-bar" role="tablist">
+        <button type="button" class="tab-btn active" data-tab="profile">Profile</button>
+        <button type="button" class="tab-btn" data-tab="learning">Learning Profile</button>
+        <button type="button" class="tab-btn" data-tab="history">Test History</button>
+        <button type="button" class="tab-btn" data-tab="activity">Activity Log</button>
+    </div>
+
+    <div class="tab-panel active" data-tab="profile">
+        <div class="panel">
+            <dl class="detail-list">
+                <dt>User ID</dt><dd>@d.UserId</dd>
+                <dt>Display name</dt><dd>@d.DisplayName</dd>
+                <dt>Phone</dt><dd>@(d.Phone ?? "—")</dd>
+                <dt>Google email</dt><dd>@(d.GoogleEmail ?? "—")</dd>
+                <dt>Username</dt><dd>@(d.Username ?? "—")</dd>
+                <dt>Role</dt><dd>@d.Role.Replace("_", " ")</dd>
+                <dt>Status</dt><dd><span class="@StatusBadge(d.Status)">@d.Status</span></dd>
+                <dt>Last login</dt><dd>@(d.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</dd>
+                <dt>Created</dt><dd>@d.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+                <dt>Updated</dt><dd>@d.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="tab-panel" data-tab="learning">
+        <div class="panel">
+            @if (d.LearningProfile is null)
+            {
+                <p class="text-muted">This user has not completed the learning profile.</p>
+            }
+            else
+            {
+                var lp = d.LearningProfile;
+                <dl class="detail-list">
+                    <dt>Age range</dt><dd>@(lp.AgeRangeName ?? "—")</dd>
+                    <dt>Region</dt><dd>@(lp.RegionName ?? "—")</dd>
+                    <dt>Occupation</dt><dd>@(lp.OccupationName ?? "—")</dd>
+                    <dt>Education level</dt><dd>@(lp.EducationLevelName ?? "—")</dd>
+                    <dt>Learning purpose</dt><dd>@(lp.LearningPurposeName ?? "—")</dd>
+                </dl>
+            }
+        </div>
+    </div>
+
+    <div class="tab-panel" data-tab="history">
+        <div class="panel table-panel">
+            <table class="data-table">
+                <thead><tr><th>Session</th><th>Mode</th><th>Questions</th><th>Accuracy</th><th>Score</th><th>Status</th><th>Started</th></tr></thead>
+                <tbody>
+                    @if (Model.TestHistory.Items.Count == 0)
+                    {
+                        <tr><td colspan="7" class="empty-row">No test sessions.</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var s in Model.TestHistory.Items)
+                        {
+                            <tr>
+                                <td>#@s.SessionId</td>
+                                <td>@s.Mode</td>
+                                <td>@s.CorrectCount/@s.QuestionCount</td>
+                                <td>@s.Accuracy.ToString("0.#")%</td>
+                                <td>@s.Score.ToString("0.#")</td>
+                                <td><span class="badge badge-muted">@s.Status</span></td>
+                                <td>@s.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+            @if (Model.TestHistory.TotalItems > Model.TestHistory.Items.Count)
+            {
+                <p class="panel-muted table-foot">Showing latest @Model.TestHistory.Items.Count of @Model.TestHistory.TotalItems sessions.</p>
+            }
+        </div>
+    </div>
+
+    <div class="tab-panel" data-tab="activity">
+        <div class="panel table-panel">
+            <table class="data-table">
+                <thead><tr><th>Action</th><th>Entity</th><th>Entity ID</th><th>IP</th><th>When</th></tr></thead>
+                <tbody>
+                    @if (Model.AuditLogs.Items.Count == 0)
+                    {
+                        <tr><td colspan="5" class="empty-row">No activity logged.</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var log in Model.AuditLogs.Items)
+                        {
+                            <tr>
+                                <td><span class="badge badge-muted">@log.Action</span></td>
+                                <td>@log.EntityType</td>
+                                <td>@(log.EntityId?.ToString() ?? "—")</td>
+                                <td>@(log.IpAddress ?? "—")</td>
+                                <td>@log.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+            @if (Model.AuditLogs.TotalItems > Model.AuditLogs.Items.Count)
+            {
+                <p class="panel-muted table-foot">Showing latest @Model.AuditLogs.Items.Count of @Model.AuditLogs.TotalItems entries.</p>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/users.js" asp-append-version="true"></script>
+}

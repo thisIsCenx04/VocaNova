@@ -984,3 +984,107 @@ code {
     border-radius: 4px;
     font-size: 13px;
 }
+
+/* ----- User management (F060) ----- */
+.badge-warning {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.user-avatar-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.tab-bar {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.tab-btn:hover {
+    color: var(--text);
+}
+
+.tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+.detail-list {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 10px 16px;
+    margin: 0;
+}
+
+.detail-list dt {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.detail-list dd {
+    margin: 0;
+}
+
+.table-foot {
+    padding: 12px 16px;
+}
+
+@media (max-width: 768px) {
+    .detail-list {
+        grid-template-columns: 1fr;
+        gap: 2px 0;
+    }
+
+    .detail-list dd {
+        margin-bottom: 8px;
+    }
+}

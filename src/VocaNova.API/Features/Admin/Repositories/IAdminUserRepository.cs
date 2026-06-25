@@ -14,6 +14,16 @@ public interface IAdminUserRepository
         uint userId,
         CancellationToken cancellationToken = default);
 
+    Task<bool> UserExistsAsync(
+        uint userId,
+        CancellationToken cancellationToken = default);
+
+    Task<PagedResult<AdminUserTestSessionDto>> GetTestHistoryAsync(
+        uint userId,
+        int page,
+        int limit,
+        CancellationToken cancellationToken = default);
+
     Task<User?> FindUserForStatusUpdateAsync(
         uint userId,
         CancellationToken cancellationToken = default);

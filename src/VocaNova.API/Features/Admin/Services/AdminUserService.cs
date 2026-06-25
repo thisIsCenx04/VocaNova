@@ -64,6 +64,31 @@ public sealed class AdminUserService : IAdminUserService
             : Result<AdminUserDetailDto>.Ok(user);
     }
 
+    public async Task<Result<PagedResult<AdminUserTestSessionDto>>> GetTestHistoryAsync(
+        uint userId,
+        int page,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        if (page <= 0)
+        {
+            return Result<PagedResult<AdminUserTestSessionDto>>.Fail("Page must be greater than zero.");
+        }
+
+        if (limit <= 0 || limit > AppSettings.MaxPageLimit)
+        {
+            return Result<PagedResult<AdminUserTestSessionDto>>.Fail($"Limit must be between 1 and {AppSettings.MaxPageLimit}.");
+        }
+
+        if (userId == 0 || !await _repository.UserExistsAsync(userId, cancellationToken))
+        {
+            return Result<PagedResult<AdminUserTestSessionDto>>.NotFound("User not found.");
+        }
+
+        var result = await _repository.GetTestHistoryAsync(userId, page, limit, cancellationToken);
+        return Result<PagedResult<AdminUserTestSessionDto>>.Ok(result);
+    }
+
     public async Task<Result<bool>> DeactivateAsync(
         uint userId,
         CancellationToken cancellationToken = default)
