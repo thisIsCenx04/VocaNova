@@ -12,6 +12,8 @@ public sealed class AdminStatsService : IAdminStatsService
     private const int DashboardCacheMinutes = 5;
     private const int TopWrongWordLimit = 20;
     private const int TrendDays = 30;
+    private const int MaxSessionsTrendDays = 90;
+    private const int MasteryLevelCount = 6; // mastery_level 0..5
 
     private readonly IAdminStatsRepository _repository;
     private readonly IMemoryCache _cache;
@@ -87,6 +89,54 @@ public sealed class AdminStatsService : IAdminStatsService
             .ToArray();
 
         return Result<AdminLearningStatsDto>.Ok(new AdminLearningStatsDto(topWrongWords, trend));
+    }
+
+    public async Task<Result<AdminSessionsTrendDto>> GetSessionsTrendAsync(
+        int days,
+        CancellationToken cancellationToken = default)
+    {
+        if (days <= 0 || days > MaxSessionsTrendDays)
+        {
+            return Result<AdminSessionsTrendDto>.Fail($"Days must be between 1 and {MaxSessionsTrendDays}.");
+        }
+
+        var todayUtc = DateTime.UtcNow.Date;
+        var tomorrowUtc = todayUtc.AddDays(1);
+        var startUtc = todayUtc.AddDays(-(days - 1));
+        var rows = await _repository.GetSessionCountsByDayAsync(startUtc, tomorrowUtc, cancellationToken);
+        var countsByDate = rows.ToDictionary(row => row.Date, row => row.SessionCount);
+
+        // Bù đủ N ngày (kể cả ngày không có phiên = 0) để chart liền mạch.
+        var points = Enumerable
+            .Range(0, days)
+            .Select(offset =>
+            {
+                var date = DateOnly.FromDateTime(startUtc.AddDays(offset));
+                return new AdminSessionTrendPointDto(
+                    date,
+                    countsByDate.TryGetValue(date, out var count) ? count : 0);
+            })
+            .ToArray();
+
+        return Result<AdminSessionsTrendDto>.Ok(new AdminSessionsTrendDto(days, points));
+    }
+
+    public async Task<Result<AdminMasteryDistributionDto>> GetMasteryDistributionAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await _repository.GetMasteryDistributionAsync(cancellationToken);
+        var countsByLevel = rows.ToDictionary(row => row.Level, row => row.Count);
+
+        // Luôn trả đủ level 0..5 (level rỗng = 0) để pie chart ổn định.
+        var levels = Enumerable
+            .Range(0, MasteryLevelCount)
+            .Select(level => new AdminMasteryLevelDto(
+                level,
+                countsByLevel.TryGetValue(level, out var count) ? count : 0))
+            .ToArray();
+
+        var total = levels.Sum(level => level.WordCount);
+        return Result<AdminMasteryDistributionDto>.Ok(new AdminMasteryDistributionDto(total, levels));
     }
 
     public async Task<Result<PagedResult<AdminAuditLogDto>>> GetAuditLogsAsync(

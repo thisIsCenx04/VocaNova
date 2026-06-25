@@ -167,6 +167,72 @@ public class AdminStatsFeatureTests
     }
 
     [Fact]
+    public async Task GetSessionsTrendAsync_Should_Fill_Requested_Days_With_Session_Counts()
+    {
+        await using var dbContext = CreateDbContext();
+        var today = DateTime.UtcNow.Date;
+        await SeedUsersAsync(dbContext);
+        dbContext.TestSessions.AddRange(
+            CreateSession(1, 1, today.AddHours(2), 5, 1),
+            CreateSession(2, 1, today.AddHours(4), 3, 2),
+            CreateSession(3, 1, today.AddDays(-2).AddHours(1), 4, 0));
+        // Phiên ngoài cửa sổ 7 ngày không được đếm.
+        dbContext.TestSessions.Add(CreateSession(4, 1, today.AddDays(-10), 1, 0));
+        // Phiên chưa hoàn thành bị loại.
+        var pending = CreateSession(5, 1, today.AddHours(6), 0, 0);
+        pending.Status = TestSessionStatus.InProgress;
+        dbContext.TestSessions.Add(pending);
+        await dbContext.SaveChangesAsync();
+        var service = CreateService(dbContext);
+
+        var result = await service.GetSessionsTrendAsync(7);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Days.Should().Be(7);
+        result.Value.Points.Should().HaveCount(7);
+        result.Value.Points.Last().Date.Should().Be(DateOnly.FromDateTime(today));
+        result.Value.Points.Last().SessionCount.Should().Be(2);
+        result.Value.Points.Single(point => point.Date == DateOnly.FromDateTime(today.AddDays(-2)))
+            .SessionCount.Should().Be(1);
+        result.Value.Points.Single(point => point.Date == DateOnly.FromDateTime(today.AddDays(-1)))
+            .SessionCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetSessionsTrendAsync_Should_Reject_Invalid_Days()
+    {
+        await using var dbContext = CreateDbContext();
+        var service = CreateService(dbContext);
+
+        (await service.GetSessionsTrendAsync(0)).IsSuccess.Should().BeFalse();
+        (await service.GetSessionsTrendAsync(91)).IsSuccess.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetMasteryDistributionAsync_Should_Return_Levels_0_To_5_Excluding_Deleted_Users()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUsersAsync(dbContext); // user 1 active, 2 locked, 3 deleted
+        dbContext.UserWordProgresses.AddRange(
+            new UserWordProgress { ProgressId = 1, UserId = 1, WordId = 1, MasteryLevel = 0, EaseFactor = 2.5f, UpdatedAt = DateTime.UtcNow },
+            new UserWordProgress { ProgressId = 2, UserId = 1, WordId = 2, MasteryLevel = 5, EaseFactor = 2.5f, UpdatedAt = DateTime.UtcNow },
+            new UserWordProgress { ProgressId = 3, UserId = 2, WordId = 1, MasteryLevel = 5, EaseFactor = 2.5f, UpdatedAt = DateTime.UtcNow },
+            // Tiến độ của user đã xoá bị loại khỏi thống kê.
+            new UserWordProgress { ProgressId = 4, UserId = 3, WordId = 1, MasteryLevel = 3, EaseFactor = 2.5f, UpdatedAt = DateTime.UtcNow });
+        await dbContext.SaveChangesAsync();
+        var service = CreateService(dbContext);
+
+        var result = await service.GetMasteryDistributionAsync();
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Levels.Should().HaveCount(6);
+        result.Value.TotalWordsInProgress.Should().Be(3);
+        result.Value.Levels.Single(level => level.Level == 0).WordCount.Should().Be(1);
+        result.Value.Levels.Single(level => level.Level == 5).WordCount.Should().Be(2);
+        result.Value.Levels.Single(level => level.Level == 3).WordCount.Should().Be(0);
+    }
+
+    [Fact]
     public async Task GetAuditLogsAsync_Should_Filter_By_User_And_Entity_With_Pagination()
     {
         await using var dbContext = CreateDbContext();

@@ -160,6 +160,39 @@ public sealed class AdminStatsRepository : IAdminStatsRepository
             .ToArray();
     }
 
+    public async Task<IReadOnlyCollection<AdminSessionCountRow>> GetSessionCountsByDayAsync(
+        DateTime fromInclusiveUtc,
+        DateTime toExclusiveUtc,
+        CancellationToken cancellationToken = default)
+    {
+        var startedDates = await _dbContext.TestSessions
+            .AsNoTracking()
+            .Where(session =>
+                session.Status == TestSessionStatus.Completed
+                && session.StartedAt >= fromInclusiveUtc
+                && session.StartedAt < toExclusiveUtc)
+            .Select(session => session.StartedAt)
+            .ToListAsync(cancellationToken);
+
+        return startedDates
+            .GroupBy(startedAt => DateOnly.FromDateTime(startedAt))
+            .Select(grouped => new AdminSessionCountRow(grouped.Key, grouped.Count()))
+            .ToArray();
+    }
+
+    public async Task<IReadOnlyCollection<AdminMasteryCountRow>> GetMasteryDistributionAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await _dbContext.UserWordProgresses
+            .AsNoTracking()
+            .Where(progress => progress.User.Status != UserStatus.Deleted)
+            .GroupBy(progress => progress.MasteryLevel)
+            .Select(grouped => new AdminMasteryCountRow(grouped.Key, grouped.Count()))
+            .ToListAsync(cancellationToken);
+
+        return rows;
+    }
+
     public Task<PagedResult<AdminAuditLogDto>> GetAuditLogsAsync(
         AdminAuditLogQuery query,
         CancellationToken cancellationToken = default)

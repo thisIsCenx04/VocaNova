@@ -22,6 +22,14 @@ public interface IAdminStatsRepository
         DateTime toExclusiveUtc,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<AdminSessionCountRow>> GetSessionCountsByDayAsync(
+        DateTime fromInclusiveUtc,
+        DateTime toExclusiveUtc,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<AdminMasteryCountRow>> GetMasteryDistributionAsync(
+        CancellationToken cancellationToken = default);
+
     Task<PagedResult<AdminAuditLogDto>> GetAuditLogsAsync(
         AdminAuditLogQuery query,
         CancellationToken cancellationToken = default);

@@ -47,6 +47,26 @@ public sealed class AdminStatsController : ControllerBase
             : this.ErrorResult(result);
     }
 
+    [HttpGet("stats/sessions-trend")]
+    public async Task<IActionResult> GetSessionsTrend(
+        [FromQuery] int days,
+        CancellationToken cancellationToken)
+    {
+        var result = await _adminStatsService.GetSessionsTrendAsync(days <= 0 ? 7 : days, cancellationToken);
+        return result.IsSuccess
+            ? this.OkResult(result.Value!, "Sessions trend loaded successfully.")
+            : this.ErrorResult(result);
+    }
+
+    [HttpGet("stats/mastery-distribution")]
+    public async Task<IActionResult> GetMasteryDistribution(CancellationToken cancellationToken)
+    {
+        var result = await _adminStatsService.GetMasteryDistributionAsync(cancellationToken);
+        return result.IsSuccess
+            ? this.OkResult(result.Value!, "Mastery distribution loaded successfully.")
+            : this.ErrorResult(result);
+    }
+
     [HttpGet("audit-logs")]
     public async Task<IActionResult> GetAuditLogs(
         [FromQuery] AdminAuditLogQuery query,

@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "Chart.js@4.4.1",
+      "destination": "wwwroot/lib/chart/",
+      "files": [
+        "chart.umd.min.js"
+      ]
+    }
+  ]
+}

@@ -58,3 +58,29 @@ public sealed record AdminSessionAccuracyRow(
     DateOnly Date,
     int CorrectCount,
     int WrongCount);
+
+// F056 line chart: số phiên hoàn thành theo từng ngày.
+public sealed record AdminSessionsTrendDto(
+    [property: JsonPropertyName("days")] int Days,
+    [property: JsonPropertyName("points")] IReadOnlyCollection<AdminSessionTrendPointDto> Points);
+
+public sealed record AdminSessionTrendPointDto(
+    [property: JsonPropertyName("date")] DateOnly Date,
+    [property: JsonPropertyName("session_count")] int SessionCount);
+
+public sealed record AdminSessionCountRow(
+    DateOnly Date,
+    int SessionCount);
+
+// F056 pie chart: phân bố mastery_level (0–5) trên toàn hệ thống.
+public sealed record AdminMasteryDistributionDto(
+    [property: JsonPropertyName("total_words_in_progress")] int TotalWordsInProgress,
+    [property: JsonPropertyName("levels")] IReadOnlyCollection<AdminMasteryLevelDto> Levels);
+
+public sealed record AdminMasteryLevelDto(
+    [property: JsonPropertyName("level")] int Level,
+    [property: JsonPropertyName("word_count")] int WordCount);
+
+public sealed record AdminMasteryCountRow(
+    int Level,
+    int Count);

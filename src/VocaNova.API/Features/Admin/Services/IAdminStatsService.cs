@@ -11,6 +11,13 @@ public interface IAdminStatsService
 
     Task<Result<AdminLearningStatsDto>> GetLearningStatsAsync(CancellationToken cancellationToken = default);
 
+    Task<Result<AdminSessionsTrendDto>> GetSessionsTrendAsync(
+        int days,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<AdminMasteryDistributionDto>> GetMasteryDistributionAsync(
+        CancellationToken cancellationToken = default);
+
     Task<Result<PagedResult<AdminAuditLogDto>>> GetAuditLogsAsync(
         AdminAuditLogQuery query,
         CancellationToken cancellationToken = default);
