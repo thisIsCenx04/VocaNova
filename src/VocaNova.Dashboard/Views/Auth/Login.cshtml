@@ -1,47 +1,37 @@
-@model VocaNova.Dashboard.Models.Auth.LoginViewModel
-
+@model LoginViewModel
 @{
-    ViewData["Title"] = L["Login.Title"];
+    ViewData["Title"] = "Sign in";
 }
 
-<section class="login-panel" aria-labelledby="login-title">
-    <div class="login-brand">
+<div class="auth-card">
+    <div class="auth-brand">
         <span class="brand-mark">VN</span>
-        <div>
-            <h1 id="login-title">VocaNova Dashboard</h1>
-            <p>@L["Login.Subtitle"]</p>
-        </div>
+        <span>VocaNova</span>
     </div>
+    <h1 class="auth-title">Admin Dashboard</h1>
+    <p class="auth-subtitle">Sign in with your administrator account.</p>
 
-    @if (TempData["AuthInfo"] is string authInfo && !string.IsNullOrEmpty(authInfo))
-    {
-        <div class="auth-info small mb-2">@authInfo</div>
-    }
-
-    <form asp-action="Login" asp-controller="Auth" method="post" class="login-form">
+    <form asp-controller="Auth" asp-action="Login" method="post" novalidate>
         @Html.AntiForgeryToken()
-        <input asp-for="ReturnUrl" type="hidden" />
-        <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+        <input type="hidden" asp-for="ReturnUrl" />
 
-        <div class="form-field">
-            <label asp-for="Phone"></label>
-            <input asp-for="Phone" class="form-control" autocomplete="username" inputmode="tel" />
-            <span asp-validation-for="Phone" class="text-danger small"></span>
+        <div asp-validation-summary="ModelOnly" class="auth-error" role="alert"></div>
+
+        <div class="form-group">
+            <label asp-for="Phone">Phone</label>
+            <input asp-for="Phone" class="form-control" autocomplete="username" inputmode="tel" placeholder="0xxxxxxxxx" />
+            <span asp-validation-for="Phone" class="field-error"></span>
         </div>
 
-        <div class="form-field">
-            <label asp-for="Password"></label>
-            <input asp-for="Password" class="form-control" autocomplete="current-password" />
-            <span asp-validation-for="Password" class="text-danger small"></span>
+        <div class="form-group">
+            <label asp-for="Password">Password</label>
+            <input asp-for="Password" class="form-control" autocomplete="current-password" type="password" />
+            <span asp-validation-for="Password" class="field-error"></span>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100">@L["Login.Submit"]</button>
+        <button type="submit" class="btn-primary btn-block">Sign in</button>
     </form>
-
-    <p class="auth-back">
-        <a href="/forgot-password">@L["Login.ForgotPassword"]</a>
-    </p>
-</section>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

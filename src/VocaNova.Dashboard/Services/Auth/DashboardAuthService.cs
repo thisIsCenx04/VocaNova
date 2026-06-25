@@ -3,14 +3,22 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using VocaNova.Dashboard.Models.Auth;
-using VocaNova.Dashboard.Services.Api;
 
 namespace VocaNova.Dashboard.Services.Auth;
 
+/// <summary>
+/// Shared service layer của dashboard cho luồng auth (F055).
+/// Đăng nhập qua VocaNova.API, lấy profile, chỉ cho phép tài khoản admin/super_admin vào dashboard.
+/// </summary>
 public sealed class DashboardAuthService : IDashboardAuthService
 {
-    // Dùng chung cấu hình JSON với API client (snake_case). [JsonPropertyName] trên các record vẫn override.
-    private static readonly JsonSerializerOptions JsonOptions = ApiJson.Default;
+    // VocaNova.API trả/nhận snake_case → cấu hình JSON một lần dùng chung.
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        DictionaryKeyPolicy = JsonNamingPolicy.SnakeCaseLower,
+        PropertyNameCaseInsensitive = true,
+    };
 
     private static readonly HashSet<string> DashboardRoles = new(StringComparer.Ordinal)
     {
@@ -46,7 +54,7 @@ public sealed class DashboardAuthService : IDashboardAuthService
 
         using var profileRequest = new HttpRequestMessage(HttpMethod.Get, "api/auth/me");
         profileRequest.Headers.Authorization = new AuthenticationHeaderValue(
-            tokenEnvelope.Data.TokenType,
+            string.IsNullOrWhiteSpace(tokenEnvelope.Data.TokenType) ? "Bearer" : tokenEnvelope.Data.TokenType,
             tokenEnvelope.Data.AccessToken);
 
         using var profileResponse = await _httpClient.SendAsync(profileRequest, cancellationToken);
@@ -56,6 +64,7 @@ public sealed class DashboardAuthService : IDashboardAuthService
             return DashboardAuthResult.Failure(GetErrorMessage(profileEnvelope, "Unable to load account profile."));
         }
 
+        // Chỉ admin/super_admin được vào dashboard; user thường bị từ chối và token bị thu hồi.
         if (!DashboardRoles.Contains(profileEnvelope.Data.Role))
         {
             await LogoutAsync(
@@ -113,46 +122,6 @@ public sealed class DashboardAuthService : IDashboardAuthService
         }
     }
 
-    public async Task<DashboardActionResult> ForgotPasswordAsync(
-        string phone,
-        CancellationToken cancellationToken = default)
-    {
-        using var response = await _httpClient.PostAsJsonAsync(
-            "api/auth/forgot-password",
-            new ForgotPasswordApiRequest(phone),
-            JsonOptions,
-            cancellationToken);
-
-        var envelope = await ReadEnvelopeAsync<OtpSendApiResponse>(response, cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            return DashboardActionResult.Fail(GetErrorMessage(envelope, "Unable to send the reset code."), (int)response.StatusCode);
-        }
-
-        return DashboardActionResult.Ok((int)response.StatusCode, envelope?.Data?.ExpiresIn ?? 0);
-    }
-
-    public async Task<DashboardActionResult> ResetPasswordAsync(
-        string phone,
-        string otpCode,
-        string newPassword,
-        CancellationToken cancellationToken = default)
-    {
-        using var response = await _httpClient.PostAsJsonAsync(
-            "api/auth/reset-password",
-            new ResetPasswordApiRequest(phone, otpCode, newPassword),
-            JsonOptions,
-            cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            var envelope = await ReadEnvelopeAsync<object>(response, cancellationToken);
-            return DashboardActionResult.Fail(GetErrorMessage(envelope, "Unable to reset the password."), (int)response.StatusCode);
-        }
-
-        return DashboardActionResult.Ok((int)response.StatusCode);
-    }
-
     private static async Task<ApiEnvelope<T>?> ReadEnvelopeAsync<T>(
         HttpResponseMessage response,
         CancellationToken cancellationToken)
@@ -162,6 +131,10 @@ public sealed class DashboardAuthService : IDashboardAuthService
             return await response.Content.ReadFromJsonAsync<ApiEnvelope<T>>(JsonOptions, cancellationToken);
         }
         catch (JsonException)
+        {
+            return null;
+        }
+        catch (NotSupportedException)
         {
             return null;
         }
@@ -184,17 +157,6 @@ public sealed class DashboardAuthService : IDashboardAuthService
 
     private sealed record RefreshTokenApiRequest(
         [property: JsonPropertyName("refresh_token")] string RefreshToken);
-
-    private sealed record ForgotPasswordApiRequest(
-        [property: JsonPropertyName("phone")] string Phone);
-
-    private sealed record ResetPasswordApiRequest(
-        [property: JsonPropertyName("phone")] string Phone,
-        [property: JsonPropertyName("otp_code")] string OtpCode,
-        [property: JsonPropertyName("new_password")] string NewPassword);
-
-    private sealed record OtpSendApiResponse(
-        [property: JsonPropertyName("expires_in")] int ExpiresIn);
 
     private sealed record TokenApiResponse(
         [property: JsonPropertyName("access_token")] string AccessToken,

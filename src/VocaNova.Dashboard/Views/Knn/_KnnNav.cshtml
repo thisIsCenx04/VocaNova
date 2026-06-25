@@ -1,9 +1,0 @@
-@model string
-@* Sub-nav cho khu vực KNN. Model = key đang active ("overview" hoặc key của lookup). *@
-<nav class="knn-nav" aria-label="KNN sections">
-    <a class="knn-nav__link @(Model == "overview" ? "is-active" : null)" href="/knn">@L["Knn.Nav.Overview"]</a>
-    @foreach (var t in VocaNova.Dashboard.Models.Knn.KnnTypes.All)
-    {
-        <a class="knn-nav__link @(Model == t.Key ? "is-active" : null)" href="/knn/@t.Key">@L[t.TitleKey]</a>
-    }
-</nav>
