@@ -2,47 +2,37 @@ using VocaNova.Dashboard.Models.Auth;
 
 namespace VocaNova.Dashboard.Services.Auth;
 
+/// <summary>Kết quả đăng nhập dashboard: thành công kèm token + user, hoặc thất bại kèm lý do.</summary>
 public sealed class DashboardAuthResult
 {
-    private DashboardAuthResult(
-        bool isSuccess,
-        DashboardUser? user,
-        string? accessToken,
-        string? refreshToken,
-        int expiresIn,
-        string? error)
-    {
-        IsSuccess = isSuccess;
-        User = user;
-        AccessToken = accessToken;
-        RefreshToken = refreshToken;
-        ExpiresIn = expiresIn;
-        Error = error;
-    }
+    public bool IsSuccess { get; private init; }
 
-    public bool IsSuccess { get; }
+    public DashboardUser? User { get; private init; }
 
-    public DashboardUser? User { get; }
+    public string? AccessToken { get; private init; }
 
-    public string? AccessToken { get; }
+    public string? RefreshToken { get; private init; }
 
-    public string? RefreshToken { get; }
+    public int ExpiresIn { get; private init; }
 
-    public int ExpiresIn { get; }
-
-    public string? Error { get; }
+    public string? Error { get; private init; }
 
     public static DashboardAuthResult Success(
         DashboardUser user,
         string accessToken,
         string refreshToken,
-        int expiresIn)
-    {
-        return new DashboardAuthResult(true, user, accessToken, refreshToken, expiresIn, null);
-    }
+        int expiresIn) => new()
+        {
+            IsSuccess = true,
+            User = user,
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
+            ExpiresIn = expiresIn,
+        };
 
-    public static DashboardAuthResult Failure(string error)
+    public static DashboardAuthResult Failure(string error) => new()
     {
-        return new DashboardAuthResult(false, null, null, null, 0, error);
-    }
+        IsSuccess = false,
+        Error = error,
+    };
 }
