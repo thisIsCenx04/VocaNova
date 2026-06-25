@@ -18,6 +18,16 @@ public interface IWordRepository
         uint wordId,
         CancellationToken cancellationToken = default);
 
+    Task<PagedResult<AdminWordListItemDto>> SearchAdminAsync(
+        string? normalizedQuery,
+        int page,
+        int limit,
+        string? cefr,
+        uint? topicId,
+        string? status,
+        bool includeDeleted,
+        CancellationToken cancellationToken = default);
+
     Task<bool> WordKeyExistsAsync(
         string wordKey,
         uint? excludingWordId = null,

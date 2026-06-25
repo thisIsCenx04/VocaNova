@@ -13,6 +13,10 @@ public interface IWordService
         uint wordId,
         CancellationToken cancellationToken = default);
 
+    Task<Result<PagedResult<AdminWordListItemDto>>> SearchAdminAsync(
+        AdminWordQuery query,
+        CancellationToken cancellationToken = default);
+
     Task<Result<WordDetailDto>> CreateAsync(
         CreateWordRequest request,
         CancellationToken cancellationToken = default);

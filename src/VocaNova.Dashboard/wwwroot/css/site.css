@@ -463,4 +463,253 @@ a {
     .chart-grid {
         grid-template-columns: 1fr;
     }
+
+    .filter-bar {
+        flex-wrap: wrap;
+    }
+
+    .data-table {
+        font-size: 13px;
+    }
+}
+
+/* ----- Vocabulary list (F057) ----- */
+.filter-bar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-bar .form-control {
+    width: auto;
+    min-width: 150px;
+}
+
+.filter-bar input[type="text"] {
+    min-width: 220px;
+    flex: 1 1 220px;
+}
+
+.checkbox-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-secondary:hover {
+    background: var(--page-bg);
+}
+
+.alert {
+    border-radius: var(--radius);
+    padding: 11px 14px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    border: 1px solid transparent;
+}
+
+.alert-success {
+    background: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+}
+
+.alert-danger {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border-color: #fecaca;
+}
+
+.table-panel {
+    padding: 0;
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.data-table th {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    background: #f8fafc;
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.empty-row {
+    text-align: center !important;
+    color: var(--text-muted);
+    padding: 32px !important;
+}
+
+.word-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.word-text {
+    font-weight: 600;
+}
+
+.word-phonetic {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.col-actions {
+    white-space: nowrap;
+    text-align: right;
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-transform: capitalize;
+}
+
+.badge-success {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.badge-danger {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+/* CEFR difficulty color ladder A1 → C2 */
+.badge.cefr {
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.cefr-a1 { background: #22c55e; }
+.cefr-a2 { background: #84cc16; }
+.cefr-b1 { background: #eab308; }
+.cefr-b2 { background: #f97316; }
+.cefr-c1 { background: #ef4444; }
+.cefr-c2 { background: #b91c1c; }
+
+.chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.chip {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: #f1f5f9;
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.inline-form {
+    display: inline;
+}
+
+.btn-icon {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 4px;
+    text-decoration: none;
+}
+
+.btn-icon:hover {
+    background: var(--page-bg);
+}
+
+.btn-icon.btn-danger {
+    color: var(--danger);
+    border-color: #fecaca;
+}
+
+.btn-icon.btn-danger:hover {
+    background: var(--danger-bg);
+}
+
+.btn-icon.btn-success {
+    color: #047857;
+    border-color: #a7f3d0;
+}
+
+.btn-icon.btn-success:hover {
+    background: #ecfdf5;
+}
+
+.pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.pager-link {
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.pager-link:hover {
+    background: var(--page-bg);
+}
+
+.pager-info {
+    color: var(--text-muted);
+    font-size: 14px;
 }
