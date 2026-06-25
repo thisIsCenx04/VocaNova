@@ -67,6 +67,17 @@ public sealed class AdminStatsController : ControllerBase
             : this.ErrorResult(result);
     }
 
+    [HttpGet("stats/activity-trend")]
+    public async Task<IActionResult> GetActivityTrend(
+        [FromQuery] string granularity = "daily",
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _adminStatsService.GetActivityTrendAsync(granularity, cancellationToken);
+        return result.IsSuccess
+            ? this.OkResult(result.Value!, "Activity trend loaded successfully.")
+            : this.ErrorResult(result);
+    }
+
     [HttpGet("audit-logs")]
     public async Task<IActionResult> GetAuditLogs(
         [FromQuery] AdminAuditLogQuery query,

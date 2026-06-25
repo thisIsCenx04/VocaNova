@@ -16,6 +16,13 @@ public interface IVocaNovaApiClient
 
     Task<MasteryDistribution?> GetMasteryDistributionAsync(CancellationToken cancellationToken = default);
 
+    // F062 — Statistics page.
+    Task<ActivityTrend?> GetActivityTrendAsync(string granularity, CancellationToken cancellationToken = default);
+
+    Task<LearningStats?> GetLearningStatsAsync(CancellationToken cancellationToken = default);
+
+    Task<Demographics?> GetDemographicsAsync(CancellationToken cancellationToken = default);
+
     // F057 — Vocabulary list & filter.
     Task<PagedData<WordListItem>> GetWordsAsync(WordListFilter filter, CancellationToken cancellationToken = default);
 

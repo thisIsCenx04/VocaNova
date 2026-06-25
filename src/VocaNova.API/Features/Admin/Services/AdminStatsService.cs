@@ -139,6 +139,87 @@ public sealed class AdminStatsService : IAdminStatsService
         return Result<AdminMasteryDistributionDto>.Ok(new AdminMasteryDistributionDto(total, levels));
     }
 
+    public async Task<Result<AdminActivityTrendDto>> GetActivityTrendAsync(
+        string granularity,
+        CancellationToken cancellationToken = default)
+    {
+        var g = (granularity ?? string.Empty).Trim().ToLowerInvariant();
+        if (g != "daily" && g != "weekly" && g != "monthly")
+        {
+            return Result<AdminActivityTrendDto>.Fail("Granularity must be daily, weekly, or monthly.");
+        }
+
+        var today = DateTime.UtcNow.Date;
+        var tomorrow = today.AddDays(1);
+
+        // Mỗi bucket = (label, ngày đầu, ngày cuối inclusive).
+        var buckets = new List<(string Period, DateOnly Start, DateOnly End)>();
+        DateTime windowStart;
+
+        if (g == "daily")
+        {
+            windowStart = today.AddDays(-29); // 30 ngày
+            for (var i = 0; i < 30; i++)
+            {
+                var d = windowStart.AddDays(i);
+                var only = DateOnly.FromDateTime(d);
+                buckets.Add((d.ToString("yyyy-MM-dd"), only, only));
+            }
+        }
+        else if (g == "weekly")
+        {
+            var startOfWeek = today.AddDays(-(((int)today.DayOfWeek + 6) % 7)); // thứ Hai
+            windowStart = startOfWeek.AddDays(-7 * 11); // 12 tuần
+            for (var i = 0; i < 12; i++)
+            {
+                var ws = windowStart.AddDays(7 * i);
+                buckets.Add((ws.ToString("yyyy-MM-dd"), DateOnly.FromDateTime(ws), DateOnly.FromDateTime(ws.AddDays(6))));
+            }
+        }
+        else
+        {
+            var firstOfMonth = new DateTime(today.Year, today.Month, 1);
+            windowStart = firstOfMonth.AddMonths(-5); // 6 tháng
+            for (var i = 0; i < 6; i++)
+            {
+                var ms = windowStart.AddMonths(i);
+                buckets.Add((ms.ToString("yyyy-MM"), DateOnly.FromDateTime(ms), DateOnly.FromDateTime(ms.AddMonths(1).AddDays(-1))));
+            }
+        }
+
+        var accuracyRows = await _repository.GetSessionAccuracyRowsAsync(windowStart, tomorrow, cancellationToken);
+        var countRows = await _repository.GetSessionCountsByDayAsync(windowStart, tomorrow, cancellationToken);
+        var accuracyByDate = accuracyRows.ToDictionary(row => row.Date);
+        var countByDate = countRows.ToDictionary(row => row.Date, row => row.SessionCount);
+
+        var points = buckets
+            .Select(bucket =>
+            {
+                var sessions = 0;
+                var correct = 0;
+                var total = 0;
+                for (var d = bucket.Start; d <= bucket.End; d = d.AddDays(1))
+                {
+                    if (countByDate.TryGetValue(d, out var c))
+                    {
+                        sessions += c;
+                    }
+
+                    if (accuracyByDate.TryGetValue(d, out var row))
+                    {
+                        correct += row.CorrectCount;
+                        total += row.CorrectCount + row.WrongCount;
+                    }
+                }
+
+                var accuracy = total == 0 ? 0 : Math.Round(correct * 100d / total, 2);
+                return new AdminActivityTrendPointDto(bucket.Period, sessions, correct, total, accuracy);
+            })
+            .ToArray();
+
+        return Result<AdminActivityTrendDto>.Ok(new AdminActivityTrendDto(g, points));
+    }
+
     public async Task<Result<PagedResult<AdminAuditLogDto>>> GetAuditLogsAsync(
         AdminAuditLogQuery query,
         CancellationToken cancellationToken = default)
