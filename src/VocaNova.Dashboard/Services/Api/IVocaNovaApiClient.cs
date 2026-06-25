@@ -57,6 +57,8 @@ public interface IVocaNovaApiClient
 
     Task<PagedData<AuditLog>> GetUserAuditLogsAsync(uint userId, int page, int limit, CancellationToken cancellationToken = default);
 
+    Task<AdminUserTopics?> GetUserTopicsAsync(uint userId, CancellationToken cancellationToken = default);
+
     Task<ApiActionResult> DeactivateUserAsync(uint userId, CancellationToken cancellationToken = default);
 
     Task<ApiActionResult> RestoreUserAsync(uint userId, CancellationToken cancellationToken = default);
@@ -97,7 +99,7 @@ public sealed record KnnLookupFilter(string? Q, string? Status, bool IncludeDele
 public sealed record TopicInput(string? TopicName, string? TopicNameVi, string? Icon);
 
 /// <summary>Bộ lọc danh sách user (F060).</summary>
-public sealed record UserListFilter(string? Status, string? Search, bool IncludeDeleted, int Page, int Limit);
+public sealed record UserListFilter(string? Status, string? Search, bool IncludeDeleted, int Page, int Limit, string? Role = null);
 
 /// <summary>Payload tạo/cập nhật sense (khớp CreateSenseRequest/UpdateSenseRequest của API).</summary>
 public sealed record SenseInput(int SenseOrder, string? WordClass, string? EnglishDefinition, string? VietnameseMeaning);

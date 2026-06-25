@@ -1,4 +1,4 @@
-// F060 — User detail tabs + delete confirm.
+// F060 — User detail: tab toggle + Disable confirmation modal.
 (function () {
     'use strict';
 
@@ -10,18 +10,19 @@
             btn.addEventListener('click', function () {
                 var target = btn.getAttribute('data-tab');
                 buttons.forEach(function (b) { b.classList.toggle('active', b === btn); });
-                panels.forEach(function (p) {
-                    p.classList.toggle('active', p.getAttribute('data-tab') === target);
-                });
+                panels.forEach(function (p) { p.classList.toggle('active', p.getAttribute('data-tab') === target); });
             });
         });
     }
 
-    document.querySelectorAll('form.js-confirm').forEach(function (form) {
-        form.addEventListener('submit', function (e) {
-            if (!window.confirm(form.getAttribute('data-confirm') || 'Are you sure?')) {
-                e.preventDefault();
-            }
-        });
-    });
+    var modal = document.getElementById('disable-modal');
+    if (modal) {
+        var open = document.querySelector('[data-open-disable]');
+        function show() { modal.hidden = false; }
+        function hide() { modal.hidden = true; }
+        if (open) { open.addEventListener('click', show); }
+        modal.querySelectorAll('[data-close-disable]').forEach(function (b) { b.addEventListener('click', hide); });
+        modal.addEventListener('click', function (e) { if (e.target === modal) { hide(); } });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { hide(); } });
+    }
 })();

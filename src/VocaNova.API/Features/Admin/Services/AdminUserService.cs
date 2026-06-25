@@ -89,6 +89,19 @@ public sealed class AdminUserService : IAdminUserService
         return Result<PagedResult<AdminUserTestSessionDto>>.Ok(result);
     }
 
+    public async Task<Result<AdminUserTopicsDto>> GetUserTopicsAsync(
+        uint userId,
+        CancellationToken cancellationToken = default)
+    {
+        if (userId == 0 || !await _repository.UserExistsAsync(userId, cancellationToken))
+        {
+            return Result<AdminUserTopicsDto>.NotFound("User not found.");
+        }
+
+        var topics = await _repository.GetUserTopicsAsync(userId, cancellationToken);
+        return Result<AdminUserTopicsDto>.Ok(topics);
+    }
+
     public async Task<Result<bool>> DeactivateAsync(
         uint userId,
         CancellationToken cancellationToken = default)
@@ -99,8 +112,10 @@ public sealed class AdminUserService : IAdminUserService
             return Result<bool>.NotFound("User not found.");
         }
 
+        // "Disable" = khóa tài khoản (limit access): vẫn hiển thị trong danh sách với status 'locked',
+        // không xóa/ẩn. Vẫn thu hồi refresh token để chặn truy cập ngay.
         var now = DateTime.UtcNow;
-        user.Status = UserStatus.Deleted;
+        user.Status = UserStatus.Locked;
         user.UpdatedAt = now;
         await _repository.RevokeActiveRefreshTokensAsync(userId, now, cancellationToken);
         await _repository.SaveChangesAsync(cancellationToken);
@@ -119,9 +134,10 @@ public sealed class AdminUserService : IAdminUserService
             return Result<bool>.NotFound("User not found.");
         }
 
-        if (user.Status != UserStatus.Deleted)
+        // "Enable" = mở khóa: đưa user (locked hoặc deleted) về active.
+        if (user.Status == UserStatus.Active)
         {
-            return Result<bool>.Conflict("User is not deleted.");
+            return Result<bool>.Conflict("User is already active.");
         }
 
         user.Status = UserStatus.Active;

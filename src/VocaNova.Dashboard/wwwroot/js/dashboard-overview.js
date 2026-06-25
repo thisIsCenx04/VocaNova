@@ -14,8 +14,8 @@
     function themeColors() {
         var dark = document.documentElement.getAttribute('data-theme') === 'dark';
         return {
-            grid: dark ? 'rgba(255,255,255,0.08)' : '#eceef5',
-            tick: dark ? '#99a0bb' : '#868ba1',
+            grid: dark ? 'rgba(255,255,255,0.14)' : '#e1e4ee',
+            tick: dark ? '#aab1c9' : '#6b7185',
         };
     }
 

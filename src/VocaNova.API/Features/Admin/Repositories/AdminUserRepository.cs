@@ -36,11 +36,17 @@ public sealed class AdminUserRepository : IAdminUserRepository
             source = source.Where(user => user.Status != UserStatus.Deleted);
         }
 
+        if (!string.IsNullOrWhiteSpace(query.Role))
+        {
+            source = source.Where(user => user.Role.RoleName == query.Role);
+        }
+
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             var search = query.Search.Trim().ToLower();
             source = source.Where(user =>
                 (user.UserAuth != null && user.UserAuth.Phone != null && user.UserAuth.Phone.ToLower().Contains(search))
+                || (user.UserAuth != null && user.UserAuth.GoogleEmail != null && user.UserAuth.GoogleEmail.ToLower().Contains(search))
                 || (user.UserProfile != null && user.UserProfile.FullName.ToLower().Contains(search)));
         }
 
@@ -50,6 +56,7 @@ public sealed class AdminUserRepository : IAdminUserRepository
             .Select(user => new AdminUserSummaryDto(
                 user.UserId,
                 user.UserAuth == null ? null : user.UserAuth.Phone,
+                user.UserAuth == null ? null : user.UserAuth.GoogleEmail,
                 user.UserProfile == null ? string.Empty : user.UserProfile.FullName,
                 user.UserProfile == null ? null : user.UserProfile.AvatarUrl,
                 user.Role.RoleName,
@@ -57,6 +64,36 @@ public sealed class AdminUserRepository : IAdminUserRepository
                 user.LastLoginAt,
                 user.CreatedAt))
             .ToPagedResultAsync(query.Page, query.Limit, cancellationToken);
+    }
+
+    public async Task<AdminUserTopicsDto> GetUserTopicsAsync(
+        uint userId,
+        CancellationToken cancellationToken = default)
+    {
+        var prefs = await _dbContext.UserTopicPreferences
+            .AsNoTracking()
+            .Where(pref => pref.UserId == userId && pref.Status == UserStatus.Active)
+            .OrderBy(pref => pref.Topic.TopicName)
+            .Select(pref => new
+            {
+                pref.Source,
+                pref.TopicId,
+                Name = pref.Topic.TopicName,
+                NameVi = pref.Topic.TopicNameVi,
+            })
+            .ToListAsync(cancellationToken);
+
+        // source 'knn_suggested' = gợi ý AI; còn lại ('user_selected','onboarding') = user chọn.
+        var selected = prefs
+            .Where(p => p.Source != "knn_suggested")
+            .Select(p => new AdminTopicChipDto(p.TopicId, p.Name, p.NameVi))
+            .ToArray();
+        var suggested = prefs
+            .Where(p => p.Source == "knn_suggested")
+            .Select(p => new AdminTopicChipDto(p.TopicId, p.Name, p.NameVi))
+            .ToArray();
+
+        return new AdminUserTopicsDto(selected, suggested);
     }
 
     public async Task<AdminUserDetailDto?> GetUserDetailAsync(

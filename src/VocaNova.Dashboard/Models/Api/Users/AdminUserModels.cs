@@ -7,12 +7,23 @@ namespace VocaNova.Dashboard.Models.Api.Users;
 public sealed record AdminUserSummary(
     [property: JsonPropertyName("user_id")] uint UserId,
     [property: JsonPropertyName("phone")] string? Phone,
+    [property: JsonPropertyName("google_email")] string? GoogleEmail,
     [property: JsonPropertyName("display_name")] string DisplayName,
     [property: JsonPropertyName("avatar_url")] string? AvatarUrl,
     [property: JsonPropertyName("role")] string Role,
     [property: JsonPropertyName("status")] string Status,
     [property: JsonPropertyName("last_login_at")] DateTime? LastLoginAt,
     [property: JsonPropertyName("created_at")] DateTime CreatedAt);
+
+// F060 redesign — Topic of Interest.
+public sealed record AdminUserTopics(
+    [property: JsonPropertyName("selected")] IReadOnlyList<AdminTopicChip> Selected,
+    [property: JsonPropertyName("suggested")] IReadOnlyList<AdminTopicChip> Suggested);
+
+public sealed record AdminTopicChip(
+    [property: JsonPropertyName("topic_id")] uint TopicId,
+    [property: JsonPropertyName("name")] string Name,
+    [property: JsonPropertyName("name_vi")] string? NameVi);
 
 public sealed record AdminUserDetail(
     [property: JsonPropertyName("user_id")] uint UserId,

@@ -64,7 +64,18 @@ public sealed class AdminUsersController : ControllerBase
         return Ok(ApiResponseFormatter.Paged(result.Value!, "User test history loaded successfully."));
     }
 
-    [Authorize(Policy = JwtAuthenticationExtensions.SuperAdminPolicy)]
+    [HttpGet("{id:uint}/topics")]
+    public async Task<IActionResult> GetTopics(
+        [FromRoute] uint id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _adminUserService.GetUserTopicsAsync(id, cancellationToken);
+        return result.IsSuccess
+            ? this.OkResult(result.Value!, "User topics loaded successfully.")
+            : this.ErrorResult(result);
+    }
+
+    // Nới quyền: Admin (không chỉ SuperAdmin) được disable user ngay ở list — theo yêu cầu owner.
     [HttpPatch("{id:uint}/deactivate")]
     public async Task<IActionResult> Deactivate(
         [FromRoute] uint id,
@@ -80,7 +91,6 @@ public sealed class AdminUsersController : ControllerBase
         return this.OkResult(result.Value, "User deactivated successfully.");
     }
 
-    [Authorize(Policy = JwtAuthenticationExtensions.SuperAdminPolicy)]
     [HttpPatch("{id:uint}/restore")]
     public async Task<IActionResult> Restore(
         [FromRoute] uint id,

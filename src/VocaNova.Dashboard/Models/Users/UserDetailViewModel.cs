@@ -7,6 +7,8 @@ public sealed class UserDetailViewModel
 {
     public required AdminUserDetail Detail { get; init; }
 
+    public AdminUserTopics? Topics { get; init; }
+
     public PagedData<AdminUserTestSession> TestHistory { get; init; } = new();
 
     public PagedData<AuditLog> AuditLogs { get; init; } = new();

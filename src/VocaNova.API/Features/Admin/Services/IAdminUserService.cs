@@ -19,6 +19,10 @@ public interface IAdminUserService
         int limit,
         CancellationToken cancellationToken = default);
 
+    Task<Result<AdminUserTopicsDto>> GetUserTopicsAsync(
+        uint userId,
+        CancellationToken cancellationToken = default);
+
     Task<Result<bool>> DeactivateAsync(
         uint userId,
         CancellationToken cancellationToken = default);

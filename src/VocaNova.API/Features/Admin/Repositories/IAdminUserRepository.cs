@@ -18,6 +18,10 @@ public interface IAdminUserRepository
         uint userId,
         CancellationToken cancellationToken = default);
 
+    Task<AdminUserTopicsDto> GetUserTopicsAsync(
+        uint userId,
+        CancellationToken cancellationToken = default);
+
     Task<PagedResult<AdminUserTestSessionDto>> GetTestHistoryAsync(
         uint userId,
         int page,

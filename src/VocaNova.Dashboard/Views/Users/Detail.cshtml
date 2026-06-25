@@ -1,11 +1,9 @@
-@using System.Security.Claims
 @using VocaNova.Dashboard.Models.Api.Users
 @model VocaNova.Dashboard.Models.Users.UserDetailViewModel
 @{
-    ViewData["Title"] = Model.Detail.DisplayName;
-    var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
-    var isSuperAdmin = string.Equals(role, "super_admin", StringComparison.Ordinal);
+    ViewData["Title"] = "User Details";
     var d = Model.Detail;
+    var lp = d.LearningProfile;
 
     string StatusBadge(string status) => status switch
     {
@@ -28,105 +26,156 @@
 <div class="page-header page-header-row">
     <div>
         <a class="back-link" href="/users">‹ Back to users</a>
-        <h1 class="page-title">@d.DisplayName <span class="@StatusBadge(d.Status)">@d.Status</span></h1>
-        <p class="page-subtitle">@(d.Phone ?? d.GoogleEmail ?? "—") · @d.Role.Replace("_", " ")</p>
+        <h1 class="page-title">User Details</h1>
     </div>
-    @if (isSuperAdmin)
-    {
-        <div class="header-actions">
-            @if (d.Status != "deleted")
-            {
-                <form method="post" action="/users/@d.UserId/deactivate" class="inline-form js-confirm" data-confirm="Deactivate @d.DisplayName? This soft-deletes the account.">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn-icon btn-danger">Deactivate</button>
-                </form>
-            }
-            else
-            {
-                <form method="post" action="/users/@d.UserId/restore" class="inline-form">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn-icon btn-success">Restore</button>
-                </form>
-            }
-        </div>
-    }
+    <div class="header-actions">
+        @if (d.Status == "active")
+        {
+            <button type="button" class="btn-warning" data-open-disable>Disable account</button>
+        }
+        else
+        {
+            <form method="post" action="/users/@d.UserId/restore" class="inline-form">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-primary">Enable account</button>
+            </form>
+        }
+    </div>
 </div>
 
-<div class="tabs" id="user-tabs">
-    <div class="tab-bar" role="tablist">
-        <button type="button" class="tab-btn active" data-tab="profile">Profile</button>
-        <button type="button" class="tab-btn" data-tab="learning">Learning Profile</button>
-        <button type="button" class="tab-btn" data-tab="history">Test History</button>
-        <button type="button" class="tab-btn" data-tab="activity">Activity Log</button>
-    </div>
-
-    <div class="tab-panel active" data-tab="profile">
-        <div class="panel">
-            <dl class="detail-list">
-                <dt>User ID</dt><dd>@d.UserId</dd>
-                <dt>Display name</dt><dd>@d.DisplayName</dd>
-                <dt>Phone</dt><dd>@(d.Phone ?? "—")</dd>
-                <dt>Google email</dt><dd>@(d.GoogleEmail ?? "—")</dd>
-                <dt>Username</dt><dd>@(d.Username ?? "—")</dd>
-                <dt>Role</dt><dd>@d.Role.Replace("_", " ")</dd>
-                <dt>Status</dt><dd><span class="@StatusBadge(d.Status)">@d.Status</span></dd>
-                <dt>Last login</dt><dd>@(d.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</dd>
-                <dt>Created</dt><dd>@d.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
-                <dt>Updated</dt><dd>@d.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
-            </dl>
-        </div>
-    </div>
-
-    <div class="tab-panel" data-tab="learning">
-        <div class="panel">
-            @if (d.LearningProfile is null)
+<div class="user-detail-grid">
+    <!-- LEFT: identity + account/security -->
+    <div class="detail-col">
+        <section class="panel profile-card">
+            @if (!string.IsNullOrWhiteSpace(d.AvatarUrl))
             {
-                <p class="text-muted">This user has not completed the learning profile.</p>
+                <img class="profile-avatar" src="@d.AvatarUrl" alt="" />
             }
             else
             {
-                var lp = d.LearningProfile;
-                <dl class="detail-list">
-                    <dt>Age range</dt><dd>@(lp.AgeRangeName ?? "—")</dd>
-                    <dt>Region</dt><dd>@(lp.RegionName ?? "—")</dd>
-                    <dt>Occupation</dt><dd>@(lp.OccupationName ?? "—")</dd>
-                    <dt>Education level</dt><dd>@(lp.EducationLevelName ?? "—")</dd>
-                    <dt>Learning purpose</dt><dd>@(lp.LearningPurposeName ?? "—")</dd>
-                </dl>
+                <span class="profile-avatar profile-avatar-fallback">@(string.IsNullOrWhiteSpace(d.DisplayName) ? "?" : d.DisplayName[..1].ToUpperInvariant())</span>
             }
-        </div>
+            <h2 class="profile-name">@d.DisplayName</h2>
+            <p class="profile-uid">UID-@d.UserId.ToString("D4")</p>
+            <div class="profile-badges">
+                <span class="@StatusBadge(d.Status)">@d.Status</span>
+                <span class="badge badge-muted">@d.Role.Replace("_", " ")</span>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head"><h2 class="panel-title">Account &amp; Security</h2></div>
+            <dl class="detail-list compact">
+                <dt>Username</dt><dd>@(d.Username ?? "—")</dd>
+                <dt>Phone number</dt><dd>@(d.Phone ?? "—")</dd>
+                <dt>Google email</dt><dd>@(d.GoogleEmail ?? "—")</dd>
+                <dt>Last logged in</dt><dd>@(d.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? "Never")</dd>
+                <dt>Account created</dt><dd>@d.CreatedAt.ToString("yyyy-MM-dd")</dd>
+            </dl>
+        </section>
     </div>
 
-    <div class="tab-panel" data-tab="history">
-        <div class="panel table-panel">
-            <table class="data-table">
-                <thead><tr><th>Session</th><th>Mode</th><th>Questions</th><th>Accuracy</th><th>Score</th><th>Status</th><th>Started</th></tr></thead>
-                <tbody>
-                    @if (Model.TestHistory.Items.Count == 0)
+    <!-- RIGHT: academic record + objective + topics -->
+    <div class="detail-col">
+        <section class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title">Academic record</h2>
+                <span class="panel-hint">Updated @d.UpdatedAt.ToString("dd/MM/yyyy")</span>
+            </div>
+            @if (lp is null)
+            {
+                <p class="text-muted">This user has not completed onboarding.</p>
+            }
+            else
+            {
+                <div class="info-grid">
+                    <div class="info-item"><span class="info-label">Age</span><span class="info-value">@(lp.AgeRangeName ?? "—")</span></div>
+                    <div class="info-item"><span class="info-label">Area</span><span class="info-value">@(lp.RegionName ?? "—")</span></div>
+                    <div class="info-item"><span class="info-label">Job</span><span class="info-value">@(lp.OccupationName ?? "—")</span></div>
+                    <div class="info-item"><span class="info-label">Educational level</span><span class="info-value">@(lp.EducationLevelName ?? "—")</span></div>
+                </div>
+
+                <div class="objective-box">
+                    <span class="info-label">Learning objective</span>
+                    <p class="objective-text">@(string.IsNullOrWhiteSpace(lp.LearningPurposeName) ? "Not set" : lp.LearningPurposeName)</p>
+                </div>
+            }
+        </section>
+
+        <section class="panel">
+            <div class="panel-head"><h2 class="panel-title">Topic of interest</h2></div>
+            @{
+                var selected = Model.Topics?.Selected ?? new List<AdminTopicChip>();
+                var suggested = Model.Topics?.Suggested ?? new List<AdminTopicChip>();
+            }
+            <div class="topic-block">
+                <span class="info-label">Selected topics</span>
+                <div class="chip-list">
+                    @if (selected.Count == 0)
                     {
-                        <tr><td colspan="7" class="empty-row">No test sessions.</td></tr>
+                        <span class="text-muted">None</span>
                     }
                     else
                     {
-                        foreach (var s in Model.TestHistory.Items)
+                        foreach (var t in selected)
+                        {
+                            <span class="chip chip-selected">@t.Name</span>
+                        }
+                    }
+                </div>
+            </div>
+            <div class="topic-block">
+                <span class="info-label">System suggestion (AI-based)</span>
+                <div class="chip-list">
+                    @if (suggested.Count == 0)
+                    {
+                        <span class="text-muted">No suggestions yet</span>
+                    }
+                    else
+                    {
+                        foreach (var t in suggested)
+                        {
+                            <span class="chip chip-suggested">@t.Name</span>
+                        }
+                    }
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Activity: test history + audit log -->
+<div class="tabs" id="user-tabs" style="margin-top:16px;">
+    <div class="tab-bar" role="tablist">
+        <button type="button" class="tab-btn active" data-tab="history">Test history</button>
+        <button type="button" class="tab-btn" data-tab="activity">Activity log</button>
+    </div>
+
+    <div class="tab-panel active" data-tab="history">
+        <div class="panel table-panel">
+            <table class="data-table">
+                <thead><tr><th>Session</th><th>Mode</th><th>Questions</th><th>Accuracy</th><th>Status</th><th>Started</th></tr></thead>
+                <tbody>
+                    @if (Model.TestHistory.Items.Count == 0)
+                    {
+                        <tr><td colspan="6" class="empty-row">No test sessions.</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var sn in Model.TestHistory.Items)
                         {
                             <tr>
-                                <td>#@s.SessionId</td>
-                                <td>@s.Mode</td>
-                                <td>@s.CorrectCount/@s.QuestionCount</td>
-                                <td>@s.Accuracy.ToString("0.#")%</td>
-                                <td>@s.Score.ToString("0.#")</td>
-                                <td><span class="badge badge-muted">@s.Status</span></td>
-                                <td>@s.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>#@sn.SessionId</td>
+                                <td>@sn.Mode</td>
+                                <td>@sn.CorrectCount/@sn.QuestionCount</td>
+                                <td>@sn.Accuracy.ToString("0.#")%</td>
+                                <td><span class="badge badge-muted">@sn.Status</span></td>
+                                <td>@sn.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
                             </tr>
                         }
                     }
                 </tbody>
             </table>
-            @if (Model.TestHistory.TotalItems > Model.TestHistory.Items.Count)
-            {
-                <p class="panel-muted table-foot">Showing latest @Model.TestHistory.Items.Count of @Model.TestHistory.TotalItems sessions.</p>
-            }
         </div>
     </div>
 
@@ -154,13 +203,27 @@
                     }
                 </tbody>
             </table>
-            @if (Model.AuditLogs.TotalItems > Model.AuditLogs.Items.Count)
-            {
-                <p class="panel-muted table-foot">Showing latest @Model.AuditLogs.Items.Count of @Model.AuditLogs.TotalItems entries.</p>
-            }
         </div>
     </div>
 </div>
+
+@if (d.Status == "active")
+{
+    <div class="modal-overlay" id="disable-modal" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="disable-title">
+            <div class="modal-icon"><svg viewBox="0 0 24 24"><path d="M12 2 1 21h22L12 2Zm0 6 6.5 11h-13L12 8Zm-1 4v3h2v-3h-2Zm0 4v2h2v-2h-2Z"/></svg></div>
+            <h3 class="modal-title" id="disable-title">Disable user account</h3>
+            <p class="modal-text">Are you sure you want to disable <strong>@d.DisplayName</strong>? This limits the user's access to the system. You can restore it later.</p>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" data-close-disable>Cancel</button>
+                <form method="post" action="/users/@d.UserId/deactivate" class="inline-form">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-warning">Disable</button>
+                </form>
+            </div>
+        </div>
+    </div>
+}
 
 @section Scripts {
     <script src="~/js/users.js" asp-append-version="true"></script>

@@ -4,7 +4,8 @@
 @{
     ViewData["Title"] = "Vocabulary";
     var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
-    var canManage = string.Equals(role, "super_admin", StringComparison.Ordinal);
+    // Tạm thời Admin có quyền như SuperAdmin (dễ test) — đồng bộ với policy API.
+    var canManage = role is "admin" or "super_admin";
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 
     // Dựng URL phân trang giữ nguyên bộ lọc hiện tại.
