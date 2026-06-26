@@ -116,7 +116,24 @@ public static class TranslationTable
         ("Phonetic (US)", "Phiên âm (Mỹ)"),
         ("Create vocabulary", "Tạo từ vựng"),
 
-        // ===== Vocabulary detail =====
+        // ===== Vocabulary detail (Figma: Vocabulary details) =====
+        ("Details", "Chi tiết"),
+        ("Vocabulary details", "Chi tiết từ vựng"),
+        ("Review and edit detailed linguistic metadata.", "Xem và chỉnh sửa dữ liệu ngôn ngữ chi tiết."),
+        ("Back", "Quay lại"),
+        ("Edit Item", "Sửa mục"),
+        ("System Metadata", "Dữ liệu hệ thống"),
+        ("Item ID", "Mã mục"),
+        ("Added By", "Thêm bởi"),
+        ("System Auto-Import", "Tự động nhập"),
+        ("Last Modified", "Sửa lần cuối"),
+        ("No meanings yet.", "Chưa có nghĩa nào."),
+        ("English Meaning", "Nghĩa tiếng Anh"),
+        ("Vietnamese Translation", "Bản dịch tiếng Việt"),
+        ("ILLUSTRATIVE EXAMPLES", "VÍ DỤ MINH HỌA"),
+        ("yes", "có"),
+
+        // ===== Vocabulary detail (cũ — quản lý) =====
         ("Back to vocabulary", "Quay lại từ vựng"),
         ("phrase", "cụm từ"),
         ("Senses", "Nghĩa"),

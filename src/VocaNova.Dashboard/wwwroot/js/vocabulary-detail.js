@@ -94,6 +94,18 @@
     wireUpload('image-upload-form', '/vocabulary/' + wordId + '/image');
     wireUpload('audio-upload-form', '/vocabulary/' + wordId + '/audio');
 
+    // ----- Phát audio phát âm (nút loa UK/US trên thẻ từ) -----
+    var playerEl = null;
+    root.querySelectorAll('.vd-audio-btn[data-audio]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var url = btn.getAttribute('data-audio');
+            if (!url) { return; }
+            if (!playerEl) { playerEl = new Audio(); }
+            playerEl.src = url;
+            playerEl.play().catch(function () { /* ignore playback errors */ });
+        });
+    });
+
     // ----- Audio delete (confirm + AJAX) -----
     root.querySelectorAll('form.js-confirm[data-ajax]').forEach(function (form) {
         form.addEventListener('submit', function (e) {

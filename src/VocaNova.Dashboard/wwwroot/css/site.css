@@ -2372,3 +2372,137 @@ html, body {
     .create-basic-grid { grid-template-columns: 1fr; }
     .create-card { padding: 22px 18px; }
 }
+
+/* ===== View Details Vocabulary Metadata ===== */
+.vd-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.vd-head-actions { display: flex; gap: 10px; flex: none; }
+
+.vd-top-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.vd-word-card,
+.vd-meta-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+}
+.vd-cefr {
+    position: absolute;
+    top: 18px;
+    right: 20px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: #fdebc8;
+    color: #b7791f;
+    font-size: 12px;
+    font-weight: 700;
+}
+[data-theme="dark"] .vd-cefr { background: rgba(234,179,8,.18); color: #f5c451; }
+
+.vd-word {
+    margin: 0 0 12px;
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1.1;
+}
+.vd-phonetics { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 16px; }
+.vd-phon { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 14px; }
+.vd-phon-label { color: var(--text-soft); font-weight: 600; }
+.vd-audio-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: var(--accent-soft, rgba(108,92,231,.12));
+    color: var(--accent);
+    cursor: pointer;
+}
+.vd-audio-btn:hover { background: var(--accent); color: #fff; }
+
+.vd-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.vd-chip {
+    padding: 5px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--surface-2);
+}
+
+.vd-meta-title { margin: 0 0 14px; font-size: 15px; font-weight: 700; color: var(--text); }
+.vd-meta-list { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.vd-meta-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.vd-meta-row dt { margin: 0; font-size: 13px; color: var(--text-muted); }
+.vd-meta-row dd { margin: 0; font-size: 13px; font-weight: 600; color: var(--text); text-align: right; }
+.vd-status { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.vd-status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.vd-status.is-active { color: #16a34a; }
+.vd-status.is-deleted { color: #e05260; }
+
+.vd-meanings {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+}
+.vd-meanings-head { display: flex; align-items: center; gap: 9px; margin-bottom: 18px; }
+
+.vd-sense {
+    border-left: 3px solid var(--accent);
+    padding: 2px 0 2px 18px;
+    margin-bottom: 22px;
+}
+.vd-sense:last-child { margin-bottom: 0; }
+.vd-sense-title { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.vd-sense-title strong { font-size: 15px; color: var(--text); }
+.vd-sense-badge {
+    padding: 3px 10px;
+    border-radius: 6px;
+    background: var(--accent-soft, rgba(108,92,231,.12));
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+}
+.vd-sense-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.vd-def-box {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+}
+.vd-def-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-soft);
+    margin-bottom: 4px;
+}
+.vd-def-box p { margin: 0; font-size: 14px; color: var(--text); }
+
+.vd-examples { display: flex; flex-direction: column; gap: 12px; }
+.vd-example { padding-left: 2px; }
+.vd-ex-en { margin: 0; font-size: 14px; color: var(--text); }
+.vd-quote { color: var(--accent); font-weight: 700; margin-right: 4px; }
+.vd-hl { color: var(--accent); font-weight: 600; }
+.vd-ex-vi { margin: 2px 0 0; font-size: 13px; font-style: italic; color: var(--text-muted); }
+
+.vd-manage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+.vd-extra { margin-top: 16px; }
+.vd-manage-grid .vd-extra { margin-top: 0; }
+
+@media (max-width: 992px) {
+    .vd-top-grid,
+    .vd-sense-grid,
+    .vd-manage-grid { grid-template-columns: 1fr; }
+    .vd-head { flex-direction: column; }
+}

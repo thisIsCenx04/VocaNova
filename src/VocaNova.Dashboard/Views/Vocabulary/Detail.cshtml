@@ -1,164 +1,211 @@
+@using System.Security.Claims
+@using System.Text.RegularExpressions
+@using System.Text.Encodings.Web
 @using VocaNova.Dashboard.Models.Api.Dictionary
 @model WordDetail
 @{
     ViewData["Title"] = Model.Word;
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
+    var canManage = role is "admin" or "super_admin";
+
     var allRelations = Model.Relations
         .Concat(Model.Senses.SelectMany(s => s.Relations))
         .ToList();
+
+    var ukAudio = Model.Audio.FirstOrDefault(a => string.Equals(a.Accent, "uk", StringComparison.OrdinalIgnoreCase));
+    var usAudio = Model.Audio.FirstOrDefault(a => string.Equals(a.Accent, "us", StringComparison.OrdinalIgnoreCase));
+
+    var itemId = $"VOC-{Model.WordId:0000}";
+    var statusActive = !string.Equals(Model.Status, "deleted", StringComparison.OrdinalIgnoreCase);
+
+    // Tô đậm từ mục tiêu trong câu ví dụ (encode trước rồi mới bọc <span> để tránh injection).
+    string Highlight(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return string.Empty;
+        var enc = HtmlEncoder.Default;
+        var encoded = enc.Encode(text);
+        var needle = enc.Encode(Model.Word);
+        if (string.IsNullOrWhiteSpace(needle)) return encoded;
+        return Regex.Replace(encoded, Regex.Escape(needle),
+            m => $"<span class=\"vd-hl\">{m.Value}</span>", RegexOptions.IgnoreCase);
+    }
 }
 
 @Html.AntiForgeryToken()
-<div data-word-id="@Model.WordId" id="detail-root">
+<div id="detail-root" data-word-id="@Model.WordId">
 
-    <div class="page-header detail-header">
+    <nav class="breadcrumb">
+        <a href="/vocabulary">@T["Vocabulary Metadata"]</a>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current">@T["Details"]</span>
+    </nav>
+
+    <div class="page-header vd-head">
         <div>
-            <a class="back-link" href="/vocabulary">‹ @T["Back to vocabulary"]</a>
-            <h1 class="page-title">
-                @Model.Word
-                @if (!string.IsNullOrWhiteSpace(Model.Cefr))
-                {
-                    <span class="badge cefr cefr-@Model.Cefr.ToLowerInvariant()">@Model.Cefr</span>
-                }
-                @if (Model.IsPhrase)
-                {
-                    <span class="badge badge-muted">@T["phrase"]</span>
-                }
-            </h1>
-            <div class="phonetics">
-                @if (!string.IsNullOrWhiteSpace(Model.PhoneticUk))
-                {
-                    <span>UK @Model.PhoneticUk</span>
-                }
-                @if (!string.IsNullOrWhiteSpace(Model.PhoneticUs))
-                {
-                    <span>US @Model.PhoneticUs</span>
-                }
-            </div>
-            <div class="chip-list">
-                @foreach (var topic in Model.Topics)
-                {
-                    <span class="chip">@topic.Name</span>
-                }
-            </div>
+            <h1 class="page-title">@T["Vocabulary details"]</h1>
+            <p class="page-subtitle">@T["Review and edit detailed linguistic metadata."]</p>
+        </div>
+        <div class="vd-head-actions">
+            <a href="/vocabulary" class="btn-secondary">← @T["Back"]</a>
+            @if (canManage)
+            {
+                <a href="/vocabulary/@Model.WordId/edit" class="btn-primary">✎ @T["Edit Item"]</a>
+            }
         </div>
     </div>
 
-    <div class="detail-grid">
-        <div class="detail-main">
-            <!-- Senses -->
-            <section class="panel">
-                <div class="panel-head">
-                    <h2 class="panel-title">@T["Senses"] (@Model.Senses.Count)</h2>
-                </div>
+    <div class="vd-top-grid">
+        <section class="vd-word-card">
+            @if (!string.IsNullOrWhiteSpace(Model.Cefr))
+            {
+                <span class="vd-cefr">CEFR @Model.Cefr</span>
+            }
+            <h2 class="vd-word">@Model.Word</h2>
 
-                <div class="accordion" id="senses-list">
-                    @foreach (var sense in Model.Senses.OrderBy(s => s.Order))
+            <div class="vd-phonetics">
+                @if (!string.IsNullOrWhiteSpace(Model.PhoneticUk))
+                {
+                    <span class="vd-phon">
+                        <span class="vd-phon-label">UK</span> @Model.PhoneticUk
+                        @if (ukAudio is not null)
+                        {
+                            <button type="button" class="vd-audio-btn" data-audio="@ukAudio.Url" aria-label="@T["Play"]">
+                                <svg viewBox="0 0 24 24" width="15" height="15"><path d="M5 9v6h4l5 5V4L9 9H5Zm11.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Z" fill="currentColor"/></svg>
+                            </button>
+                        }
+                    </span>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.PhoneticUs))
+                {
+                    <span class="vd-phon">
+                        <span class="vd-phon-label">US</span> @Model.PhoneticUs
+                        @if (usAudio is not null)
+                        {
+                            <button type="button" class="vd-audio-btn" data-audio="@usAudio.Url" aria-label="@T["Play"]">
+                                <svg viewBox="0 0 24 24" width="15" height="15"><path d="M5 9v6h4l5 5V4L9 9H5Zm11.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Z" fill="currentColor"/></svg>
+                            </button>
+                        }
+                    </span>
+                }
+            </div>
+
+            @if (Model.Topics.Count > 0)
+            {
+                <div class="vd-chips">
+                    @foreach (var topic in Model.Topics)
                     {
-                        <details class="sense-item" data-sense-id="@sense.SenseId" open>
-                            <summary>
-                                <span class="sense-order">#@sense.Order</span>
-                                <span class="sense-class">@sense.WordClass</span>
-                                <span class="sense-def js-sense-def">@sense.EnglishDefinition</span>
-                            </summary>
-                            <div class="sense-body">
-                                <p class="sense-vi"><strong>VI:</strong> <span class="js-sense-vi">@sense.VietnameseMeaning</span></p>
-
-                                <div class="sense-examples">
-                                    <h4>@T["Examples"]</h4>
-                                    @if (sense.Examples.Count == 0)
-                                    {
-                                        <p class="text-muted">@T["No examples."]</p>
-                                    }
-                                    else
-                                    {
-                                        <ul class="example-list">
-                                            @foreach (var ex in sense.Examples.OrderBy(e => e.Order))
-                                            {
-                                                <li>
-                                                    <span class="ex-en">@ex.ExampleEn</span>
-                                                    @if (!string.IsNullOrWhiteSpace(ex.ExampleVi))
-                                                    {
-                                                        <span class="ex-vi">@ex.ExampleVi</span>
-                                                    }
-                                                </li>
-                                            }
-                                        </ul>
-                                    }
-                                </div>
-
-                                <button type="button" class="btn-secondary btn-sm js-edit-toggle">@T["Edit"]</button>
-
-                                <form class="sense-edit-form js-sense-edit" hidden
-                                      data-sense-id="@sense.SenseId">
-                                    <div class="form-row">
-                                        <label>@T["Order"]</label>
-                                        <input type="number" name="senseOrder" value="@sense.Order" min="1" class="form-control" />
-                                    </div>
-                                    <div class="form-row">
-                                        <label>@T["Word class"]</label>
-                                        <input type="text" name="wordClass" value="@sense.WordClass" class="form-control" />
-                                    </div>
-                                    <div class="form-row">
-                                        <label>@T["English definition"]</label>
-                                        <textarea name="englishDefinition" class="form-control" rows="2">@sense.EnglishDefinition</textarea>
-                                    </div>
-                                    <div class="form-row">
-                                        <label>@T["Vietnamese meaning"]</label>
-                                        <textarea name="vietnameseMeaning" class="form-control" rows="2">@sense.VietnameseMeaning</textarea>
-                                    </div>
-                                    <div class="form-actions">
-                                        <button type="submit" class="btn-primary btn-sm">@T["Save"]</button>
-                                        <button type="button" class="btn-secondary btn-sm js-edit-cancel">@T["Cancel"]</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </details>
+                        <span class="vd-chip">@topic.Name</span>
                     }
                 </div>
+            }
+        </section>
 
-                <!-- Add sense -->
-                <form class="sense-add-form" id="add-sense-form">
-                    <h4>@T["Add a sense"]</h4>
-                    <div class="form-grid">
-                        <input type="number" name="senseOrder" value="@(Model.Senses.Count + 1)" min="1" class="form-control" placeholder="@T["Order"]" />
-                        <input type="text" name="wordClass" class="form-control" placeholder="@T["Word class (noun/verb...)"]" required />
-                        <input type="text" name="englishDefinition" class="form-control" placeholder="@T["English definition"]" required />
-                        <input type="text" name="vietnameseMeaning" class="form-control" placeholder="@T["Vietnamese meaning"]" />
+        <section class="vd-meta-card">
+            <h3 class="vd-meta-title">@T["System Metadata"]</h3>
+            <dl class="vd-meta-list">
+                <div class="vd-meta-row">
+                    <dt>@T["Item ID"]</dt>
+                    <dd>@itemId</dd>
+                </div>
+                <div class="vd-meta-row">
+                    <dt>@T["Added By"]</dt>
+                    <dd>@T["System Auto-Import"]</dd>
+                </div>
+                <div class="vd-meta-row">
+                    <dt>@T["Last Modified"]</dt>
+                    <dd>@(Model.UpdatedAt == default ? "—" : Model.UpdatedAt.ToString("MMM dd, yyyy - HH:mm"))</dd>
+                </div>
+                <div class="vd-meta-row">
+                    <dt>@T["Status"]</dt>
+                    <dd>
+                        <span class="vd-status @(statusActive ? "is-active" : "is-deleted")">
+                            <span class="vd-status-dot"></span>@(statusActive ? T["Active"] : T["Deleted"])
+                        </span>
+                    </dd>
+                </div>
+            </dl>
+        </section>
+    </div>
+
+    <section class="vd-meanings">
+        <header class="vd-meanings-head">
+            <span class="create-section-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18"><path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 8h5M9 12h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </span>
+            <h2 class="create-section-title">@T["Meaning & Examples"]</h2>
+        </header>
+
+        @if (Model.Senses.Count == 0)
+        {
+            <p class="text-muted">@T["No meanings yet."]</p>
+        }
+        else
+        {
+            @foreach (var sense in Model.Senses.OrderBy(s => s.Order))
+            {
+                <div class="vd-sense">
+                    <div class="vd-sense-title">
+                        <span class="vd-sense-badge">@(char.ToUpper(sense.WordClass[0]) + sense.WordClass[1..])</span>
+                        <strong>@T["Meaning"] @sense.Order</strong>
                     </div>
-                    <button type="submit" class="btn-primary btn-sm">@T["Add sense"]</button>
-                </form>
-            </section>
 
-            <!-- Relations -->
-            <section class="panel">
-                <div class="panel-head"><h2 class="panel-title">@T["Relations"]</h2></div>
-                @if (allRelations.Count == 0)
-                {
-                    <p class="text-muted">@T["No relations."]</p>
-                }
-                else
-                {
-                    <table class="data-table">
-                        <thead><tr><th>@T["Type"]</th><th>@T["Related word"]</th><th>@T["Linked"]</th><th>@T["Quiz"]</th></tr></thead>
-                        <tbody>
-                            @foreach (var rel in allRelations)
+                    <div class="vd-sense-grid">
+                        <div class="vd-def-box">
+                            <span class="vd-def-label">@T["English Meaning"]</span>
+                            <p>@sense.EnglishDefinition</p>
+                        </div>
+                        <div class="vd-def-box">
+                            <span class="vd-def-label">@T["Vietnamese Translation"]</span>
+                            <p>@(string.IsNullOrWhiteSpace(sense.VietnameseMeaning) ? "—" : sense.VietnameseMeaning)</p>
+                        </div>
+                    </div>
+
+                    @if (sense.Examples.Count > 0)
+                    {
+                        <p class="illustrative-label">@T["ILLUSTRATIVE EXAMPLES"]</p>
+                        <div class="vd-examples">
+                            @foreach (var ex in sense.Examples.OrderBy(e => e.Order))
                             {
-                                <tr>
-                                    <td><span class="badge badge-muted">@rel.RelationType</span></td>
-                                    <td>@rel.RelatedWord</td>
-                                    <td>@(rel.LinkedWordId is null ? "—" : "yes")</td>
-                                    <td>@(rel.IsQuizEligible ? "✓" : "—")</td>
-                                </tr>
+                                <div class="vd-example">
+                                    <p class="vd-ex-en"><span class="vd-quote">&ldquo;</span>@Html.Raw(Highlight(ex.ExampleEn))</p>
+                                    @if (!string.IsNullOrWhiteSpace(ex.ExampleVi))
+                                    {
+                                        <p class="vd-ex-vi">@ex.ExampleVi</p>
+                                    }
+                                </div>
                             }
-                        </tbody>
-                    </table>
-                }
-            </section>
-        </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </section>
 
-        <div class="detail-side">
-            <!-- Image -->
-            <section class="panel">
+    @if (allRelations.Count > 0)
+    {
+        <section class="panel vd-extra">
+            <div class="panel-head"><h2 class="panel-title">@T["Relations"]</h2></div>
+            <table class="data-table">
+                <thead><tr><th>@T["Type"]</th><th>@T["Related word"]</th><th>@T["Linked"]</th><th>@T["Quiz"]</th></tr></thead>
+                <tbody>
+                    @foreach (var rel in allRelations)
+                    {
+                        <tr>
+                            <td><span class="badge badge-muted">@rel.RelationType</span></td>
+                            <td>@rel.RelatedWord</td>
+                            <td>@(rel.LinkedWordId is null ? "—" : T["yes"])</td>
+                            <td>@(rel.IsQuizEligible ? "✓" : "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </section>
+    }
+
+    @if (canManage)
+    {
+        <div class="vd-manage-grid">
+            <section class="panel vd-extra">
                 <div class="panel-head"><h2 class="panel-title">@T["Image"]</h2></div>
                 @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
                 {
@@ -174,8 +221,7 @@
                 </form>
             </section>
 
-            <!-- Audio -->
-            <section class="panel">
+            <section class="panel vd-extra">
                 <div class="panel-head"><h2 class="panel-title">@T["Audio"]</h2></div>
                 @if (Model.Audio.Count == 0)
                 {
@@ -207,7 +253,7 @@
                 </form>
             </section>
         </div>
-    </div>
+    }
 
     <div id="detail-toast" class="detail-toast" hidden></div>
 </div>
