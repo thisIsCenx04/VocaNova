@@ -109,7 +109,11 @@ public sealed record TopicInput(string? TopicName, string? TopicNameVi, string? 
 public sealed record UserListFilter(string? Status, string? Search, bool IncludeDeleted, int Page, int Limit, string? Role = null);
 
 /// <summary>Payload tạo/cập nhật sense (khớp CreateSenseRequest/UpdateSenseRequest của API).</summary>
-public sealed record SenseInput(int SenseOrder, string? WordClass, string? EnglishDefinition, string? VietnameseMeaning);
+public sealed record SenseInput(int SenseOrder, string? WordClass, string? EnglishDefinition, string? VietnameseMeaning,
+    IReadOnlyList<SenseExampleInput>? Examples = null);
+
+/// <summary>Ví dụ gửi kèm sense. ExampleId &gt; 0 = sửa ví dụ cũ; null = thêm mới.</summary>
+public sealed record SenseExampleInput(uint? ExampleId, string? ExampleEn, string? ExampleVi);
 
 public sealed record AudioUpload(string Accent, Stream Content, string FileName, string ContentType);
 

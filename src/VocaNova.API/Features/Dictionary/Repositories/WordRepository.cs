@@ -417,6 +417,27 @@ public sealed class WordRepository : IWordRepository
             VietnameseMeaning = NormalizeNullable(request.VietnameseMeaning),
         };
 
+        // Ví dụ gửi kèm (nếu có) — gắn vào navigation để EF chèn cùng sense.
+        if (request.Examples is { Count: > 0 })
+        {
+            var order = 0;
+            foreach (var example in request.Examples)
+            {
+                if (string.IsNullOrWhiteSpace(example.ExampleEn))
+                {
+                    continue;
+                }
+
+                sense.WordExamples.Add(new WordExample
+                {
+                    WordId = wordId,
+                    ExampleEn = example.ExampleEn.Trim(),
+                    ExampleVi = NormalizeNullable(example.ExampleVi),
+                    OrderIndex = order++,
+                });
+            }
+        }
+
         _dbContext.WordSenses.Add(sense);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -466,6 +487,7 @@ public sealed class WordRepository : IWordRepository
         CancellationToken cancellationToken = default)
     {
         var sense = await _dbContext.WordSenses
+            .Include(entity => entity.WordExamples)
             .SingleOrDefaultAsync(
                 entity => entity.WordId == wordId && entity.SenseId == senseId,
                 cancellationToken);
@@ -478,6 +500,44 @@ public sealed class WordRepository : IWordRepository
         sense.WordClass = request.WordClass!.Trim();
         sense.EnglishDefinition = request.EnglishDefinition!.Trim();
         sense.VietnameseMeaning = NormalizeNullable(request.VietnameseMeaning);
+
+        // Upsert ví dụ: có example_id → cập nhật; không có → thêm mới. KHÔNG xóa ví dụ vắng mặt
+        // (xóa mềm ví dụ chưa hỗ trợ — bảng word_examples chưa có cột trạng thái).
+        if (request.Examples is not null)
+        {
+            var maxOrder = sense.WordExamples.Count == 0
+                ? -1
+                : sense.WordExamples.Max(example => example.OrderIndex);
+
+            foreach (var input in request.Examples)
+            {
+                if (string.IsNullOrWhiteSpace(input.ExampleEn))
+                {
+                    continue;
+                }
+
+                WordExample? existing = input.ExampleId is { } id && id > 0
+                    ? sense.WordExamples.FirstOrDefault(example => example.ExampleId == id)
+                    : null;
+
+                if (existing is not null)
+                {
+                    existing.ExampleEn = input.ExampleEn.Trim();
+                    existing.ExampleVi = NormalizeNullable(input.ExampleVi);
+                }
+                else
+                {
+                    sense.WordExamples.Add(new WordExample
+                    {
+                        WordId = wordId,
+                        SenseId = senseId,
+                        ExampleEn = input.ExampleEn.Trim(),
+                        ExampleVi = NormalizeNullable(input.ExampleVi),
+                        OrderIndex = ++maxOrder,
+                    });
+                }
+            }
+        }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -585,7 +645,11 @@ public sealed class WordRepository : IWordRepository
             sense.WordClass,
             sense.EnglishDefinition,
             sense.VietnameseMeaning,
-            Array.Empty<WordExampleDto>(),
+            sense.WordExamples
+                .OrderBy(example => example.OrderIndex)
+                .ThenBy(example => example.ExampleId)
+                .Select(MapExample)
+                .ToArray(),
             Array.Empty<WordRelationDto>());
     }
 

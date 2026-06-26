@@ -81,6 +81,8 @@ public sealed class VocabularyController : Controller
         [FromForm] string[]? senseWordClass,
         [FromForm] string[]? meaningEn,
         [FromForm] string[]? meaningVi,
+        [FromForm] string[]? exampleEn,
+        [FromForm] string[]? exampleVi,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(word))
@@ -118,6 +120,8 @@ public sealed class VocabularyController : Controller
             var classes = senseWordClass ?? Array.Empty<string>();
             var ens = meaningEn ?? Array.Empty<string>();
             var vis = meaningVi ?? Array.Empty<string>();
+            var exEns = exampleEn ?? Array.Empty<string>();
+            var exVis = exampleVi ?? Array.Empty<string>();
             var blockCount = Math.Max(ens.Length, vis.Length);
             var order = 1;
 
@@ -134,10 +138,22 @@ public sealed class VocabularyController : Controller
                     ? classes[i].Trim().ToLowerInvariant()
                     : null;
 
+                // Mỗi block nghĩa kèm 1 ví dụ (nếu có) — căn theo cùng chỉ số block.
+                var exEn = i < exEns.Length ? exEns[i] : null;
+                var exVi = i < exVis.Length ? exVis[i] : null;
+                List<SenseExampleInput>? examples = null;
+                if (!string.IsNullOrWhiteSpace(exEn))
+                {
+                    examples = new List<SenseExampleInput>
+                    {
+                        new(null, exEn.Trim(), string.IsNullOrWhiteSpace(exVi) ? null : exVi.Trim()),
+                    };
+                }
+
                 var senseResult = await _apiClient.CreateSenseAsync(
                     wordId,
                     new SenseInput(order, wordClass, string.IsNullOrWhiteSpace(en) ? null : en.Trim(),
-                        string.IsNullOrWhiteSpace(vi) ? null : vi.Trim()),
+                        string.IsNullOrWhiteSpace(vi) ? null : vi.Trim(), examples),
                     cancellationToken);
 
                 if (senseResult.IsSuccess)
@@ -187,6 +203,10 @@ public sealed class VocabularyController : Controller
         [FromForm] string[]? senseWordClass,
         [FromForm] string[]? englishDefinition,
         [FromForm] string[]? vietnameseMeaning,
+        [FromForm] int[]? exampleSenseIdx,
+        [FromForm] uint[]? exampleId,
+        [FromForm] string[]? exampleEn,
+        [FromForm] string[]? exampleVi,
         [FromForm] string? newEnglishDefinition,
         [FromForm] string? newVietnameseMeaning,
         CancellationToken cancellationToken)
@@ -221,6 +241,36 @@ public sealed class VocabularyController : Controller
             return RedirectToAction(nameof(Edit), new { id });
         }
 
+        // Gom ví dụ theo chỉ số block của sense (exampleSenseIdx căn vị trí với exampleId/En/Vi).
+        var exSenseIdx = exampleSenseIdx ?? Array.Empty<int>();
+        var exIds = exampleId ?? Array.Empty<uint>();
+        var exEns = exampleEn ?? Array.Empty<string>();
+        var exVis = exampleVi ?? Array.Empty<string>();
+
+        List<SenseExampleInput> ExamplesForBlock(int blockIdx)
+        {
+            var list = new List<SenseExampleInput>();
+            for (var k = 0; k < exSenseIdx.Length; k++)
+            {
+                if (exSenseIdx[k] != blockIdx)
+                {
+                    continue;
+                }
+
+                var een = k < exEns.Length ? exEns[k] : null;
+                if (string.IsNullOrWhiteSpace(een))
+                {
+                    continue;
+                }
+
+                var eid = k < exIds.Length && exIds[k] > 0 ? (uint?)exIds[k] : null;
+                var evi = k < exVis.Length ? exVis[k] : null;
+                list.Add(new SenseExampleInput(eid, een.Trim(), string.IsNullOrWhiteSpace(evi) ? null : evi.Trim()));
+            }
+
+            return list;
+        }
+
         // 2) Định nghĩa & ví dụ — cập nhật từng sense (sense đầu nhận Word Type của màn).
         var ids = senseId ?? Array.Empty<uint>();
         for (var i = 0; i < ids.Length; i++)
@@ -239,7 +289,8 @@ public sealed class VocabularyController : Controller
             var senseResult = await _apiClient.UpdateSenseAsync(
                 id,
                 ids[i],
-                new SenseInput(order, wordClass, en.Trim(), string.IsNullOrWhiteSpace(vi) ? null : vi.Trim()),
+                new SenseInput(order, wordClass, en.Trim(), string.IsNullOrWhiteSpace(vi) ? null : vi.Trim(),
+                    ExamplesForBlock(i)),
                 cancellationToken);
             if (!senseResult.IsSuccess)
             {

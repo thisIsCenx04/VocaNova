@@ -321,6 +321,9 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         input.WordClass,
         input.EnglishDefinition,
         input.VietnameseMeaning,
+        Examples = input.Examples?
+            .Select(example => new { example.ExampleId, example.ExampleEn, example.ExampleVi })
+            .ToArray(),
     };
 
     private async Task<T?> GetDataAsync<T>(string requestUri, CancellationToken cancellationToken)

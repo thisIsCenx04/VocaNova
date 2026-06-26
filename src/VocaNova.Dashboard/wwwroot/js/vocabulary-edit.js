@@ -24,6 +24,35 @@
         });
     }
 
+    // Thêm dòng ví dụ (clone từ template) — lưu ý: API chưa lưu ví dụ, đây là UI theo thiết kế.
+    var tpl = document.getElementById("example-row-tpl");
+    document.querySelectorAll(".add-example-link").forEach(function (link) {
+        link.addEventListener("click", function () {
+            if (!tpl) { return; }
+            var block = link.closest(".meaning-block");
+            var rows = block ? block.querySelector(".example-rows") : null;
+            if (!rows) { return; }
+            rows.appendChild(tpl.content.cloneNode(true));
+            var added = rows.lastElementChild;
+            if (added) {
+                // Gắn ví dụ mới vào đúng sense (theo data-sense-idx của block).
+                var idxField = added.querySelector('input[name="exampleSenseIdx"]');
+                if (idxField) { idxField.value = block.getAttribute("data-sense-idx") || "0"; }
+            }
+            var firstField = added ? added.querySelector("textarea") : null;
+            if (firstField) { firstField.focus(); }
+        });
+    });
+
+    // Xóa dòng ví dụ (event delegation).
+    document.addEventListener("click", function (e) {
+        var btn = e.target.closest ? e.target.closest(".example-remove") : null;
+        if (btn) {
+            var row = btn.closest(".example-row");
+            if (row) { row.remove(); }
+        }
+    });
+
     // Play pronunciation audio.
     var audioEl = null;
     document.querySelectorAll(".audio-btn[data-audio]").forEach(function (btn) {

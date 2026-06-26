@@ -87,6 +87,8 @@ public static class TranslationTable
         ("‹ Prev", "‹ Trước"),
         ("Next ›", "Sau ›"),
         ("‹ Back to vocabulary", "‹ Quay lại từ vựng"),
+        ("Are you sure you want to delete it?", "Bạn có chắc muốn xóa không?"),
+        ("It will be soft-deleted — you can restore it later.", "Mục sẽ được xóa mềm — bạn có thể khôi phục lại sau."),
 
         // ===== Vocabulary create (Figma: Add new vocabulary) =====
         ("Add new", "Thêm mới"),
@@ -174,6 +176,10 @@ public static class TranslationTable
         ("New meaning", "Nghĩa mới"),
         ("Definition in English", "Định nghĩa bằng tiếng Anh"),
         ("Add new meaning", "Thêm nghĩa mới"),
+        ("English example", "Ví dụ tiếng Anh"),
+        ("Vietnamese example", "Ví dụ tiếng Việt"),
+        ("Add example", "Thêm ví dụ"),
+        ("Remove", "Xóa"),
         ("Status & Storage", "Trạng thái & Lưu trữ"),
         ("Date created", "Ngày tạo"),
         ("Creator", "Người tạo"),

@@ -47,7 +47,9 @@
             <!-- Vocabulary information -->
             <section class="panel edit-panel">
                 <header class="edit-panel-head">
-                    <span class="edit-panel-icon">ⓘ</span>
+                    <span class="edit-panel-icon">
+                        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 5a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6Zm1.5 11h-3v-1.4h.8V12h-.8v-1.4h2.2v5.6h.8V18Z" fill="currentColor"/></svg>
+                    </span>
                     <h2 class="edit-panel-title">@T["Vocabulary information"]</h2>
                 </header>
                 <div class="edit-panel-body">
@@ -101,7 +103,9 @@
             <!-- Meaning & Examples -->
             <section class="panel edit-panel">
                 <header class="edit-panel-head">
-                    <span class="edit-panel-icon">📖</span>
+                    <span class="edit-panel-icon">
+                        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 8h5M9 12h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </span>
                     <h2 class="edit-panel-title">@T["Meaning & Examples"]</h2>
                 </header>
                 <div class="edit-panel-body">
@@ -112,7 +116,7 @@
                     @{ var idx = 0; }
                     @foreach (var sense in senses)
                     {
-                        <div class="meaning-block">
+                        <div class="meaning-block" data-sense-idx="@idx">
                             <span class="meaning-badge">@T["Meaning"] @(idx + 1)</span>
                             <input type="hidden" name="senseId" value="@sense.SenseId" />
                             <input type="hidden" name="senseOrder" value="@sense.Order" />
@@ -128,24 +132,50 @@
                                 </div>
                             </div>
 
-                            @if (sense.Examples.Count > 0)
-                            {
-                                <span class="meaning-badge subtle">@T["Example"]</span>
-                                <div class="field-grid-2">
-                                    @foreach (var ex in sense.Examples.OrderBy(e => e.Order))
-                                    {
-                                        <div class="example-card">
-                                            <p class="example-en">@ex.ExampleEn</p>
+                            <span class="meaning-badge subtle">@T["Example"]</span>
+                            <div class="example-rows">
+                                @foreach (var ex in sense.Examples.OrderBy(e => e.Order))
+                                {
+                                    <div class="example-row">
+                                        <input type="hidden" name="exampleSenseIdx" value="@idx" />
+                                        <input type="hidden" name="exampleId" value="@ex.ExampleId" />
+                                        <div class="field-grid-2">
+                                            <div class="form-group">
+                                                <label>@T["English example"]</label>
+                                                <textarea name="exampleEn" class="form-control" rows="2">@ex.ExampleEn</textarea>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>@T["Vietnamese example"]</label>
+                                                <textarea name="exampleVi" class="form-control" rows="2">@ex.ExampleVi</textarea>
+                                            </div>
                                         </div>
-                                        <div class="example-card">
-                                            <p class="example-vi">@(string.IsNullOrWhiteSpace(ex.ExampleVi) ? "—" : ex.ExampleVi)</p>
-                                        </div>
-                                    }
-                                </div>
-                            }
+                                        <button type="button" class="example-remove" aria-label="@T["Remove"]">✕</button>
+                                    </div>
+                                }
+                            </div>
+                            <button type="button" class="add-example-link">+ @T["Add example"]</button>
                         </div>
                         idx++;
                     }
+
+                    <!-- Template cho 1 dòng ví dụ mới (JS clone) -->
+                    <template id="example-row-tpl">
+                        <div class="example-row">
+                            <input type="hidden" name="exampleSenseIdx" value="0" />
+                            <input type="hidden" name="exampleId" value="0" />
+                            <div class="field-grid-2">
+                                <div class="form-group">
+                                    <label>@T["English example"]</label>
+                                    <textarea name="exampleEn" class="form-control" rows="2"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>@T["Vietnamese example"]</label>
+                                    <textarea name="exampleVi" class="form-control" rows="2"></textarea>
+                                </div>
+                            </div>
+                            <button type="button" class="example-remove" aria-label="@T["Remove"]">✕</button>
+                        </div>
+                    </template>
 
                     <!-- New meaning (hidden until toggled) -->
                     <div class="meaning-block new-meaning" id="new-meaning" hidden>

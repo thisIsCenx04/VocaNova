@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
@@ -406,6 +407,61 @@ public class AdminWordCrudFeatureTests
         var sense = await dbContext.WordSenses.SingleAsync(entity => entity.SenseId == 10);
         sense.SenseOrder.Should().Be(2);
         sense.WordClass.Should().Be("noun");
+    }
+
+    [Fact]
+    public async Task CreateSenseAsync_Should_Persist_Examples()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedWordAsync(dbContext, "run", "run");
+        var service = CreateService(dbContext);
+
+        var result = await service.CreateSenseAsync(
+            1,
+            new CreateSenseRequest(1, "verb", "move quickly", "chay", new[]
+            {
+                new SenseExampleInput(null, "I run fast.", "Tôi chạy nhanh."),
+            }));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Examples.Should().ContainSingle()
+            .Which.ExampleEn.Should().Be("I run fast.");
+
+        var example = await dbContext.WordExamples.SingleAsync();
+        example.WordId.Should().Be(1);
+        example.SenseId.Should().Be(result.Value.SenseId);
+        example.ExampleEn.Should().Be("I run fast.");
+        example.ExampleVi.Should().Be("Tôi chạy nhanh.");
+    }
+
+    [Fact]
+    public async Task UpdateSenseAsync_Should_Upsert_Examples_Without_Deleting_Omitted()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedWordAsync(dbContext, "run", "run");
+        await SeedSenseAsync(dbContext);
+        dbContext.WordExamples.AddRange(
+            new WordExample { ExampleId = 100, WordId = 1, SenseId = 10, ExampleEn = "old one", ExampleVi = "cũ", OrderIndex = 0 },
+            new WordExample { ExampleId = 101, WordId = 1, SenseId = 10, ExampleEn = "keep me", ExampleVi = "giữ", OrderIndex = 1 });
+        await dbContext.SaveChangesAsync();
+        var service = CreateService(dbContext);
+
+        var result = await service.UpdateSenseAsync(
+            1,
+            10,
+            new UpdateSenseRequest(1, "verb", "move quickly", "chay", new[]
+            {
+                new SenseExampleInput(100, "updated one", "mới"),   // sửa ví dụ sẵn có
+                new SenseExampleInput(null, "brand new", "thêm"),   // thêm ví dụ mới
+            }));
+
+        result.IsSuccess.Should().BeTrue();
+
+        var examples = await dbContext.WordExamples.OrderBy(entity => entity.ExampleId).ToListAsync();
+        examples.Should().HaveCount(3); // 100 (sửa) + 101 (giữ, không xóa) + 1 mới
+        examples.Single(entity => entity.ExampleId == 100).ExampleEn.Should().Be("updated one");
+        examples.Should().Contain(entity => entity.ExampleId == 101 && entity.ExampleEn == "keep me");
+        examples.Should().Contain(entity => entity.ExampleEn == "brand new");
     }
 
     [Fact]

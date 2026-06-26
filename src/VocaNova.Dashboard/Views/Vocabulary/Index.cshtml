@@ -137,6 +137,7 @@
                                 @if (canManage && item.Status == "active")
                                 {
                                     <form method="post" action="/vocabulary/delete" class="inline-form js-confirm"
+                                          data-word="@item.Word"
                                           data-confirm="Delete '@item.Word'? It will be soft-deleted.">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@item.WordId" />
@@ -195,6 +196,23 @@
             }
         </nav>
     }
+</div>
+
+<!-- Modal xác nhận xóa (soft-delete) — Figma "Delete Vocabulary Metadata" -->
+<div class="confirm-modal" id="delete-modal" hidden>
+    <div class="confirm-overlay" data-close></div>
+    <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+        <span class="confirm-icon">
+            <svg viewBox="0 0 24 24" width="26" height="26"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Zm4 0v8h2v-8h-2Z" fill="currentColor"/></svg>
+        </span>
+        <h3 class="confirm-title" id="delete-modal-title">@T["Are you sure you want to delete it?"]</h3>
+        <p class="confirm-word" id="delete-modal-word" hidden></p>
+        <p class="confirm-note">@T["It will be soft-deleted — you can restore it later."]</p>
+        <div class="confirm-actions">
+            <button type="button" class="btn-secondary" data-close>@T["Cancel"]</button>
+            <button type="button" class="btn-danger-solid" id="delete-modal-confirm">@T["Delete"]</button>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
