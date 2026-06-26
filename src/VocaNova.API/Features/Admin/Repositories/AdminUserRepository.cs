@@ -166,6 +166,7 @@ public sealed class AdminUserRepository : IAdminUserRepository
     {
         return _dbContext.Users
             .IgnoreQueryFilters()
+            .Include(entity => entity.Role)
             .SingleOrDefaultAsync(entity => entity.UserId == userId, cancellationToken);
     }
 

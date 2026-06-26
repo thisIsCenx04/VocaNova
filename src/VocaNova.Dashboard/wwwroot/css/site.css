@@ -1352,6 +1352,32 @@ code {
     color: var(--text-muted);
 }
 
+/* Nhóm KNN có thể thu/xổ — pure CSS bằng checkbox ẩn + label */
+.sidebar-group-check {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+.sidebar-group-toggle { cursor: pointer; }
+.sidebar-link .sidebar-caret {
+    margin-left: auto;
+    width: 15px;
+    height: 15px;
+    transition: transform .2s ease;
+}
+.sidebar-group-check:checked ~ .sidebar-group-toggle .sidebar-caret { transform: rotate(180deg); }
+.sidebar-subnav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+    max-height: 360px;
+    transition: max-height .22s ease;
+}
+.sidebar-group-check:not(:checked) ~ .sidebar-subnav { max-height: 0; }
+
 .sidebar-sublink {
     display: block;
     padding: 7px 12px 7px 44px;
@@ -1699,6 +1725,11 @@ html, body {
 .modal-icon.ok {
     background: var(--success-bg);
     color: var(--success);
+}
+
+.modal-icon.err {
+    background: var(--danger-bg, rgba(224, 82, 96, .14));
+    color: var(--danger, #e05260);
 }
 
 /* ----- Vocabulary Metadata Management ----- */

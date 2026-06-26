@@ -62,11 +62,8 @@
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-8 9a8 8 0 1 1 16 0H4Z" /></svg>
                         <span>@T["Users"]</span>
                     </a>
-                    <a class="@NavActive("/knn")" href="/knn">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm12 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM12 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm-4.7-11.3 3.3 3.3 1.4-1.4-3.3-3.3-1.4 1.4Zm9.4 0-3.3 3.3 1.4 1.4 3.3-3.3-1.4-1.4Z" /></svg>
-                        <span>@T["KNN Management"]</span>
-                    </a>
                     @{
+                        var knnOpen = path.StartsWith("/knn");
                         var knnLinks = new (string Slug, string Label)[]
                         {
                             ("age-ranges", "Age Ranges"),
@@ -76,11 +73,19 @@
                             ("learning-purposes", "Learning Purposes"),
                         };
                     }
-                    @foreach (var (slug, label) in knnLinks)
-                    {
-                        var subActive = path.StartsWith($"/knn/{slug}") ? "sidebar-sublink active" : "sidebar-sublink";
-                        <a class="@subActive" href="/knn/@slug">@T[label]</a>
-                    }
+                    <input type="checkbox" id="knn-toggle" class="sidebar-group-check" checked="@knnOpen" />
+                    <label for="knn-toggle" class="sidebar-link sidebar-group-toggle@(knnOpen ? " active" : "")">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm12 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM12 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm-4.7-11.3 3.3 3.3 1.4-1.4-3.3-3.3-1.4 1.4Zm9.4 0-3.3 3.3 1.4 1.4 3.3-3.3-1.4-1.4Z" /></svg>
+                        <span>@T["KNN Management"]</span>
+                        <svg class="sidebar-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z" /></svg>
+                    </label>
+                    <div class="sidebar-subnav" id="knn-subnav">
+                        @foreach (var (slug, label) in knnLinks)
+                        {
+                            var subActive = path.StartsWith($"/knn/{slug}") ? "sidebar-sublink active" : "sidebar-sublink";
+                            <a class="@subActive" href="/knn/@slug">@T[label]</a>
+                        }
+                    </div>
                     @if (isSuperAdmin)
                     {
                         <a class="@NavActive("/admin-accounts")" href="/admin-accounts">
@@ -144,6 +149,34 @@
         <main class="auth-shell" role="main">
             @RenderBody()
         </main>
+    }
+
+    @{
+        var toastErr = TempData["UserError"] as string;
+        var toastOk = TempData["UserSuccess"] as string;
+        var toastMsg = toastErr ?? toastOk;
+    }
+    @if (toastMsg is not null)
+    {
+        <div class="modal-overlay" id="result-modal">
+            <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="result-title">
+                <div class="modal-icon @(toastErr is not null ? "err" : "ok")">
+                    @if (toastErr is not null)
+                    {
+                        <svg viewBox="0 0 24 24"><path d="M12 2 1 21h22L12 2Zm0 6 6.5 11h-13L12 8Zm-1 4v3h2v-3h-2Zm0 4v2h2v-2h-2Z" fill="currentColor"/></svg>
+                    }
+                    else
+                    {
+                        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1.2 14.2-3.5-3.5 1.4-1.4 2.1 2.1 4.9-4.9 1.4 1.4-6.3 6.3Z" fill="currentColor"/></svg>
+                    }
+                </div>
+                <h3 class="modal-title" id="result-title">@(toastErr is not null ? T["Failed"] : T["Success"])</h3>
+                <p class="modal-text">@T[toastMsg]</p>
+                <div class="modal-actions">
+                    <button type="button" class="btn-primary" id="result-ok">OK</button>
+                </div>
+            </div>
+        </div>
     }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

@@ -1,9 +1,16 @@
+@using System.Security.Claims
 @using VocaNova.Dashboard.Models.Api.Users
 @model VocaNova.Dashboard.Models.Users.UserListViewModel
 @{
     ViewData["Title"] = "User Management";
     var pageStart = Model.TotalItems == 0 ? 0 : (Model.Page - 1) * Model.Limit + 1;
     var pageEnd = pageStart == 0 ? 0 : pageStart + Model.Items.Count - 1;
+
+    var actorRole = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
+    // Admin chỉ khóa/mở user thường; chỉ super_admin mới thao tác trên admin; super_admin không bị khóa.
+    bool CanManageStatus(string? targetRole) =>
+        targetRole == "admin" ? actorRole == "super_admin"
+        : targetRole == "user" && actorRole is "admin" or "super_admin";
 
     string PageUrl(int page)
     {
@@ -30,14 +37,6 @@
     <p class="page-subtitle">@T["Manage learners and admin accounts."]</p>
 </div>
 
-@if (TempData["UserSuccess"] is string okMsg)
-{
-    <div class="alert alert-success">@okMsg</div>
-}
-@if (TempData["UserError"] is string errMsg)
-{
-    <div class="alert alert-danger">@errMsg</div>
-}
 
 <form method="get" action="/users" class="filter-bar">
     <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="@T["Search by name, email or phone..."]" />
@@ -110,21 +109,24 @@
                                 <a class="icon-link" href="/users/@user.UserId" title="@T["View details"]" aria-label="@T["View details"]">
                                     <svg viewBox="0 0 24 24"><path d="M12 5c-5 0-8.5 4.5-9.5 7 1 2.5 4.5 7 9.5 7s8.5-4.5 9.5-7c-1-2.5-4.5-7-9.5-7Zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
                                 </a>
-                                @if (user.Status == "active")
+                                @if (CanManageStatus(user.Role))
                                 {
-                                    <button type="button" class="icon-link warn js-disable"
-                                            data-id="@user.UserId" data-name="@user.DisplayName"
-                                            title="@T["Disable account"]" aria-label="@T["Disable account"]">
-                                        <svg viewBox="0 0 24 24"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 0 1 6 0v3H9Zm3 4a1.5 1.5 0 0 1 1 2.6V19h-2v-3.4A1.5 1.5 0 0 1 12 13Z"/></svg>
-                                    </button>
-                                }
-                                else
-                                {
-                                    <button type="button" class="icon-link ok js-restore"
-                                            data-id="@user.UserId" data-name="@user.DisplayName"
-                                            title="@T["Enable account"]" aria-label="@T["Enable account"]">
-                                        <svg viewBox="0 0 24 24"><path d="M12 1a5 5 0 0 0-5 5h2a3 3 0 0 1 6 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Z"/></svg>
-                                    </button>
+                                    if (user.Status == "active")
+                                    {
+                                        <button type="button" class="icon-link warn js-disable"
+                                                data-id="@user.UserId" data-name="@user.DisplayName"
+                                                title="@T["Disable account"]" aria-label="@T["Disable account"]">
+                                            <svg viewBox="0 0 24 24"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 0 1 6 0v3H9Zm3 4a1.5 1.5 0 0 1 1 2.6V19h-2v-3.4A1.5 1.5 0 0 1 12 13Z"/></svg>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="icon-link ok js-restore"
+                                                data-id="@user.UserId" data-name="@user.DisplayName"
+                                                title="@T["Enable account"]" aria-label="@T["Enable account"]">
+                                            <svg viewBox="0 0 24 24"><path d="M12 1a5 5 0 0 0-5 5h2a3 3 0 0 1 6 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Z"/></svg>
+                                        </button>
+                                    }
                                 }
                             </div>
                         </td>
@@ -175,6 +177,7 @@
             <button type="button" class="btn-secondary" data-close-modal>@T["Cancel"]</button>
             <form method="post" id="um-form" class="inline-form">
                 @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
                 <button type="submit" class="btn-warning" id="um-confirm">@T["Disable"]</button>
             </form>
         </div>

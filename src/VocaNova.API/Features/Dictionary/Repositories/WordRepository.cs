@@ -107,10 +107,20 @@ public sealed class WordRepository : IWordRepository
             query = query.Where(word => word.WordSenses.Any(sense => sense.WordClass == wordType));
         }
 
-        // Quản trị: từ mới tạo lên đầu (thay vì sắp alphabet — đầu danh sách toàn ký hiệu/từ rỗng do import từ điển).
-        return query
-            .OrderByDescending(word => word.CreatedAt)
-            .ThenByDescending(word => word.WordId)
+        // Sắp xếp:
+        // - Có từ khóa tìm kiếm → ưu tiên KHỚP CHÍNH XÁC lên đầu, rồi từ ngắn hơn (gần khớp hơn), rồi alphabet.
+        // - Không tìm kiếm → từ mới tạo lên đầu (sắp alphabet thì đầu danh sách toàn ký hiệu/từ rỗng do import từ điển).
+        var ordered = string.IsNullOrWhiteSpace(normalizedQuery)
+            ? query
+                .OrderByDescending(word => word.CreatedAt)
+                .ThenByDescending(word => word.WordId)
+            : query
+                .OrderByDescending(word => word.WordKey == normalizedQuery)
+                .ThenBy(word => word.WordKey.Length)
+                .ThenBy(word => word.WordKey)
+                .ThenByDescending(word => word.WordId);
+
+        return ordered
             .Select(word => new AdminWordListItemDto(
                 word.WordId,
                 word.Word1,

@@ -202,6 +202,16 @@ public static class TranslationTable
         ("Column", "Cột"),
         ("Message", "Thông báo"),
 
+        // ===== Kết quả thao tác (popup) =====
+        ("Success", "Thành công"),
+        ("Failed", "Thất bại"),
+        ("User deactivated.", "Đã khóa tài khoản."),
+        ("User restored.", "Đã mở khóa tài khoản."),
+        ("You do not have permission (super admin required).", "Bạn không có quyền (cần super admin)."),
+        ("User not found.", "Không tìm thấy người dùng."),
+        ("User is not in a state that allows this action.", "Tài khoản không ở trạng thái cho phép thao tác này."),
+        ("The request could not be completed.", "Không thể hoàn tất yêu cầu."),
+
         // ===== Users list =====
         ("User Management", "Quản lý người dùng"),
         ("Manage learners and admin accounts.", "Quản lý tài khoản người học và quản trị viên."),

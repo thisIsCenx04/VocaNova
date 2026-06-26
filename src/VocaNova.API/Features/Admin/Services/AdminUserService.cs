@@ -104,12 +104,19 @@ public sealed class AdminUserService : IAdminUserService
 
     public async Task<Result<bool>> DeactivateAsync(
         uint userId,
+        string actorRole,
         CancellationToken cancellationToken = default)
     {
         var user = await _repository.FindUserForStatusUpdateAsync(userId, cancellationToken);
         if (user is null || user.Status == UserStatus.Deleted)
         {
             return Result<bool>.NotFound("User not found.");
+        }
+
+        var guard = EnsureCanManageStatus(actorRole, user.Role?.RoleName);
+        if (guard is not null)
+        {
+            return guard;
         }
 
         // "Disable" = khóa tài khoản (limit access): vẫn hiển thị trong danh sách với status 'locked',
@@ -126,12 +133,19 @@ public sealed class AdminUserService : IAdminUserService
 
     public async Task<Result<bool>> RestoreAsync(
         uint userId,
+        string actorRole,
         CancellationToken cancellationToken = default)
     {
         var user = await _repository.FindUserForStatusUpdateAsync(userId, cancellationToken);
         if (user is null)
         {
             return Result<bool>.NotFound("User not found.");
+        }
+
+        var guard = EnsureCanManageStatus(actorRole, user.Role?.RoleName);
+        if (guard is not null)
+        {
+            return guard;
         }
 
         // "Enable" = mở khóa: đưa user (locked hoặc deleted) về active.
@@ -146,6 +160,26 @@ public sealed class AdminUserService : IAdminUserService
         await RemoveCachedProfileAsync(userId, cancellationToken);
 
         return Result<bool>.Ok(true);
+    }
+
+    // Phân quyền khóa/mở tài khoản theo vai trò đối tượng:
+    // - super_admin: không khóa/mở (bảo vệ tài khoản super admin).
+    // - admin: chỉ super_admin mới thao tác được.
+    // - user thường: admin hoặc super_admin đều được.
+    private static Result<bool>? EnsureCanManageStatus(string actorRole, string? targetRole)
+    {
+        if (string.Equals(targetRole, UserRole.SuperAdmin, StringComparison.Ordinal))
+        {
+            return Result<bool>.Forbidden("Không thể thay đổi trạng thái của tài khoản super admin.");
+        }
+
+        if (string.Equals(targetRole, UserRole.Admin, StringComparison.Ordinal)
+            && !string.Equals(actorRole, UserRole.SuperAdmin, StringComparison.Ordinal))
+        {
+            return Result<bool>.Forbidden("Chỉ super admin mới được khóa/mở tài khoản admin.");
+        }
+
+        return null;
     }
 
     private async Task RemoveCachedProfileAsync(uint userId, CancellationToken cancellationToken)

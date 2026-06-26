@@ -84,21 +84,27 @@ public sealed class UsersController : Controller
 
     [HttpPost("/users/{id:uint}/deactivate")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Deactivate(uint id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Deactivate(uint id, string? returnUrl, CancellationToken cancellationToken)
     {
         var result = await _apiClient.DeactivateUserAsync(id, cancellationToken);
         SetFeedback(result, "User deactivated.");
-        return RedirectToAction(nameof(Detail), new { id });
+        return RedirectToSafe(returnUrl);
     }
 
     [HttpPost("/users/{id:uint}/restore")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Restore(uint id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Restore(uint id, string? returnUrl, CancellationToken cancellationToken)
     {
         var result = await _apiClient.RestoreUserAsync(id, cancellationToken);
         SetFeedback(result, "User restored.");
-        return RedirectToAction(nameof(Detail), new { id });
+        return RedirectToSafe(returnUrl);
     }
+
+    // Ở lại trang vừa thao tác (danh sách hoặc chi tiết) thay vì luôn nhảy sang detail.
+    private IActionResult RedirectToSafe(string? returnUrl) =>
+        !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+            ? Redirect(returnUrl)
+            : RedirectToAction(nameof(Index));
 
     private void SetFeedback(ApiActionResult result, string successMessage)
     {

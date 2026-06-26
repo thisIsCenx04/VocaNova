@@ -94,7 +94,7 @@ public class AdminUserManagementFeatureTests
         var cache = new FakeUserProfileCache();
         var service = CreateService(dbContext, cache);
 
-        var result = await service.DeactivateAsync(1);
+        var result = await service.DeactivateAsync(1, UserRole.Admin);
 
         result.IsSuccess.Should().BeTrue();
         var user = await dbContext.Users.IgnoreQueryFilters().SingleAsync(entity => entity.UserId == 1);
@@ -114,12 +114,41 @@ public class AdminUserManagementFeatureTests
         var cache = new FakeUserProfileCache();
         var service = CreateService(dbContext, cache);
 
-        var result = await service.RestoreAsync(2);
+        var result = await service.RestoreAsync(2, UserRole.SuperAdmin);
 
         result.IsSuccess.Should().BeTrue();
         var user = await dbContext.Users.SingleAsync(entity => entity.UserId == 2);
         user.Status.Should().Be(UserStatus.Active);
         cache.RemovedUserIds.Should().Equal(2u);
+    }
+
+    [Fact]
+    public async Task DeactivateAsync_Should_Forbid_Admin_Disabling_Another_Admin()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUsersAsync(dbContext); // user 2 = role admin, active
+        var service = CreateService(dbContext);
+
+        var result = await service.DeactivateAsync(2, UserRole.Admin);
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(403);
+        var user = await dbContext.Users.IgnoreQueryFilters().SingleAsync(entity => entity.UserId == 2);
+        user.Status.Should().Be(UserStatus.Active); // không bị khóa
+    }
+
+    [Fact]
+    public async Task DeactivateAsync_Should_Allow_SuperAdmin_Disabling_Admin()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUsersAsync(dbContext); // user 2 = role admin, active
+        var service = CreateService(dbContext);
+
+        var result = await service.DeactivateAsync(2, UserRole.SuperAdmin);
+
+        result.IsSuccess.Should().BeTrue();
+        var user = await dbContext.Users.IgnoreQueryFilters().SingleAsync(entity => entity.UserId == 2);
+        user.Status.Should().Be(UserStatus.Locked);
     }
 
     [Fact]

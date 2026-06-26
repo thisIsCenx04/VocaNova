@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VocaNova.API.Common.Extensions;
@@ -75,13 +76,13 @@ public sealed class AdminUsersController : ControllerBase
             : this.ErrorResult(result);
     }
 
-    // Nới quyền: Admin (không chỉ SuperAdmin) được disable user ngay ở list — theo yêu cầu owner.
+    // Admin được khóa user thường; chỉ super_admin mới khóa được admin (kiểm tra trong service).
     [HttpPatch("{id:uint}/deactivate")]
     public async Task<IActionResult> Deactivate(
         [FromRoute] uint id,
         CancellationToken cancellationToken)
     {
-        var result = await _adminUserService.DeactivateAsync(id, cancellationToken);
+        var result = await _adminUserService.DeactivateAsync(id, ActorRole(), cancellationToken);
         if (!result.IsSuccess)
         {
             return this.ErrorResult(result);
@@ -96,7 +97,7 @@ public sealed class AdminUsersController : ControllerBase
         [FromRoute] uint id,
         CancellationToken cancellationToken)
     {
-        var result = await _adminUserService.RestoreAsync(id, cancellationToken);
+        var result = await _adminUserService.RestoreAsync(id, ActorRole(), cancellationToken);
         if (!result.IsSuccess)
         {
             return this.ErrorResult(result);
@@ -105,6 +106,8 @@ public sealed class AdminUsersController : ControllerBase
         SetAuditEntity(id);
         return this.OkResult(result.Value, "User restored successfully.");
     }
+
+    private string ActorRole() => User.FindFirstValue("role") ?? string.Empty;
 
     private void SetAuditEntity(uint userId)
     {

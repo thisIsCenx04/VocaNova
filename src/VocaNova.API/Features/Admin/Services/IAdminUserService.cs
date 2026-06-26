@@ -23,11 +23,15 @@ public interface IAdminUserService
         uint userId,
         CancellationToken cancellationToken = default);
 
+    // actorRole = vai trò người thực hiện. Admin chỉ khóa/mở user thường; chỉ super_admin
+    // mới khóa/mở được admin. Không ai khóa/mở super_admin qua màn quản trị.
     Task<Result<bool>> DeactivateAsync(
         uint userId,
+        string actorRole,
         CancellationToken cancellationToken = default);
 
     Task<Result<bool>> RestoreAsync(
         uint userId,
+        string actorRole,
         CancellationToken cancellationToken = default);
 }

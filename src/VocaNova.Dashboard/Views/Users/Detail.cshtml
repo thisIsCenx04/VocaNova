@@ -1,9 +1,15 @@
+@using System.Security.Claims
 @using VocaNova.Dashboard.Models.Api.Users
 @model VocaNova.Dashboard.Models.Users.UserDetailViewModel
 @{
     ViewData["Title"] = "User Details";
     var d = Model.Detail;
     var lp = d.LearningProfile;
+
+    var actorRole = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
+    // Admin chỉ khóa/mở user thường; chỉ super_admin mới thao tác trên admin; super_admin không bị khóa.
+    var canManageStatus = d.Role == "admin" ? actorRole == "super_admin"
+        : d.Role == "user" && actorRole is "admin" or "super_admin";
 
     string StatusBadge(string status) => status switch
     {
@@ -14,29 +20,21 @@
     };
 }
 
-@if (TempData["UserSuccess"] is string okMsg)
-{
-    <div class="alert alert-success">@okMsg</div>
-}
-@if (TempData["UserError"] is string errMsg)
-{
-    <div class="alert alert-danger">@errMsg</div>
-}
-
 <div class="page-header page-header-row">
     <div>
         <a class="back-link" href="/users">‹ @T["Back to users"]</a>
         <h1 class="page-title">@T["User Details"]</h1>
     </div>
     <div class="header-actions">
-        @if (d.Status == "active")
+        @if (canManageStatus && d.Status == "active")
         {
             <button type="button" class="btn-warning" data-open-disable>@T["Disable account"]</button>
         }
-        else
+        else if (canManageStatus)
         {
             <form method="post" action="/users/@d.UserId/restore" class="inline-form">
                 @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="/users/@d.UserId" />
                 <button type="submit" class="btn-primary">@T["Enable account"]</button>
             </form>
         }
@@ -218,6 +216,7 @@
                 <button type="button" class="btn-secondary" data-close-disable>@T["Cancel"]</button>
                 <form method="post" action="/users/@d.UserId/deactivate" class="inline-form">
                     @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnUrl" value="/users/@d.UserId" />
                     <button type="submit" class="btn-warning">@T["Disable"]</button>
                 </form>
             </div>
