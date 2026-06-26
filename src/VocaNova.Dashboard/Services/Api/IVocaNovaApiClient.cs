@@ -32,6 +32,10 @@ public interface IVocaNovaApiClient
 
     Task<ApiActionResult> RestoreWordAsync(uint wordId, CancellationToken cancellationToken = default);
 
+    Task<ApiActionResult> CreateWordAsync(WordInput input, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> UpdateWordAsync(uint wordId, WordInput input, CancellationToken cancellationToken = default);
+
     // F058 — Vocabulary detail & sense management.
     Task<WordDetail?> GetWordDetailAsync(uint wordId, CancellationToken cancellationToken = default);
 
@@ -126,4 +130,8 @@ public sealed record WordListFilter(
     string? Status,
     bool IncludeDeleted,
     int Page,
-    int Limit);
+    int Limit,
+    string? WordType = null);
+
+/// <summary>Payload tạo từ mới (khớp CreateWordRequest của API).</summary>
+public sealed record WordInput(string? Word, string? Cefr, string? PhoneticUk, string? PhoneticUs, bool IsPhrase);

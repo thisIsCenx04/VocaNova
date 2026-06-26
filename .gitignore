@@ -78,3 +78,6 @@ windows/flutter/generated_plugin_registrant.*
 VocaNova_Activity_History.md
 VocaNova_Feature_Breakdown.md
 input.txt
+
+# Figma working files (contains a read-only token — never commit)
+.figma-tmp/

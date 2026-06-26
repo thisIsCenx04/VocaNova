@@ -138,6 +138,10 @@ public sealed class WordService : IWordService
             ? null
             : query.Q.NormalizeWord();
 
+        var wordType = string.IsNullOrWhiteSpace(query.WordType)
+            ? null
+            : query.WordType.Trim().ToLowerInvariant();
+
         var result = await _wordRepository.SearchAdminAsync(
             normalizedQuery,
             query.Page,
@@ -146,6 +150,7 @@ public sealed class WordService : IWordService
             query.TopicId,
             status,
             includeDeleted,
+            wordType,
             cancellationToken);
 
         return Result<PagedResult<AdminWordListItemDto>>.Ok(result);

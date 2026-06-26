@@ -17,4 +17,7 @@ public sealed record WordDetailDto(
     [property: JsonPropertyName("audio")] IReadOnlyCollection<WordAudioDto> Audio,
     [property: JsonPropertyName("derived_forms")] IReadOnlyCollection<WordDerivedFormDto> DerivedForms,
     [property: JsonPropertyName("idioms")] IReadOnlyCollection<WordIdiomDto> Idioms,
-    [property: JsonPropertyName("topics")] IReadOnlyCollection<WordTopicDto> Topics);
+    [property: JsonPropertyName("topics")] IReadOnlyCollection<WordTopicDto> Topics,
+    [property: JsonPropertyName("status")] string Status,
+    [property: JsonPropertyName("created_at")] DateTime CreatedAt,
+    [property: JsonPropertyName("updated_at")] DateTime UpdatedAt);

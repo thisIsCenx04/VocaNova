@@ -14,6 +14,10 @@ public sealed class AdminWordQuery
     [JsonPropertyName("topicId")]
     public uint? TopicId { get; set; }
 
+    /// <summary>Lọc theo word_class của sense (noun/verb/adjective...).</summary>
+    [JsonPropertyName("wordType")]
+    public string? WordType { get; set; }
+
     /// <summary>active | deleted. Null = không lọc theo status.</summary>
     [JsonPropertyName("status")]
     public string? Status { get; set; }

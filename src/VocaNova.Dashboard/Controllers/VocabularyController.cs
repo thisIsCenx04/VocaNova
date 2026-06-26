@@ -7,7 +7,7 @@ namespace VocaNova.Dashboard.Controllers;
 // F057 — Vocabulary List & Filter. Phân trang server-side; xóa/khôi phục proxy qua API rồi redirect giữ nguyên bộ lọc.
 public sealed class VocabularyController : Controller
 {
-    private const int PageSize = 20;
+    private const int PageSize = 10;
 
     private readonly IVocaNovaApiClient _apiClient;
 
@@ -22,6 +22,7 @@ public sealed class VocabularyController : Controller
         string? cefr,
         uint? topicId,
         string? status,
+        string? wordType,
         bool includeDeleted = false,
         int page = 1,
         CancellationToken cancellationToken = default)
@@ -38,7 +39,8 @@ public sealed class VocabularyController : Controller
             Status: string.IsNullOrWhiteSpace(status) ? null : status,
             IncludeDeleted: includeDeleted,
             Page: page,
-            Limit: PageSize);
+            Limit: PageSize,
+            WordType: string.IsNullOrWhiteSpace(wordType) ? null : wordType);
 
         var words = await _apiClient.GetWordsAsync(filter, cancellationToken);
         var topics = await _apiClient.GetTopicsAsync(cancellationToken);
@@ -51,6 +53,7 @@ public sealed class VocabularyController : Controller
             Cefr = filter.Cefr,
             TopicId = topicId,
             Status = filter.Status,
+            WordType = filter.WordType,
             IncludeDeleted = includeDeleted,
             Page = words.Page,
             Limit = words.Limit,
@@ -59,6 +62,178 @@ public sealed class VocabularyController : Controller
         };
 
         return View(model);
+    }
+
+    // Create New Vocabulary — form đơn giản (word + CEFR + phonetics + is_phrase); sense/word-type thêm ở trang chi tiết.
+    [HttpGet("/vocabulary/create")]
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+    [HttpPost("/vocabulary/create")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(
+        [FromForm] WordInput input,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(input.Word))
+        {
+            TempData["VocabError"] = "Word is required.";
+            return RedirectToAction(nameof(Create));
+        }
+
+        var result = await _apiClient.CreateWordAsync(input, cancellationToken);
+        if (result.IsSuccess)
+        {
+            TempData["VocabSuccess"] = $"Vocabulary \"{input.Word}\" created. Add senses in the detail page.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        TempData["VocabError"] = result.StatusCode switch
+        {
+            409 => "That word already exists.",
+            401 or 403 => "You do not have permission to create vocabulary.",
+            400 => result.Message ?? "Invalid vocabulary data.",
+            _ => result.Message ?? "Unable to create vocabulary.",
+        };
+        return RedirectToAction(nameof(Create));
+    }
+
+    // Update Vocabulary Metadata — màn Edit theo Figma: thông tin cơ bản + định nghĩa/ví dụ + trạng thái lưu trữ.
+    [HttpGet("/vocabulary/{id:uint}/edit")]
+    public async Task<IActionResult> Edit(uint id, CancellationToken cancellationToken)
+    {
+        var detail = await _apiClient.GetWordDetailAsync(id, cancellationToken);
+        if (detail is null)
+        {
+            return NotFound();
+        }
+
+        return View(detail);
+    }
+
+    [HttpPost("/vocabulary/{id:uint}/edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(
+        uint id,
+        [FromForm] string? word,
+        [FromForm] string? wordType,
+        [FromForm] string? cefr,
+        [FromForm] string? phoneticUk,
+        [FromForm] string? phoneticUs,
+        [FromForm] bool isPhrase,
+        [FromForm] bool isActive,
+        [FromForm] bool wasActive,
+        [FromForm] uint[]? senseId,
+        [FromForm] int[]? senseOrder,
+        [FromForm] string[]? senseWordClass,
+        [FromForm] string[]? englishDefinition,
+        [FromForm] string[]? vietnameseMeaning,
+        [FromForm] string? newEnglishDefinition,
+        [FromForm] string? newVietnameseMeaning,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(word))
+        {
+            TempData["VocabError"] = "Word is required.";
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+
+        var normalizedType = string.IsNullOrWhiteSpace(wordType) ? null : wordType.Trim().ToLowerInvariant();
+        var errors = new List<string>();
+
+        // 1) Thông tin cơ bản — PUT metadata (giữ nguyên phonetic US + is_phrase ẩn).
+        var metaResult = await _apiClient.UpdateWordAsync(
+            id,
+            new WordInput(
+                word.Trim(),
+                string.IsNullOrWhiteSpace(cefr) ? null : cefr,
+                string.IsNullOrWhiteSpace(phoneticUk) ? null : phoneticUk.Trim(),
+                string.IsNullOrWhiteSpace(phoneticUs) ? null : phoneticUs.Trim(),
+                isPhrase),
+            cancellationToken);
+        if (!metaResult.IsSuccess)
+        {
+            TempData["VocabError"] = metaResult.StatusCode switch
+            {
+                409 => "That word already exists.",
+                401 or 403 => "You do not have permission to edit vocabulary.",
+                _ => metaResult.Message ?? "Unable to update the word.",
+            };
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+
+        // 2) Định nghĩa & ví dụ — cập nhật từng sense (sense đầu nhận Word Type của màn).
+        var ids = senseId ?? Array.Empty<uint>();
+        for (var i = 0; i < ids.Length; i++)
+        {
+            var en = englishDefinition is not null && i < englishDefinition.Length ? englishDefinition[i] : null;
+            if (string.IsNullOrWhiteSpace(en))
+            {
+                continue;
+            }
+
+            var existingClass = senseWordClass is not null && i < senseWordClass.Length ? senseWordClass[i] : null;
+            var wordClass = i == 0 && normalizedType is not null ? normalizedType : existingClass;
+            var order = senseOrder is not null && i < senseOrder.Length ? senseOrder[i] : i + 1;
+            var vi = vietnameseMeaning is not null && i < vietnameseMeaning.Length ? vietnameseMeaning[i] : null;
+
+            var senseResult = await _apiClient.UpdateSenseAsync(
+                id,
+                ids[i],
+                new SenseInput(order, wordClass, en.Trim(), string.IsNullOrWhiteSpace(vi) ? null : vi.Trim()),
+                cancellationToken);
+            if (!senseResult.IsSuccess)
+            {
+                errors.Add($"sense #{order}");
+            }
+        }
+
+        // 3) Định nghĩa mới (nếu nhập) — tạo sense kế tiếp.
+        if (!string.IsNullOrWhiteSpace(newEnglishDefinition))
+        {
+            var nextOrder = (senseOrder is { Length: > 0 } ? senseOrder.Max() : ids.Length) + 1;
+            var addResult = await _apiClient.CreateSenseAsync(
+                id,
+                new SenseInput(
+                    nextOrder,
+                    normalizedType ?? "other",
+                    newEnglishDefinition.Trim(),
+                    string.IsNullOrWhiteSpace(newVietnameseMeaning) ? null : newVietnameseMeaning.Trim()),
+                cancellationToken);
+            if (!addResult.IsSuccess)
+            {
+                errors.Add("new meaning");
+            }
+        }
+
+        // 4) Trạng thái lưu trữ — toggle Active = restore / deactivate (xóa mềm).
+        if (wasActive && !isActive)
+        {
+            var off = await _apiClient.DeleteWordAsync(id, cancellationToken);
+            if (!off.IsSuccess)
+            {
+                errors.Add("status");
+            }
+        }
+        else if (!wasActive && isActive)
+        {
+            var on = await _apiClient.RestoreWordAsync(id, cancellationToken);
+            if (!on.IsSuccess)
+            {
+                errors.Add("status");
+            }
+        }
+
+        if (errors.Count > 0)
+        {
+            TempData["VocabError"] = $"Saved core info, but these parts failed: {string.Join(", ", errors)}.";
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+
+        TempData["VocabSuccess"] = $"\"{word.Trim()}\" updated.";
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost("/vocabulary/delete")]

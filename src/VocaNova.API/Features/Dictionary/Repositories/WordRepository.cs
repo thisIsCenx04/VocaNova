@@ -74,6 +74,7 @@ public sealed class WordRepository : IWordRepository
         uint? topicId,
         string? status,
         bool includeDeleted,
+        string? wordType,
         CancellationToken cancellationToken = default)
     {
         // includeDeleted = bỏ global query filter để thấy cả từ status='deleted'.
@@ -101,9 +102,15 @@ public sealed class WordRepository : IWordRepository
             query = query.Where(word => word.Status == status);
         }
 
+        if (!string.IsNullOrWhiteSpace(wordType))
+        {
+            query = query.Where(word => word.WordSenses.Any(sense => sense.WordClass == wordType));
+        }
+
+        // Quản trị: từ mới tạo lên đầu (thay vì sắp alphabet — đầu danh sách toàn ký hiệu/từ rỗng do import từ điển).
         return query
-            .OrderBy(word => word.WordKey)
-            .ThenBy(word => word.WordId)
+            .OrderByDescending(word => word.CreatedAt)
+            .ThenByDescending(word => word.WordId)
             .Select(word => new AdminWordListItemDto(
                 word.WordId,
                 word.Word1,
@@ -122,7 +129,11 @@ public sealed class WordRepository : IWordRepository
                         wordTopic.Topic.TopicName,
                         wordTopic.Topic.TopicNameVi,
                         wordTopic.Topic.Icon))
-                    .ToList()))
+                    .ToList(),
+                word.WordSenses
+                    .OrderBy(sense => sense.SenseOrder)
+                    .Select(sense => sense.WordClass)
+                    .FirstOrDefault()))
             .ToPagedResultAsync(page, limit, cancellationToken);
     }
 
@@ -550,7 +561,10 @@ public sealed class WordRepository : IWordRepository
                     wordTopic.Topic.TopicName,
                     wordTopic.Topic.TopicNameVi,
                     wordTopic.Topic.Icon))
-                .ToArray());
+                .ToArray(),
+            word.Status,
+            word.CreatedAt,
+            word.UpdatedAt);
     }
 
     private static WordExampleDto MapExample(WordExample example)

@@ -17,11 +17,13 @@ public sealed class VocabularyListViewModel
 
     public string? Status { get; init; }
 
+    public string? WordType { get; init; }
+
     public bool IncludeDeleted { get; init; }
 
     public int Page { get; init; } = 1;
 
-    public int Limit { get; init; } = 20;
+    public int Limit { get; init; } = 10;
 
     public int TotalItems { get; init; }
 
@@ -33,4 +35,7 @@ public sealed class VocabularyListViewModel
 
     public static readonly IReadOnlyList<string> CefrLevels =
         new[] { "A1", "A2", "B1", "B2", "C1", "C2" };
+
+    public static readonly IReadOnlyList<string> WordTypes =
+        new[] { "noun", "verb", "adjective", "adverb", "preposition", "pronoun", "conjunction", "phrase" };
 }

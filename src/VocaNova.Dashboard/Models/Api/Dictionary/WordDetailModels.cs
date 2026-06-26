@@ -16,7 +16,10 @@ public sealed record WordDetail(
     [property: JsonPropertyName("senses")] IReadOnlyList<WordSenseDetail> Senses,
     [property: JsonPropertyName("relations")] IReadOnlyList<WordRelation> Relations,
     [property: JsonPropertyName("audio")] IReadOnlyList<WordAudio> Audio,
-    [property: JsonPropertyName("topics")] IReadOnlyList<WordTopic> Topics);
+    [property: JsonPropertyName("topics")] IReadOnlyList<WordTopic> Topics,
+    [property: JsonPropertyName("status")] string Status = "active",
+    [property: JsonPropertyName("created_at")] DateTime CreatedAt = default,
+    [property: JsonPropertyName("updated_at")] DateTime UpdatedAt = default);
 
 public sealed record WordSenseDetail(
     [property: JsonPropertyName("sense_id")] uint SenseId,

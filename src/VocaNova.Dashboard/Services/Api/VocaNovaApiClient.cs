@@ -50,6 +50,7 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         if (!string.IsNullOrWhiteSpace(filter.Q)) queryParams["q"] = filter.Q;
         if (!string.IsNullOrWhiteSpace(filter.Cefr)) queryParams["cefr"] = filter.Cefr;
         if (!string.IsNullOrWhiteSpace(filter.Status)) queryParams["status"] = filter.Status;
+        if (!string.IsNullOrWhiteSpace(filter.WordType)) queryParams["wordType"] = filter.WordType;
         if (filter.TopicId is { } topicId) queryParams["topicId"] = topicId.ToString(CultureInfo.InvariantCulture);
 
         var uri = QueryHelpers.AddQueryString("api/admin/words", queryParams);
@@ -61,6 +62,26 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
 
     public Task<ApiActionResult> RestoreWordAsync(uint wordId, CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Patch, $"api/admin/words/{wordId}/restore", cancellationToken);
+
+    public Task<ApiActionResult> CreateWordAsync(WordInput input, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Post, "api/admin/words", new
+        {
+            input.Word,
+            input.Cefr,
+            input.PhoneticUk,
+            input.PhoneticUs,
+            input.IsPhrase,
+        }, cancellationToken);
+
+    public Task<ApiActionResult> UpdateWordAsync(uint wordId, WordInput input, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Put, $"api/admin/words/{wordId}", new
+        {
+            input.Word,
+            input.Cefr,
+            input.PhoneticUk,
+            input.PhoneticUs,
+            input.IsPhrase,
+        }, cancellationToken);
 
     public Task<WordDetail?> GetWordDetailAsync(uint wordId, CancellationToken cancellationToken = default) =>
         GetDataAsync<WordDetail>($"api/words/{wordId}", cancellationToken);

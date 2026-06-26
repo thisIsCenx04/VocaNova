@@ -73,7 +73,22 @@ public class AdminWordListFeatureTests
         row.Cefr.Should().Be(CefrLevel.A1);
         row.Phonetic.Should().Be("/run-us/");
         row.PrimaryMeaning.Should().Be("chay"); // sense order 1
+        row.WordType.Should().Be("verb"); // word_class của sense chính
         row.Topics.Should().ContainSingle(topic => topic.TopicId == 1 && topic.Name == "Movement");
+    }
+
+    [Fact]
+    public async Task SearchAdminAsync_Should_Filter_By_WordType()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var verbs = await service.SearchAdminAsync(new AdminWordQuery { WordType = "verb" });
+
+        verbs.IsSuccess.Should().BeTrue();
+        verbs.Value!.Items.Should().OnlyContain(item => item.WordType == "verb");
+        verbs.Value.Items.Select(item => item.Word).Should().Contain("run");
     }
 
     [Fact]

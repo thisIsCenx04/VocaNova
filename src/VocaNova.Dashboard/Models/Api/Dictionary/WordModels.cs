@@ -12,7 +12,8 @@ public sealed record WordListItem(
     [property: JsonPropertyName("status")] string Status,
     [property: JsonPropertyName("image_url")] string? ImageUrl,
     [property: JsonPropertyName("primary_meaning")] string? PrimaryMeaning,
-    [property: JsonPropertyName("topics")] IReadOnlyList<WordTopic> Topics);
+    [property: JsonPropertyName("topics")] IReadOnlyList<WordTopic> Topics,
+    [property: JsonPropertyName("word_type")] string? WordType);
 
 public sealed record WordTopic(
     [property: JsonPropertyName("topic_id")] uint TopicId,

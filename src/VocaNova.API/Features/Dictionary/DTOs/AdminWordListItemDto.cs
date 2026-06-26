@@ -11,4 +11,5 @@ public sealed record AdminWordListItemDto(
     [property: JsonPropertyName("status")] string Status,
     [property: JsonPropertyName("image_url")] string? ImageUrl,
     [property: JsonPropertyName("primary_meaning")] string? PrimaryMeaning,
-    [property: JsonPropertyName("topics")] IReadOnlyCollection<WordTopicDto> Topics);
+    [property: JsonPropertyName("topics")] IReadOnlyCollection<WordTopicDto> Topics,
+    [property: JsonPropertyName("word_type")] string? WordType);

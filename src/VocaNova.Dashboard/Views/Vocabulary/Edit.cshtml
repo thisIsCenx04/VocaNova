@@ -1,0 +1,199 @@
+@using VocaNova.Dashboard.Models.Api.Dictionary
+@using VocaNova.Dashboard.Models.Vocabulary
+@model WordDetail
+@{
+    ViewData["Title"] = "Update Vocabulary Metadata";
+    var senses = Model.Senses.OrderBy(s => s.Order).ToList();
+    var primaryType = senses.FirstOrDefault()?.WordClass;
+    var ukAudio = Model.Audio.FirstOrDefault(a => string.Equals(a.Accent, "uk", StringComparison.OrdinalIgnoreCase))
+                  ?? Model.Audio.FirstOrDefault();
+    var isActive = !string.Equals(Model.Status, "deleted", StringComparison.OrdinalIgnoreCase);
+
+    string Relative(DateTime utc)
+    {
+        if (utc == default) return "—";
+        var span = DateTime.UtcNow - utc;
+        if (span.TotalMinutes < 1) return "just now";
+        if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes} min ago";
+        if (span.TotalHours < 24) return $"{(int)span.TotalHours} hrs ago";
+        if (span.TotalDays < 30) return $"{(int)span.TotalDays} days ago";
+        return utc.ToString("dd MMM, yyyy");
+    }
+}
+
+<div class="page-header">
+    <nav class="breadcrumb">
+        <a href="/vocabulary">Vocabulary Metadata</a>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current">Edit</span>
+    </nav>
+    <h1 class="page-title">Edit vocabulary</h1>
+    <p class="page-subtitle">Update the vocabulary details.</p>
+</div>
+
+@if (TempData["VocabError"] is string errMsg)
+{
+    <div class="alert alert-danger">@errMsg</div>
+}
+
+<form method="post" action="/vocabulary/@Model.WordId/edit" class="edit-form">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="phoneticUs" value="@Model.PhoneticUs" />
+    <input type="hidden" name="isPhrase" value="@Model.IsPhrase.ToString().ToLowerInvariant()" />
+    <input type="hidden" name="wasActive" value="@isActive.ToString().ToLowerInvariant()" />
+
+    <div class="edit-grid">
+        <div class="edit-main">
+            <!-- Vocabulary information -->
+            <section class="panel edit-panel">
+                <header class="edit-panel-head">
+                    <span class="edit-panel-icon">ⓘ</span>
+                    <h2 class="edit-panel-title">Vocabulary information</h2>
+                </header>
+                <div class="edit-panel-body">
+                    <div class="field-grid-3">
+                        <div class="form-group">
+                            <label for="word">Word</label>
+                            <input id="word" name="word" class="form-control" value="@Model.Word" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="wordType">Word Type</label>
+                            <select id="wordType" name="wordType" class="form-control">
+                                <option value="">—</option>
+                                @foreach (var wt in VocabularyListViewModel.WordTypes)
+                                {
+                                    <option value="@wt" selected="@(string.Equals(primaryType, wt, StringComparison.OrdinalIgnoreCase))">@(char.ToUpper(wt[0]) + wt[1..])</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="cefr">CEFR Level</label>
+                            <select id="cefr" name="cefr" class="form-control">
+                                <option value="">—</option>
+                                @foreach (var level in VocabularyListViewModel.CefrLevels)
+                                {
+                                    <option value="@level" selected="@(string.Equals(Model.Cefr, level, StringComparison.OrdinalIgnoreCase))">@level</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="phoneticUk">Phonetics - UK</label>
+                        <div class="input-with-audio">
+                            <input id="phoneticUk" name="phoneticUk" class="form-control" value="@Model.PhoneticUk" placeholder="/.../" />
+                            @if (ukAudio is not null)
+                            {
+                                <button type="button" class="audio-btn" title="Play" data-audio="@ukAudio.Url" aria-label="Play pronunciation">
+                                    <svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3Zm13.5 2a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Zm-2.5-9v2.06A7 7 0 0 1 14 21v-2.06A5 5 0 0 0 14 5Z"/></svg>
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="audio-btn disabled" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3Z"/></svg>
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Meaning & Examples -->
+            <section class="panel edit-panel">
+                <header class="edit-panel-head">
+                    <span class="edit-panel-icon">📖</span>
+                    <h2 class="edit-panel-title">Meaning &amp; Examples</h2>
+                </header>
+                <div class="edit-panel-body">
+                    @if (senses.Count == 0)
+                    {
+                        <p class="text-muted">No meanings yet. Add the first one below.</p>
+                    }
+                    @{ var idx = 0; }
+                    @foreach (var sense in senses)
+                    {
+                        <div class="meaning-block">
+                            <span class="meaning-badge">Meaning @(idx + 1)</span>
+                            <input type="hidden" name="senseId" value="@sense.SenseId" />
+                            <input type="hidden" name="senseOrder" value="@sense.Order" />
+                            <input type="hidden" name="senseWordClass" value="@sense.WordClass" />
+                            <div class="field-grid-2">
+                                <div class="form-group">
+                                    <label>English meaning</label>
+                                    <textarea name="englishDefinition" class="form-control" rows="2">@sense.EnglishDefinition</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Vietnamese meaning</label>
+                                    <textarea name="vietnameseMeaning" class="form-control" rows="2">@sense.VietnameseMeaning</textarea>
+                                </div>
+                            </div>
+
+                            @if (sense.Examples.Count > 0)
+                            {
+                                <span class="meaning-badge subtle">Example</span>
+                                <div class="field-grid-2">
+                                    @foreach (var ex in sense.Examples.OrderBy(e => e.Order))
+                                    {
+                                        <div class="example-card">
+                                            <p class="example-en">@ex.ExampleEn</p>
+                                        </div>
+                                        <div class="example-card">
+                                            <p class="example-vi">@(string.IsNullOrWhiteSpace(ex.ExampleVi) ? "—" : ex.ExampleVi)</p>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        idx++;
+                    }
+
+                    <!-- New meaning (hidden until toggled) -->
+                    <div class="meaning-block new-meaning" id="new-meaning" hidden>
+                        <span class="meaning-badge">New meaning</span>
+                        <div class="field-grid-2">
+                            <div class="form-group">
+                                <label>English meaning</label>
+                                <textarea name="newEnglishDefinition" class="form-control" rows="2" placeholder="Definition in English"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Vietnamese meaning</label>
+                                <textarea name="newVietnameseMeaning" class="form-control" rows="2" placeholder="Nghĩa tiếng Việt"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="add-meaning-btn" id="add-meaning-btn">⊕ Add new meaning</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- Status & Storage -->
+        <aside class="edit-side">
+            <section class="panel side-card">
+                <h2 class="side-card-title">Status &amp; Storage</h2>
+
+                <div class="status-toggle-row">
+                    <span class="status-label" id="status-label">@(isActive ? "Active" : "Inactive")</span>
+                    <label class="switch">
+                        <input type="checkbox" name="isActive" value="true" id="isActive" @(isActive ? "checked" : "") />
+                        <input type="hidden" name="isActive" value="false" />
+                        <span class="switch-track"><span class="switch-thumb"></span></span>
+                    </label>
+                </div>
+
+                <dl class="meta-list">
+                    <div class="meta-row"><dt>Date created</dt><dd>@(Model.CreatedAt == default ? "—" : Model.CreatedAt.ToString("dd MMM, yyyy"))</dd></div>
+                    <div class="meta-row"><dt>Update</dt><dd>@Relative(Model.UpdatedAt)</dd></div>
+                    <div class="meta-row"><dt>Creator</dt><dd>Admin</dd></div>
+                </dl>
+
+                <button type="submit" class="btn-primary btn-block">💾 Save</button>
+                <a href="/vocabulary" class="btn-secondary btn-block">Cancel</a>
+            </section>
+        </aside>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="~/js/vocabulary-edit.js" asp-append-version="true"></script>
+}

@@ -82,7 +82,10 @@ public class WordDetailFeatureTests
             Array.Empty<WordAudioDto>(),
             Array.Empty<WordDerivedFormDto>(),
             Array.Empty<WordIdiomDto>(),
-            Array.Empty<WordTopicDto>());
+            Array.Empty<WordTopicDto>(),
+            "active",
+            default,
+            default);
         var cache = new FakeWordDetailCache(cachedWord);
         var service = CreateService(dbContext, cache);
 
