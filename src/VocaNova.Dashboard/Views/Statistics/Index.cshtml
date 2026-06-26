@@ -26,17 +26,17 @@
 }
 
 <div class="page-header">
-    <h1 class="page-title">Statistics</h1>
-    <p class="page-subtitle">System learning analytics.</p>
+    <h1 class="page-title">@T["Statistics"]</h1>
+    <p class="page-subtitle">@T["System learning analytics."]</p>
 </div>
 
 <section class="panel">
     <div class="panel-head">
-        <h2 class="panel-title">Activity over time</h2>
+        <h2 class="panel-title">@T["Activity over time"]</h2>
         <select id="granularity" class="form-control granularity-select">
-            <option value="daily">Daily (30 days)</option>
-            <option value="weekly">Weekly (12 weeks)</option>
-            <option value="monthly">Monthly (6 months)</option>
+            <option value="daily">@T["Daily (30 days)"]</option>
+            <option value="weekly">@T["Weekly (12 weeks)"]</option>
+            <option value="monthly">@T["Monthly (6 months)"]</option>
         </select>
     </div>
     <div class="chart-grid">
@@ -47,13 +47,13 @@
 
 <div class="chart-grid stats-grid">
     <section class="panel table-panel">
-        <div class="panel-head"><h2 class="panel-title">Top 20 wrong words</h2></div>
+        <div class="panel-head"><h2 class="panel-title">@T["Top 20 wrong words"]</h2></div>
         <table class="data-table">
-            <thead><tr><th>Word</th><th>Wrong</th><th>Accuracy</th></tr></thead>
+            <thead><tr><th>@T["Word"]</th><th>@T["Wrong"]</th><th>@T["Accuracy"]</th></tr></thead>
             <tbody>
                 @if (wrongWords.Count == 0)
                 {
-                    <tr><td colspan="3" class="empty-row">No data.</td></tr>
+                    <tr><td colspan="3" class="empty-row">@T["No data."]</td></tr>
                 }
                 else
                 {
@@ -71,11 +71,11 @@
     </section>
 
     <section class="panel">
-        <div class="panel-head"><h2 class="panel-title">Demographics</h2></div>
+        <div class="panel-head"><h2 class="panel-title">@T["Demographics"]</h2></div>
         <div class="demo-charts">
-            <div class="demo-chart"><h4>Age range</h4><div class="chart-box chart-box-sm"><canvas id="age-chart"></canvas></div></div>
-            <div class="demo-chart"><h4>Occupation</h4><div class="chart-box chart-box-sm"><canvas id="occupation-chart"></canvas></div></div>
-            <div class="demo-chart"><h4>Education level</h4><div class="chart-box chart-box-sm"><canvas id="education-chart"></canvas></div></div>
+            <div class="demo-chart"><h4>@T["Age range"]</h4><div class="chart-box chart-box-sm"><canvas id="age-chart"></canvas></div></div>
+            <div class="demo-chart"><h4>@T["Occupation"]</h4><div class="chart-box chart-box-sm"><canvas id="occupation-chart"></canvas></div></div>
+            <div class="demo-chart"><h4>@T["Education level"]</h4><div class="chart-box chart-box-sm"><canvas id="education-chart"></canvas></div></div>
         </div>
     </section>
 </div>

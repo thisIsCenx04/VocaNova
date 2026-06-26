@@ -73,6 +73,59 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
             input.IsPhrase,
         }, cancellationToken);
 
+    public async Task<(ApiActionResult Result, uint? WordId)> CreateWordWithIdAsync(WordInput input, CancellationToken cancellationToken = default)
+    {
+        const string requestUri = "api/admin/words";
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            {
+                Content = JsonContent.Create(
+                    new { input.Word, input.Cefr, input.PhoneticUk, input.PhoneticUs, input.IsPhrase },
+                    options: ApiJson.Default),
+            };
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+            var statusCode = (int)response.StatusCode;
+
+            if (response.IsSuccessStatusCode)
+            {
+                uint? newId = null;
+                try
+                {
+                    var envelope = await response.Content
+                        .ReadFromJsonAsync<ApiEnvelope<CreatedWordRef>>(ApiJson.Default, cancellationToken);
+                    newId = envelope?.Data?.WordId;
+                }
+                catch (Exception ex) when (ex is System.Text.Json.JsonException or NotSupportedException)
+                {
+                    // Không parse được id → vẫn coi là tạo thành công, chỉ là không thêm sense được.
+                }
+
+                return (ApiActionResult.Ok(statusCode), newId);
+            }
+
+            string? message = null;
+            try
+            {
+                var envelope = await response.Content
+                    .ReadFromJsonAsync<ApiEnvelope<object>>(ApiJson.Default, cancellationToken);
+                message = envelope?.Message ?? envelope?.Errors.FirstOrDefault();
+            }
+            catch (Exception ex) when (ex is System.Text.Json.JsonException or NotSupportedException)
+            {
+                // body lỗi không parse được → message null.
+            }
+
+            LogNonSuccess(requestUri, statusCode);
+            return (ApiActionResult.Fail(statusCode, message), null);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            _logger.LogWarning(ex, "VocaNova.API POST {RequestUri} failed.", requestUri);
+            return (ApiActionResult.Fail(0, null), null);
+        }
+    }
+
     public Task<ApiActionResult> UpdateWordAsync(uint wordId, WordInput input, CancellationToken cancellationToken = default) =>
         SendJsonActionAsync(HttpMethod.Put, $"api/admin/words/{wordId}", new
         {
@@ -255,6 +308,12 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         input.TopicNameVi,
         input.Icon,
     };
+
+    // Chỉ cần word_id từ response tạo word (POST /api/admin/words trả về word DTO đầy đủ).
+    private sealed class CreatedWordRef
+    {
+        public uint WordId { get; set; }
+    }
 
     private static object SensePayload(SenseInput input) => new
     {

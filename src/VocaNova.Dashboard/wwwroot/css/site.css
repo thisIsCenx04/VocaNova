@@ -2258,3 +2258,117 @@ html, body {
 @media (max-width: 992px) {
     .appearance-grid { grid-template-columns: 1fr; }
 }
+
+/* ===== Create Vocabulary Metadata screen ===== */
+.create-card {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px 26px;
+    max-width: 1000px;
+}
+.create-title {
+    margin: 0 0 22px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+}
+.create-section { margin: 0; }
+.create-section-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 16px;
+}
+.create-section-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+}
+.create-section-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+}
+.add-meaning-link {
+    margin-left: auto;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--accent);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.add-meaning-link:hover { text-decoration: underline; }
+
+.create-basic-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 22px;
+    align-items: start;
+}
+.create-basic-main { display: flex; flex-direction: column; gap: 14px; }
+.create-basic-main .form-group,
+.create-basic-side .form-group { margin: 0; }
+
+.audio-btn-static { cursor: default; }
+.audio-btn-static:hover { background: var(--surface-3); color: var(--text-muted); }
+
+.create-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+}
+
+.meaning-card {
+    position: relative;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+}
+.meaning-card + .meaning-card { margin-top: 14px; }
+.meaning-card .form-group { margin-bottom: 14px; }
+.meaning-card .field-grid-2 .form-group:last-child,
+.meaning-card .form-group:last-child { margin-bottom: 0; }
+
+.illustrative-label {
+    margin: 14px 0 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+.meaning-remove {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+}
+.meaning-remove:hover { color: #fff; background: var(--danger, #e05260); border-color: transparent; }
+
+.create-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 26px;
+}
+
+@media (max-width: 992px) {
+    .create-basic-grid { grid-template-columns: 1fr; }
+    .create-card { padding: 22px 18px; }
+}

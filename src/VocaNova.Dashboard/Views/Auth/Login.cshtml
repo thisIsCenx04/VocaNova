@@ -8,8 +8,8 @@
         <span class="brand-mark">VN</span>
         <span>VocaNova</span>
     </div>
-    <h1 class="auth-title">Admin Dashboard</h1>
-    <p class="auth-subtitle">Sign in with your administrator account.</p>
+    <h1 class="auth-title">@T["Admin Dashboard"]</h1>
+    <p class="auth-subtitle">@T["Sign in with your administrator account."]</p>
 
     <form asp-controller="Auth" asp-action="Login" method="post" novalidate>
         @Html.AntiForgeryToken()
@@ -18,18 +18,18 @@
         <div asp-validation-summary="ModelOnly" class="auth-error" role="alert"></div>
 
         <div class="form-group">
-            <label asp-for="Phone">Phone</label>
+            <label asp-for="Phone">@T["Phone"]</label>
             <input asp-for="Phone" class="form-control" autocomplete="username" inputmode="tel" placeholder="0xxxxxxxxx" />
             <span asp-validation-for="Phone" class="field-error"></span>
         </div>
 
         <div class="form-group">
-            <label asp-for="Password">Password</label>
+            <label asp-for="Password">@T["Password"]</label>
             <input asp-for="Password" class="form-control" autocomplete="current-password" type="password" />
             <span asp-validation-for="Password" class="field-error"></span>
         </div>
 
-        <button type="submit" class="btn-primary btn-block">Sign in</button>
+        <button type="submit" class="btn-primary btn-block">@T["Sign in"]</button>
     </form>
 </div>
 

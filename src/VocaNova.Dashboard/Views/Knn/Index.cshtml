@@ -6,8 +6,8 @@
 }
 
 <div class="page-header">
-    <h1 class="page-title">KNN Management</h1>
-    <p class="page-subtitle">Onboarding lookup tables and recommendation rebuild.</p>
+    <h1 class="page-title">@T["KNN Management"]</h1>
+    <p class="page-subtitle">@T["Onboarding lookup tables and recommendation rebuild."]</p>
 </div>
 
 @if (TempData["KnnSuccess"] is string okMsg)
@@ -31,52 +31,52 @@
 
 <div class="chart-grid stats-grid">
     <section class="panel">
-        <div class="panel-head"><h2 class="panel-title">Recommendation rebuild</h2></div>
+        <div class="panel-head"><h2 class="panel-title">@T["Recommendation rebuild"]</h2></div>
         @if (rb is null)
         {
-            <p class="text-muted">Rebuild status unavailable.</p>
+            <p class="text-muted">@T["Rebuild status unavailable."]</p>
         }
         else
         {
             <dl class="detail-list">
-                <dt>Last rebuilt</dt>
+                <dt>@T["Last rebuilt"]</dt>
                 <dd>@(rb.LastRebuildAt?.ToString("yyyy-MM-dd HH:mm") ?? "Never")</dd>
-                <dt>Running</dt>
+                <dt>@T["Running"]</dt>
                 <dd>@(rb.IsRunning ? "Yes" : "No")</dd>
             </dl>
         }
         <form method="post" action="/knn/trigger-rebuild" class="inline-form js-confirm" data-confirm="Trigger a KNN recommendation rebuild now?">
             @Html.AntiForgeryToken()
-            <button type="submit" class="btn-primary btn-sm">Trigger rebuild</button>
+            <button type="submit" class="btn-primary btn-sm">@T["Trigger rebuild"]</button>
         </form>
-        <p class="panel-muted" style="margin-top:10px;">Rate limited to 1 request / 5 minutes.</p>
+        <p class="panel-muted" style="margin-top:10px;">@T["Rate limited to 1 request / 5 minutes."]</p>
     </section>
 
     <section class="panel">
-        <div class="panel-head"><h2 class="panel-title">Algorithm config (read-only)</h2></div>
+        <div class="panel-head"><h2 class="panel-title">@T["Algorithm config (read-only)"]</h2></div>
         @if (cfg is null)
         {
-            <p class="text-muted">Config unavailable.</p>
+            <p class="text-muted">@T["Config unavailable."]</p>
         }
         else
         {
-            <h4>Onboarding</h4>
+            <h4>@T["Onboarding"]</h4>
             <dl class="detail-list">
-                <dt>K value</dt><dd>@cfg.Onboarding.KValue</dd>
-                <dt>Default topic limit</dt><dd>@cfg.Onboarding.DefaultTopicLimit</dd>
-                <dt>Min similarity</dt><dd>@cfg.Onboarding.MinSimilarity</dd>
-                <dt>Cache TTL (min)</dt><dd>@cfg.Onboarding.CacheTtlMinutes</dd>
+                <dt>@T["K value"]</dt><dd>@cfg.Onboarding.KValue</dd>
+                <dt>@T["Default topic limit"]</dt><dd>@cfg.Onboarding.DefaultTopicLimit</dd>
+                <dt>@T["Min similarity"]</dt><dd>@cfg.Onboarding.MinSimilarity</dd>
+                <dt>@T["Cache TTL (min)"]</dt><dd>@cfg.Onboarding.CacheTtlMinutes</dd>
             </dl>
-            <h4 style="margin-top:14px;">Learning</h4>
+            <h4 style="margin-top:14px;">@T["Learning"]</h4>
             <dl class="detail-list">
-                <dt>K value</dt><dd>@cfg.Learning.KValue</dd>
-                <dt>Min sessions</dt><dd>@cfg.Learning.MinSessions</dd>
-                <dt>Min similarity</dt><dd>@cfg.Learning.MinSimilarity</dd>
-                <dt>Recommendation count</dt><dd>@cfg.Learning.RecommendationCount</dd>
-                <dt>Rebuild interval (h)</dt><dd>@cfg.Learning.RebuildIntervalHours</dd>
-                <dt>Cache TTL (min)</dt><dd>@cfg.Learning.CacheTtlMinutes</dd>
+                <dt>@T["K value"]</dt><dd>@cfg.Learning.KValue</dd>
+                <dt>@T["Min sessions"]</dt><dd>@cfg.Learning.MinSessions</dd>
+                <dt>@T["Min similarity"]</dt><dd>@cfg.Learning.MinSimilarity</dd>
+                <dt>@T["Recommendation count"]</dt><dd>@cfg.Learning.RecommendationCount</dd>
+                <dt>@T["Rebuild interval (h)"]</dt><dd>@cfg.Learning.RebuildIntervalHours</dd>
+                <dt>@T["Cache TTL (min)"]</dt><dd>@cfg.Learning.CacheTtlMinutes</dd>
             </dl>
-            <p class="panel-muted" style="margin-top:10px;">Change via <code>.env</code> / deployment config then restart.</p>
+            <p class="panel-muted" style="margin-top:10px;">@T["Change via"] <code>.env</code> @T["/ deployment config then restart."]</p>
         }
     </section>
 </div>

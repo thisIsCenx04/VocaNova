@@ -26,8 +26,8 @@
 }
 
 <div class="page-header">
-    <h1 class="page-title">User Management</h1>
-    <p class="page-subtitle">Manage learners and admin accounts.</p>
+    <h1 class="page-title">@T["User Management"]</h1>
+    <p class="page-subtitle">@T["Manage learners and admin accounts."]</p>
 </div>
 
 @if (TempData["UserSuccess"] is string okMsg)
@@ -40,16 +40,16 @@
 }
 
 <form method="get" action="/users" class="filter-bar">
-    <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="Search by name, email or phone..." />
+    <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="@T["Search by name, email or phone..."]" />
     <select name="status" class="form-control">
-        <option value="">All status</option>
+        <option value="">@T["All status"]</option>
         @foreach (var s in VocaNova.Dashboard.Models.Users.UserListViewModel.Statuses)
         {
             <option value="@s" selected="@(Model.Status == s)">@s</option>
         }
     </select>
     <select name="role" class="form-control">
-        <option value="">All roles</option>
+        <option value="">@T["All roles"]</option>
         @foreach (var (value, label) in VocaNova.Dashboard.Models.Users.UserListViewModel.Roles)
         {
             <option value="@value" selected="@(Model.Role == value)">@label</option>
@@ -57,28 +57,28 @@
     </select>
     <label class="checkbox-inline">
         <input type="checkbox" name="includeDeleted" value="true" checked="@Model.IncludeDeleted" />
-        Show deleted
+        @T["Show deleted"]
     </label>
-    <button type="submit" class="btn-primary">Filter</button>
-    <a href="/users" class="btn-secondary">Reset</a>
+    <button type="submit" class="btn-primary">@T["Filter"]</button>
+    <a href="/users" class="btn-secondary">@T["Reset"]</a>
 </form>
 
 <div class="panel table-panel">
     <table class="data-table">
         <thead>
             <tr>
-                <th style="width:70px;">User ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th style="width:110px;">Status</th>
-                <th style="width:140px;">Phone</th>
-                <th style="width:80px;" class="col-actions">Action</th>
+                <th style="width:70px;">@T["User ID"]</th>
+                <th>@T["Name"]</th>
+                <th>@T["Email"]</th>
+                <th style="width:110px;">@T["Status"]</th>
+                <th style="width:140px;">@T["Phone"]</th>
+                <th style="width:80px;" class="col-actions">@T["Action"]</th>
             </tr>
         </thead>
         <tbody>
             @if (Model.Items.Count == 0)
             {
-                <tr><td colspan="6" class="empty-row">No users found.</td></tr>
+                <tr><td colspan="6" class="empty-row">@T["No users found."]</td></tr>
             }
             else
             {
@@ -107,14 +107,14 @@
                         <td>@(user.Phone ?? "—")</td>
                         <td class="col-actions">
                             <div class="action-icons">
-                                <a class="icon-link" href="/users/@user.UserId" title="View details" aria-label="View details">
+                                <a class="icon-link" href="/users/@user.UserId" title="@T["View details"]" aria-label="@T["View details"]">
                                     <svg viewBox="0 0 24 24"><path d="M12 5c-5 0-8.5 4.5-9.5 7 1 2.5 4.5 7 9.5 7s8.5-4.5 9.5-7c-1-2.5-4.5-7-9.5-7Zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
                                 </a>
                                 @if (user.Status == "active")
                                 {
                                     <button type="button" class="icon-link warn js-disable"
                                             data-id="@user.UserId" data-name="@user.DisplayName"
-                                            title="Disable account" aria-label="Disable account">
+                                            title="@T["Disable account"]" aria-label="@T["Disable account"]">
                                         <svg viewBox="0 0 24 24"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 0 1 6 0v3H9Zm3 4a1.5 1.5 0 0 1 1 2.6V19h-2v-3.4A1.5 1.5 0 0 1 12 13Z"/></svg>
                                     </button>
                                 }
@@ -122,7 +122,7 @@
                                 {
                                     <button type="button" class="icon-link ok js-restore"
                                             data-id="@user.UserId" data-name="@user.DisplayName"
-                                            title="Enable account" aria-label="Enable account">
+                                            title="@T["Enable account"]" aria-label="@T["Enable account"]">
                                         <svg viewBox="0 0 24 24"><path d="M12 1a5 5 0 0 0-5 5h2a3 3 0 0 1 6 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Z"/></svg>
                                     </button>
                                 }
@@ -141,14 +141,14 @@
     {
         var winStart = Model.Page;
         var winEnd = Math.Min(Model.Page + 2, Model.TotalPages);
-        <nav class="pager" aria-label="Pagination">
+        <nav class="pager" aria-label="@T["Pagination"]">
             @if (Model.HasPrevious)
             {
-                <a class="pager-link" href="@PageUrl(Model.Page - 1)">‹ Prev</a>
+                <a class="pager-link" href="@PageUrl(Model.Page - 1)">‹ @T["Prev"]</a>
             }
             else
             {
-                <span class="pager-link disabled">‹ Prev</span>
+                <span class="pager-link disabled">‹ @T["Prev"]</span>
             }
             @for (var p = winStart; p <= winEnd; p++)
             {
@@ -156,11 +156,11 @@
             }
             @if (Model.HasNext)
             {
-                <a class="pager-link" href="@PageUrl(Model.Page + 1)">Next ›</a>
+                <a class="pager-link" href="@PageUrl(Model.Page + 1)">@T["Next"] ›</a>
             }
             else
             {
-                <span class="pager-link disabled">Next ›</span>
+                <span class="pager-link disabled">@T["Next"] ›</span>
             }
         </nav>
     }
@@ -169,13 +169,13 @@
 <div class="modal-overlay" id="user-modal" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="um-title">
         <div class="modal-icon" id="um-icon"><svg viewBox="0 0 24 24"><path d="M12 2 1 21h22L12 2Zm-1 6h2v7h-2V8Zm0 9h2v2h-2v-2Z"/></svg></div>
-        <h3 class="modal-title" id="um-title">Disable user account</h3>
+        <h3 class="modal-title" id="um-title">@T["Disable user account"]</h3>
         <p class="modal-text" id="um-text"></p>
         <div class="modal-actions">
-            <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+            <button type="button" class="btn-secondary" data-close-modal>@T["Cancel"]</button>
             <form method="post" id="um-form" class="inline-form">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn-warning" id="um-confirm">Disable</button>
+                <button type="submit" class="btn-warning" id="um-confirm">@T["Disable"]</button>
             </form>
         </div>
     </div>

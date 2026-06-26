@@ -34,6 +34,9 @@ public interface IVocaNovaApiClient
 
     Task<ApiActionResult> CreateWordAsync(WordInput input, CancellationToken cancellationToken = default);
 
+    // Như CreateWordAsync nhưng trả thêm word_id vừa tạo (để tạo sense kèm theo trong cùng luồng Create).
+    Task<(ApiActionResult Result, uint? WordId)> CreateWordWithIdAsync(WordInput input, CancellationToken cancellationToken = default);
+
     Task<ApiActionResult> UpdateWordAsync(uint wordId, WordInput input, CancellationToken cancellationToken = default);
 
     // F058 — Vocabulary detail & sense management.

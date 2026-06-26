@@ -1,60 +1,129 @@
 @{
-    ViewData["Title"] = "Create New Vocabulary";
+    ViewData["Title"] = "Add new vocabulary";
+    var cefrLevels = VocaNova.Dashboard.Models.Vocabulary.VocabularyListViewModel.CefrLevels;
+    var wordTypes = VocaNova.Dashboard.Models.Vocabulary.VocabularyListViewModel.WordTypes;
+
+    string CefrLabel(string l) => l switch
+    {
+        "A1" => "A1 - Beginner",
+        "A2" => "A2 - Elementary",
+        "B1" => "B1 - Intermediate",
+        "B2" => "B2 - Upper Intermediate",
+        "C1" => "C1 - Advanced",
+        "C2" => "C2 - Proficient",
+        _ => l,
+    };
 }
 
-<div class="page-header">
-    <a class="back-link" href="/vocabulary">‹ Back to vocabulary</a>
-    <h1 class="page-title">Create New Vocabulary</h1>
-    <p class="page-subtitle">Add the word metadata. Senses, examples, audio and image are managed on the detail page.</p>
-</div>
+<nav class="breadcrumb">
+    <a href="/vocabulary">@T["Vocabulary Metadata"]</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">@T["Add new"]</span>
+</nav>
 
 @if (TempData["VocabError"] is string errMsg)
 {
     <div class="alert alert-danger">@errMsg</div>
 }
 
-<div class="panel create-panel">
-    <form method="post" action="/vocabulary/create">
-        @Html.AntiForgeryToken()
+<form method="post" action="/vocabulary/create" class="create-card" id="create-form">
+    @Html.AntiForgeryToken()
 
-        <div class="form-group">
-            <label for="word">Word <span class="req">*</span></label>
-            <input id="word" name="Word" class="form-control" placeholder="e.g. resilient" required autofocus />
-        </div>
+    <h1 class="create-title">@T["Add new vocabulary"]</h1>
 
-        <div class="form-grid-2">
-            <div class="form-group">
-                <label for="cefr">CEFR level</label>
-                <select id="cefr" name="Cefr" class="form-control">
-                    <option value="">— none —</option>
-                    @foreach (var level in VocaNova.Dashboard.Models.Vocabulary.VocabularyListViewModel.CefrLevels)
-                    {
-                        <option value="@level">@level</option>
-                    }
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="checkbox-inline" style="margin-top:30px;">
-                    <input type="checkbox" name="IsPhrase" value="true" />
-                    This is a phrase / idiom
-                </label>
-            </div>
-        </div>
+    <section class="create-section">
+        <header class="create-section-head">
+            <span class="create-section-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 5a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6Zm1.5 11h-3v-1.4h.8V12h-.8v-1.4h2.2v5.6h.8V18Z" fill="currentColor"/></svg>
+            </span>
+            <h2 class="create-section-title">@T["Basic Information & Phonetics"]</h2>
+        </header>
 
-        <div class="form-grid-2">
-            <div class="form-group">
-                <label for="puk">Phonetic (UK)</label>
-                <input id="puk" name="PhoneticUk" class="form-control" placeholder="/rɪˈzɪl.i.ənt/" />
+        <div class="create-basic-grid">
+            <div class="create-basic-main">
+                <div class="form-group">
+                    <label for="word">@T["Vocabulary"] <span class="req">*</span></label>
+                    <input id="word" name="word" class="form-control" placeholder="@T["Enter vocabulary..."]" required autofocus />
+                </div>
+                <div class="form-group">
+                    <label for="puk">@T["Phonetic UK"]</label>
+                    <div class="input-with-audio">
+                        <input id="puk" name="phoneticUk" class="form-control" placeholder="/wɜːd/" />
+                        <span class="audio-btn audio-btn-static" aria-hidden="true" title="@T["Audio"]">
+                            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M5 9v6h4l5 5V4L9 9H5Zm11.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Z" fill="currentColor"/></svg>
+                        </span>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="pus">Phonetic (US)</label>
-                <input id="pus" name="PhoneticUs" class="form-control" placeholder="/rɪˈzɪl.jənt/" />
+            <div class="create-basic-side">
+                <div class="form-group">
+                    <label for="cefr">@T["Level CEFR"]</label>
+                    <select id="cefr" name="cefr" class="form-control">
+                        <option value="">@T["— none —"]</option>
+                        @foreach (var level in cefrLevels)
+                        {
+                            <option value="@level">@CefrLabel(level)</option>
+                        }
+                    </select>
+                </div>
             </div>
         </div>
+    </section>
 
-        <div class="form-actions">
-            <button type="submit" class="btn-primary">Create vocabulary</button>
-            <a href="/vocabulary" class="btn-secondary">Cancel</a>
+    <hr class="create-divider" />
+
+    <section class="create-section">
+        <header class="create-section-head">
+            <span class="create-section-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 8h5M9 12h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </span>
+            <h2 class="create-section-title">@T["Meaning & Examples"]</h2>
+            <button type="button" class="add-meaning-link" id="add-meaning-btn">@T["+ Add new meaning"]</button>
+        </header>
+
+        <div id="meaning-list">
+            <div class="meaning-card">
+                <div class="field-grid-2">
+                    <div class="form-group">
+                        <label>@T["Word type"]</label>
+                        <select name="senseWordClass" class="form-control">
+                            <option value="">@T["— none —"]</option>
+                            @foreach (var wt in wordTypes)
+                            {
+                                <option value="@wt">@(char.ToUpper(wt[0]) + wt[1..])</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>@T["Meaning (in English)"]</label>
+                        <input name="meaningEn" class="form-control" placeholder="@T["Describe the meaning in English..."]" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>@T["Meaning (in Vietnamese)"]</label>
+                    <input name="meaningVi" class="form-control" placeholder="@T["Describe the meaning in Vietnamese..."]" />
+                </div>
+                <p class="illustrative-label">@T["ILLUSTRATIVE EXAMPLE"]</p>
+                <div class="field-grid-2">
+                    <div class="form-group">
+                        <label>@T["Example (in English)"]</label>
+                        <textarea name="exampleEn" class="form-control" rows="3" placeholder="@T["E.g: This word is beautiful."]"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>@T["Example (in Vietnamese)"]</label>
+                        <textarea name="exampleVi" class="form-control" rows="3" placeholder="VD: Từ này rất đẹp."></textarea>
+                    </div>
+                </div>
+            </div>
         </div>
-    </form>
-</div>
+    </section>
+
+    <div class="create-footer">
+        <a href="/vocabulary" class="btn-secondary">@T["Cancel"]</a>
+        <button type="submit" class="btn-primary">@T["Save"]</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="~/js/vocabulary-create.js" asp-append-version="true"></script>
+}

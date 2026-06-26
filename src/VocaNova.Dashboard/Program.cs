@@ -8,6 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
+// Đa ngôn ngữ UI dashboard (Tiếng Việt / English) đọc từ cookie, render server-side.
+builder.Services.AddScoped<VocaNova.Dashboard.Services.Localization.ITranslator,
+    VocaNova.Dashboard.Services.Localization.Translator>();
+
 // Đăng ký route constraint {id:uint} (dùng trong nhiều route dashboard).
 builder.Services.Configure<Microsoft.AspNetCore.Routing.RouteOptions>(options =>
     options.ConstraintMap["uint"] = typeof(VocaNova.Dashboard.Routing.UIntRouteConstraint));

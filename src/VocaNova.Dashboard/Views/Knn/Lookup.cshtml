@@ -23,7 +23,7 @@
 }
 
 <div class="page-header">
-    <a class="back-link" href="/knn">‹ Back to KNN Management</a>
+    <a class="back-link" href="/knn">‹ @T["Back to KNN Management"]</a>
     <h1 class="page-title">@Model.Title</h1>
     <p class="page-subtitle">@Model.TotalItems item(s).</p>
 </div>
@@ -38,22 +38,22 @@
 }
 
 <form method="get" action="/knn/@Model.Slug" class="filter-bar">
-    <input type="text" name="q" value="@Model.Q" class="form-control" placeholder="Search..." />
+    <input type="text" name="q" value="@Model.Q" class="form-control" placeholder="@T["Search..."]" />
     <select name="status" class="form-control">
-        <option value="">Any status</option>
-        <option value="active" selected="@(Model.Status == "active")">Active</option>
-        <option value="deleted" selected="@(Model.Status == "deleted")">Deleted</option>
+        <option value="">@T["Any status"]</option>
+        <option value="active" selected="@(Model.Status == "active")">@T["Active"]</option>
+        <option value="deleted" selected="@(Model.Status == "deleted")">@T["Deleted"]</option>
     </select>
     <label class="checkbox-inline">
         <input type="checkbox" name="includeDeleted" value="true" checked="@Model.IncludeDeleted" />
-        Show deleted
+        @T["Show deleted"]
     </label>
-    <button type="submit" class="btn-primary">Filter</button>
-    <a href="/knn/@Model.Slug" class="btn-secondary">Reset</a>
+    <button type="submit" class="btn-primary">@T["Filter"]</button>
+    <a href="/knn/@Model.Slug" class="btn-secondary">@T["Reset"]</a>
 </form>
 
 <div class="panel">
-    <h4>Add @Model.Title.TrimEnd('s')</h4>
+    <h4>@T["Add"] @Model.Title.TrimEnd('s')</h4>
     <form method="post" action="/knn/@Model.Slug/save" class="form-grid topic-add-form">
         @Html.AntiForgeryToken()
         <input type="hidden" name="id" value="0" />
@@ -62,7 +62,7 @@
         {
             <input type="@InputType(f)" name="@f.Name" class="form-control" placeholder="@f.Label" required="@(f.Required ? "required" : null)" />
         }
-        <button type="submit" class="btn-primary btn-sm">Add</button>
+        <button type="submit" class="btn-primary btn-sm">@T["Add"]</button>
     </form>
 </div>
 
@@ -74,14 +74,14 @@
                 {
                     <th>@col</th>
                 }
-                <th>Status</th>
-                <th class="col-actions">Actions</th>
+                <th>@T["Status"]</th>
+                <th class="col-actions">@T["Actions"]</th>
             </tr>
         </thead>
         <tbody>
             @if (Model.Rows.Count == 0)
             {
-                <tr><td colspan="@colSpan" class="empty-row">No items found.</td></tr>
+                <tr><td colspan="@colSpan" class="empty-row">@T["No items found."]</td></tr>
             }
             else
             {
@@ -96,12 +96,12 @@
                         <td class="col-actions">
                             @if (row.Status != "deleted")
                             {
-                                <button type="button" class="btn-icon js-edit-toggle" data-row-id="@row.Id">Edit</button>
+                                <button type="button" class="btn-icon js-edit-toggle" data-row-id="@row.Id">@T["Edit"]</button>
                                 <form method="post" action="/knn/@Model.Slug/delete" class="inline-form js-confirm" data-confirm="Delete this item?">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@row.Id" />
                                     <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                    <button type="submit" class="btn-icon btn-danger">Delete</button>
+                                    <button type="submit" class="btn-icon btn-danger">@T["Delete"]</button>
                                 </form>
                             }
                             else
@@ -110,7 +110,7 @@
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@row.Id" />
                                     <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                    <button type="submit" class="btn-icon btn-success">Restore</button>
+                                    <button type="submit" class="btn-icon btn-success">@T["Restore"]</button>
                                 </form>
                             }
                         </td>
@@ -128,8 +128,8 @@
                                         <input type="@InputType(f)" name="@f.Name" value="@f.Value" class="form-control" placeholder="@f.Label" required="@(f.Required ? "required" : null)" />
                                     }
                                     <div class="form-actions">
-                                        <button type="submit" class="btn-primary btn-sm">Save</button>
-                                        <button type="button" class="btn-secondary btn-sm js-edit-cancel" data-row-id="@row.Id">Cancel</button>
+                                        <button type="submit" class="btn-primary btn-sm">@T["Save"]</button>
+                                        <button type="button" class="btn-secondary btn-sm js-edit-cancel" data-row-id="@row.Id">@T["Cancel"]</button>
                                     </div>
                                 </form>
                             </td>
@@ -143,15 +143,15 @@
 
 @if (Model.TotalPages > 1)
 {
-    <nav class="pager" aria-label="Pagination">
+    <nav class="pager" aria-label="@T["Pagination"]">
         @if (Model.HasPrevious)
         {
-            <a class="pager-link" href="@PageUrl(Model.Page - 1)">‹ Prev</a>
+            <a class="pager-link" href="@PageUrl(Model.Page - 1)">‹ @T["Prev"]</a>
         }
-        <span class="pager-info">Page @Model.Page / @Model.TotalPages</span>
+        <span class="pager-info">@T["Page"] @Model.Page / @Model.TotalPages</span>
         @if (Model.HasNext)
         {
-            <a class="pager-link" href="@PageUrl(Model.Page + 1)">Next ›</a>
+            <a class="pager-link" href="@PageUrl(Model.Page + 1)">@T["Next"] ›</a>
         }
     </nav>
 }

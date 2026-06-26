@@ -23,12 +23,12 @@
 
 <div class="page-header">
     <nav class="breadcrumb">
-        <a href="/vocabulary">Vocabulary Metadata</a>
+        <a href="/vocabulary">@T["Vocabulary Metadata"]</a>
         <span class="breadcrumb-sep">›</span>
-        <span class="breadcrumb-current">Edit</span>
+        <span class="breadcrumb-current">@T["Edit"]</span>
     </nav>
-    <h1 class="page-title">Edit vocabulary</h1>
-    <p class="page-subtitle">Update the vocabulary details.</p>
+    <h1 class="page-title">@T["Edit vocabulary"]</h1>
+    <p class="page-subtitle">@T["Update the vocabulary details."]</p>
 </div>
 
 @if (TempData["VocabError"] is string errMsg)
@@ -48,16 +48,16 @@
             <section class="panel edit-panel">
                 <header class="edit-panel-head">
                     <span class="edit-panel-icon">ⓘ</span>
-                    <h2 class="edit-panel-title">Vocabulary information</h2>
+                    <h2 class="edit-panel-title">@T["Vocabulary information"]</h2>
                 </header>
                 <div class="edit-panel-body">
                     <div class="field-grid-3">
                         <div class="form-group">
-                            <label for="word">Word</label>
+                            <label for="word">@T["Word"]</label>
                             <input id="word" name="word" class="form-control" value="@Model.Word" required />
                         </div>
                         <div class="form-group">
-                            <label for="wordType">Word Type</label>
+                            <label for="wordType">@T["Word Type"]</label>
                             <select id="wordType" name="wordType" class="form-control">
                                 <option value="">—</option>
                                 @foreach (var wt in VocabularyListViewModel.WordTypes)
@@ -67,7 +67,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="cefr">CEFR Level</label>
+                            <label for="cefr">@T["CEFR Level"]</label>
                             <select id="cefr" name="cefr" class="form-control">
                                 <option value="">—</option>
                                 @foreach (var level in VocabularyListViewModel.CefrLevels)
@@ -78,12 +78,12 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="phoneticUk">Phonetics - UK</label>
+                        <label for="phoneticUk">@T["Phonetics - UK"]</label>
                         <div class="input-with-audio">
                             <input id="phoneticUk" name="phoneticUk" class="form-control" value="@Model.PhoneticUk" placeholder="/.../" />
                             @if (ukAudio is not null)
                             {
-                                <button type="button" class="audio-btn" title="Play" data-audio="@ukAudio.Url" aria-label="Play pronunciation">
+                                <button type="button" class="audio-btn" title="@T["Play"]" data-audio="@ukAudio.Url" aria-label="@T["Play pronunciation"]">
                                     <svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3Zm13.5 2a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Zm-2.5-9v2.06A7 7 0 0 1 14 21v-2.06A5 5 0 0 0 14 5Z"/></svg>
                                 </button>
                             }
@@ -102,35 +102,35 @@
             <section class="panel edit-panel">
                 <header class="edit-panel-head">
                     <span class="edit-panel-icon">📖</span>
-                    <h2 class="edit-panel-title">Meaning &amp; Examples</h2>
+                    <h2 class="edit-panel-title">@T["Meaning & Examples"]</h2>
                 </header>
                 <div class="edit-panel-body">
                     @if (senses.Count == 0)
                     {
-                        <p class="text-muted">No meanings yet. Add the first one below.</p>
+                        <p class="text-muted">@T["No meanings yet. Add the first one below."]</p>
                     }
                     @{ var idx = 0; }
                     @foreach (var sense in senses)
                     {
                         <div class="meaning-block">
-                            <span class="meaning-badge">Meaning @(idx + 1)</span>
+                            <span class="meaning-badge">@T["Meaning"] @(idx + 1)</span>
                             <input type="hidden" name="senseId" value="@sense.SenseId" />
                             <input type="hidden" name="senseOrder" value="@sense.Order" />
                             <input type="hidden" name="senseWordClass" value="@sense.WordClass" />
                             <div class="field-grid-2">
                                 <div class="form-group">
-                                    <label>English meaning</label>
+                                    <label>@T["English meaning"]</label>
                                     <textarea name="englishDefinition" class="form-control" rows="2">@sense.EnglishDefinition</textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label>Vietnamese meaning</label>
+                                    <label>@T["Vietnamese meaning"]</label>
                                     <textarea name="vietnameseMeaning" class="form-control" rows="2">@sense.VietnameseMeaning</textarea>
                                 </div>
                             </div>
 
                             @if (sense.Examples.Count > 0)
                             {
-                                <span class="meaning-badge subtle">Example</span>
+                                <span class="meaning-badge subtle">@T["Example"]</span>
                                 <div class="field-grid-2">
                                     @foreach (var ex in sense.Examples.OrderBy(e => e.Order))
                                     {
@@ -149,20 +149,20 @@
 
                     <!-- New meaning (hidden until toggled) -->
                     <div class="meaning-block new-meaning" id="new-meaning" hidden>
-                        <span class="meaning-badge">New meaning</span>
+                        <span class="meaning-badge">@T["New meaning"]</span>
                         <div class="field-grid-2">
                             <div class="form-group">
-                                <label>English meaning</label>
-                                <textarea name="newEnglishDefinition" class="form-control" rows="2" placeholder="Definition in English"></textarea>
+                                <label>@T["English meaning"]</label>
+                                <textarea name="newEnglishDefinition" class="form-control" rows="2" placeholder="@T["Definition in English"]"></textarea>
                             </div>
                             <div class="form-group">
-                                <label>Vietnamese meaning</label>
+                                <label>@T["Vietnamese meaning"]</label>
                                 <textarea name="newVietnameseMeaning" class="form-control" rows="2" placeholder="Nghĩa tiếng Việt"></textarea>
                             </div>
                         </div>
                     </div>
 
-                    <button type="button" class="add-meaning-btn" id="add-meaning-btn">⊕ Add new meaning</button>
+                    <button type="button" class="add-meaning-btn" id="add-meaning-btn">⊕ @T["Add new meaning"]</button>
                 </div>
             </section>
         </div>
@@ -170,10 +170,10 @@
         <!-- Status & Storage -->
         <aside class="edit-side">
             <section class="panel side-card">
-                <h2 class="side-card-title">Status &amp; Storage</h2>
+                <h2 class="side-card-title">@T["Status & Storage"]</h2>
 
                 <div class="status-toggle-row">
-                    <span class="status-label" id="status-label">@(isActive ? "Active" : "Inactive")</span>
+                    <span class="status-label" id="status-label">@(isActive ? T["Active"] : T["Inactive"])</span>
                     <label class="switch">
                         <input type="checkbox" name="isActive" value="true" id="isActive" @(isActive ? "checked" : "") />
                         <input type="hidden" name="isActive" value="false" />
@@ -182,13 +182,13 @@
                 </div>
 
                 <dl class="meta-list">
-                    <div class="meta-row"><dt>Date created</dt><dd>@(Model.CreatedAt == default ? "—" : Model.CreatedAt.ToString("dd MMM, yyyy"))</dd></div>
-                    <div class="meta-row"><dt>Update</dt><dd>@Relative(Model.UpdatedAt)</dd></div>
-                    <div class="meta-row"><dt>Creator</dt><dd>Admin</dd></div>
+                    <div class="meta-row"><dt>@T["Date created"]</dt><dd>@(Model.CreatedAt == default ? "—" : Model.CreatedAt.ToString("dd MMM, yyyy"))</dd></div>
+                    <div class="meta-row"><dt>@T["Update"]</dt><dd>@Relative(Model.UpdatedAt)</dd></div>
+                    <div class="meta-row"><dt>@T["Creator"]</dt><dd>Admin</dd></div>
                 </dl>
 
-                <button type="submit" class="btn-primary btn-block">💾 Save</button>
-                <a href="/vocabulary" class="btn-secondary btn-block">Cancel</a>
+                <button type="submit" class="btn-primary btn-block">💾 @T["Save"]</button>
+                <a href="/vocabulary" class="btn-secondary btn-block">@T["Cancel"]</a>
             </section>
         </aside>
     </div>

@@ -12,7 +12,7 @@
 
     <div class="page-header detail-header">
         <div>
-            <a class="back-link" href="/vocabulary">‹ Back to vocabulary</a>
+            <a class="back-link" href="/vocabulary">‹ @T["Back to vocabulary"]</a>
             <h1 class="page-title">
                 @Model.Word
                 @if (!string.IsNullOrWhiteSpace(Model.Cefr))
@@ -21,7 +21,7 @@
                 }
                 @if (Model.IsPhrase)
                 {
-                    <span class="badge badge-muted">phrase</span>
+                    <span class="badge badge-muted">@T["phrase"]</span>
                 }
             </h1>
             <div class="phonetics">
@@ -48,7 +48,7 @@
             <!-- Senses -->
             <section class="panel">
                 <div class="panel-head">
-                    <h2 class="panel-title">Senses (@Model.Senses.Count)</h2>
+                    <h2 class="panel-title">@T["Senses"] (@Model.Senses.Count)</h2>
                 </div>
 
                 <div class="accordion" id="senses-list">
@@ -64,10 +64,10 @@
                                 <p class="sense-vi"><strong>VI:</strong> <span class="js-sense-vi">@sense.VietnameseMeaning</span></p>
 
                                 <div class="sense-examples">
-                                    <h4>Examples</h4>
+                                    <h4>@T["Examples"]</h4>
                                     @if (sense.Examples.Count == 0)
                                     {
-                                        <p class="text-muted">No examples.</p>
+                                        <p class="text-muted">@T["No examples."]</p>
                                     }
                                     else
                                     {
@@ -86,29 +86,29 @@
                                     }
                                 </div>
 
-                                <button type="button" class="btn-secondary btn-sm js-edit-toggle">Edit</button>
+                                <button type="button" class="btn-secondary btn-sm js-edit-toggle">@T["Edit"]</button>
 
                                 <form class="sense-edit-form js-sense-edit" hidden
                                       data-sense-id="@sense.SenseId">
                                     <div class="form-row">
-                                        <label>Order</label>
+                                        <label>@T["Order"]</label>
                                         <input type="number" name="senseOrder" value="@sense.Order" min="1" class="form-control" />
                                     </div>
                                     <div class="form-row">
-                                        <label>Word class</label>
+                                        <label>@T["Word class"]</label>
                                         <input type="text" name="wordClass" value="@sense.WordClass" class="form-control" />
                                     </div>
                                     <div class="form-row">
-                                        <label>English definition</label>
+                                        <label>@T["English definition"]</label>
                                         <textarea name="englishDefinition" class="form-control" rows="2">@sense.EnglishDefinition</textarea>
                                     </div>
                                     <div class="form-row">
-                                        <label>Vietnamese meaning</label>
+                                        <label>@T["Vietnamese meaning"]</label>
                                         <textarea name="vietnameseMeaning" class="form-control" rows="2">@sense.VietnameseMeaning</textarea>
                                     </div>
                                     <div class="form-actions">
-                                        <button type="submit" class="btn-primary btn-sm">Save</button>
-                                        <button type="button" class="btn-secondary btn-sm js-edit-cancel">Cancel</button>
+                                        <button type="submit" class="btn-primary btn-sm">@T["Save"]</button>
+                                        <button type="button" class="btn-secondary btn-sm js-edit-cancel">@T["Cancel"]</button>
                                     </div>
                                 </form>
                             </div>
@@ -118,28 +118,28 @@
 
                 <!-- Add sense -->
                 <form class="sense-add-form" id="add-sense-form">
-                    <h4>Add a sense</h4>
+                    <h4>@T["Add a sense"]</h4>
                     <div class="form-grid">
-                        <input type="number" name="senseOrder" value="@(Model.Senses.Count + 1)" min="1" class="form-control" placeholder="Order" />
-                        <input type="text" name="wordClass" class="form-control" placeholder="Word class (noun/verb...)" required />
-                        <input type="text" name="englishDefinition" class="form-control" placeholder="English definition" required />
-                        <input type="text" name="vietnameseMeaning" class="form-control" placeholder="Vietnamese meaning" />
+                        <input type="number" name="senseOrder" value="@(Model.Senses.Count + 1)" min="1" class="form-control" placeholder="@T["Order"]" />
+                        <input type="text" name="wordClass" class="form-control" placeholder="@T["Word class (noun/verb...)"]" required />
+                        <input type="text" name="englishDefinition" class="form-control" placeholder="@T["English definition"]" required />
+                        <input type="text" name="vietnameseMeaning" class="form-control" placeholder="@T["Vietnamese meaning"]" />
                     </div>
-                    <button type="submit" class="btn-primary btn-sm">Add sense</button>
+                    <button type="submit" class="btn-primary btn-sm">@T["Add sense"]</button>
                 </form>
             </section>
 
             <!-- Relations -->
             <section class="panel">
-                <div class="panel-head"><h2 class="panel-title">Relations</h2></div>
+                <div class="panel-head"><h2 class="panel-title">@T["Relations"]</h2></div>
                 @if (allRelations.Count == 0)
                 {
-                    <p class="text-muted">No relations.</p>
+                    <p class="text-muted">@T["No relations."]</p>
                 }
                 else
                 {
                     <table class="data-table">
-                        <thead><tr><th>Type</th><th>Related word</th><th>Linked</th><th>Quiz</th></tr></thead>
+                        <thead><tr><th>@T["Type"]</th><th>@T["Related word"]</th><th>@T["Linked"]</th><th>@T["Quiz"]</th></tr></thead>
                         <tbody>
                             @foreach (var rel in allRelations)
                             {
@@ -159,27 +159,27 @@
         <div class="detail-side">
             <!-- Image -->
             <section class="panel">
-                <div class="panel-head"><h2 class="panel-title">Image</h2></div>
+                <div class="panel-head"><h2 class="panel-title">@T["Image"]</h2></div>
                 @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
                 {
                     <img class="word-image" src="@Model.ImageUrl" alt="@Model.Word" />
                 }
                 else
                 {
-                    <p class="text-muted">No image.</p>
+                    <p class="text-muted">@T["No image."]</p>
                 }
                 <form class="upload-form" id="image-upload-form">
                     <input type="file" name="file" accept="image/png,image/jpeg,image/webp" class="form-control" required />
-                    <button type="submit" class="btn-secondary btn-sm">Upload image</button>
+                    <button type="submit" class="btn-secondary btn-sm">@T["Upload image"]</button>
                 </form>
             </section>
 
             <!-- Audio -->
             <section class="panel">
-                <div class="panel-head"><h2 class="panel-title">Audio</h2></div>
+                <div class="panel-head"><h2 class="panel-title">@T["Audio"]</h2></div>
                 @if (Model.Audio.Count == 0)
                 {
-                    <p class="text-muted">No audio.</p>
+                    <p class="text-muted">@T["No audio."]</p>
                 }
                 else
                 {
@@ -189,9 +189,9 @@
                             <li class="audio-item">
                                 <span class="badge badge-muted">@audio.Accent.ToUpperInvariant()</span>
                                 <audio controls preload="none" src="@audio.Url"></audio>
-                                <form class="inline-form js-confirm" data-confirm="Delete this audio?"
+                                <form class="inline-form js-confirm" data-confirm="@T["Delete this audio?"]"
                                       data-ajax="/vocabulary/@Model.WordId/audio/@audio.AudioId/delete">
-                                    <button type="submit" class="btn-icon btn-danger">Delete</button>
+                                    <button type="submit" class="btn-icon btn-danger">@T["Delete"]</button>
                                 </form>
                             </li>
                         }
@@ -203,7 +203,7 @@
                         <option value="us">US</option>
                     </select>
                     <input type="file" name="file" accept="audio/mpeg,audio/wav,audio/ogg" class="form-control" required />
-                    <button type="submit" class="btn-secondary btn-sm">Upload audio</button>
+                    <button type="submit" class="btn-secondary btn-sm">@T["Upload audio"]</button>
                 </form>
             </section>
         </div>

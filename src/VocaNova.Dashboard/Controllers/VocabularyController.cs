@@ -64,7 +64,8 @@ public sealed class VocabularyController : Controller
         return View(model);
     }
 
-    // Create New Vocabulary — form đơn giản (word + CEFR + phonetics + is_phrase); sense/word-type thêm ở trang chi tiết.
+    // Create Vocabulary Metadata (Figma): thông tin cơ bản + phiên âm + một/nhiều nghĩa (Word type + EN/VI).
+    // Ví dụ (examples) hiển thị theo thiết kế nhưng API chưa hỗ trợ CRUD nên không được lưu.
     [HttpGet("/vocabulary/create")]
     public IActionResult Create()
     {
@@ -74,30 +75,86 @@ public sealed class VocabularyController : Controller
     [HttpPost("/vocabulary/create")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(
-        [FromForm] WordInput input,
+        [FromForm] string? word,
+        [FromForm] string? cefr,
+        [FromForm] string? phoneticUk,
+        [FromForm] string[]? senseWordClass,
+        [FromForm] string[]? meaningEn,
+        [FromForm] string[]? meaningVi,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(input.Word))
+        if (string.IsNullOrWhiteSpace(word))
         {
             TempData["VocabError"] = "Word is required.";
             return RedirectToAction(nameof(Create));
         }
 
-        var result = await _apiClient.CreateWordAsync(input, cancellationToken);
-        if (result.IsSuccess)
+        // 1) Tạo word (lấy word_id để gắn nghĩa).
+        var (result, newId) = await _apiClient.CreateWordWithIdAsync(
+            new WordInput(
+                word.Trim(),
+                string.IsNullOrWhiteSpace(cefr) ? null : cefr,
+                string.IsNullOrWhiteSpace(phoneticUk) ? null : phoneticUk.Trim(),
+                null,
+                false),
+            cancellationToken);
+
+        if (!result.IsSuccess)
         {
-            TempData["VocabSuccess"] = $"Vocabulary \"{input.Word}\" created. Add senses in the detail page.";
-            return RedirectToAction(nameof(Index));
+            TempData["VocabError"] = result.StatusCode switch
+            {
+                409 => "That word already exists.",
+                401 or 403 => "You do not have permission to create vocabulary.",
+                400 => result.Message ?? "Invalid vocabulary data.",
+                _ => result.Message ?? "Unable to create vocabulary.",
+            };
+            return RedirectToAction(nameof(Create));
         }
 
-        TempData["VocabError"] = result.StatusCode switch
+        // 2) Tạo các nghĩa (chỉ những block có định nghĩa EN hoặc VI).
+        var senseErrors = new List<string>();
+        if (newId is { } wordId)
         {
-            409 => "That word already exists.",
-            401 or 403 => "You do not have permission to create vocabulary.",
-            400 => result.Message ?? "Invalid vocabulary data.",
-            _ => result.Message ?? "Unable to create vocabulary.",
-        };
-        return RedirectToAction(nameof(Create));
+            var classes = senseWordClass ?? Array.Empty<string>();
+            var ens = meaningEn ?? Array.Empty<string>();
+            var vis = meaningVi ?? Array.Empty<string>();
+            var blockCount = Math.Max(ens.Length, vis.Length);
+            var order = 1;
+
+            for (var i = 0; i < blockCount; i++)
+            {
+                var en = i < ens.Length ? ens[i] : null;
+                var vi = i < vis.Length ? vis[i] : null;
+                if (string.IsNullOrWhiteSpace(en) && string.IsNullOrWhiteSpace(vi))
+                {
+                    continue;
+                }
+
+                var wordClass = i < classes.Length && !string.IsNullOrWhiteSpace(classes[i])
+                    ? classes[i].Trim().ToLowerInvariant()
+                    : null;
+
+                var senseResult = await _apiClient.CreateSenseAsync(
+                    wordId,
+                    new SenseInput(order, wordClass, string.IsNullOrWhiteSpace(en) ? null : en.Trim(),
+                        string.IsNullOrWhiteSpace(vi) ? null : vi.Trim()),
+                    cancellationToken);
+
+                if (senseResult.IsSuccess)
+                {
+                    order++;
+                }
+                else
+                {
+                    senseErrors.Add(senseResult.Message ?? $"meaning #{i + 1}");
+                }
+            }
+        }
+
+        TempData["VocabSuccess"] = senseErrors.Count == 0
+            ? $"Vocabulary \"{word.Trim()}\" created."
+            : $"Vocabulary \"{word.Trim()}\" created, but some meanings failed: {string.Join("; ", senseErrors)}";
+        return RedirectToAction(nameof(Index));
     }
 
     // Update Vocabulary Metadata — màn Edit theo Figma: thông tin cơ bản + định nghĩa/ví dụ + trạng thái lưu trữ.
