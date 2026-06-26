@@ -1,11 +1,12 @@
 @{
-    ViewData["Title"] = "Settings";
+    ViewData["Title"] = "Setting";
     var theme = (ViewData["Theme"] as string) ?? "light";
+    var language = (ViewData["Language"] as string) ?? "vi";
 }
 
 <div class="page-header">
-    <h1 class="page-title">Settings</h1>
-    <p class="page-subtitle">Personalize how the dashboard looks.</p>
+    <h1 class="page-title">Setting</h1>
+    <p class="page-subtitle">Manage your administrative preferences and localization settings.</p>
 </div>
 
 @if (TempData["SettingsSaved"] is string saved)
@@ -13,61 +14,79 @@
     <div class="alert alert-success">@saved</div>
 }
 
-<div class="panel">
-    <div class="panel-head"><h2 class="panel-title">Appearance</h2></div>
-    <p class="panel-muted" style="margin-bottom:6px;">Choose a theme for the dashboard. Light is the default.</p>
+<form method="post" action="/settings" id="settings-form" class="settings-form">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="theme" id="theme-input" value="@theme" />
+    <input type="hidden" name="language" id="language-input" value="@language" />
 
-    <form method="post" action="/settings/theme" id="theme-form">
-        @Html.AntiForgeryToken()
-        <div class="theme-options">
-            <label class="theme-option swatch-light @(theme == "light" ? "is-active" : "")">
-                <input type="radio" name="theme" value="light" checked="@(theme == "light")" />
-                <div class="theme-swatch">
-                    <div class="sw-side"></div>
-                    <div class="sw-main">
-                        <div class="sw-bar accent"></div>
-                        <div class="sw-bar"></div>
-                        <div class="sw-bar" style="width:80%"></div>
-                    </div>
-                </div>
-                <div class="theme-option-label">
-                    <span>Light</span>
-                    @if (theme == "light")
-                    {
-                        <span class="theme-current">Current</span>
-                    }
-                </div>
-            </label>
+    <section class="settings-panel">
+        <header class="settings-panel-head">
+            <h2 class="settings-panel-title">Appearance</h2>
+            <p class="settings-panel-sub">Select your preferred viewing experience.</p>
+        </header>
 
-            <label class="theme-option swatch-dark @(theme == "dark" ? "is-active" : "")">
-                <input type="radio" name="theme" value="dark" checked="@(theme == "dark")" />
-                <div class="theme-swatch">
-                    <div class="sw-side"></div>
-                    <div class="sw-main">
-                        <div class="sw-bar accent"></div>
-                        <div class="sw-bar"></div>
-                        <div class="sw-bar" style="width:80%"></div>
-                    </div>
-                </div>
-                <div class="theme-option-label">
-                    <span>Dark</span>
-                    @if (theme == "dark")
-                    {
-                        <span class="theme-current">Current</span>
-                    }
-                </div>
-            </label>
+        <div class="appearance-grid">
+            <button type="button" class="appearance-card js-theme @(theme == "light" ? "is-selected" : "")" data-theme="light">
+                <span class="appearance-icon icon-light">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 4V2m0 20v-2m8-8h2M2 12h2m13.66-5.66 1.41-1.41M4.93 19.07l1.41-1.41m0-11.32L4.93 4.93m14.14 14.14-1.41-1.41M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="appearance-text">
+                    <span class="appearance-title">Chế độ Sáng</span>
+                    <span class="appearance-sub">Light Mode</span>
+                </span>
+                <span class="radio-dot" aria-hidden="true"></span>
+            </button>
+
+            <button type="button" class="appearance-card js-theme @(theme == "dark" ? "is-selected" : "")" data-theme="dark">
+                <span class="appearance-icon icon-dark">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="appearance-text">
+                    <span class="appearance-title">Chế độ Tối</span>
+                    <span class="appearance-sub">Dark Mode</span>
+                </span>
+                <span class="radio-dot" aria-hidden="true"></span>
+            </button>
         </div>
+    </section>
 
-        <button type="submit" class="btn-primary" style="margin-top:18px;">Save theme</button>
-    </form>
-</div>
+    <section class="settings-panel">
+        <header class="settings-panel-head">
+            <h2 class="settings-panel-title">Language</h2>
+            <p class="settings-panel-sub">Choose the primary language for the administrative console.</p>
+        </header>
+
+        <div class="language-list">
+            <button type="button" class="language-row js-language @(language == "vi" ? "is-selected" : "")" data-language="vi">
+                <span class="language-icon">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </span>
+                <span class="language-text">
+                    <span class="language-title">Tiếng Việt</span>
+                    <span class="language-sub">Vietnamese</span>
+                </span>
+                <span class="radio-dot" aria-hidden="true"></span>
+            </button>
+
+            <button type="button" class="language-row js-language @(language == "en" ? "is-selected" : "")" data-language="en">
+                <span class="language-icon">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </span>
+                <span class="language-text">
+                    <span class="language-title">Tiếng Anh</span>
+                    <span class="language-sub">English</span>
+                </span>
+                <span class="radio-dot" aria-hidden="true"></span>
+            </button>
+        </div>
+    </section>
+
+    <div class="settings-actions">
+        <a href="/settings" class="btn-secondary">Hủy / Cancel</a>
+        <button type="submit" class="btn-primary">Lưu thay đổi / Save Changes</button>
+    </div>
+</form>
 
 @section Scripts {
-    <script>
-        // Đổi theme là submit ngay khi chọn radio (mượt hơn), vẫn có nút Save dự phòng.
-        document.querySelectorAll('#theme-form input[name="theme"]').forEach(function (el) {
-            el.addEventListener('change', function () { document.getElementById('theme-form').submit(); });
-        });
-    </script>
+    <script src="~/js/settings.js" asp-append-version="true"></script>
 }
