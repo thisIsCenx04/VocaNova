@@ -13,7 +13,7 @@
         if (!ctx) { return null; }
         return new Chart(ctx, {
             type: 'line',
-            data: { labels: [], datasets: [{ label: label, data: [], borderColor: ACCENT, backgroundColor: fillRgba, fill: true, tension: 0.3, pointRadius: 2 }] },
+            data: { labels: [], datasets: [{ label: ctx.dataset.label || label, data: [], borderColor: ACCENT, backgroundColor: fillRgba, fill: true, tension: 0.3, pointRadius: 2 }] },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -47,7 +47,7 @@
         var colors = (payload.labels || []).map(function (_, i) { return BAR_COLORS[i % BAR_COLORS.length]; });
         new Chart(ctx, {
             type: 'bar',
-            data: { labels: payload.labels, datasets: [{ label: 'Users', data: payload.values, backgroundColor: colors }] },
+            data: { labels: payload.labels, datasets: [{ label: ctx.dataset.label || 'Users', data: payload.values, backgroundColor: colors }] },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,

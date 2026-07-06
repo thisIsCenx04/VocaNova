@@ -302,6 +302,33 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> RestoreKnnLookupAsync(string lookup, uint id, CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Patch, $"api/admin/knn/{lookup}/{id}/restore", cancellationToken);
 
+    public Task<Models.Api.Auth.MeProfile?> GetMyProfileAsync(CancellationToken cancellationToken = default) =>
+        GetDataAsync<Models.Api.Auth.MeProfile>("api/auth/me", cancellationToken);
+
+    public Task<ApiActionResult> UpdateMyProfileAsync(string? displayName, string? avatarUrl, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Put, "api/auth/me/profile", new
+        {
+            DisplayName = displayName,
+            AvatarUrl = avatarUrl,
+        }, cancellationToken);
+
+    public Task<ApiActionResult> ChangeMyPasswordAsync(string? currentPassword, string? newPassword, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Put, "api/auth/me/password", new
+        {
+            CurrentPassword = currentPassword,
+            NewPassword = newPassword,
+        }, cancellationToken);
+
+    public Task<ApiActionResult> UploadMyAvatarAsync(ImageUpload upload, CancellationToken cancellationToken = default)
+    {
+        var content = new MultipartFormDataContent();
+        var file = new StreamContent(upload.Content);
+        file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(upload.ContentType);
+        content.Add(file, "file", upload.FileName);
+
+        return SendMultipartActionAsync(HttpMethod.Post, "api/auth/me/avatar", content, cancellationToken);
+    }
+
     private static object TopicPayload(TopicInput input) => new
     {
         input.TopicName,

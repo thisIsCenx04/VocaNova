@@ -2329,6 +2329,63 @@ html, body {
     .appearance-grid { grid-template-columns: 1fr; }
 }
 
+/* ===== Admin Profile (F063A) ===== */
+.account-link { text-decoration: none; color: inherit; }
+.profile-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+    align-items: start;
+}
+.profile-identity {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    padding: 24px 20px;
+}
+.profile-avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border);
+}
+.profile-avatar-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 34px;
+    font-weight: 700;
+}
+.profile-name { font-size: 18px; font-weight: 700; color: var(--text); margin: 4px 0 0; }
+.profile-badges { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; text-transform: capitalize; }
+.profile-meta { width: 100%; margin: 12px 0 4px; display: flex; flex-direction: column; gap: 8px; }
+.profile-meta-row { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.profile-meta-row dt { color: var(--text-muted); }
+.profile-meta-row dd { margin: 0; color: var(--text); font-weight: 600; }
+.profile-avatar-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+.profile-file-label { font-size: 13px; font-weight: 600; color: var(--text); text-align: left; }
+.profile-main { display: flex; flex-direction: column; gap: 20px; }
+.profile-form { display: flex; flex-direction: column; gap: 14px; }
+.profile-form .form-actions { display: flex; justify-content: flex-end; }
+.profile-hint { font-size: 12px; color: var(--text-muted); margin: -4px 0 0; }
+
+@media (max-width: 860px) {
+    .profile-grid { grid-template-columns: 1fr; }
+}
+
 /* ===== Create Vocabulary Metadata screen ===== */
 .create-card {
     display: block;

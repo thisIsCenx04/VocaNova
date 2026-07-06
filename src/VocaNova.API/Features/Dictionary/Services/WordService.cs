@@ -4,6 +4,7 @@ using VocaNova.API.Common.Extensions;
 using VocaNova.API.Common.Results;
 using VocaNova.API.Features.Dictionary.DTOs;
 using VocaNova.API.Features.Dictionary.Repositories;
+using VocaNova.API.Features.Notifications.Services;
 using VocaNova.API.Infrastructure.Caching;
 using VocaNova.API.Infrastructure.Storage;
 
@@ -26,19 +27,22 @@ public sealed class WordService : IWordService
     private readonly IImageStorage? _imageStorage;
     private readonly IWordSearchCache? _wordSearchCache;
     private readonly IWordDetailCache? _wordDetailCache;
+    private readonly INotificationService? _notificationService;
 
     public WordService(
         IWordRepository wordRepository,
         IWordSearchCache? wordSearchCache = null,
         IWordDetailCache? wordDetailCache = null,
         IAudioStorage? audioStorage = null,
-        IImageStorage? imageStorage = null)
+        IImageStorage? imageStorage = null,
+        INotificationService? notificationService = null)
     {
         _wordRepository = wordRepository;
         _audioStorage = audioStorage;
         _imageStorage = imageStorage;
         _wordSearchCache = wordSearchCache;
         _wordDetailCache = wordDetailCache;
+        _notificationService = notificationService;
     }
 
     public async Task<Result<PagedResult<WordSummaryDto>>> SearchAsync(
@@ -376,7 +380,23 @@ public sealed class WordService : IWordService
         uint wordId,
         CancellationToken cancellationToken = default)
     {
-        return await SetWordStatusAsync(wordId, UserStatus.Deleted, cancellationToken);
+        var result = await SetWordStatusAsync(wordId, UserStatus.Deleted, cancellationToken);
+
+        // Notify the affected users (list/progress) that a word they use was removed. Best-effort:
+        // a notification failure must not fail the soft-delete itself.
+        if (result.IsSuccess && _notificationService is not null)
+        {
+            try
+            {
+                await _notificationService.NotifyWordDeletedAsync(wordId, cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // Swallow — the word is already soft-deleted; notifications are non-critical.
+            }
+        }
+
+        return result;
     }
 
     public async Task<Result<bool>> RestoreAsync(
