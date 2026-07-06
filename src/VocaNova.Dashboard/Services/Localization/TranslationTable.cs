@@ -50,6 +50,8 @@ public static class TranslationTable
         ("Action", "Thao tác"),
         ("Actions", "Thao tác"),
         ("Any status", "Mọi trạng thái"),
+        ("All", "Tất cả"),
+        ("Filter by first letter", "Lọc theo chữ cái đầu"),
         ("Show deleted", "Hiện mục đã xóa"),
         ("View details", "Xem chi tiết"),
         ("Word", "Từ"),

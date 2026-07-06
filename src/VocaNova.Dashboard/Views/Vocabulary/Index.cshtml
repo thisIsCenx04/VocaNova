@@ -23,6 +23,24 @@
     }
 
     string StatusBadgeClass(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
+
+    // Thanh A–Z: giữ nguyên mọi filter, chỉ đổi q = chữ cái (hoặc bỏ q khi "Tất cả"); page reset về 1.
+    string LetterUrl(string? letter)
+    {
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(letter)) qs.Add($"q={Uri.EscapeDataString(letter)}");
+        if (!string.IsNullOrWhiteSpace(Model.Cefr)) qs.Add($"cefr={Uri.EscapeDataString(Model.Cefr)}");
+        if (!string.IsNullOrWhiteSpace(Model.WordType)) qs.Add($"wordType={Uri.EscapeDataString(Model.WordType)}");
+        if (Model.TopicId is { } tid) qs.Add($"topicId={tid}");
+        if (!string.IsNullOrWhiteSpace(Model.Status)) qs.Add($"status={Uri.EscapeDataString(Model.Status)}");
+        if (Model.IncludeDeleted) qs.Add("includeDeleted=true");
+        return qs.Count == 0 ? "/vocabulary" : "/vocabulary?" + string.Join("&", qs);
+    }
+
+    // Chữ cái đang chọn = khi q đúng 1 ký tự chữ (A–Z). Prefix search dài hơn không highlight chữ nào.
+    char? selectedLetter = !string.IsNullOrEmpty(Model.Q) && Model.Q.Length == 1 && char.IsLetter(Model.Q[0])
+        ? char.ToUpperInvariant(Model.Q[0])
+        : null;
 }
 
 <div class="page-header page-header-row">
@@ -77,6 +95,14 @@
     <button type="submit" class="btn-primary">@T["Filter"]</button>
     <a href="/vocabulary" class="btn-secondary">@T["Reset"]</a>
 </form>
+
+<nav class="alpha-bar" aria-label="@T["Filter by first letter"]">
+    <a class="alpha-link @(string.IsNullOrWhiteSpace(Model.Q) ? "active" : "")" href="@LetterUrl(null)">@T["All"]</a>
+    @for (var c = 'A'; c <= 'Z'; c++)
+    {
+        <a class="alpha-link @(selectedLetter == c ? "active" : "")" href="@LetterUrl(c.ToString())" aria-label="@c">@c</a>
+    }
+</nav>
 
 <div class="panel table-panel">
     <table class="data-table">
