@@ -28,7 +28,7 @@ public sealed class SettingsController : Controller
         AppendCookie(ThemeCookie, themeValue);
         AppendCookie(LanguageCookie, languageValue);
 
-        TempData["SettingsSaved"] = "Đã lưu thay đổi / Changes saved.";
+        TempData["SettingsSaved"] = "Changes saved.";
         return RedirectToAction(nameof(Index));
     }
 

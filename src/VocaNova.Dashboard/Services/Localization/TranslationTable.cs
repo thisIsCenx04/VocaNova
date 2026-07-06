@@ -34,6 +34,14 @@ public static class TranslationTable
         ("Select your preferred viewing experience.", "Chọn trải nghiệm hiển thị bạn muốn."),
         ("Language", "Ngôn ngữ"),
         ("Choose the primary language for the administrative console.", "Chọn ngôn ngữ chính cho bảng quản trị."),
+        ("Light Mode", "Chế độ Sáng"),
+        ("Dark Mode", "Chế độ Tối"),
+        ("Vietnamese", "Tiếng Việt"),
+        ("English", "Tiếng Anh"),
+        ("Save Changes", "Lưu thay đổi"),
+        ("Changes saved.", "Đã lưu thay đổi."),
+        ("Theme set to Dark.", "Đã chuyển sang giao diện Tối."),
+        ("Theme set to Light.", "Đã chuyển sang giao diện Sáng."),
 
         // ===== Common / shared =====
         ("Filter", "Lọc"),
