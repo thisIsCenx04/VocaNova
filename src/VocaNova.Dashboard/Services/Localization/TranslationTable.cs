@@ -182,6 +182,7 @@ public static class TranslationTable
         ("Vietnamese example", "Ví dụ tiếng Việt"),
         ("Add example", "Thêm ví dụ"),
         ("Remove", "Xóa"),
+        ("Removing saved examples is temporarily disabled.", "Xóa ví dụ đã lưu tạm thời chưa được hỗ trợ."),
         ("Status & Storage", "Trạng thái & Lưu trữ"),
         ("Date created", "Ngày tạo"),
         ("Creator", "Người tạo"),

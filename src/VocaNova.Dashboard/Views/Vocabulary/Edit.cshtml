@@ -149,7 +149,9 @@
                                                 <textarea name="exampleVi" class="form-control" rows="2">@ex.ExampleVi</textarea>
                                             </div>
                                         </div>
-                                        <button type="button" class="example-remove" aria-label="@T["Remove"]">✕</button>
+                                        <button type="button" class="example-remove is-locked" disabled
+                                                title="@T["Removing saved examples is temporarily disabled."]"
+                                                aria-label="@T["Remove"]">✕</button>
                                     </div>
                                 }
                             </div>

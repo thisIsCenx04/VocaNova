@@ -45,9 +45,11 @@
     });
 
     // Xóa dòng ví dụ (event delegation).
+    // R02: nút xóa ví dụ ĐÃ LƯU bị khóa tạm thời (.is-locked/disabled) để tránh mất dữ liệu;
+    // chỉ cho phép hủy dòng ví dụ MỚI thêm (chưa lưu).
     document.addEventListener("click", function (e) {
         var btn = e.target.closest ? e.target.closest(".example-remove") : null;
-        if (btn) {
+        if (btn && !btn.disabled && !btn.classList.contains("is-locked")) {
             var row = btn.closest(".example-row");
             if (row) { row.remove(); }
         }
