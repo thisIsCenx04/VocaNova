@@ -27,6 +27,12 @@ abstract final class ApiEndpoints {
   static const progressMasteryBreakdown = '/api/progress/mastery-breakdown';
   static const progressWeakestWords = '/api/progress/weakest-words';
 
+  static const notifications = '/api/notifications';
+  static const notificationsUnreadCount = '/api/notifications/unread-count';
+  static const notificationsReadAll = '/api/notifications/read-all';
+
+  static String notificationRead(int id) => '$notifications/$id/read';
+
   static String word(int id) => '$words/$id';
 
   static String listWords(int id) => '$lists/$id/words';

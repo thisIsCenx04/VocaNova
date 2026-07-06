@@ -13,6 +13,7 @@ import 'package:vocanova_mobile/features/auth/presentation/register_screen.dart'
 import 'package:vocanova_mobile/features/dictionary/presentation/word_search_screen.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/word_detail_screen.dart';
 import 'package:vocanova_mobile/features/home/presentation/home_screen.dart';
+import 'package:vocanova_mobile/features/notifications/presentation/notifications_screen.dart';
 import 'package:vocanova_mobile/features/lists/presentation/lists_screen.dart';
 import 'package:vocanova_mobile/features/lists/presentation/list_detail_screen.dart';
 import 'package:vocanova_mobile/features/progress/presentation/progress_overview_screen.dart';
@@ -125,6 +126,10 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.progressCharts,
         builder: (_, _) => const ProgressChartsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        builder: (_, _) => const NotificationsScreen(),
       ),
       GoRoute(
         path: AppRoutes.list,

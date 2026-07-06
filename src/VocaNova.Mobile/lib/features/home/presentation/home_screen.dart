@@ -1,10 +1,12 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
+import 'package:vocanova_mobile/features/notifications/application/notifications_notifier.dart';
 
 class _HomePalette {
   const _HomePalette({
@@ -57,7 +59,9 @@ class HomeScreen extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            _HomeHeader(onNotification: () => context.push(AppRoutes.settings)),
+            _HomeHeader(
+              onNotification: () => context.push(AppRoutes.notifications),
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(25, 17, 25, 10),
               child: Column(
@@ -174,14 +178,18 @@ class _LogoPainter extends CustomPainter {
   }
 }
 
-class _NotificationButton extends StatelessWidget {
+class _NotificationButton extends ConsumerWidget {
   const _NotificationButton({required this.onPressed});
 
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = _HomePalette.of(context);
+    // .asData avoids rethrowing while loading or on error (e.g. offline) —
+    // the badge simply hides until a real count arrives.
+    final unread =
+        ref.watch(notificationsUnreadCountProvider).asData?.value ?? 0;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -202,18 +210,19 @@ class _NotificationButton extends StatelessWidget {
             ),
           ),
         ),
-        Positioned(
-          top: 9,
-          right: 8,
-          child: Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: Color(0xFFFF3D8B),
-              shape: BoxShape.circle,
+        if (unread > 0)
+          Positioned(
+            top: 9,
+            right: 8,
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFF3D8B),
+                shape: BoxShape.circle,
+              ),
             ),
           ),
-        ),
       ],
     );
   }
