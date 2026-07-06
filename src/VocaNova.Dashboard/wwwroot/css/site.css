@@ -692,6 +692,45 @@ h1, h2, h3, h4, .page-title, .panel-title {
     background: var(--page-bg);
 }
 
+/* A–Z alphabetical index (R01) */
+.alpha-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.alpha-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    transition: background .15s, color .15s, border-color .15s;
+}
+
+.alpha-link:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.alpha-link.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
 .alert {
     border-radius: var(--radius);
     padding: 11px 14px;

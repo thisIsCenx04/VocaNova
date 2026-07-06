@@ -1363,6 +1363,133 @@ Phụ thuộc: F050, F055
 
 ---
 
+## PHASE 2.5 — Dashboard Revisions (Điều chỉnh sau rà soát)
+
+> **Bối cảnh:** Sau khi dashboard hoàn tất F055–F063, rà soát thực tế phát hiện 4 nhóm cần điều chỉnh:
+> tìm kiếm theo bảng chữ cái (a–z), kiểm chứng CRUD từ vựng, hoàn thiện dịch ngôn ngữ, và lỗi trang Settings
+> không tự đổi ngôn ngữ/giao diện. Mỗi mục dưới đây = 1 branch điều chỉnh (`fix/…` hoặc `feature/…`).
+>
+> **Ghi chú kiến trúc i18n hiện tại (đã kiểm chứng trong code):**
+> - `Services/Localization/Translator.cs`: đọc cookie `VocaNova.Dashboard.Language`, đăng ký **Scoped** trong `Program.cs`
+>   (mỗi request tạo mới → đọc lại cookie). Chuỗi gốc trong view là **tiếng Anh**; khi `Language == "vi"` thì map
+>   sang tiếng Việt qua `TranslationTable.Vietnamese`, thiếu key thì fallback về tiếng Anh.
+> - Vì Translator là Scoped, **mọi trang đều đổi ngôn ngữ đúng** ngay sau khi cookie đổi. Trang nào "không đổi"
+>   là do chuỗi bị **hardcode song ngữ** trong view, không đi qua `@T[]` (xem R04).
+
+---
+
+### R01 — Vocabulary Search: kiểm tra & bổ sung chỉ mục bảng chữ cái (A–Z)
+```
+Branch:    fix/dashboard/vocab-search-alphabet
+Assignee:  Tan
+Thời gian: 2h
+Phụ thuộc: F057
+```
+**Hiện trạng (đã kiểm chứng):**
+- `VocabularyController.Index` nhận `q` → `WordListFilter.Q` → gọi API `GET /api/words?q=` (F022 dùng `word_key LIKE {NormalizeWord(q)}%`).
+- Đây là **prefix search**: gõ 1 ký tự bất kỳ `a`–`z` sẽ ra các từ **bắt đầu** bằng ký tự đó → về mặt kỹ thuật a–z đã hoạt động.
+- **Chưa có** thanh chỉ mục bảng chữ cái (A B C … Z) để lọc nhanh; người dùng phải tự gõ.
+
+**Quyết định (đã chốt 2026-07-06):** hỗ trợ **cả hai** — giữ prefix search (ô tìm kiếm tự do) **và** thêm thanh A–Z để lọc nhanh theo chữ cái đầu.
+
+**Done khi:** ✅ **HOÀN THÀNH 2026-07-06**
+- [x] Xác nhận: search 1 ký tự `a`…`z` trả đúng từ bắt đầu bằng ký tự đó (API `word_key LIKE q%`, kiểm chứng qua `VocabularyController.Index` → `WordListFilter.Q`).
+- [x] Thêm thanh chỉ mục A–Z trong `Views/Vocabulary/Index.cshtml` (ngay dưới `filter-bar`): nút "All/Tất cả" + 26 nút `A`…`Z` (helper `LetterUrl`).
+- [x] Bấm 1 chữ cái = điều hướng `/vocabulary?q={char}` (giữ nguyên cefr, wordType, topic, status, includeDeleted; page reset về 1).
+- [x] Chữ cái đang chọn được highlight (`selectedLetter` = `Model.Q` khi đúng 1 ký tự chữ); "All" sáng khi không có `q`.
+- [x] Chỉ A–Z (từ vựng tiếng Anh).
+- [x] Nhãn/aria đi qua `@T[]` (thêm key `All`, `Filter by first letter` vào `TranslationTable`).
+- [x] Responsive: `.alpha-bar { flex-wrap: wrap; }` trong `site.css`; style `.alpha-link` theme-aware (dùng biến `--accent`/`--surface`/`--border`).
+- [x] Build dashboard: 0 error.
+
+---
+
+### R02 — Vocabulary CRUD: kiểm chứng toàn luồng & bịt lỗ hổng
+```
+Branch:    fix/dashboard/vocab-crud-verify
+Assignee:  Tan
+Thời gian: 2.5h
+Phụ thuộc: F057, F058
+```
+**Hiện trạng (đã kiểm chứng trong `VocabularyController.cs`):**
+- **Create** (`/vocabulary/create`): tạo word → tạo từng sense (Word type + nghĩa EN/VI + 1 ví dụ/sense). OK.
+- **Edit** (`/vocabulary/{id}/edit`): PUT metadata + cập nhật sense hiện có + thêm nghĩa mới + gom ví dụ theo block + toggle Active = delete/restore. OK.
+- **Delete/Restore** (`/vocabulary/delete`, `/restore`): soft delete/restore, giữ filter qua `returnUrl`. OK.
+- Ví dụ (examples) đã được lưu (commit `1f061e2 feat(dictionary): persist sense examples on create/update`).
+
+**Quyết định (đã chốt 2026-07-06): TẠM VÔ HIỆU HÓA nút xóa (sense/ví dụ).**
+- [ ] Xóa sense / xóa ví dụ riêng lẻ trong màn Edit: **tạm vô hiệu hóa** (hiển thị nút ở trạng thái `disabled` + tooltip "Tạm thời chưa hỗ trợ", HOẶC ẩn nút) — chưa nối API delete sense (F027) ở đợt này.
+- [ ] Giữ nguyên luồng thêm/sửa sense + ví dụ (đang chạy tốt); chỉ chặn thao tác xóa để tránh mất dữ liệu ngoài ý muốn.
+- [ ] Ghi rõ đây là quyết định "hoãn có chủ đích", sẽ mở lại khi cần (không xóa code, chỉ disable).
+
+**Done khi (checklist kiểm chứng — chạy tay end-to-end, ghi kết quả vào Activity History):**
+- [ ] Create: từ mới + ≥2 nghĩa + ví dụ → hiển thị đúng ở Detail; `word_key` trùng → báo 409 "That word already exists.".
+- [ ] Create thiếu `word` → chặn với thông báo "Word is required.".
+- [ ] Edit: đổi metadata (word, cefr, phonetic), sửa nghĩa hiện có, thêm nghĩa mới, thêm ví dụ → tất cả lưu đúng.
+- [ ] Edit toggle Active off → từ chuyển `deleted`; toggle on → `active` trở lại.
+- [ ] Delete từ list (active) → biến mất khỏi danh sách active, còn khi bật "Hiện đã xóa".
+- [ ] Restore từ deleted → trở lại active.
+- [ ] Phân quyền: user không phải admin/super_admin **không thấy** nút Edit/Delete/Restore và bị API chặn 401/403.
+- [ ] Thông báo lỗi hiển thị đúng khi API trả 400/409/403.
+- [ ] Nút xóa sense/ví dụ ở màn Edit đang ở trạng thái **disabled** (hoặc ẩn), không gọi API, không làm hỏng luồng lưu.
+
+---
+
+### R03 — Hoàn thiện dịch ngôn ngữ (i18n coverage)
+```
+Branch:    feature/dashboard/i18n-coverage
+Assignee:  Tan
+Thời gian: 2.5h
+Phụ thuộc: F055
+```
+**Hiện trạng (đã kiểm chứng):**
+- Cơ chế dịch đã có và **đúng** (`Translator` + `TranslationTable`, Scoped). Vấn đề là **độ phủ chưa đủ**: một số chuỗi bị hardcode, không đi qua `@T[]` nên không đổi theo ngôn ngữ.
+- Ví dụ đã phát hiện:
+  - `Views/Vocabulary/Index.cshtml` dòng ~31: `Quản lý dữ liệu từ vựng — @Model.TotalItems @T["word(s)."]` → phần "Quản lý dữ liệu từ vựng" hardcode tiếng Việt.
+  - `Views/Settings/Index.cshtml`: nhãn thẻ theme/ngôn ngữ và nút hành động hardcode song ngữ (xem R04).
+  - `data-confirm="Delete '@item.Word'? …"` (Index.cshtml) hardcode tiếng Anh.
+
+**Done khi:**
+- [ ] Rà toàn bộ `Views/**/*.cshtml`, tìm chuỗi hiển thị **chưa** bọc `@T[]` (đặc biệt tiêu đề phụ, placeholder, `data-confirm`, `title`, `aria-label`, thông báo).
+- [ ] Bọc tất cả chuỗi tĩnh còn thiếu bằng `@T["..."]` với **key gốc là tiếng Anh**.
+- [ ] Bổ sung các key còn thiếu vào `TranslationTable.Entries` (cặp EN→VI).
+- [ ] Thông báo phía server (`TempData["VocabSuccess"]`, `VocabError`…) dùng key có trong bảng dịch, hoặc render qua `@T[]` ở view (hiện `_Layout` đã có `@T[toastMsg]`).
+- [ ] Kiểm chứng: chuyển `vi`↔`en` ở Settings → **mọi** trang (Dashboard, Vocabulary, Topics, Users, Statistics, KNN, Settings) đổi ngôn ngữ đồng nhất, không còn chuỗi lẫn lộn.
+- [ ] Không còn chuỗi song ngữ "X / Y" hiển thị cùng lúc (thay bằng 1 ngôn ngữ theo lựa chọn).
+
+---
+
+### R04 — Fix: trang Settings không tự đổi ngôn ngữ/giao diện 🔴
+```
+Branch:    fix/dashboard/settings-not-reacting
+Assignee:  Tan
+Thời gian: 2h
+Phụ thuộc: R03
+```
+**Triệu chứng (theo báo cáo):** đổi ngôn ngữ ở Settings thì **các trang khác** đổi đúng, nhưng **chính trang Settings** không đổi.
+
+**Nguyên nhân gốc (đã kiểm chứng — KHÔNG phải lỗi Translator):**
+- `Translator` là **Scoped** → sau khi lưu cookie và redirect về `/settings`, các chuỗi `@T[]` trên trang Settings **đã** đổi đúng.
+- Nhưng phần hiển thị **nổi bật nhất** của trang Settings lại **hardcode song ngữ**, không đi qua `@T[]`, nên trông như "không đổi":
+  - `Views/Settings/Index.cshtml`: `"Chế độ Sáng"`/`"Light Mode"`, `"Chế độ Tối"`/`"Dark Mode"` (thẻ theme).
+  - `"Tiếng Việt"`/`"Vietnamese"`, `"Tiếng Anh"`/`"English"` (hàng ngôn ngữ).
+  - Nút `"Hủy / Cancel"`, `"Lưu thay đổi / Save Changes"`.
+  - `SettingsController.Save`: `TempData["SettingsSaved"] = "Đã lưu thay đổi / Changes saved."` (song ngữ cứng).
+- Về **theme**: `settings.js` chỉ đổi highlight thẻ + hidden input (chưa lưu tới khi Save). `_Layout` đọc cookie theme và set `data-theme` server-side → sau khi Save + reload, trang Settings **phải** đổi theme; cần kiểm chứng các thành phần riêng của Settings (`appearance-card`, `language-row`) có dùng biến CSS theme-aware trong `site.css` không, tránh màu cứng.
+
+**Done khi:**
+- [ ] Thay toàn bộ nhãn hardcode song ngữ trong `Views/Settings/Index.cshtml` bằng `@T[]` (một ngôn ngữ theo lựa chọn):
+  - Thẻ theme: nhãn qua `@T["Light Mode"]`, `@T["Dark Mode"]` (bỏ dòng phụ song ngữ).
+  - Hàng ngôn ngữ: `@T["Vietnamese"]`, `@T["English"]`.
+  - Nút: `@T["Cancel"]`, `@T["Save Changes"]`.
+- [ ] Thêm các key mới vào `TranslationTable`: `Light Mode`, `Dark Mode`, `Vietnamese`, `English`, `Save Changes`, `Changes saved.`…
+- [ ] `SettingsController.Save`: đổi `TempData["SettingsSaved"]` sang **key tiếng Anh** (vd `"Changes saved."`) rồi render qua `@T[]` ở view, thay vì chuỗi song ngữ cứng.
+- [ ] Kiểm chứng theme: đổi Dark/Light + Save → trang Settings (và mọi thẻ trong đó) đổi màu đúng nhờ `data-theme`; sửa `site.css` nếu `appearance-card`/`language-row` còn dùng màu cứng.
+- [ ] Kiểm chứng ngôn ngữ: chọn `en` + Save → trang Settings hiển thị **toàn tiếng Anh**; chọn `vi` + Save → **toàn tiếng Việt**; không còn hiển thị đồng thời 2 ngôn ngữ.
+- [ ] (Tùy chọn UX) Cân nhắc đổi theme/ngôn ngữ **áp dụng ngay** khi bấm (không cần Save) để phản hồi tức thì; nếu giữ mô hình Save thì đảm bảo sau reload nhất quán.
+
+---
+
 ## PHASE 3 — Flutter Mobile
 
 ---
