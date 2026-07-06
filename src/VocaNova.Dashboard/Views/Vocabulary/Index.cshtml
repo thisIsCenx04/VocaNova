@@ -46,7 +46,7 @@
 <div class="page-header page-header-row">
     <div>
         <h1 class="page-title">@T["Vocabulary Metadata Management"]</h1>
-        <p class="page-subtitle">Quản lý dữ liệu từ vựng — @Model.TotalItems @T["word(s)."]</p>
+        <p class="page-subtitle">@T["Manage vocabulary metadata"] — @Model.TotalItems @T["word(s)."]</p>
     </div>
     <a href="/vocabulary/create" class="btn-primary">@T["+ Create New Vocabulary"]</a>
 </div>
@@ -164,7 +164,7 @@
                                 {
                                     <form method="post" action="/vocabulary/delete" class="inline-form js-confirm"
                                           data-word="@item.Word"
-                                          data-confirm="Delete '@item.Word'? It will be soft-deleted.">
+                                          data-confirm="@(T.Format("Delete '{0}'? It will be soft-deleted.", item.Word))">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@item.WordId" />
                                         <input type="hidden" name="returnUrl" value="@returnUrl" />

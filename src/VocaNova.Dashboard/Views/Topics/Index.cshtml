@@ -43,7 +43,7 @@
         <input type="hidden" name="returnUrl" value="@returnUrl" />
         <input type="text" name="icon" class="form-control" placeholder="@T["Icon"]" />
         <input type="text" name="topicName" class="form-control" placeholder="@T["Topic name (EN)"]" required />
-        <input type="text" name="topicNameVi" class="form-control" placeholder="Tên chủ đề (VI)" />
+        <input type="text" name="topicNameVi" class="form-control" placeholder="@T["Topic name (VI)"]" />
         <button type="submit" class="btn-primary btn-sm">@T["Add topic"]</button>
     </form>
 </div>
@@ -54,7 +54,7 @@
             <tr>
                 <th>@T["Icon"]</th>
                 <th>@T["Topic name"]</th>
-                <th>Tên (VI)</th>
+                <th>@T["Name (VI)"]</th>
                 <th>@T["Status"]</th>
                 <th>@T["Words"]</th>
                 <th class="col-actions">@T["Actions"]</th>
@@ -82,12 +82,12 @@
                                 @if (topic.WordCount > 0)
                                 {
                                     <button type="button" class="btn-icon btn-danger" disabled
-                                            title="Không thể xóa — còn @topic.WordCount từ đang dùng topic này">@T["Delete"]</button>
+                                            title="@(T.Format("Cannot delete — {0} word(s) still use this topic", topic.WordCount))">@T["Delete"]</button>
                                 }
                                 else
                                 {
                                     <form method="post" action="/topics/@topic.TopicId/delete" class="inline-form js-confirm"
-                                          data-confirm="Delete topic '@topic.TopicName'?">
+                                          data-confirm="@(T.Format("Delete topic '{0}'?", topic.TopicName))">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="returnUrl" value="@returnUrl" />
                                         <button type="submit" class="btn-icon btn-danger">@T["Delete"]</button>
@@ -113,7 +113,7 @@
                                     <input type="hidden" name="returnUrl" value="@returnUrl" />
                                     <input type="text" name="icon" value="@topic.Icon" class="form-control" placeholder="@T["Icon"]" />
                                     <input type="text" name="topicName" value="@topic.TopicName" class="form-control" placeholder="@T["Topic name (EN)"]" required />
-                                    <input type="text" name="topicNameVi" value="@topic.TopicNameVi" class="form-control" placeholder="Tên chủ đề (VI)" />
+                                    <input type="text" name="topicNameVi" value="@topic.TopicNameVi" class="form-control" placeholder="@T["Topic name (VI)"]" />
                                     <div class="form-actions">
                                         <button type="submit" class="btn-primary btn-sm">@T["Save"]</button>
                                         <button type="button" class="btn-secondary btn-sm js-edit-cancel" data-topic-id="@topic.TopicId">@T["Cancel"]</button>

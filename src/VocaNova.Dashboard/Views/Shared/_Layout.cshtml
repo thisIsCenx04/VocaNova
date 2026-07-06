@@ -33,9 +33,9 @@
     @if (isAuthenticated)
     {
         <div class="app-shell">
-            <input class="sidebar-toggle" type="checkbox" id="sidebar-toggle" aria-label="Toggle navigation" />
+            <input class="sidebar-toggle" type="checkbox" id="sidebar-toggle" aria-label="@T["Toggle navigation"]" />
             <label class="sidebar-scrim" for="sidebar-toggle" aria-hidden="true"></label>
-            <aside class="sidebar" aria-label="Primary navigation">
+            <aside class="sidebar" aria-label="@T["Primary navigation"]">
                 <div class="sidebar-brand">
                     <img class="brand-logo" src="~/img/logo.png" alt="" />
                     <span class="brand-word">VocaNova</span>
@@ -112,7 +112,7 @@
 
             <div class="content-shell">
                 <header class="topbar">
-                    <label class="icon-button menu-button" for="sidebar-toggle" aria-label="Toggle navigation">
+                    <label class="icon-button menu-button" for="sidebar-toggle" aria-label="@T["Toggle navigation"]">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4V6Zm0 5h16v2H4v-2Zm0 5h16v2H4v-2Z" /></svg>
                     </label>
 

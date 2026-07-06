@@ -97,7 +97,7 @@
                             @if (row.Status != "deleted")
                             {
                                 <button type="button" class="btn-icon js-edit-toggle" data-row-id="@row.Id">@T["Edit"]</button>
-                                <form method="post" action="/knn/@Model.Slug/delete" class="inline-form js-confirm" data-confirm="Delete this item?">
+                                <form method="post" action="/knn/@Model.Slug/delete" class="inline-form js-confirm" data-confirm="@T["Delete this item?"]">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@row.Id" />
                                     <input type="hidden" name="returnUrl" value="@returnUrl" />
