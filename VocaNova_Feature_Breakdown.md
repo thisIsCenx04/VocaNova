@@ -1417,21 +1417,23 @@ Phụ thuộc: F057, F058
 - **Delete/Restore** (`/vocabulary/delete`, `/restore`): soft delete/restore, giữ filter qua `returnUrl`. OK.
 - Ví dụ (examples) đã được lưu (commit `1f061e2 feat(dictionary): persist sense examples on create/update`).
 
-**Quyết định (đã chốt 2026-07-06): TẠM VÔ HIỆU HÓA nút xóa (sense/ví dụ).**
-- [ ] Xóa sense / xóa ví dụ riêng lẻ trong màn Edit: **tạm vô hiệu hóa** (hiển thị nút ở trạng thái `disabled` + tooltip "Tạm thời chưa hỗ trợ", HOẶC ẩn nút) — chưa nối API delete sense (F027) ở đợt này.
-- [ ] Giữ nguyên luồng thêm/sửa sense + ví dụ (đang chạy tốt); chỉ chặn thao tác xóa để tránh mất dữ liệu ngoài ý muốn.
-- [ ] Ghi rõ đây là quyết định "hoãn có chủ đích", sẽ mở lại khi cần (không xóa code, chỉ disable).
+**Quyết định (đã chốt 2026-07-06): TẠM VÔ HIỆU HÓA nút xóa (sense/ví dụ).** ✅ **ĐÃ LÀM 2026-07-06**
+- [x] Xóa ví dụ **đã lưu** ở màn Edit: nút ✕ chuyển `disabled` + class `.is-locked` + tooltip "Xóa ví dụ đã lưu tạm thời chưa được hỗ trợ." (`Edit.cshtml`). Nút ✕ trên dòng ví dụ **mới thêm** (chưa lưu) vẫn hoạt động để hủy dòng nháp.
+- [x] JS `vocabulary-edit.js` bỏ qua nút `disabled`/`.is-locked`; CSS `site.css` làm mờ nút khóa.
+- [x] Xóa sense: **không có nút xóa sense trong UI** (Edit chỉ thêm/sửa, Detail chỉ xem) → đã "không hỗ trợ" sẵn, không cần thêm gì.
+- [x] Giữ nguyên luồng thêm/sửa; chỉ chặn xóa để tránh mất dữ liệu. Không xóa code, chỉ disable — dễ mở lại sau.
 
-**Done khi (checklist kiểm chứng — chạy tay end-to-end, ghi kết quả vào Activity History):**
-- [ ] Create: từ mới + ≥2 nghĩa + ví dụ → hiển thị đúng ở Detail; `word_key` trùng → báo 409 "That word already exists.".
-- [ ] Create thiếu `word` → chặn với thông báo "Word is required.".
-- [ ] Edit: đổi metadata (word, cefr, phonetic), sửa nghĩa hiện có, thêm nghĩa mới, thêm ví dụ → tất cả lưu đúng.
-- [ ] Edit toggle Active off → từ chuyển `deleted`; toggle on → `active` trở lại.
-- [ ] Delete từ list (active) → biến mất khỏi danh sách active, còn khi bật "Hiện đã xóa".
-- [ ] Restore từ deleted → trở lại active.
-- [ ] Phân quyền: user không phải admin/super_admin **không thấy** nút Edit/Delete/Restore và bị API chặn 401/403.
-- [ ] Thông báo lỗi hiển thị đúng khi API trả 400/409/403.
-- [ ] Nút xóa sense/ví dụ ở màn Edit đang ở trạng thái **disabled** (hoặc ẩn), không gọi API, không làm hỏng luồng lưu.
+**Đã kiểm chứng bằng đọc code (`VocabularyController` + views):**
+- [x] Create: tạo word → tạo từng sense (Word type + nghĩa EN/VI + ví dụ). `word_key` trùng → 409 "That word already exists."; thiếu `word` → "Word is required.".
+- [x] Edit: PUT metadata + cập nhật sense hiện có + thêm nghĩa mới + gom ví dụ theo block; toggle Active off→`deleted`, on→`active` (gọi Delete/Restore API).
+- [x] Delete/Restore từ list: soft delete/restore, giữ filter qua `returnUrl`.
+- [x] Phân quyền: `canManage = role is "admin" or "super_admin"` → ẩn nút Edit/Delete/Restore; API vẫn chặn 401/403.
+- [x] Thông báo lỗi map theo status 400/409/403 trong controller.
+- ⚠️ **Lưu ý (không phải nút xóa):** xóa **trắng** ô "English meaning"/"English example" rồi Save sẽ khiến controller bỏ qua block đó (`ExamplesForBlock`/vòng sense skip khi rỗng) → có thể vô tình không cập nhật/không lưu. Đây là hành vi edit, ngoài phạm vi khóa nút xóa; ghi lại để cân nhắc siết ở R sau nếu cần.
+
+**Còn lại — cần chạy app xác nhận trực quan (ghi vào `VocaNova_Activity_History.md`):**
+- [ ] Chạy end-to-end Create/Edit/Delete/Restore trên UI với API + DB thật, chụp màn hình.
+- [ ] Xác nhận nút ✕ ví dụ đã lưu hiển thị mờ + không xóa được; nút ✕ dòng mới thêm vẫn hủy được.
 
 ---
 

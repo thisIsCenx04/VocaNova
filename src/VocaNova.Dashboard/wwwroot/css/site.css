@@ -2594,6 +2594,8 @@ html, body {
     line-height: 1;
 }
 .example-remove:hover { color: #fff; background: var(--danger, #e05260); border-color: transparent; }
+.example-remove.is-locked, .example-remove:disabled { opacity: .4; cursor: not-allowed; }
+.example-remove.is-locked:hover, .example-remove:disabled:hover { color: var(--text-muted); background: var(--surface); border-color: var(--border); }
 .add-example-link {
     background: none;
     border: none;
