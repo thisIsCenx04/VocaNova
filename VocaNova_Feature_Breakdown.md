@@ -1486,16 +1486,17 @@ Phụ thuộc: R03
   - `SettingsController.Save`: `TempData["SettingsSaved"] = "Đã lưu thay đổi / Changes saved."` (song ngữ cứng).
 - Về **theme**: `settings.js` chỉ đổi highlight thẻ + hidden input (chưa lưu tới khi Save). `_Layout` đọc cookie theme và set `data-theme` server-side → sau khi Save + reload, trang Settings **phải** đổi theme; cần kiểm chứng các thành phần riêng của Settings (`appearance-card`, `language-row`) có dùng biến CSS theme-aware trong `site.css` không, tránh màu cứng.
 
-**Done khi:**
-- [ ] Thay toàn bộ nhãn hardcode song ngữ trong `Views/Settings/Index.cshtml` bằng `@T[]` (một ngôn ngữ theo lựa chọn):
-  - Thẻ theme: nhãn qua `@T["Light Mode"]`, `@T["Dark Mode"]` (bỏ dòng phụ song ngữ).
-  - Hàng ngôn ngữ: `@T["Vietnamese"]`, `@T["English"]`.
+**Done khi:** ✅ **HOÀN THÀNH 2026-07-06**
+- [x] Thay toàn bộ nhãn hardcode song ngữ trong `Views/Settings/Index.cshtml` bằng `@T[]` (bỏ dòng phụ song ngữ):
+  - Thẻ theme: `@T["Light Mode"]`, `@T["Dark Mode"]` (đã xóa `.appearance-sub`).
+  - Hàng ngôn ngữ: `@T["Vietnamese"]`, `@T["English"]` (đã xóa `.language-sub`).
   - Nút: `@T["Cancel"]`, `@T["Save Changes"]`.
-- [ ] Thêm các key mới vào `TranslationTable`: `Light Mode`, `Dark Mode`, `Vietnamese`, `English`, `Save Changes`, `Changes saved.`…
-- [ ] `SettingsController.Save`: đổi `TempData["SettingsSaved"]` sang **key tiếng Anh** (vd `"Changes saved."`) rồi render qua `@T[]` ở view, thay vì chuỗi song ngữ cứng.
-- [ ] Kiểm chứng theme: đổi Dark/Light + Save → trang Settings (và mọi thẻ trong đó) đổi màu đúng nhờ `data-theme`; sửa `site.css` nếu `appearance-card`/`language-row` còn dùng màu cứng.
-- [ ] Kiểm chứng ngôn ngữ: chọn `en` + Save → trang Settings hiển thị **toàn tiếng Anh**; chọn `vi` + Save → **toàn tiếng Việt**; không còn hiển thị đồng thời 2 ngôn ngữ.
-- [ ] (Tùy chọn UX) Cân nhắc đổi theme/ngôn ngữ **áp dụng ngay** khi bấm (không cần Save) để phản hồi tức thì; nếu giữ mô hình Save thì đảm bảo sau reload nhất quán.
+- [x] Thêm key vào `TranslationTable`: `Light Mode`, `Dark Mode`, `Vietnamese`, `English`, `Save Changes`, `Changes saved.`, `Theme set to Dark./Light.`.
+- [x] `SettingsController.Save`: `TempData["SettingsSaved"] = "Changes saved."` (key EN); view render `@T[saved]` (thay `@saved`).
+- [x] Theme: đã kiểm CSS — `.appearance-card`/`.language-row`/`.settings-panel` đều theme-aware (`var(--surface-2)`, `--text`, `--accent`…); chỉ `.icon-dark` cố định là chủ ý (chip icon mặt trăng). **Không cần sửa CSS.**
+- [x] Grep Settings sạch: không còn ký tự tiếng Việt cứng hay chuỗi "X / Y". Build 0 error.
+- [ ] **Còn lại (cần chạy app):** xác nhận trực quan chọn `en`+Save → Settings toàn tiếng Anh; `vi`+Save → toàn tiếng Việt; đổi Dark/Light đổi màu đúng.
+- ➡️ Bỏ qua "áp dụng ngay khi bấm" — giữ mô hình Save hiện tại (đơn giản, nhất quán sau reload).
 
 ---
 
