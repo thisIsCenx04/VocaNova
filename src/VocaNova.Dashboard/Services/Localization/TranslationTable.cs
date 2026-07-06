@@ -24,6 +24,8 @@ public static class TranslationTable
         ("Settings", "Cài đặt"),
         ("Logout", "Đăng xuất"),
         ("Notifications", "Thông báo"),
+        ("Toggle navigation", "Bật/tắt điều hướng"),
+        ("Primary navigation", "Điều hướng chính"),
 
         // ===== Settings =====
         ("Setting", "Cài đặt"),
@@ -76,6 +78,8 @@ public static class TranslationTable
 
         // ===== Vocabulary list (Index) =====
         ("Vocabulary Metadata Management", "Quản lý dữ liệu từ vựng"),
+        ("Manage vocabulary metadata", "Quản lý dữ liệu từ vựng"),
+        ("Delete '{0}'? It will be soft-deleted.", "Xóa '{0}'? Mục sẽ được xóa mềm."),
         ("word(s).", "từ."),
         ("+ Create New Vocabulary", "+ Tạo từ vựng mới"),
         ("Search for vocabulary...", "Tìm kiếm từ vựng..."),
@@ -109,6 +113,7 @@ public static class TranslationTable
         ("Example (in English)", "Ví dụ (tiếng Anh)"),
         ("Example (in Vietnamese)", "Ví dụ (tiếng Việt)"),
         ("E.g: This word is beautiful.", "Ví dụ: This word is beautiful."),
+        ("e.g. This word is very beautiful.", "VD: Từ này rất đẹp."),
 
         // ===== Vocabulary create (cũ — giữ tương thích) =====
         ("Create New Vocabulary", "Tạo từ vựng mới"),
@@ -288,6 +293,8 @@ public static class TranslationTable
         ("/ deployment config then restart.", "/ cấu hình triển khai rồi khởi động lại."),
         ("Back to KNN Management", "Quay lại Quản lý KNN"),
         ("No items found.", "Không tìm thấy mục nào."),
+        ("Trigger a KNN recommendation rebuild now?", "Kích hoạt tái dựng gợi ý KNN ngay bây giờ?"),
+        ("Delete this item?", "Xóa mục này?"),
 
         // ===== Login =====
         ("Admin Dashboard", "Bảng điều khiển quản trị"),
@@ -325,10 +332,14 @@ public static class TranslationTable
         ("Add a topic", "Thêm chủ đề"),
         ("Icon", "Biểu tượng"),
         ("Topic name (EN)", "Tên chủ đề (EN)"),
+        ("Topic name (VI)", "Tên chủ đề (VI)"),
+        ("Name (VI)", "Tên (VI)"),
         ("Add topic", "Thêm chủ đề"),
         ("Topic name", "Tên chủ đề"),
         ("Words", "Số từ"),
         ("No topics found.", "Không tìm thấy chủ đề."),
+        ("Cannot delete — {0} word(s) still use this topic", "Không thể xóa — còn {0} từ đang dùng chủ đề này"),
+        ("Delete topic '{0}'?", "Xóa chủ đề '{0}'?"),
 
         // ===== Statistics =====
         ("System learning analytics.", "Phân tích học tập hệ thống."),

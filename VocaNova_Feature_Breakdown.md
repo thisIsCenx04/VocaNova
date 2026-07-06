@@ -1451,13 +1451,20 @@ Phụ thuộc: F055
   - `Views/Settings/Index.cshtml`: nhãn thẻ theme/ngôn ngữ và nút hành động hardcode song ngữ (xem R04).
   - `data-confirm="Delete '@item.Word'? …"` (Index.cshtml) hardcode tiếng Anh.
 
-**Done khi:**
-- [ ] Rà toàn bộ `Views/**/*.cshtml`, tìm chuỗi hiển thị **chưa** bọc `@T[]` (đặc biệt tiêu đề phụ, placeholder, `data-confirm`, `title`, `aria-label`, thông báo).
-- [ ] Bọc tất cả chuỗi tĩnh còn thiếu bằng `@T["..."]` với **key gốc là tiếng Anh**.
-- [ ] Bổ sung các key còn thiếu vào `TranslationTable.Entries` (cặp EN→VI).
-- [ ] Thông báo phía server (`TempData["VocabSuccess"]`, `VocabError`…) dùng key có trong bảng dịch, hoặc render qua `@T[]` ở view (hiện `_Layout` đã có `@T[toastMsg]`).
-- [ ] Kiểm chứng: chuyển `vi`↔`en` ở Settings → **mọi** trang (Dashboard, Vocabulary, Topics, Users, Statistics, KNN, Settings) đổi ngôn ngữ đồng nhất, không còn chuỗi lẫn lộn.
-- [ ] Không còn chuỗi song ngữ "X / Y" hiển thị cùng lúc (thay bằng 1 ngôn ngữ theo lựa chọn).
+**Done khi:** ✅ **HOÀN THÀNH 2026-07-06 (trừ Settings — thuộc R04)**
+- [x] Rà toàn bộ `Views/**/*.cshtml` bằng grep ký tự tiếng Việt + attribute (placeholder/title/data-confirm/aria-label) + text node.
+- [x] Bọc các chuỗi hardcode còn thiếu bằng `@T[...]` / `@(T.Format(...))` với key gốc tiếng Anh:
+  - `Vocabulary/Index.cshtml`: subtitle "Manage vocabulary metadata"; `data-confirm` (Format).
+  - `Vocabulary/Edit.cshtml`: placeholder "Vietnamese meaning".
+  - `Vocabulary/Create.cshtml`: placeholder ví dụ VI ("e.g. This word is very beautiful.").
+  - `Topics/Index.cshtml`: "Topic name (VI)" (×2), "Name (VI)", title không-thể-xóa (Format), data-confirm xóa topic (Format).
+  - `_Layout.cshtml`: aria-label "Toggle navigation" (×2), "Primary navigation".
+  - `Knn/Index.cshtml` + `Knn/Lookup.cshtml`: data-confirm rebuild / xóa item.
+- [x] Bổ sung ~14 key mới vào `TranslationTable.Entries` (cặp EN→VI), gồm cả chuỗi có `{0}` cho `Format`.
+- [x] Thông báo server render qua `@T[toastMsg]` ở `_Layout` (đã có sẵn).
+- [x] Build 0 error; grep còn lại sạch (chỉ `Settings` thuộc R04 + nút "OK" trung tính).
+- [ ] **Còn lại (cần chạy app):** xác nhận trực quan `vi`↔`en` trên mọi trang đồng nhất, không lẫn lộn.
+- ➡️ Chuỗi song ngữ "X / Y" ở trang Settings sẽ xử lý trong **R04**.
 
 ---
 
