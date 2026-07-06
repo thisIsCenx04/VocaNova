@@ -20,7 +20,9 @@
     var label = document.getElementById("status-label");
     if (toggle && label) {
         toggle.addEventListener("change", function () {
-            label.textContent = toggle.checked ? "Active" : "Inactive";
+            label.textContent = toggle.checked
+                ? (label.dataset.active || "Active")
+                : (label.dataset.inactive || "Inactive");
         });
     }
 

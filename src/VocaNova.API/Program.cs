@@ -64,6 +64,8 @@ builder.Services.AddScoped<IAdminStatsRepository, AdminStatsRepository>();
 builder.Services.AddScoped<IAdminStatsService, AdminStatsService>();
 builder.Services.AddScoped<IWordRepository, WordRepository>();
 builder.Services.AddScoped<IWordService, WordService>();
+builder.Services.AddScoped<VocaNova.API.Features.Notifications.Repositories.INotificationRepository, VocaNova.API.Features.Notifications.Repositories.NotificationRepository>();
+builder.Services.AddScoped<VocaNova.API.Features.Notifications.Services.INotificationService, VocaNova.API.Features.Notifications.Services.NotificationService>();
 builder.Services.AddScoped<ITopicRepository, TopicRepository>();
 builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<IUserListRepository, UserListRepository>();

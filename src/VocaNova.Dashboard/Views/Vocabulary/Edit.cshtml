@@ -205,7 +205,7 @@
                 <h2 class="side-card-title">@T["Status & Storage"]</h2>
 
                 <div class="status-toggle-row">
-                    <span class="status-label" id="status-label">@(isActive ? T["Active"] : T["Inactive"])</span>
+                    <span class="status-label" id="status-label" data-active="@T["Active"]" data-inactive="@T["Inactive"]">@(isActive ? T["Active"] : T["Inactive"])</span>
                     <label class="switch">
                         <input type="checkbox" name="isActive" value="true" id="isActive" @(isActive ? "checked" : "") />
                         <input type="hidden" name="isActive" value="false" />

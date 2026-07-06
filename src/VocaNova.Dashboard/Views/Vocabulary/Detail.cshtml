@@ -32,7 +32,8 @@
 }
 
 @Html.AntiForgeryToken()
-<div id="detail-root" data-word-id="@Model.WordId">
+<div id="detail-root" data-word-id="@Model.WordId"
+     data-msg-request-failed="@T["Request failed."]" data-msg-confirm="@T["Are you sure?"]">
 
     <nav class="breadcrumb">
         <a href="/vocabulary">@T["Vocabulary Metadata"]</a>

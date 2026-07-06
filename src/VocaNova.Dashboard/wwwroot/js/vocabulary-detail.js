@@ -10,6 +10,9 @@
     var wordId = root.getAttribute('data-word-id');
     var tokenField = document.querySelector('input[name="__RequestVerificationToken"]');
     var token = tokenField ? tokenField.value : '';
+    // Localized fallback messages (rendered by @T).
+    var MSG_FAIL = root.dataset.msgRequestFailed || 'Request failed.';
+    var MSG_CONFIRM = root.dataset.msgConfirm || 'Are you sure?';
 
     function toast(message, ok) {
         var el = document.getElementById('detail-toast');
@@ -58,7 +61,7 @@
                         }
                         toast(data.message, data.success);
                     })
-                    .catch(function () { toast('Request failed.', false); });
+                    .catch(function () { toast(MSG_FAIL, false); });
             });
         }
     });
@@ -73,7 +76,7 @@
                     toast(data.message, data.success);
                     if (data.success) { window.setTimeout(function () { window.location.reload(); }, 600); }
                 })
-                .catch(function () { toast('Request failed.', false); });
+                .catch(function () { toast(MSG_FAIL, false); });
         });
     }
 
@@ -88,7 +91,7 @@
                     toast(data.message, data.success);
                     if (data.success) { window.setTimeout(function () { window.location.reload(); }, 600); }
                 })
-                .catch(function () { toast('Request failed.', false); });
+                .catch(function () { toast(MSG_FAIL, false); });
         });
     }
     wireUpload('image-upload-form', '/vocabulary/' + wordId + '/image');
@@ -110,13 +113,13 @@
     root.querySelectorAll('form.js-confirm[data-ajax]').forEach(function (form) {
         form.addEventListener('submit', function (e) {
             e.preventDefault();
-            if (!window.confirm(form.getAttribute('data-confirm') || 'Are you sure?')) { return; }
+            if (!window.confirm(form.getAttribute('data-confirm') || MSG_CONFIRM)) { return; }
             postForm(form.getAttribute('data-ajax'), new FormData())
                 .then(function (data) {
                     toast(data.message, data.success);
                     if (data.success) { window.setTimeout(function () { window.location.reload(); }, 600); }
                 })
-                .catch(function () { toast('Request failed.', false); });
+                .catch(function () { toast(MSG_FAIL, false); });
         });
     });
 })();

@@ -97,6 +97,15 @@ public interface IVocaNovaApiClient
     Task<ApiActionResult> DeleteKnnLookupAsync(string lookup, uint id, CancellationToken cancellationToken = default);
 
     Task<ApiActionResult> RestoreKnnLookupAsync(string lookup, uint id, CancellationToken cancellationToken = default);
+
+    // F063A — Admin profile (hồ sơ của chính người đăng nhập).
+    Task<Models.Api.Auth.MeProfile?> GetMyProfileAsync(CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> UpdateMyProfileAsync(string? displayName, string? avatarUrl, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> ChangeMyPasswordAsync(string? currentPassword, string? newPassword, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> UploadMyAvatarAsync(ImageUpload upload, CancellationToken cancellationToken = default);
 }
 
 /// <summary>Bộ lọc danh sách lookup KNN (F063). API dùng query key snake_case <c>include_deleted</c>.</summary>

@@ -17,14 +17,18 @@
         <a href="/vocabulary/import/template">@T["Download template CSV"]</a>
     </p>
 
-    <form id="import-form">
+    <form id="import-form"
+          data-msg-choose="@T["Please choose a CSV file."]"
+          data-msg-failed="@T["Import failed."]"
+          data-msg-request-failed="@T["Import request failed."]">
         <label id="drop-zone" class="drop-zone" for="csv-file">
             <svg viewBox="0 0 24 24" aria-hidden="true" class="drop-icon"><path d="M12 3v12m0-12 4 4m-4-4-4 4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <span class="drop-text">@T["Drag & drop your CSV here, or click to choose a file"]</span>
             <span class="drop-file" id="drop-file"></span>
             <input type="file" id="csv-file" name="file" accept=".csv,text/csv" hidden />
         </label>
-        <button type="submit" class="btn-primary" id="import-submit">@T["Upload & import"]</button>
+        <button type="submit" class="btn-primary" id="import-submit"
+                data-label-idle="@T["Upload & import"]" data-label-busy="@T["Importing..."]">@T["Upload & import"]</button>
     </form>
 </div>
 

@@ -23,7 +23,7 @@
             var remove = document.createElement("button");
             remove.type = "button";
             remove.className = "meaning-remove";
-            remove.setAttribute("aria-label", "Remove meaning");
+            remove.setAttribute("aria-label", list.dataset.removeLabel || "Remove meaning");
             remove.textContent = "✕";
             remove.addEventListener("click", function () { clone.remove(); });
             clone.appendChild(remove);
