@@ -1974,12 +1974,15 @@ Depends on: F084, F067
 ```
 **What to do:** Show the F084 notifications to end-users in the Flutter app.
 
-**Done when:**
-- [ ] Bell icon + unread badge (from `GET /api/notifications/unread-count`).
-- [ ] Notifications screen: paginated list (`GET /api/notifications`), unread highlighted, tap a `word` notification → open that word / mark read (`PATCH /{id}/read`).
-- [ ] "Mark all read" action (`PATCH /api/notifications/read-all`).
-- [ ] Localize by `type` (`word_deleted`) or show the stored message; empty/loading/error states.
-- [ ] (Optional/later) real push via FCM — separate infra task.
+**Done when:** ✅ **COMPLETED 2026-07-07 (Flutter, analyze clean, tests 121/121)**
+- [x] Home bell (`home_screen.dart` `_NotificationButton` → `ConsumerWidget`) shows the unread badge from `notificationsUnreadCountProvider` (`GET /api/notifications/unread-count`); tapping opens `/notifications` (was pointing at `/settings`). Badge is resilient (`.asData?.value ?? 0`; provider swallows errors → 0 when offline/not-ready).
+- [x] `NotificationsScreen`: paginated list (`GET /api/notifications`, infinite scroll via scroll listener), unread rows tinted + dot, pull-to-refresh, empty/loading/error states.
+- [x] Tap a notification → optimistic `markRead` (`PATCH /{id}/read`) + if `ref_type=='word'` navigate to the word detail.
+- [x] "Đọc tất cả" (mark all read) app-bar action (`PATCH /api/notifications/read-all`), shown only when unread > 0.
+- [x] Feature-first structure matching the app: `domain/app_notification.dart`, `data/notifications_repository.dart` (+ `NotificationsPage`), `application/notifications_state.dart` + `notifications_notifier.dart` (Riverpod), `presentation/notifications_screen.dart`. Endpoints added to `api_endpoints.dart`; `/notifications` route in `app_routes.dart` + `app_router.dart`. User-facing strings in Vietnamese.
+- [x] Verify: `flutter analyze` → no issues; `flutter test` → 121/121 (added a `ProviderScope` + unread-count override to `home_screen_test.dart` since the bell is now a Consumer).
+- [x] **Toolchain fixed:** `build_runner` failed under Dart 3.10 (`'dart compile' does not support build hooks`) because it AOT-compiles its build script. Fix = **`dart run build_runner build --force-jit`** (JIT mode skips the failing AOT step). `notifications_notifier.g.dart` is now **real generated code** (the earlier hand-written stub was replaced). Note: the generator names the class provider `notificationsProvider` (it strips the `Notifier` suffix).
+- [ ] (Optional/later) real push via FCM — separate infra task (not needed for in-app notifications).
 
 ---
 

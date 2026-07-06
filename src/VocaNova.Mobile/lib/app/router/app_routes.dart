@@ -18,6 +18,7 @@ abstract final class AppRoutes {
   static const progressCharts = '/progress/charts';
   static const settings = '/settings';
   static const profile = '/profile';
+  static const notifications = '/notifications';
 
   static String wordDetail(String id) => '/word/$id';
 
