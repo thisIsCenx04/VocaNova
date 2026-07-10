@@ -118,6 +118,25 @@ public class AiGradingCacheFeatureTests
     }
 
     [Fact]
+    public async Task GradeAsync_Should_Not_Cache_Fallback_Result()
+    {
+        await using var dbContext = CreateDbContext();
+        var provider = new FakeAiGradingProvider(new AiGradingResult(
+            false,
+            0f,
+            "AI không khả dụng",
+            null,
+            FromAi: false));
+        var service = CreateService(dbContext, provider);
+
+        var result = await service.GradeAsync(30, 3, "answer", "expected");
+
+        result.Score.Should().Be(0f);
+        provider.CallCount.Should().Be(1);
+        (await dbContext.AiGradingCaches.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
     public async Task GradeAsync_Should_Normalize_UserAnswer_For_Cache_Key()
     {
         await using var dbContext = CreateDbContext();

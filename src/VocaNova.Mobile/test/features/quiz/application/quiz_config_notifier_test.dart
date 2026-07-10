@@ -64,6 +64,7 @@ void main() {
       () => repository.createSession(any()),
     ).thenAnswer((_) async => testSession);
     final notifier = container.read(quizConfigProvider.notifier);
+    notifier.setListId(5);
     notifier.setMode('timed');
     notifier.setTimeLimit(120);
     notifier.setQuestionType(2);
@@ -81,6 +82,7 @@ void main() {
     expect(request.questionType, 2);
     expect(request.answerMethod, 'exact_typing');
     expect(request.topicIds, [2]);
+    expect(request.listId, 5);
   });
 }
 

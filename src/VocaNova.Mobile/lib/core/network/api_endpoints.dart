@@ -27,11 +27,9 @@ abstract final class ApiEndpoints {
   static const progressMasteryBreakdown = '/api/progress/mastery-breakdown';
   static const progressWeakestWords = '/api/progress/weakest-words';
 
+  // Notifications are derived on read; read state is tracked per-device on the client,
+  // so there is only a list endpoint.
   static const notifications = '/api/notifications';
-  static const notificationsUnreadCount = '/api/notifications/unread-count';
-  static const notificationsReadAll = '/api/notifications/read-all';
-
-  static String notificationRead(int id) => '$notifications/$id/read';
 
   static String word(int id) => '$words/$id';
 

@@ -60,7 +60,8 @@ public sealed class QuizSessionService : IQuizSessionService
                 request.TopicIds,
                 request.WordOrder!,
                 request.WordLimit,
-                request.AnswerMethod!),
+                request.AnswerMethod!,
+                request.ListId),
             cancellationToken);
         if (!poolResult.IsSuccess)
         {

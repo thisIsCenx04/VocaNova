@@ -40,6 +40,7 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
             sessionId: session.sessionId,
             wordId: state.question.wordId,
             answer: answer,
+            listId: session.listId,
           );
       final lives = state.remainingLives == null || result.isCorrect
           ? state.remainingLives

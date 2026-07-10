@@ -13,4 +13,5 @@ public sealed record CreateSessionRequest(
     [property: JsonPropertyName("word_limit")] int? WordLimit,
     [property: JsonPropertyName("time_limit_sec")] int? TimeLimitSec,
     [property: JsonPropertyName("lives")] int? Lives,
-    [property: JsonPropertyName("answer_method")] string? AnswerMethod);
+    [property: JsonPropertyName("answer_method")] string? AnswerMethod,
+    [property: JsonPropertyName("list_id")] uint? ListId = null);

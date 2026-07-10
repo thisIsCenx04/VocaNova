@@ -17,4 +17,5 @@ public sealed record QuizSessionDto(
     [property: JsonPropertyName("question_count")] int QuestionCount,
     [property: JsonPropertyName("status")] string Status,
     [property: JsonPropertyName("started_at")] DateTime StartedAt,
-    [property: JsonPropertyName("topic_ids")] IReadOnlyCollection<uint> TopicIds);
+    [property: JsonPropertyName("topic_ids")] IReadOnlyCollection<uint> TopicIds,
+    [property: JsonPropertyName("list_id")] uint? ListId = null);

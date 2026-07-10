@@ -53,10 +53,12 @@ public sealed class QuizSessionRepository : IQuizSessionRepository
         _dbContext.TestSessions.Add(session);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return ToDto(session);
+        // list_id is not persisted (no schema change); echo it back so the
+        // client can carry it on subsequent answer requests to keep scoping.
+        return ToDto(session, request.ListId);
     }
 
-    private static QuizSessionDto ToDto(TestSession session)
+    private static QuizSessionDto ToDto(TestSession session, uint? listId)
     {
         return new QuizSessionDto(
             session.SessionId,
@@ -76,7 +78,8 @@ public sealed class QuizSessionRepository : IQuizSessionRepository
             session.TestSessionTopics
                 .Select(topic => topic.TopicId)
                 .OrderBy(topicId => topicId)
-                .ToArray());
+                .ToArray(),
+            listId);
     }
 
     private static IReadOnlyCollection<uint> NormalizeTopicIds(IReadOnlyCollection<uint>? topicIds)

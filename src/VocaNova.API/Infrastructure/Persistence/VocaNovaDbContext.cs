@@ -21,8 +21,6 @@ public partial class VocaNovaDbContext : DbContext
 
     public virtual DbSet<LearningPurpose> LearningPurposes { get; set; }
 
-    public virtual DbSet<Notification> Notifications { get; set; }
-
     public virtual DbSet<Occupation> Occupations { get; set; }
 
     public virtual DbSet<OtpVerification> OtpVerifications { get; set; }

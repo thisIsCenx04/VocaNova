@@ -20,7 +20,11 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(quizConfigProvider.notifier).loadTopics());
+    Future.microtask(() {
+      final notifier = ref.read(quizConfigProvider.notifier);
+      notifier.setListId(widget.initialListId);
+      notifier.loadTopics();
+    });
   }
 
   @override
@@ -49,7 +53,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
                 padding: const EdgeInsets.all(14),
                 child: Text(
                   'Mở từ danh sách #${widget.initialListId}. '
-                  'API hiện tạo bài kiểm tra từ toàn bộ từ đã học và các bộ lọc bên dưới.',
+                  'Bài kiểm tra chỉ lấy từ trong danh sách này, kết hợp với các bộ lọc bên dưới.',
                 ),
               ),
             ),

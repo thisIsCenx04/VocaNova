@@ -108,7 +108,9 @@ class NotificationsNotifier extends _$NotificationsNotifier {
       unreadCount: 0,
     );
     try {
-      await ref.read(notificationsRepositoryProvider).markAllRead();
+      await ref
+          .read(notificationsRepositoryProvider)
+          .markAllRead(state.items.map((n) => n.id));
     } catch (_) {
       // Best-effort.
     }

@@ -25,14 +25,16 @@ public class QuizFinishResultFeatureTests
         result.Value.CorrectCount.Should().Be(2);
         result.Value.WrongCount.Should().Be(1);
         result.Value.AnsweredCount.Should().Be(3);
+        // Accuracy is over answered questions (2 of 3); score is over the full quiz (2 of 5).
         result.Value.Accuracy.Should().BeApproximately(66.666f, 0.01f);
+        result.Value.Score.Should().BeApproximately(40f, 0.01f);
         result.Value.MaxStreak.Should().Be(1);
         result.Value.DurationSec.Should().NotBeNull();
 
         var session = await dbContext.TestSessions.SingleAsync(entity => entity.SessionId == 100);
         session.Status.Should().Be(TestSessionStatus.Abandoned);
         session.EndedAt.Should().NotBeNull();
-        session.Score.Should().BeApproximately(66.666f, 0.01f);
+        session.Score.Should().BeApproximately(40f, 0.01f);
     }
 
     [Fact]
@@ -47,7 +49,9 @@ public class QuizFinishResultFeatureTests
         result.IsSuccess.Should().BeTrue();
         result.Value!.Status.Should().Be(TestSessionStatus.Completed);
         result.Value.DurationSec.Should().Be(125);
-        result.Value.Score.Should().BeApproximately(66.666f, 0.01f);
+        // 2 correct of 3 answered = 66.6% accuracy, but 2 of 5 total questions = 40% score.
+        result.Value.Accuracy.Should().BeApproximately(66.666f, 0.01f);
+        result.Value.Score.Should().BeApproximately(40f, 0.01f);
         result.Value.Answers.Should().HaveCount(3);
         result.Value.Answers.Select(answer => answer.QuestionNumber).Should().Equal(1, 2, 3);
     }

@@ -2,6 +2,7 @@ import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 
 class QuizConfigState {
   const QuizConfigState({
+    this.listId,
     this.scopeType = 'all',
     this.selectedTopicIds = const {},
     this.mode = 'standard',
@@ -17,6 +18,7 @@ class QuizConfigState {
     this.errorMessage,
   });
 
+  final int? listId;
   final String scopeType;
   final Set<int> selectedTopicIds;
   final String mode;
@@ -32,6 +34,7 @@ class QuizConfigState {
   final String? errorMessage;
 
   QuizConfigState copyWith({
+    int? listId,
     String? scopeType,
     Set<int>? selectedTopicIds,
     String? mode,
@@ -51,6 +54,7 @@ class QuizConfigState {
     bool clearDateTo = false,
     bool clearError = false,
   }) => QuizConfigState(
+    listId: listId ?? this.listId,
     scopeType: scopeType ?? this.scopeType,
     selectedTopicIds: selectedTopicIds ?? this.selectedTopicIds,
     mode: mode ?? this.mode,

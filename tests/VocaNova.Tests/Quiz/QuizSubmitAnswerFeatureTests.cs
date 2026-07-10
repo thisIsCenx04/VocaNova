@@ -27,7 +27,8 @@ public class QuizSubmitAnswerFeatureTests
         result.Value!.IsCorrect.Should().BeTrue();
         result.Value.CorrectCount.Should().Be(1);
         result.Value.WrongCount.Should().Be(0);
-        result.Value.Score.Should().Be(100);
+        // Score is over the whole quiz: 1 correct of 4 questions = 25%.
+        result.Value.Score.Should().Be(25);
         result.Value.NextQuestion.Should().NotBeNull();
         result.Value.NextQuestion!.WordId.Should().Be(3);
 
