@@ -441,12 +441,12 @@ public sealed class WordService : IWordService
         }
 
         var normalizedUrl = NormalizeNullable(request.ImageUrl);
-        if (!IsValidHttpsUrl(normalizedUrl))
+        if (normalizedUrl is not null && !IsValidHttpsUrl(normalizedUrl))
         {
             return Task.FromResult(Result<WordDetailDto>.Fail("ImageUrl must be a valid HTTPS URL."));
         }
 
-        return SetImageUrlAsync(wordId, normalizedUrl!, cancellationToken);
+        return SetImageUrlAsync(wordId, normalizedUrl, cancellationToken);
     }
 
     public async Task<Result<WordAudioDto>> UploadAudioAsync(
@@ -664,7 +664,7 @@ public sealed class WordService : IWordService
 
     private async Task<Result<WordDetailDto>> SetImageUrlAsync(
         uint wordId,
-        string imageUrl,
+        string? imageUrl,
         CancellationToken cancellationToken)
     {
         var word = await _wordRepository.SetImageUrlAsync(wordId, imageUrl, cancellationToken);

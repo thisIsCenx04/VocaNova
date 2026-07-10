@@ -107,18 +107,10 @@ public sealed class WordRepository : IWordRepository
             query = query.Where(word => word.WordSenses.Any(sense => sense.WordClass == wordType));
         }
 
-        // Sắp xếp:
-        // - Có từ khóa tìm kiếm → ưu tiên KHỚP CHÍNH XÁC lên đầu, rồi từ ngắn hơn (gần khớp hơn), rồi alphabet.
-        // - Không tìm kiếm → từ mới tạo lên đầu (sắp alphabet thì đầu danh sách toàn ký hiệu/từ rỗng do import từ điển).
-        var ordered = string.IsNullOrWhiteSpace(normalizedQuery)
-            ? query
-                .OrderByDescending(word => word.CreatedAt)
-                .ThenByDescending(word => word.WordId)
-            : query
-                .OrderByDescending(word => word.WordKey == normalizedQuery)
-                .ThenBy(word => word.WordKey.Length)
-                .ThenBy(word => word.WordKey)
-                .ThenByDescending(word => word.WordId);
+        // Vocabulary management remains consistently sorted A-Z across searches and filters.
+        var ordered = query
+            .OrderBy(word => word.WordKey)
+            .ThenBy(word => word.WordId);
 
         return ordered
             .Select(word => new AdminWordListItemDto(
@@ -129,6 +121,7 @@ public sealed class WordRepository : IWordRepository
                 word.Status,
                 word.ImageUrl,
                 word.WordSenses
+                    .Where(sense => wordType == null || sense.WordClass == wordType)
                     .OrderBy(sense => sense.SenseOrder)
                     .Select(sense => sense.VietnameseMeaning)
                     .FirstOrDefault(),
@@ -141,6 +134,7 @@ public sealed class WordRepository : IWordRepository
                         wordTopic.Topic.Icon))
                     .ToList(),
                 word.WordSenses
+                    .Where(sense => wordType == null || sense.WordClass == wordType)
                     .OrderBy(sense => sense.SenseOrder)
                     .Select(sense => sense.WordClass)
                     .FirstOrDefault()))

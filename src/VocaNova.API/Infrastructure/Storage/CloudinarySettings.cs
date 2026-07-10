@@ -13,4 +13,6 @@ public sealed class CloudinarySettings
     public string Folder { get; set; } = "vocanova/words";
 
     public string AvatarFolder { get; set; } = "vocanova/avatars";
+
+    public string AudioFolder { get; set; } = "vocanova/words/audio";
 }

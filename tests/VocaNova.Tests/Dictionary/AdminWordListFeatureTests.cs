@@ -22,7 +22,7 @@ public class AdminWordListFeatureTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Items.Select(item => item.Word).Should().NotContain("runner");
-        result.Value.Items.Select(item => item.Word).Should().Contain(new[] { "apple", "run", "running" });
+        result.Value.Items.Select(item => item.Word).Should().Equal("apple", "desert", "run", "running");
     }
 
     [Fact]
@@ -89,6 +89,11 @@ public class AdminWordListFeatureTests
         verbs.IsSuccess.Should().BeTrue();
         verbs.Value!.Items.Should().OnlyContain(item => item.WordType == "verb");
         verbs.Value.Items.Select(item => item.Word).Should().Contain("run");
+
+        var nouns = await service.SearchAdminAsync(new AdminWordQuery { WordType = "noun" });
+        var desert = nouns.Value!.Items.Should().ContainSingle(item => item.Word == "desert").Subject;
+        desert.WordType.Should().Be("noun");
+        desert.PrimaryMeaning.Should().Be("sa mac");
     }
 
     [Fact]
@@ -172,6 +177,21 @@ public class AdminWordListFeatureTests
                 Status = UserStatus.Deleted,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
+            },
+            new Word
+            {
+                WordId = 5,
+                Word1 = "desert",
+                WordKey = "desert",
+                CefrLevel = CefrLevel.A2,
+                Status = UserStatus.Active,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                WordSenses =
+                {
+                    new WordSense { SenseId = 5, WordId = 5, SenseOrder = 1, WordClass = "adjective", EnglishDefinition = "abandoned", VietnameseMeaning = "hoang vang" },
+                    new WordSense { SenseId = 6, WordId = 5, SenseOrder = 2, WordClass = "noun", EnglishDefinition = "dry region", VietnameseMeaning = "sa mac" },
+                },
             });
 
         await dbContext.SaveChangesAsync();

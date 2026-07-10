@@ -12,6 +12,9 @@ import 'package:vocanova_mobile/features/auth/presentation/otp_screen.dart';
 import 'package:vocanova_mobile/features/auth/presentation/register_screen.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/word_search_screen.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/word_detail_screen.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_detail_screen.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topics_screen.dart';
 import 'package:vocanova_mobile/features/home/presentation/home_screen.dart';
 import 'package:vocanova_mobile/features/notifications/presentation/notifications_screen.dart';
 import 'package:vocanova_mobile/features/lists/presentation/lists_screen.dart';
@@ -85,6 +88,19 @@ class AppRouter {
                 path: AppRoutes.word,
                 builder: (_, state) => WordDetailScreen(
                   wordId: int.parse(state.pathParameters['id']!),
+                ),
+              ),
+              GoRoute(
+                path: AppRoutes.topics,
+                builder: (_, _) => const TopicsScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.topic,
+                builder: (_, state) => TopicDetailScreen(
+                  topicId: int.parse(state.pathParameters['id']!),
+                  initialTopic: state.extra is TopicSummary
+                      ? state.extra! as TopicSummary
+                      : null,
                 ),
               ),
             ],

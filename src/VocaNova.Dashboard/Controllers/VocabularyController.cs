@@ -403,7 +403,6 @@ public sealed class VocabularyController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UploadAudio(
         uint id,
-        string accent,
         IFormFile? file,
         CancellationToken cancellationToken)
     {
@@ -415,7 +414,7 @@ public sealed class VocabularyController : Controller
         await using var stream = file.OpenReadStream();
         var result = await _apiClient.UploadAudioAsync(
             id,
-            new AudioUpload(accent, stream, file.FileName, file.ContentType),
+            new AudioUpload("us", stream, file.FileName, file.ContentType),
             cancellationToken);
         return JsonResultFor(result, "Audio uploaded.");
     }
@@ -446,6 +445,14 @@ public sealed class VocabularyController : Controller
             new ImageUpload(stream, file.FileName, file.ContentType),
             cancellationToken);
         return JsonResultFor(result, "Image uploaded.");
+    }
+
+    [HttpPost("/vocabulary/{id:uint}/image/delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteImage(uint id, CancellationToken cancellationToken)
+    {
+        var result = await _apiClient.UpdateImageUrlAsync(id, null, cancellationToken);
+        return JsonResultFor(result, "Image removed.");
     }
 
     // ---- F059: CSV import ----

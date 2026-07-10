@@ -7,6 +7,8 @@ class WordSummary {
     this.primaryMeaning,
     this.imageUrl,
     this.topicIds = const {},
+    this.learningStatus = 'new',
+    this.masteryScore = 0,
   });
 
   final int wordId;
@@ -16,6 +18,8 @@ class WordSummary {
   final String? primaryMeaning;
   final String? imageUrl;
   final Set<int> topicIds;
+  final String learningStatus;
+  final double masteryScore;
 
   factory WordSummary.fromJson(Map<String, dynamic> json) {
     return WordSummary(
@@ -28,6 +32,12 @@ class WordSummary {
       topicIds:
           (json['topic_ids'] as List<dynamic>?)?.whereType<int>().toSet() ??
           const {},
+      learningStatus:
+          (json['learning_status'] ?? json['status'])
+              ?.toString()
+              .toLowerCase() ??
+          'new',
+      masteryScore: (json['mastery_score'] as num?)?.toDouble() ?? 0,
     );
   }
 
@@ -43,6 +53,8 @@ class WordSummary {
       primaryMeaning: primaryMeaning,
       imageUrl: imageUrl,
       topicIds: {...topicIds, topicId},
+      learningStatus: learningStatus,
+      masteryScore: masteryScore,
     );
   }
 
@@ -55,6 +67,8 @@ class WordSummary {
       primaryMeaning: primaryMeaning ?? other.primaryMeaning,
       imageUrl: imageUrl ?? other.imageUrl,
       topicIds: {...topicIds, ...other.topicIds},
+      learningStatus: learningStatus,
+      masteryScore: masteryScore,
     );
   }
 
@@ -66,6 +80,8 @@ class WordSummary {
     'primary_meaning': primaryMeaning,
     'image_url': imageUrl,
     'topic_ids': topicIds.toList(),
+    'learning_status': learningStatus,
+    'mastery_score': masteryScore,
   };
 }
 

@@ -421,7 +421,11 @@ class _DiscoveryView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _SectionHeading(title: 'Browse by topic'),
+                  _SectionHeading(
+                    title: 'Browse by topic',
+                    action: 'See all',
+                    onAction: () => context.push(AppRoutes.topics),
+                  ),
                   const SizedBox(height: 12),
                   LayoutBuilder(
                     builder: (context, constraints) {
@@ -481,7 +485,11 @@ class _SectionHeading extends StatelessWidget {
           const Spacer(),
           if (action != null)
             TextButton(
-              key: const Key('clear-search-history'),
+              key: Key(
+                action == 'Clear'
+                    ? 'clear-search-history'
+                    : 'browse-all-topics',
+              ),
               onPressed: onAction,
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
