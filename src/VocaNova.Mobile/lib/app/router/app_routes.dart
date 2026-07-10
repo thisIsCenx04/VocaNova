@@ -8,6 +8,8 @@ abstract final class AppRoutes {
   static const home = '/home';
   static const search = '/search';
   static const word = '/word/:id';
+  static const topics = '/topics';
+  static const topic = '/topic/:id';
   static const lists = '/lists';
   static const list = '/list/:id';
   static const quizConfig = '/quiz/config';
@@ -21,6 +23,8 @@ abstract final class AppRoutes {
   static const notifications = '/notifications';
 
   static String wordDetail(String id) => '/word/$id';
+
+  static String topicDetail(String id) => '/topic/$id';
 
   static String listDetail(String id) => '/list/$id';
 
