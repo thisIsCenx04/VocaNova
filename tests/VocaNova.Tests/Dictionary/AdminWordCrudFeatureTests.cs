@@ -278,13 +278,13 @@ public class AdminWordCrudFeatureTests
     }
 
     [Fact]
-    public void S3AudioStorage_BuildObjectKey_Should_Be_Deterministic_And_Safe()
+    public void CloudinaryAudioStorage_BuildPublicId_Should_Be_Deterministic_And_Safe()
     {
         var timestamp = new DateTime(2026, 6, 15, 8, 9, 10, DateTimeKind.Utc);
 
-        var key = S3AudioStorage.BuildObjectKey(42, AudioAccent.Us, "../hello world!.mp3", timestamp);
+        var key = CloudinaryAudioStorage.BuildPublicId(42, AudioAccent.Us, "../hello world!.mp3", timestamp);
 
-        key.Should().Be("words/42/audio/us/20260615080910-hello-world.mp3");
+        key.Should().Be("vocanova/words/audio/42/us/20260615080910-hello-world");
     }
 
     [Fact]
@@ -344,12 +344,15 @@ public class AdminWordCrudFeatureTests
 
         var invalid = await service.UpdateImageUrlAsync(1, new UpdateWordImageRequest("http://example.com/run.png"));
         var valid = await service.UpdateImageUrlAsync(1, new UpdateWordImageRequest("https://example.com/run.png"));
+        var removed = await service.UpdateImageUrlAsync(1, new UpdateWordImageRequest(null));
 
         invalid.IsSuccess.Should().BeFalse();
         invalid.Error.Should().Be("ImageUrl must be a valid HTTPS URL.");
         valid.IsSuccess.Should().BeTrue();
         valid.Value!.ImageUrl.Should().Be("https://example.com/run.png");
-        cache.RemoveCount.Should().Be(1);
+        removed.IsSuccess.Should().BeTrue();
+        removed.Value!.ImageUrl.Should().BeNull();
+        cache.RemoveCount.Should().Be(2);
     }
 
     [Fact]

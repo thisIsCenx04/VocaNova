@@ -12,7 +12,6 @@
         .Concat(Model.Senses.SelectMany(s => s.Relations))
         .ToList();
 
-    var ukAudio = Model.Audio.FirstOrDefault(a => string.Equals(a.Accent, "uk", StringComparison.OrdinalIgnoreCase));
     var usAudio = Model.Audio.FirstOrDefault(a => string.Equals(a.Accent, "us", StringComparison.OrdinalIgnoreCase));
 
     var itemId = $"VOC-{Model.WordId:0000}";
@@ -68,12 +67,6 @@
                 {
                     <span class="vd-phon">
                         <span class="vd-phon-label">UK</span> @Model.PhoneticUk
-                        @if (ukAudio is not null)
-                        {
-                            <button type="button" class="vd-audio-btn" data-audio="@ukAudio.Url" aria-label="@T["Play"]">
-                                <svg viewBox="0 0 24 24" width="15" height="15"><path d="M5 9v6h4l5 5V4L9 9H5Zm11.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Z" fill="currentColor"/></svg>
-                            </button>
-                        }
                     </span>
                 }
                 @if (!string.IsNullOrWhiteSpace(Model.PhoneticUs))
@@ -210,7 +203,19 @@
                 <div class="panel-head"><h2 class="panel-title">@T["Image"]</h2></div>
                 @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
                 {
-                    <img class="word-image" src="@Model.ImageUrl" alt="@Model.Word" />
+                    <div class="word-image-review">
+                        <a class="word-image-preview" href="@Model.ImageUrl" target="_blank" rel="noopener"
+                           title="@T["Open full image"]">
+                            <img class="word-image" src="@Model.ImageUrl" alt="@Model.Word" loading="lazy" />
+                        </a>
+                        <div class="word-image-review-meta">
+                            <span>@T["Image preview"]</span>
+                            <form class="inline-form js-confirm" data-confirm="@T["Remove image"]"
+                                  data-ajax="/vocabulary/@Model.WordId/image/delete">
+                                <button type="submit" class="btn-icon btn-danger">@T["Delete"]</button>
+                            </form>
+                        </div>
+                    </div>
                 }
                 else
                 {
@@ -224,33 +229,26 @@
 
             <section class="panel vd-extra">
                 <div class="panel-head"><h2 class="panel-title">@T["Audio"]</h2></div>
-                @if (Model.Audio.Count == 0)
+                @if (usAudio is null)
                 {
                     <p class="text-muted">@T["No audio."]</p>
                 }
                 else
                 {
                     <ul class="audio-list">
-                        @foreach (var audio in Model.Audio)
-                        {
                             <li class="audio-item">
-                                <span class="badge badge-muted">@audio.Accent.ToUpperInvariant()</span>
-                                <audio controls preload="none" src="@audio.Url"></audio>
+                                <span class="badge badge-muted">US</span>
+                                <audio controls preload="none" src="@usAudio.Url"></audio>
                                 <form class="inline-form js-confirm" data-confirm="@T["Delete this audio?"]"
-                                      data-ajax="/vocabulary/@Model.WordId/audio/@audio.AudioId/delete">
+                                      data-ajax="/vocabulary/@Model.WordId/audio/@usAudio.AudioId/delete">
                                     <button type="submit" class="btn-icon btn-danger">@T["Delete"]</button>
                                 </form>
                             </li>
-                        }
                     </ul>
                 }
                 <form class="upload-form" id="audio-upload-form">
-                    <select name="accent" class="form-control">
-                        <option value="uk">UK</option>
-                        <option value="us">US</option>
-                    </select>
                     <input type="file" name="file" accept="audio/mpeg,audio/wav,audio/ogg" class="form-control" required />
-                    <button type="submit" class="btn-secondary btn-sm">@T["Upload audio"]</button>
+                    <button type="submit" class="btn-secondary btn-sm">@(usAudio is null ? T["Upload audio"] : T["Replace"])</button>
                 </form>
             </section>
         </div>

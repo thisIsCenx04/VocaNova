@@ -171,6 +171,9 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         return SendMultipartActionAsync(HttpMethod.Post, $"api/admin/words/{wordId}/image", content, cancellationToken);
     }
 
+    public Task<ApiActionResult> UpdateImageUrlAsync(uint wordId, string? imageUrl, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Put, $"api/admin/words/{wordId}/image", new { image_url = imageUrl }, cancellationToken);
+
     public async Task<ImportWordsResult> ImportWordsAsync(FileUpload upload, CancellationToken cancellationToken = default)
     {
         try
