@@ -64,6 +64,33 @@ void main() {
     expect(topics.single.displayName, 'Du lịch');
     expect(topics.single.wordCount, 12);
   });
+
+  test(
+    'getTopicWords uses topic endpoint and parses learning progress',
+    () async {
+      final dio = Dio();
+      dio.httpClientAdapter = CallbackAdapter((options) {
+        expect(options.path, ApiEndpoints.topicWords(2));
+        expect(options.queryParameters, {'page': 1, 'limit': 100});
+        return jsonResponse({
+          'items': [
+            {
+              'word_id': 3,
+              'word': 'journey',
+              'learning_status': 'learning',
+              'mastery_score': 65,
+            },
+          ],
+        });
+      });
+
+      final words = await WordSearchRepository(dio: dio).getTopicWords(2);
+
+      expect(words.single.topicIds, contains(2));
+      expect(words.single.learningStatus, 'learning');
+      expect(words.single.masteryScore, 65);
+    },
+  );
 }
 
 typedef AdapterCallback = ResponseBody Function(RequestOptions options);

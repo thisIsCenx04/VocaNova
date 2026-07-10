@@ -34,6 +34,17 @@ class WordSearchRepository {
     ).map(TopicSummary.fromJson).toList(growable: false);
   }
 
+  Future<List<WordSummary>> getTopicWords(int topicId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiEndpoints.topicWords(topicId),
+      queryParameters: const {'page': 1, 'limit': 100},
+    );
+    return _dataList(response)
+        .map(WordSummary.fromJson)
+        .map((word) => word.withTopic(topicId))
+        .toList(growable: false);
+  }
+
   List<Map<String, dynamic>> _dataList(
     Response<Map<String, dynamic>> response,
   ) {
