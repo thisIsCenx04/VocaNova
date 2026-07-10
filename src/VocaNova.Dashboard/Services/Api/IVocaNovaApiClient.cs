@@ -52,6 +52,8 @@ public interface IVocaNovaApiClient
 
     Task<ApiActionResult> UploadImageAsync(uint wordId, ImageUpload upload, CancellationToken cancellationToken = default);
 
+    Task<ApiActionResult> UpdateImageUrlAsync(uint wordId, string? imageUrl, CancellationToken cancellationToken = default);
+
     // F059 — CSV import. Trả về kết quả import (imported/skipped/errors) hoặc lỗi.
     Task<ImportWordsResult> ImportWordsAsync(FileUpload upload, CancellationToken cancellationToken = default);
 
