@@ -119,15 +119,64 @@ public sealed class TopicService : ITopicService
         CancellationToken cancellationToken = default)
     {
         var normalizedRequest = NormalizeCreateTopicRequest(request);
-        if (await _topicRepository.TopicNameExistsAsync(normalizedRequest.TopicName!, cancellationToken: cancellationToken))
+        if (await _topicRepository.ActiveTopicNameExistsAsync(normalizedRequest.TopicName!, cancellationToken))
         {
             return Result<TopicSummaryDto>.Conflict("Topic already exists.");
+        }
+        if (normalizedRequest.TopicNameVi is not null
+            && await _topicRepository.ActiveTopicNameViExistsAsync(normalizedRequest.TopicNameVi, cancellationToken: cancellationToken))
+        {
+            return Result<TopicSummaryDto>.Conflict("Vietnamese topic name already exists.");
+        }
+
+        var wordIds = normalizedRequest.WordIds ?? Array.Empty<uint>();
+        if (!await _topicRepository.WordIdsExistAsync(wordIds, cancellationToken))
+        {
+            return Result<TopicSummaryDto>.Fail("One or more selected vocabulary words do not exist.");
         }
 
         var topic = await _topicRepository.CreateAsync(normalizedRequest, cancellationToken);
         await RemoveTopicsCacheAsync(cancellationToken);
+        if (_topicCache is not null)
+        {
+            await _topicCache.RemoveTopicWordsAsync(topic.TopicId, cancellationToken);
+        }
 
         return Result<TopicSummaryDto>.Ok(topic);
+    }
+
+    public async Task<Result<int>> AddWordsAsync(
+        uint topicId,
+        AddTopicWordsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await _topicRepository.ExistsAsync(topicId, cancellationToken))
+        {
+            return Result<int>.NotFound("Topic not found.");
+        }
+
+        var wordIds = request.WordIds?.Where(id => id > 0).Distinct().ToArray() ?? Array.Empty<uint>();
+        if (wordIds.Length == 0)
+        {
+            return Result<int>.Fail("Select at least one vocabulary word.");
+        }
+        if (!await _topicRepository.WordIdsExistAsync(wordIds, cancellationToken))
+        {
+            return Result<int>.Fail("One or more selected vocabulary words do not exist.");
+        }
+
+        var added = await _topicRepository.AddWordsAsync(topicId, wordIds, cancellationToken);
+        if (added == 0)
+        {
+            return Result<int>.Conflict("The selected vocabulary is already in this topic.");
+        }
+
+        await RemoveTopicsCacheAsync(cancellationToken);
+        if (_topicCache is not null)
+        {
+            await _topicCache.RemoveTopicWordsAsync(topicId, cancellationToken);
+        }
+        return Result<int>.Ok(added);
     }
 
     public async Task<Result<TopicSummaryDto>> UpdateAsync(
@@ -140,6 +189,17 @@ public sealed class TopicService : ITopicService
         {
             return Result<TopicSummaryDto>.Conflict("Topic already exists.");
         }
+        if (normalizedRequest.TopicNameVi is not null
+            && await _topicRepository.ActiveTopicNameViExistsAsync(normalizedRequest.TopicNameVi, topicId, cancellationToken))
+        {
+            return Result<TopicSummaryDto>.Conflict("Vietnamese topic name already exists.");
+        }
+
+        if (normalizedRequest.WordIds is not null
+            && !await _topicRepository.WordIdsExistAsync(normalizedRequest.WordIds, cancellationToken))
+        {
+            return Result<TopicSummaryDto>.Fail("One or more selected vocabulary words do not exist.");
+        }
 
         var topic = await _topicRepository.UpdateAsync(topicId, normalizedRequest, cancellationToken);
         if (topic is null)
@@ -148,6 +208,10 @@ public sealed class TopicService : ITopicService
         }
 
         await RemoveTopicsCacheAsync(cancellationToken);
+        if (_topicCache is not null)
+        {
+            await _topicCache.RemoveTopicWordsAsync(topicId, cancellationToken);
+        }
 
         return Result<TopicSummaryDto>.Ok(topic);
     }
@@ -156,11 +220,6 @@ public sealed class TopicService : ITopicService
         uint topicId,
         CancellationToken cancellationToken = default)
     {
-        if (await _topicRepository.HasActiveWordsAsync(topicId, cancellationToken))
-        {
-            return Result<bool>.Conflict("Topic still has active words.");
-        }
-
         var deleted = await _topicRepository.SetStatusAsync(topicId, UserStatus.Deleted, cancellationToken);
         if (!deleted)
         {
@@ -202,6 +261,7 @@ public sealed class TopicService : ITopicService
             TopicName = request.TopicName!.Trim(),
             TopicNameVi = NormalizeNullable(request.TopicNameVi),
             Icon = NormalizeNullable(request.Icon),
+            WordIds = request.WordIds?.Distinct().ToArray(),
         };
     }
 
@@ -212,6 +272,7 @@ public sealed class TopicService : ITopicService
             TopicName = request.TopicName!.Trim(),
             TopicNameVi = NormalizeNullable(request.TopicNameVi),
             Icon = NormalizeNullable(request.Icon),
+            WordIds = request.WordIds?.Distinct().ToArray(),
         };
     }
 

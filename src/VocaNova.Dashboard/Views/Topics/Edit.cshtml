@@ -1,0 +1,78 @@
+@model VocaNova.Dashboard.Models.Topics.TopicEditViewModel
+@{
+    ViewData["Title"] = T["Edit topic"];
+}
+
+<div class="page-header">
+    <div>
+        <a href="/topics" class="text-muted">&larr; @T["Topics"]</a>
+        <h1 class="page-title">@T["Edit topic"]</h1>
+        <p class="page-subtitle">@T["Update the topic information."]</p>
+    </div>
+</div>
+
+@if (TempData["TopicError"] is string errorMessage) { <div class="alert alert-danger">@errorMessage</div> }
+@if (!ViewData.ModelState.IsValid) { <div class="alert alert-danger validation-summary" asp-validation-summary="All"></div> }
+
+<form method="post" action="/topics/@Model.TopicId/update" class="topic-create-form">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="TopicId" />
+    <div class="panel topic-create-panel">
+        <h4>@T["Topic information"]</h4>
+        <div class="topic-create-grid topic-edit-grid">
+            <label class="form-field topic-id-field">
+                <span>@T["Topic ID"]</span>
+                <input value="@Model.TopicId" class="form-control" readonly aria-readonly="true" />
+            </label>
+            <label class="form-field topic-icon-field">
+                <span>@T["Icon"]</span>
+                <input asp-for="Icon" class="form-control" maxlength="20" />
+                <span asp-validation-for="Icon" class="field-validation-error"></span>
+            </label>
+            <label class="form-field">
+                <span>@T["Topic name (EN)"] <strong aria-hidden="true">*</strong></span>
+                <input asp-for="TopicName" class="form-control" maxlength="50" required />
+                <span asp-validation-for="TopicName" class="field-validation-error"></span>
+            </label>
+            <label class="form-field">
+                <span>@T["Topic name (VI)"]</span>
+                <input asp-for="TopicNameVi" class="form-control" maxlength="50" />
+                <span asp-validation-for="TopicNameVi" class="field-validation-error"></span>
+            </label>
+        </div>
+    </div>
+    <div class="panel topic-create-panel">
+        <h4>@T["Vocabulary"]</h4>
+        <p class="text-muted topic-keyword-help">@T["Add or remove vocabulary associated with this topic."]</p>
+        <div class="topic-keyword-entry">
+            <div class="topic-keyword-autocomplete">
+                <input id="topic-keyword-input" type="text" class="form-control" maxlength="50" placeholder="@T["Search for vocabulary..."]" autocomplete="off" />
+                <div id="topic-word-suggestions" class="topic-word-suggestions" role="listbox" hidden></div>
+            </div>
+            <button id="topic-keyword-add" type="button" class="btn-secondary">@T["Add to Topic"]</button>
+        </div>
+        <p id="topic-keyword-error" class="field-validation-error topic-keyword-error" role="alert"></p>
+        <span asp-validation-for="Keywords" class="field-validation-error"></span>
+        <div id="topic-keyword-list" class="topic-keyword-list" aria-live="polite">
+            @for (var index = 0; index < Model.Keywords.Count; index++)
+            {
+                <span class="topic-keyword-chip">
+                    <span>@Model.Keywords[index]</span>
+                    <input type="hidden" name="Keywords" value="@Model.Keywords[index]" />
+                    <input type="hidden" name="WordIds" value="@(index < Model.WordIds.Count ? Model.WordIds[index] : 0)" />
+                    <button type="button" class="topic-keyword-remove" aria-label="@T["Remove keyword"]">&times;</button>
+                </span>
+            }
+        </div>
+        @if (Model.Keywords.Count > 0) { <p id="topic-keyword-empty" class="text-muted topic-keyword-empty" hidden>@T["No vocabulary added yet."]</p> }
+        else { <p id="topic-keyword-empty" class="text-muted topic-keyword-empty">@T["No vocabulary added yet."]</p> }
+    </div>
+    <div class="topic-create-actions">
+        <a href="/topics" class="btn-secondary">@T["Cancel"]</a>
+        <button type="submit" class="btn-primary">@T["Save"]</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="~/js/topic-create.js" asp-append-version="true"></script>
+}

@@ -1,133 +1,106 @@
-@using VocaNova.Dashboard.Models.Api.Dictionary
 @model VocaNova.Dashboard.Models.Topics.TopicListViewModel
 @{
     ViewData["Title"] = "Topics";
-    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
-
+    var request = ViewContext.HttpContext.Request;
+    var returnUrl = $"{request.Path}{request.QueryString}";
     string StatusBadge(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
+    string PageUrl(int page) {
+        var query = new List<string>();
+        if (!string.IsNullOrWhiteSpace(Model.Q)) query.Add($"q={Uri.EscapeDataString(Model.Q)}");
+        if (!string.IsNullOrWhiteSpace(Model.Status)) query.Add($"status={Uri.EscapeDataString(Model.Status)}");
+        if (Model.IncludeDeleted) query.Add("includeDeleted=true");
+        query.Add($"pageSize={Model.PageSize}");
+        query.Add($"page={page}");
+        return $"/topics?{string.Join("&", query)}";
+    }
 }
 
 <div class="page-header">
-    <h1 class="page-title">@T["Topics"]</h1>
-    <p class="page-subtitle">@Model.Items.Count @T["topic(s). Manage topics and their words."]</p>
+    <div>
+        <h1 class="page-title">@T["Topics"]</h1>
+        <p class="page-subtitle">@Model.TotalItems @T["topic(s). Manage topics and their words."]</p>
+    </div>
+    <a href="/topics/create" class="btn-primary">@T["Add topic"]</a>
 </div>
 
-@if (TempData["TopicSuccess"] is string okMsg)
-{
-    <div class="alert alert-success">@okMsg</div>
-}
-@if (TempData["TopicError"] is string errMsg)
-{
-    <div class="alert alert-danger">@errMsg</div>
-}
+@if (TempData["TopicSuccess"] is string okMsg) { <div class="alert alert-success">@okMsg</div> }
+@if (TempData["TopicError"] is string errMsg) { <div class="alert alert-danger">@errMsg</div> }
 
 <form method="get" action="/topics" class="filter-bar">
     <input type="text" name="q" value="@Model.Q" class="form-control" placeholder="@T["Search topic..."]" />
-    <select name="status" class="form-control">
+    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+    <select name="status" class="form-control select-arrow">
         <option value="">@T["Any status"]</option>
         <option value="active" selected="@(Model.Status == "active")">@T["Active"]</option>
         <option value="deleted" selected="@(Model.Status == "deleted")">@T["Deleted"]</option>
     </select>
-    <label class="checkbox-inline">
-        <input type="checkbox" name="includeDeleted" value="true" checked="@Model.IncludeDeleted" />
-        @T["Show deleted"]
-    </label>
+    <label class="checkbox-inline"><input type="checkbox" name="includeDeleted" value="true" checked="@Model.IncludeDeleted" /> @T["Show deleted"]</label>
     <button type="submit" class="btn-primary">@T["Filter"]</button>
     <a href="/topics" class="btn-secondary">@T["Reset"]</a>
 </form>
 
-<div class="panel">
-    <h4>@T["Add a topic"]</h4>
-    <form method="post" action="/topics/create" class="form-grid topic-add-form">
-        @Html.AntiForgeryToken()
-        <input type="hidden" name="returnUrl" value="@returnUrl" />
-        <input type="text" name="icon" class="form-control" placeholder="@T["Icon"]" />
-        <input type="text" name="topicName" class="form-control" placeholder="@T["Topic name (EN)"]" required />
-        <input type="text" name="topicNameVi" class="form-control" placeholder="@T["Topic name (VI)"]" />
-        <button type="submit" class="btn-primary btn-sm">@T["Add topic"]</button>
-    </form>
-</div>
-
 <div class="panel table-panel">
     <table class="data-table">
-        <thead>
-            <tr>
-                <th>@T["Icon"]</th>
-                <th>@T["Topic name"]</th>
-                <th>@T["Name (VI)"]</th>
-                <th>@T["Status"]</th>
-                <th>@T["Words"]</th>
-                <th class="col-actions">@T["Actions"]</th>
-            </tr>
-        </thead>
+        <thead><tr><th>@T["ID"]</th><th>@T["Icon"]</th><th>@T["Topic name"]</th><th>@T["Name (VI)"]</th><th>@T["Status"]</th><th>@T["Words"]</th><th class="col-actions">@T["Actions"]</th></tr></thead>
         <tbody>
-            @if (Model.Items.Count == 0)
-            {
-                <tr><td colspan="6" class="empty-row">@T["No topics found."]</td></tr>
-            }
-            else
-            {
-                foreach (var topic in Model.Items)
-                {
-                    <tr data-topic-row="@topic.TopicId">
-                        <td>@(string.IsNullOrWhiteSpace(topic.Icon) ? "—" : topic.Icon)</td>
-                        <td class="word-text">@topic.TopicName</td>
-                        <td>@(topic.TopicNameVi ?? "—")</td>
-                        <td><span class="@StatusBadge(topic.Status)">@topic.Status</span></td>
-                        <td>@topic.WordCount</td>
-                        <td class="col-actions">
-                            @if (topic.Status != "deleted")
-                            {
-                                <button type="button" class="btn-icon js-edit-topic" data-topic-id="@topic.TopicId">@T["Edit"]</button>
-                                @if (topic.WordCount > 0)
-                                {
-                                    <button type="button" class="btn-icon btn-danger" disabled
-                                            title="@(T.Format("Cannot delete — {0} word(s) still use this topic", topic.WordCount))">@T["Delete"]</button>
-                                }
-                                else
-                                {
-                                    <form method="post" action="/topics/@topic.TopicId/delete" class="inline-form js-confirm"
-                                          data-confirm="@(T.Format("Delete topic '{0}'?", topic.TopicName))">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                        <button type="submit" class="btn-icon btn-danger">@T["Delete"]</button>
-                                    </form>
-                                }
-                            }
-                            else
-                            {
-                                <form method="post" action="/topics/@topic.TopicId/restore" class="inline-form">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                    <button type="submit" class="btn-icon btn-success">@T["Restore"]</button>
-                                </form>
-                            }
-                        </td>
-                    </tr>
+        @if (Model.Items.Count == 0) { <tr><td colspan="7" class="empty-row">@T["No topics found."]</td></tr> }
+        @foreach (var topic in Model.Items)
+        {
+            <tr data-topic-row="@topic.TopicId">
+                <td class="topic-id">@topic.TopicId</td>
+                <td>@(string.IsNullOrWhiteSpace(topic.Icon) ? "—" : topic.Icon)</td>
+                <td class="word-text">@topic.TopicName</td>
+                <td>@(topic.TopicNameVi ?? "—")</td>
+                <td><span class="@StatusBadge(topic.Status)">@topic.Status</span></td>
+                <td>@topic.WordCount</td>
+                <td class="col-actions">
+                    <a class="btn-icon topic-action-icon" href="/topics/@topic.TopicId" title="@T["View details"]" aria-label="@T["View details"]"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg></a>
                     @if (topic.Status != "deleted")
                     {
-                        <tr class="edit-row" id="edit-row-@topic.TopicId" hidden>
-                            <td colspan="6">
-                                <form method="post" action="/topics/@topic.TopicId/update" class="form-grid">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                    <input type="text" name="icon" value="@topic.Icon" class="form-control" placeholder="@T["Icon"]" />
-                                    <input type="text" name="topicName" value="@topic.TopicName" class="form-control" placeholder="@T["Topic name (EN)"]" required />
-                                    <input type="text" name="topicNameVi" value="@topic.TopicNameVi" class="form-control" placeholder="@T["Topic name (VI)"]" />
-                                    <div class="form-actions">
-                                        <button type="submit" class="btn-primary btn-sm">@T["Save"]</button>
-                                        <button type="button" class="btn-secondary btn-sm js-edit-cancel" data-topic-id="@topic.TopicId">@T["Cancel"]</button>
-                                    </div>
-                                </form>
-                            </td>
-                        </tr>
+                        <a class="btn-icon topic-action-icon" href="/topics/@topic.TopicId/edit" title="@T["Edit"]" aria-label="@T["Edit"]"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.7 4.2 4.2-.7L19 8.5 15.5 5 4 16.5Z"/><path d="m13.8 6.7 3.5 3.5"/></svg></a>
+                        <form method="post" action="/topics/@topic.TopicId/delete" class="inline-form js-confirm" data-confirm="@(T.Format("Delete topic '{0}'?", topic.TopicName))">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                            <button type="submit" class="btn-icon btn-danger topic-action-icon" title="@T["Delete"]" aria-label="@T["Delete"]"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg></button>
+                        </form>
                     }
-                }
-            }
+                    else
+                    {
+                        <form method="post" action="/topics/@topic.TopicId/restore" class="inline-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                            <button type="submit" class="btn-icon btn-success">@T["Restore"]</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
         </tbody>
     </table>
 </div>
 
-@section Scripts {
-    <script src="~/js/topics.js" asp-append-version="true"></script>
-}
+<div class="table-foot-bar">
+    <form method="get" action="/topics" class="topic-page-size-form">
+            <input type="hidden" name="q" value="@Model.Q" />
+            <input type="hidden" name="status" value="@Model.Status" />
+            @if (Model.IncludeDeleted) { <input type="hidden" name="includeDeleted" value="true" /> }
+            <span>@T["Showing"]</span>
+            <select name="pageSize" class="form-control select-arrow page-size-select" onchange="this.form.submit()" aria-label="@T["Items per page"]">
+                @foreach (var size in new[] { 10, 20, 30, 40, 50 })
+                {
+                    <option value="@size" selected="@(Model.PageSize == size)">@size</option>
+                }
+            </select>
+            <span>@T["of"] @Model.TotalItems @T["entries"]</span>
+    </form>
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="pager" aria-label="Topic pages">
+            <a class="pager-link @(Model.HasPrevious ? "" : "disabled")" href="@(Model.HasPrevious ? PageUrl(Model.Page - 1) : "#")">@T["Prev"]</a>
+            @for (var p = 1; p <= Model.TotalPages; p++) { <a class="pager-link @(p == Model.Page ? "active" : "")" href="@PageUrl(p)">@p</a> }
+            <a class="pager-link @(Model.HasNext ? "" : "disabled")" href="@(Model.HasNext ? PageUrl(Model.Page + 1) : "#")">@T["Next"]</a>
+        </nav>
+    }
+</div>
+
+@section Scripts { <script src="~/js/topics.js" asp-append-version="true"></script> }

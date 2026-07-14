@@ -48,6 +48,19 @@ public sealed class AdminTopicsController : ControllerBase
         return this.CreatedResult(result.Value, "Topic created successfully.");
     }
 
+    [HttpPost("{id:uint}/words")]
+    public async Task<IActionResult> AddWords(
+        [FromRoute] uint id,
+        [FromBody] AddTopicWordsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _topicService.AddWordsAsync(id, request, cancellationToken);
+        if (!result.IsSuccess) return this.ErrorResult(result);
+
+        SetAuditEntity(id);
+        return this.OkResult(new { added = result.Value }, "Vocabulary added to topic successfully.");
+    }
+
     [HttpPut("{id:uint}")]
     public async Task<IActionResult> Update(
         [FromRoute] uint id,

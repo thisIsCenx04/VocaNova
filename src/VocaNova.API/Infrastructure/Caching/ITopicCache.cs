@@ -25,4 +25,6 @@ public interface ITopicCache
         CancellationToken cancellationToken = default);
 
     Task RemoveTopicsAsync(CancellationToken cancellationToken = default);
+
+    Task RemoveTopicWordsAsync(uint topicId, CancellationToken cancellationToken = default);
 }

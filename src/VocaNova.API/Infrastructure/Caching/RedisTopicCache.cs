@@ -116,6 +116,22 @@ public sealed class RedisTopicCache : ITopicCache
         await database.KeyDeleteAsync(GetKey("topics"));
     }
 
+    public async Task RemoveTopicWordsAsync(uint topicId, CancellationToken cancellationToken = default)
+    {
+        var connection = await _connection.Value;
+        if (connection is null) return;
+
+        var database = connection.GetDatabase();
+        var pattern = GetKey($"topic-words:{topicId}:*").ToString();
+        foreach (var endpoint in connection.GetEndPoints())
+        {
+            var server = connection.GetServer(endpoint);
+            if (!server.IsConnected) continue;
+            var keys = server.Keys(database.Database, pattern: pattern).ToArray();
+            if (keys.Length > 0) await database.KeyDeleteAsync(keys);
+        }
+    }
+
     private async Task<IDatabase?> GetDatabaseAsync()
     {
         var connection = await _connection.Value;
