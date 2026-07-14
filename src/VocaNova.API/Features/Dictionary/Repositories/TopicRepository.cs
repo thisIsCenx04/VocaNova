@@ -82,22 +82,111 @@ public sealed class TopicRepository : ITopicRepository
                 cancellationToken);
     }
 
+    public Task<bool> ActiveTopicNameExistsAsync(
+        string topicName,
+        CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Topics.AnyAsync(topic => topic.TopicName == topicName, cancellationToken);
+    }
+
+    public Task<bool> ActiveTopicNameViExistsAsync(
+        string topicNameVi,
+        uint? excludingTopicId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedName = topicNameVi.Trim().ToLower();
+        return _dbContext.Topics.AnyAsync(
+            topic => topic.TopicNameVi != null && topic.TopicNameVi.ToLower() == normalizedName
+                && (!excludingTopicId.HasValue || topic.TopicId != excludingTopicId.Value),
+            cancellationToken);
+    }
+
+    public async Task<bool> WordIdsExistAsync(
+        IReadOnlyCollection<uint> wordIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (wordIds.Count == 0) return true;
+
+        var count = await _dbContext.Words.IgnoreQueryFilters().CountAsync(
+            word => wordIds.Contains(word.WordId),
+            cancellationToken);
+        return count == wordIds.Distinct().Count();
+    }
+
+    public async Task<int> AddWordsAsync(
+        uint topicId,
+        IReadOnlyCollection<uint> wordIds,
+        CancellationToken cancellationToken = default)
+    {
+        var existingIds = await _dbContext.WordTopics
+            .Where(link => link.TopicId == topicId && wordIds.Contains(link.WordId))
+            .Select(link => link.WordId)
+            .ToListAsync(cancellationToken);
+        var newIds = wordIds.Distinct().Except(existingIds).ToArray();
+
+        _dbContext.WordTopics.AddRange(newIds.Select(wordId => new WordTopic
+        {
+            TopicId = topicId,
+            WordId = wordId,
+            IsPrimary = true,
+        }));
+        await RestoreWordsAsync(newIds, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        var persistedIds = await _dbContext.WordTopics.AsNoTracking()
+            .Where(link => link.TopicId == topicId && newIds.Contains(link.WordId))
+            .Select(link => link.WordId)
+            .ToArrayAsync(cancellationToken);
+        return persistedIds.Length;
+    }
+
     public async Task<TopicSummaryDto> CreateAsync(
         CreateTopicRequest request,
         CancellationToken cancellationToken = default)
     {
-        var topic = new Topic
-        {
-            TopicName = request.TopicName!.Trim(),
-            TopicNameVi = NormalizeNullable(request.TopicNameVi),
-            Icon = NormalizeNullable(request.Icon),
-            Status = UserStatus.Active,
-        };
+        var topicName = request.TopicName!.Trim();
+        var topic = await _dbContext.Topics
+            .IgnoreQueryFilters()
+            .Include(entity => entity.WordTopics)
+            .SingleOrDefaultAsync(
+                entity => entity.TopicName == topicName && entity.Status == UserStatus.Deleted,
+                cancellationToken);
 
-        _dbContext.Topics.Add(topic);
+        if (topic is null)
+        {
+            topic = new Topic { TopicName = topicName };
+            _dbContext.Topics.Add(topic);
+        }
+        else
+        {
+            _dbContext.WordTopics.RemoveRange(topic.WordTopics);
+            topic.WordTopics.Clear();
+        }
+
+        topic.TopicNameVi = NormalizeNullable(request.TopicNameVi);
+        topic.Icon = NormalizeNullable(request.Icon);
+        topic.Status = UserStatus.Active;
+
+        await RestoreWordsAsync(request.WordIds, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return MapTopic(topic, wordCount: 0);
+        var selectedWordIds = request.WordIds?.Distinct().ToArray() ?? Array.Empty<uint>();
+        if (selectedWordIds.Length > 0)
+        {
+            _dbContext.WordTopics.AddRange(selectedWordIds.Select(wordId => new WordTopic
+            {
+                TopicId = topic.TopicId,
+                WordId = wordId,
+                IsPrimary = true,
+            }));
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        await EnsureWordLinksPersistedAsync(topic.TopicId, selectedWordIds, cancellationToken);
+
+        var wordCount = await _dbContext.WordTopics.CountAsync(
+            link => link.TopicId == topic.TopicId && link.Word.Status == UserStatus.Active,
+            cancellationToken);
+        return MapTopic(topic, wordCount);
     }
 
     public async Task<TopicSummaryDto?> UpdateAsync(
@@ -106,6 +195,7 @@ public sealed class TopicRepository : ITopicRepository
         CancellationToken cancellationToken = default)
     {
         var topic = await _dbContext.Topics
+            .Include(entity => entity.WordTopics)
             .SingleOrDefaultAsync(entity => entity.TopicId == topicId, cancellationToken);
         if (topic is null)
         {
@@ -116,10 +206,33 @@ public sealed class TopicRepository : ITopicRepository
         topic.TopicNameVi = NormalizeNullable(request.TopicNameVi);
         topic.Icon = NormalizeNullable(request.Icon);
 
+        if (request.WordIds is not null)
+        {
+            _dbContext.WordTopics.RemoveRange(topic.WordTopics);
+            topic.WordTopics.Clear();
+            await RestoreWordsAsync(request.WordIds, cancellationToken);
+        }
+
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        if (request.WordIds is not null && request.WordIds.Count > 0)
+        {
+            _dbContext.WordTopics.AddRange(request.WordIds.Distinct().Select(wordId => new WordTopic
+            {
+                TopicId = topic.TopicId,
+                WordId = wordId,
+                IsPrimary = true,
+            }));
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        if (request.WordIds is not null)
+        {
+            await EnsureWordLinksPersistedAsync(topic.TopicId, request.WordIds, cancellationToken);
+        }
+
         var wordCount = await _dbContext.WordTopics.CountAsync(
-            wordTopic => wordTopic.TopicId == topic.TopicId,
+            wordTopic => wordTopic.TopicId == topic.TopicId && wordTopic.Word.Status == UserStatus.Active,
             cancellationToken);
 
         return MapTopic(topic, wordCount);
@@ -164,5 +277,36 @@ public sealed class TopicRepository : ITopicRepository
     private static string? NormalizeNullable(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private async Task RestoreWordsAsync(
+        IReadOnlyCollection<uint>? wordIds,
+        CancellationToken cancellationToken)
+    {
+        if (wordIds is null || wordIds.Count == 0) return;
+
+        var words = await _dbContext.Words.IgnoreQueryFilters()
+            .Where(word => wordIds.Contains(word.WordId) && word.Status == UserStatus.Deleted)
+            .ToListAsync(cancellationToken);
+        foreach (var word in words) word.Status = UserStatus.Active;
+    }
+
+    private async Task EnsureWordLinksPersistedAsync(
+        uint topicId,
+        IReadOnlyCollection<uint> expectedWordIds,
+        CancellationToken cancellationToken)
+    {
+        var expected = expectedWordIds.Distinct().OrderBy(id => id).ToArray();
+        var actual = await _dbContext.WordTopics.AsNoTracking()
+            .Where(link => link.TopicId == topicId)
+            .OrderBy(link => link.WordId)
+            .Select(link => link.WordId)
+            .ToArrayAsync(cancellationToken);
+
+        if (!actual.SequenceEqual(expected))
+        {
+            throw new InvalidOperationException(
+                $"Vocabulary links for topic {topicId} were not persisted correctly.");
+        }
     }
 }

@@ -22,6 +22,10 @@ public sealed class WordTopicConfiguration : IEntityTypeConfiguration<WordTopic>
         entity.Property(e => e.TopicId)
             .HasColumnName("topic_id")
             .HasColumnType("int(10) unsigned");
+        entity.Property(e => e.IsPrimary)
+            .HasColumnName("is_primary")
+            .HasColumnType("tinyint(1)")
+            .HasDefaultValue(true);
 
         entity.HasOne(d => d.Topic).WithMany(p => p.WordTopics)
             .HasForeignKey(d => d.TopicId)

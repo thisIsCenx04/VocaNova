@@ -260,6 +260,9 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> CreateTopicAsync(TopicInput input, CancellationToken cancellationToken = default) =>
         SendJsonActionAsync(HttpMethod.Post, "api/admin/topics", TopicPayload(input), cancellationToken);
 
+    public Task<ApiActionResult> AddWordsToTopicAsync(uint topicId, IReadOnlyCollection<uint> wordIds, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Post, $"api/admin/topics/{topicId}/words", new { WordIds = wordIds }, cancellationToken);
+
     public Task<ApiActionResult> UpdateTopicAsync(uint topicId, TopicInput input, CancellationToken cancellationToken = default) =>
         SendJsonActionAsync(HttpMethod.Put, $"api/admin/topics/{topicId}", TopicPayload(input), cancellationToken);
 
@@ -337,6 +340,7 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         input.TopicName,
         input.TopicNameVi,
         input.Icon,
+        input.WordIds,
     };
 
     // Chỉ cần word_id từ response tạo word (POST /api/admin/words trả về word DTO đầy đủ).

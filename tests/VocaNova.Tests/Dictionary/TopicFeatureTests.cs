@@ -167,7 +167,109 @@ public class TopicFeatureTests
     }
 
     [Fact]
-    public async Task SoftDeleteAsync_Should_Return_409_When_Topic_Has_Active_Words()
+    public async Task CreateAsync_Should_Insert_Selected_Words_Into_WordTopics()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedTopicsAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.CreateAsync(new CreateTopicRequest(
+            "Food", "Thuc an", null, new uint[] { 1, 2 }));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.WordCount.Should().Be(2);
+        var links = await dbContext.WordTopics
+            .Where(link => link.TopicId == result.Value.TopicId)
+            .ToListAsync();
+        links.Select(link => link.WordId).Should().BeEquivalentTo(new uint[] { 1, 2 });
+        links.Should().OnlyContain(link => link.IsPrimary);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_Should_Replace_WordTopics_With_Selected_Words()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedTopicsAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.UpdateAsync(
+            1, new UpdateTopicRequest("Movement", "Van dong", "run", new uint[] { 3 }));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.WordCount.Should().Be(1);
+        var links = await dbContext.WordTopics.Where(link => link.TopicId == 1).ToListAsync();
+        links.Should().ContainSingle();
+        links[0].WordId.Should().Be(3);
+        links[0].IsPrimary.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CreateAsync_Should_Restore_Deleted_Topic_And_Add_Selected_Words()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedTopicsAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.CreateAsync(new CreateTopicRequest(
+            "Deleted Topic", "Chu de khoi phuc", "restore", new uint[] { 2, 3 }));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.TopicId.Should().Be(3);
+        result.Value.WordCount.Should().Be(2);
+
+        var restored = await dbContext.Topics
+            .Include(topic => topic.WordTopics)
+            .SingleAsync(topic => topic.TopicId == 3);
+        restored.Status.Should().Be(UserStatus.Active);
+        restored.TopicNameVi.Should().Be("Chu de khoi phuc");
+        restored.WordTopics.Select(link => link.WordId).Should().BeEquivalentTo(new uint[] { 2, 3 });
+    }
+
+    [Fact]
+    public async Task CreateAsync_Should_Reject_Duplicate_Active_Topic()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedTopicsAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.CreateAsync(new CreateTopicRequest("Sports", null, null));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(409);
+        result.Error.Should().Be("Topic already exists.");
+    }
+
+    [Fact]
+    public async Task CreateAsync_Should_Reject_Duplicate_Vietnamese_Name_Case_Insensitively()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedTopicsAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.CreateAsync(new CreateTopicRequest("Athletics", "  THE THAO  ", null));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(409);
+        result.Error.Should().Be("Vietnamese topic name already exists.");
+    }
+
+    [Fact]
+    public async Task UpdateAsync_Should_Reject_Duplicate_Vietnamese_Name()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedTopicsAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.UpdateAsync(
+            1, new UpdateTopicRequest("Movement", "The thao", "run"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(409);
+        result.Error.Should().Be("Vietnamese topic name already exists.");
+    }
+
+    [Fact]
+    public async Task SoftDeleteAsync_Should_Delete_Topic_And_Keep_Word_Links()
     {
         await using var dbContext = CreateDbContext();
         await SeedTopicsAsync(dbContext);
@@ -175,12 +277,11 @@ public class TopicFeatureTests
 
         var result = await service.SoftDeleteAsync(1);
 
-        result.IsSuccess.Should().BeFalse();
-        result.StatusCode.Should().Be(409);
-        result.Error.Should().Be("Topic still has active words.");
+        result.IsSuccess.Should().BeTrue();
 
-        var topic = await dbContext.Topics.SingleAsync(entity => entity.TopicId == 1);
-        topic.Status.Should().Be(UserStatus.Active);
+        var topic = await dbContext.Topics.IgnoreQueryFilters().SingleAsync(entity => entity.TopicId == 1);
+        topic.Status.Should().Be(UserStatus.Deleted);
+        (await dbContext.WordTopics.CountAsync(link => link.TopicId == 1)).Should().Be(2);
     }
 
     [Fact]
@@ -409,6 +510,11 @@ public class TopicFeatureTests
         public Task RemoveTopicsAsync(CancellationToken cancellationToken = default)
         {
             RemoveTopicsCount++;
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveTopicWordsAsync(uint topicId, CancellationToken cancellationToken = default)
+        {
             return Task.CompletedTask;
         }
     }

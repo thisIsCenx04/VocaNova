@@ -16,5 +16,9 @@ public sealed class UpdateTopicRequestValidator : AbstractValidator<UpdateTopicR
 
         RuleFor(request => request.Icon)
             .MaximumLength(20);
+
+        RuleFor(request => request.WordIds)
+            .Must(ids => ids is null || ids.Count == ids.Distinct().Count())
+            .WithMessage("Duplicate vocabulary words are not allowed.");
     }
 }

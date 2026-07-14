@@ -77,6 +77,8 @@ public interface IVocaNovaApiClient
 
     Task<ApiActionResult> CreateTopicAsync(TopicInput input, CancellationToken cancellationToken = default);
 
+    Task<ApiActionResult> AddWordsToTopicAsync(uint topicId, IReadOnlyCollection<uint> wordIds, CancellationToken cancellationToken = default);
+
     Task<ApiActionResult> UpdateTopicAsync(uint topicId, TopicInput input, CancellationToken cancellationToken = default);
 
     Task<ApiActionResult> DeleteTopicAsync(uint topicId, CancellationToken cancellationToken = default);
@@ -114,7 +116,11 @@ public interface IVocaNovaApiClient
 public sealed record KnnLookupFilter(string? Q, string? Status, bool IncludeDeleted, int Page, int Limit);
 
 /// <summary>Payload tạo/cập nhật topic (khớp CreateTopicRequest/UpdateTopicRequest của API).</summary>
-public sealed record TopicInput(string? TopicName, string? TopicNameVi, string? Icon);
+public sealed record TopicInput(
+    string? TopicName,
+    string? TopicNameVi,
+    string? Icon,
+    IReadOnlyCollection<uint>? WordIds = null);
 
 /// <summary>Bộ lọc danh sách user (F060).</summary>
 public sealed record UserListFilter(string? Status, string? Search, bool IncludeDeleted, int Page, int Limit, string? Role = null);
