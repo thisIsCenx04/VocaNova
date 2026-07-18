@@ -95,9 +95,12 @@
     </form>
     @if (Model.TotalPages > 1)
     {
-        <nav class="pager" aria-label="Topic pages">
+        var winStart = Math.Max(1, Model.Page - 2);
+        var winEnd = Math.Min(Model.TotalPages, winStart + 4);
+        winStart = Math.Max(1, winEnd - 4);
+        <nav class="pager" aria-label="Topic pages" data-page="@Model.Page" data-total-pages="@Model.TotalPages">
             <a class="pager-link @(Model.HasPrevious ? "" : "disabled")" href="@(Model.HasPrevious ? PageUrl(Model.Page - 1) : "#")">@T["Prev"]</a>
-            @for (var p = 1; p <= Model.TotalPages; p++) { <a class="pager-link @(p == Model.Page ? "active" : "")" href="@PageUrl(p)">@p</a> }
+            @for (var p = winStart; p <= winEnd; p++) { <a class="pager-link @(p == Model.Page ? "active" : "")" href="@PageUrl(p)">@p</a> }
             <a class="pager-link @(Model.HasNext ? "" : "disabled")" href="@(Model.HasNext ? PageUrl(Model.Page + 1) : "#")">@T["Next"]</a>
         </nav>
     }

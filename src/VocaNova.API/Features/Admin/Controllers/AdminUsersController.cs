@@ -24,6 +24,7 @@ public sealed class AdminUsersController : ControllerBase
         _adminUserService = adminUserService;
     }
 
+
     [HttpGet]
     public async Task<IActionResult> GetUsers(
         [FromQuery] AdminUserQuery query,
