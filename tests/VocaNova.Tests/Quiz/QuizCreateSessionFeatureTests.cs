@@ -44,6 +44,26 @@ public class QuizCreateSessionFeatureTests
     }
 
     [Fact]
+    public async Task CreateSessionAsync_Should_Scope_Pool_To_List_When_ListId_Provided()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedTwoListsDataAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        // Without a list, the pool spans both lists (8 words).
+        var allWords = await service.CreateSessionAsync(1, CreateRequest());
+        allWords.IsSuccess.Should().BeTrue();
+        allWords.Value!.Session.QuestionCount.Should().Be(8);
+
+        // Scoped to list 2, only its 4 words form the pool.
+        var scoped = await service.CreateSessionAsync(1, CreateRequest(listId: 2));
+        scoped.IsSuccess.Should().BeTrue();
+        scoped.Value!.Session.QuestionCount.Should().Be(4);
+        scoped.Value.Session.ListId.Should().Be(2);
+        scoped.Value.FirstQuestion.WordId.Should().BeOneOf(5u, 6u, 7u, 8u);
+    }
+
+    [Fact]
     public void CreateSessionRequestValidator_Should_Reject_Timed_Mode_Without_TimeLimit()
     {
         var validator = new CreateSessionRequestValidator();
@@ -127,7 +147,8 @@ public class QuizCreateSessionFeatureTests
         int? wordLimit = null,
         int? timeLimitSec = null,
         int? lives = null,
-        string answerMethod = AnswerMethod.MultipleChoice)
+        string answerMethod = AnswerMethod.MultipleChoice,
+        uint? listId = null)
     {
         return new CreateSessionRequest(
             mode,
@@ -140,7 +161,8 @@ public class QuizCreateSessionFeatureTests
             wordLimit,
             timeLimitSec,
             lives,
-            answerMethod);
+            answerMethod,
+            listId);
     }
 
     private static async Task SeedQuizSessionDataAsync(VocaNovaDbContext dbContext)
@@ -180,13 +202,64 @@ public class QuizCreateSessionFeatureTests
         await dbContext.SaveChangesAsync();
     }
 
+    private static async Task SeedTwoListsDataAsync(VocaNovaDbContext dbContext)
+    {
+        var now = new DateTime(2026, 1, 1, 8, 0, 0, DateTimeKind.Utc);
+
+        dbContext.Users.Add(new User
+        {
+            UserId = 1,
+            RoleId = 1,
+            Status = UserStatus.Active,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+
+        dbContext.UserLists.AddRange(
+            new UserList
+            {
+                ListId = 1,
+                UserId = 1,
+                ListName = "List one",
+                Status = UserStatus.Active,
+                CreatedAt = now,
+            },
+            new UserList
+            {
+                ListId = 2,
+                UserId = 1,
+                ListName = "List two",
+                Status = UserStatus.Active,
+                CreatedAt = now,
+            });
+
+        dbContext.Topics.Add(new Topic
+        {
+            TopicId = 7,
+            TopicName = "Actions",
+            Status = UserStatus.Active,
+        });
+
+        AddWord(dbContext, 1, "run", "move quickly", "chay", now.AddMinutes(1), listId: 1);
+        AddWord(dbContext, 2, "walk", "move on foot", "di bo", now.AddMinutes(2), listId: 1);
+        AddWord(dbContext, 3, "jump", "push off the ground", "nhay", now.AddMinutes(3), listId: 1);
+        AddWord(dbContext, 4, "fly", "move through air", "bay", now.AddMinutes(4), listId: 1);
+        AddWord(dbContext, 5, "swim", "move through water", "boi", now.AddMinutes(5), listId: 2);
+        AddWord(dbContext, 6, "crawl", "move on hands", "bo", now.AddMinutes(6), listId: 2);
+        AddWord(dbContext, 7, "climb", "go upward", "leo", now.AddMinutes(7), listId: 2);
+        AddWord(dbContext, 8, "dive", "plunge down", "lan", now.AddMinutes(8), listId: 2);
+
+        await dbContext.SaveChangesAsync();
+    }
+
     private static void AddWord(
         VocaNovaDbContext dbContext,
         uint wordId,
         string wordText,
         string definition,
         string meaning,
-        DateTime addedAt)
+        DateTime addedAt,
+        uint listId = 1)
     {
         dbContext.Words.Add(new Word
         {
@@ -221,7 +294,7 @@ public class QuizCreateSessionFeatureTests
         dbContext.UserListWords.Add(new UserListWord
         {
             UserId = 1,
-            ListId = 1,
+            ListId = listId,
             WordId = wordId,
             AddMethod = AddMethod.Manual,
             Status = UserStatus.Active,

@@ -19,6 +19,7 @@ public sealed class QuizWordPoolRepository : IQuizWordPoolRepository
         DateTime? addedFrom,
         DateTime? addedBefore,
         IReadOnlyCollection<uint>? topicIds,
+        uint? listId,
         CancellationToken cancellationToken = default)
     {
         var query = _dbContext.UserListWords
@@ -27,6 +28,11 @@ public sealed class QuizWordPoolRepository : IQuizWordPoolRepository
                 && listWord.Status == UserStatus.Active
                 && listWord.List.Status == UserStatus.Active
                 && listWord.Word.Status == UserStatus.Active);
+
+        if (listId is > 0)
+        {
+            query = query.Where(listWord => listWord.ListId == listId.Value);
+        }
 
         if (addedFrom.HasValue)
         {

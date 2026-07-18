@@ -11,7 +11,7 @@ public static class QuizSessionStatsCalculator
 
         session.CorrectCount = gradedAnswers.Count(answer => answer.IsCorrect == true);
         session.WrongCount = gradedAnswers.Count(answer => answer.IsCorrect == false);
-        session.Score = CalculateAccuracy(session.CorrectCount, gradedAnswers.Count);
+        session.Score = CalculateScore(session.CorrectCount, session.QuestionCount);
         session.MaxStreak = CalculateMaxStreak(gradedAnswers);
     }
 
@@ -21,6 +21,7 @@ public static class QuizSessionStatsCalculator
         var correctCount = gradedAnswers.Count(answer => answer.IsCorrect == true);
         var wrongCount = gradedAnswers.Count(answer => answer.IsCorrect == false);
         var accuracy = CalculateAccuracy(correctCount, gradedAnswers.Count);
+        var score = CalculateScore(correctCount, session.QuestionCount);
         var maxStreak = CalculateMaxStreak(gradedAnswers);
 
         return new QuizResultDto(
@@ -33,7 +34,7 @@ public static class QuizSessionStatsCalculator
             accuracy,
             CalculateDurationSec(session),
             maxStreak,
-            accuracy,
+            score,
             session.StartedAt,
             session.EndedAt,
             session.TestAnswers
@@ -69,6 +70,13 @@ public static class QuizSessionStatsCalculator
         return answeredCount == 0
             ? 0
             : (float)correctCount / answeredCount * 100;
+    }
+
+    private static float CalculateScore(int correctCount, int questionCount)
+    {
+        return questionCount == 0
+            ? 0
+            : (float)correctCount / questionCount * 100;
     }
 
     private static int CalculateMaxStreak(IReadOnlyCollection<TestAnswer> gradedAnswers)

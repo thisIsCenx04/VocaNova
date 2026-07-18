@@ -39,7 +39,7 @@ class _ResultContent extends StatelessWidget {
         Center(
           child: TweenAnimationBuilder<double>(
             key: const Key('score-animation'),
-            tween: Tween(begin: 0, end: result.accuracy / 100),
+            tween: Tween(begin: 0, end: result.score / 100),
             duration: const Duration(milliseconds: 900),
             builder: (context, value, _) => SizedBox.square(
               dimension: 150,

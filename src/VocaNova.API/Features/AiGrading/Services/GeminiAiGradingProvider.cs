@@ -1,5 +1,6 @@
 using System.Text.Json;
 using VocaNova.API.Common.Constants;
+using VocaNova.API.Common.Extensions;
 using VocaNova.API.Features.AiGrading.DTOs;
 using VocaNova.API.Features.Quiz.DTOs;
 
@@ -8,6 +9,11 @@ namespace VocaNova.API.Features.AiGrading.Services;
 public sealed class GeminiAiGradingProvider : IAiGradingProvider
 {
     private const string UnavailableExplanation = "AI không khả dụng";
+    private const string FallbackMatchExplanation = "Chấm tự động: khớp chính xác (AI tạm thời không khả dụng).";
+
+    // Bound the Gemini call server-side so a slow provider can't hang until the
+    // mobile client aborts the request (which surfaces as an unhandled 500).
+    private static readonly TimeSpan GradingTimeout = TimeSpan.FromSeconds(18);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private readonly IGeminiClient _geminiClient;
@@ -28,14 +34,16 @@ public sealed class GeminiAiGradingProvider : IAiGradingProvider
         string expectedAnswer,
         CancellationToken cancellationToken = default)
     {
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(GradingTimeout);
         try
         {
             var prompt = BuildPrompt(wordId, questionType, userAnswer, expectedAnswer);
-            var responseText = await _geminiClient.GenerateContentAsync(prompt, cancellationToken);
+            var responseText = await _geminiClient.GenerateContentAsync(prompt, timeoutCts.Token);
             var parsed = ParseResponse(responseText);
             if (parsed is null || parsed.Score is < 0 or > 1)
             {
-                return CreateFallback();
+                return CreateFallback(userAnswer, expectedAnswer);
             }
 
             return new AiGradingResult(
@@ -44,10 +52,17 @@ public sealed class GeminiAiGradingProvider : IAiGradingProvider
                 parsed.Explanation,
                 parsed.Suggestion);
         }
-        catch (Exception exception) when (exception is not OperationCanceledException)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            _logger.LogWarning(exception, "Gemini AI grading failed.");
-            return CreateFallback();
+            // The client aborted the request; there is nobody to grade for.
+            throw;
+        }
+        catch (Exception exception)
+        {
+            // Our own grading timeout or any Gemini/transport failure: degrade
+            // gracefully instead of failing the whole answer submission.
+            _logger.LogWarning(exception, "Gemini AI grading failed; using fallback grading.");
+            return CreateFallback(userAnswer, expectedAnswer);
         }
     }
 
@@ -107,8 +122,19 @@ public sealed class GeminiAiGradingProvider : IAiGradingProvider
         return value[(firstNewLine + 1)..lastFence].Trim();
     }
 
-    private static AiGradingResult CreateFallback()
+    private static AiGradingResult CreateFallback(string? userAnswer, string expectedAnswer)
     {
-        return new AiGradingResult(false, 0f, UnavailableExplanation, null);
+        // When AI is unavailable, fall back to an exact (normalized) match so a
+        // correct answer is not wrongly marked incorrect. FromAi = false keeps
+        // this temporary result out of the grading cache.
+        var isExactMatch = !string.IsNullOrWhiteSpace(userAnswer)
+            && string.Equals(
+                userAnswer.NormalizeAnswer(),
+                expectedAnswer.NormalizeAnswer(),
+                StringComparison.Ordinal);
+
+        return isExactMatch
+            ? new AiGradingResult(true, 1f, FallbackMatchExplanation, null, FromAi: false)
+            : new AiGradingResult(false, 0f, UnavailableExplanation, null, FromAi: false);
     }
 }

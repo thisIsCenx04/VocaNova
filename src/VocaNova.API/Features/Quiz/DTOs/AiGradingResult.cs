@@ -4,4 +4,5 @@ public sealed record AiGradingResult(
     bool IsCorrect,
     float Score,
     string Explanation,
-    string? Suggestion);
+    string? Suggestion,
+    bool FromAi = true);

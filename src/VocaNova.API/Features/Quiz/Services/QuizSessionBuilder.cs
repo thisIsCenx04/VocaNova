@@ -58,6 +58,7 @@ public sealed class QuizSessionBuilder : IQuizSessionBuilder
             addedFrom,
             addedBefore,
             NormalizeTopicIds(request.TopicIds),
+            request.ListId,
             cancellationToken);
 
         var orderedCandidates = ApplyWordOrder(candidates, request.WordOrder);

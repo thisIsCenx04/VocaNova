@@ -28,6 +28,9 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
     }
   }
 
+  void setListId(int? value) =>
+      state = state.copyWith(listId: value, clearError: true);
+
   void setScope(String value) {
     state = state.copyWith(
       scopeType: value,
@@ -111,6 +114,7 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
               mode: state.mode,
               questionType: state.questionType,
               scopeType: state.scopeType,
+              listId: state.listId,
               scopeDateFrom: state.dateFrom,
               scopeDateTo: state.dateTo,
               topicIds: state.selectedTopicIds.toList(),

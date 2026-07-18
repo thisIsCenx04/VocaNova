@@ -24,6 +24,8 @@ public sealed class AiGradingCacheConfiguration : IEntityTypeConfiguration<AiGra
         entity.Property(e => e.AiExplanation)
             .HasColumnName("ai_explanation")
             .HasColumnType("text");
+        entity.Property(e => e.AiScore)
+            .HasColumnName("ai_score");
         entity.Property(e => e.AiSuggestion)
             .HasColumnName("ai_suggestion")
             .HasColumnType("text");

@@ -19,6 +19,7 @@ void main() {
           'mode': 'timed',
           'question_type': 2,
           'scope_type': 'date_range',
+          'list_id': 5,
           'scope_date_from': '2026-06-01',
           'scope_date_to': '2026-06-15',
           'topic_ids': [2, 3],
@@ -52,6 +53,7 @@ void main() {
           mode: 'timed',
           questionType: 2,
           scopeType: 'date_range',
+          listId: 5,
           scopeDateFrom: DateTime(2026, 6, 1),
           scopeDateTo: DateTime(2026, 6, 15),
           topicIds: const [2, 3],
@@ -74,7 +76,11 @@ void main() {
       dio.httpClientAdapter = CallbackAdapter((options) {
         expect(options.path, ApiEndpoints.quizAnswer(9));
         expect(options.method, 'POST');
-        expect(options.data, {'word_id': 7, 'user_answer': 'orange'});
+        expect(options.data, {
+          'word_id': 7,
+          'user_answer': 'orange',
+          'list_id': 5,
+        });
         return jsonResponse({
           'is_correct': false,
           'expected_answer': 'apple',
@@ -96,7 +102,7 @@ void main() {
 
       final result = await QuizRepository(
         dio: dio,
-      ).submitAnswer(sessionId: 9, wordId: 7, answer: 'orange');
+      ).submitAnswer(sessionId: 9, wordId: 7, answer: 'orange', listId: 5);
 
       expect(result.isCorrect, isFalse);
       expect(result.expectedAnswer, 'apple');

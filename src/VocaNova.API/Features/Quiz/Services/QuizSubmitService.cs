@@ -68,7 +68,7 @@ public sealed class QuizSubmitService : IQuizSubmitService
             return Result<AnswerResultDto>.Conflict("Quiz session is not in progress.");
         }
 
-        var poolResult = await BuildPoolFromSessionAsync(session, cancellationToken);
+        var poolResult = await BuildPoolFromSessionAsync(session, request.ListId, cancellationToken);
         if (!poolResult.IsSuccess)
         {
             return ToAnswerResultFailure(poolResult);
@@ -143,8 +143,11 @@ public sealed class QuizSubmitService : IQuizSubmitService
 
     private async Task<Result<IReadOnlyCollection<QuizPoolWordDto>>> BuildPoolFromSessionAsync(
         TestSession session,
+        uint? listId,
         CancellationToken cancellationToken)
     {
+        // list_id is not stored on the session (no schema change); the client
+        // carries it and sends it with each answer so scoping stays consistent.
         return await _quizSessionBuilder.BuildPoolAsync(
             session.UserId,
             new BuildQuizPoolRequest(
@@ -154,7 +157,8 @@ public sealed class QuizSubmitService : IQuizSubmitService
                 session.TestSessionTopics.Select(topic => topic.TopicId).ToArray(),
                 session.WordOrder,
                 session.WordLimit,
-                session.TestType),
+                session.TestType,
+                listId),
             cancellationToken);
     }
 

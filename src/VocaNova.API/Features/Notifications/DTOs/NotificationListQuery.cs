@@ -7,6 +7,4 @@ public sealed class NotificationListQuery
     public int Page { get; set; } = 1;
 
     public int Limit { get; set; } = AppSettings.DefaultPageLimit;
-
-    public bool UnreadOnly { get; set; }
 }
