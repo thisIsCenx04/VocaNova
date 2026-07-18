@@ -67,9 +67,13 @@
 </table></div>
 
 <div class="table-foot-bar"><span class="pager-info">@T["Showing"] @Model.Items.Count @T["of"] @Model.TotalItems @T["entries"]</span>
-@if (Model.TotalPages > 1) { <nav class="pager">
+@if (Model.TotalPages > 1) {
+    var winStart = Math.Max(1, Model.Page - 2);
+    var winEnd = Math.Min(Model.TotalPages, winStart + 4);
+    winStart = Math.Max(1, winEnd - 4);
+<nav class="pager" data-page="@Model.Page" data-total-pages="@Model.TotalPages">
     <a class="pager-link @(Model.HasPrevious ? "" : "disabled")" href="@(Model.HasPrevious ? Url(Model.Page - 1) : "#")">@T["Prev"]</a>
-    @for (var p = 1; p <= Model.TotalPages; p++) { <a class="pager-link @(p == Model.Page ? "active" : "")" href="@Url(p)">@p</a> }
+    @for (var p = winStart; p <= winEnd; p++) { <a class="pager-link @(p == Model.Page ? "active" : "")" href="@Url(p)">@p</a> }
     <a class="pager-link @(Model.HasNext ? "" : "disabled")" href="@(Model.HasNext ? Url(Model.Page + 1) : "#")">@T["Next"]</a>
 </nav> }
 </div>

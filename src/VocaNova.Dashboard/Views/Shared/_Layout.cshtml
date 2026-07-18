@@ -1,11 +1,13 @@
 @using System.Security.Claims
+@inject VocaNova.Dashboard.Services.Api.IVocaNovaApiClient TopbarApiClient
 @{
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
-    var displayName = User.FindFirstValue(ClaimTypes.Name) ?? "Admin";
+    var currentProfile = isAuthenticated ? await TopbarApiClient.GetMyProfileAsync(Context.RequestAborted) : null;
+    var displayName = currentProfile?.DisplayName ?? User.FindFirstValue(ClaimTypes.Name) ?? "Admin";
     var avatarFallback = string.IsNullOrWhiteSpace(displayName) ? "A" : displayName[..1].ToUpperInvariant();
     var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
-    var phone = User.FindFirstValue("phone");
-    var avatarUrl = User.FindFirstValue("avatar_url");
+    var phone = currentProfile?.Phone ?? User.FindFirstValue("phone");
+    var avatarUrl = currentProfile?.AvatarUrl ?? User.FindFirstValue("avatar_url");
     var isSuperAdmin = string.Equals(role, "super_admin", StringComparison.Ordinal);
 
     // Theme đọc từ cookie để render server-side (không nhấp nháy). Mặc định light; đổi ở trang Settings.

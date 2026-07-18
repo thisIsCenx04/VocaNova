@@ -25,4 +25,5 @@
         modal.addEventListener('click', function (e) { if (e.target === modal) { hide(); } });
         document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { hide(); } });
     }
+
 })();

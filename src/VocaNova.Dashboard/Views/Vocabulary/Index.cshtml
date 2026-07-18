@@ -197,9 +197,10 @@
     <span class="pager-info">@T["Showing"] @pageStart @T["to"] @pageEnd @T["of"] @Model.TotalItems @T["entries"]</span>
     @if (Model.TotalPages > 1)
     {
-        var winStart = Model.Page;
-        var winEnd = Math.Min(Model.Page + 2, Model.TotalPages);
-        <nav class="pager" aria-label="@T["Pagination"]">
+        var winStart = Math.Max(1, Model.Page - 2);
+        var winEnd = Math.Min(Model.TotalPages, winStart + 4);
+        winStart = Math.Max(1, winEnd - 4);
+        <nav class="pager" aria-label="@T["Pagination"]" data-page="@Model.Page" data-total-pages="@Model.TotalPages">
             @if (Model.HasPrevious)
             {
                 <a class="pager-link" href="@PageUrl(Model.Page - 1)">@T["‹ Prev"]</a>

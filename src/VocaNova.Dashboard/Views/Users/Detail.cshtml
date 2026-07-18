@@ -22,7 +22,7 @@
 
 <div class="page-header page-header-row">
     <div>
-        <a class="back-link" href="/users">‹ @T["Back to users"]</a>
+        <a class="back-link" href="/users">← @T["Back to users"]</a>
         <h1 class="page-title">@T["User Details"]</h1>
     </div>
     <div class="header-actions">
@@ -43,21 +43,27 @@
 
 <div class="user-detail-grid">
     <!-- LEFT: identity + account/security -->
-    <div class="detail-col">
+    <div class="detail-col user-detail-side">
         <section class="panel profile-card">
-            @if (!string.IsNullOrWhiteSpace(d.AvatarUrl))
-            {
-                <img class="profile-avatar" src="@d.AvatarUrl" alt="" />
-            }
-            else
-            {
-                <span class="profile-avatar profile-avatar-fallback">@(string.IsNullOrWhiteSpace(d.DisplayName) ? "?" : d.DisplayName[..1].ToUpperInvariant())</span>
-            }
+            <div class="profile-image-wrap">
+                @if (!string.IsNullOrWhiteSpace(d.AvatarUrl))
+                {
+                    <img class="profile-avatar" id="user-avatar-preview" src="@d.AvatarUrl" alt="@d.DisplayName" />
+                }
+                else
+                {
+                    <button class="profile-image-add" type="button" title="@T["No image available"]" disabled>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h3l1.4-2h7.2L17 5h3a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"/></svg>
+                        <span>@T["Add image"]</span>
+                    </button>
+                }
+                <span class="profile-online" aria-label="@T["Active"]"></span>
+            </div>
             <h2 class="profile-name">@d.DisplayName</h2>
             <p class="profile-uid">UID-@d.UserId.ToString("D4")</p>
             <div class="profile-badges">
                 <span class="@StatusBadge(d.Status)">@d.Status</span>
-                <span class="badge badge-muted">@d.Role.Replace("_", " ")</span>
+                <span class="badge badge-premium">@d.Role.Replace("_", " ")</span>
             </div>
         </section>
 
@@ -74,7 +80,7 @@
     </div>
 
     <!-- RIGHT: academic record + objective + topics -->
-    <div class="detail-col">
+    <div class="detail-col user-detail-main">
         <section class="panel">
             <div class="panel-head">
                 <h2 class="panel-title">@T["Academic record"]</h2>
@@ -87,15 +93,16 @@
             else
             {
                 <div class="info-grid">
-                    <div class="info-item"><span class="info-label">@T["Age"]</span><span class="info-value">@(lp.AgeRangeName ?? "—")</span></div>
-                    <div class="info-item"><span class="info-label">@T["Area"]</span><span class="info-value">@(lp.RegionName ?? "—")</span></div>
-                    <div class="info-item"><span class="info-label">@T["Job"]</span><span class="info-value">@(lp.OccupationName ?? "—")</span></div>
-                    <div class="info-item"><span class="info-label">@T["Educational level"]</span><span class="info-value">@(lp.EducationLevelName ?? "—")</span></div>
+                    <div class="info-item"><span class="info-icon info-icon-purple">◫</span><span><span class="info-label">@T["Age"]</span><span class="info-value">@(lp.AgeRangeName ?? "—")</span></span></div>
+                    <div class="info-item"><span class="info-icon info-icon-blue">●</span><span><span class="info-label">@T["Area"]</span><span class="info-value">@(lp.RegionName ?? "—")</span></span></div>
+                    <div class="info-item"><span class="info-icon info-icon-orange">▣</span><span><span class="info-label">@T["Job"]</span><span class="info-value">@(lp.OccupationName ?? "—")</span></span></div>
+                    <div class="info-item"><span class="info-icon info-icon-red">◇</span><span><span class="info-label">@T["Educational level"]</span><span class="info-value">@(lp.EducationLevelName ?? "—")</span></span></div>
                 </div>
 
                 <div class="objective-box">
-                    <span class="info-label">@T["Learning objective"]</span>
-                    <p class="objective-text">@(string.IsNullOrWhiteSpace(lp.LearningPurposeName) ? T["Not set"] : lp.LearningPurposeName)</p>
+                    <span class="objective-icon">⚑</span>
+                    <span><span class="info-label">@T["Learning objective"]</span>
+                    <p class="objective-text">@(string.IsNullOrWhiteSpace(lp.LearningPurposeName) ? T["Not set"] : lp.LearningPurposeName)</p></span>
                 </div>
             }
         </section>
