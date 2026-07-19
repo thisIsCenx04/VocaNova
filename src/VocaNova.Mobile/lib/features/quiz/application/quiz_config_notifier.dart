@@ -34,8 +34,8 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
   void setScope(String value) {
     state = state.copyWith(
       scopeType: value,
-      clearDateFrom: value == 'all' || value == 'end_date',
-      clearDateTo: value == 'all' || value == 'start_date',
+      clearDateFrom: value != 'date_range',
+      clearDateTo: value != 'date_range',
       clearError: true,
     );
   }
@@ -70,6 +70,15 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
   void setAnswerMethod(String value) =>
       state = state.copyWith(answerMethod: value, clearError: true);
 
+  void setWordOrder(String value) =>
+      state = state.copyWith(wordOrder: value, clearError: true);
+
+  void setQuestionLimit(int? value) => state = state.copyWith(
+    questionLimit: value,
+    clearQuestionLimit: value == null,
+    clearError: true,
+  );
+
   void setTimeLimit(int? value) =>
       state = state.copyWith(timeLimitSec: value, clearError: true);
 
@@ -77,12 +86,10 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
       state = state.copyWith(lives: value, clearError: true);
 
   String? validate() {
-    if ((state.scopeType == 'start_date' || state.scopeType == 'date_range') &&
-        state.dateFrom == null) {
+    if (state.scopeType == 'date_range' && state.dateFrom == null) {
       return 'Vui lòng chọn ngày bắt đầu.';
     }
-    if ((state.scopeType == 'end_date' || state.scopeType == 'date_range') &&
-        state.dateTo == null) {
+    if (state.scopeType == 'date_range' && state.dateTo == null) {
       return 'Vui lòng chọn ngày kết thúc.';
     }
     if (state.dateFrom != null &&
@@ -107,16 +114,32 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
     }
     state = state.copyWith(isCreating: true, clearError: true);
     try {
+      var scopeType = state.scopeType;
+      var dateFrom = state.dateFrom;
+      var dateTo = state.dateTo;
+      if (scopeType == 'this_week') {
+        // Backend không có scope tuần; quy về start_date từ thứ Hai tuần này.
+        final today = DateTime.now();
+        scopeType = 'start_date';
+        dateFrom = DateTime(
+          today.year,
+          today.month,
+          today.day,
+        ).subtract(Duration(days: today.weekday - 1));
+        dateTo = null;
+      }
       final result = await ref
           .read(quizRepositoryProvider)
           .createSession(
             QuizConfigRequest(
               mode: state.mode,
               questionType: state.questionType,
-              scopeType: state.scopeType,
+              scopeType: scopeType,
+              wordOrder: state.wordOrder,
+              wordLimit: state.questionLimit,
               listId: state.listId,
-              scopeDateFrom: state.dateFrom,
-              scopeDateTo: state.dateTo,
+              scopeDateFrom: dateFrom,
+              scopeDateTo: dateTo,
               topicIds: state.selectedTopicIds.toList(),
               timeLimitSec: state.timeLimitSec,
               lives: state.lives,

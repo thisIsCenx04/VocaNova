@@ -8,6 +8,8 @@ class QuizConfigState {
     this.mode = 'standard',
     this.questionType = 1,
     this.answerMethod = 'multiple_choice',
+    this.wordOrder = 'random',
+    this.questionLimit = 20,
     this.timeLimitSec,
     this.lives,
     this.dateFrom,
@@ -19,11 +21,19 @@ class QuizConfigState {
   });
 
   final int? listId;
+
+  /// 'all' | 'this_week' | 'wrong_words' | 'date_range'
   final String scopeType;
   final Set<int> selectedTopicIds;
   final String mode;
   final int questionType;
   final String answerMethod;
+
+  /// 'random' | 'newest' | 'oldest' | 'by_difficulty'
+  final String wordOrder;
+
+  /// null nghĩa là làm tất cả từ trong phạm vi.
+  final int? questionLimit;
   final int? timeLimitSec;
   final int? lives;
   final DateTime? dateFrom;
@@ -40,6 +50,8 @@ class QuizConfigState {
     String? mode,
     int? questionType,
     String? answerMethod,
+    String? wordOrder,
+    int? questionLimit,
     int? timeLimitSec,
     int? lives,
     DateTime? dateFrom,
@@ -48,6 +60,7 @@ class QuizConfigState {
     bool? isLoadingTopics,
     bool? isCreating,
     String? errorMessage,
+    bool clearQuestionLimit = false,
     bool clearTime = false,
     bool clearLives = false,
     bool clearDateFrom = false,
@@ -60,6 +73,10 @@ class QuizConfigState {
     mode: mode ?? this.mode,
     questionType: questionType ?? this.questionType,
     answerMethod: answerMethod ?? this.answerMethod,
+    wordOrder: wordOrder ?? this.wordOrder,
+    questionLimit: clearQuestionLimit
+        ? null
+        : questionLimit ?? this.questionLimit,
     timeLimitSec: clearTime ? null : timeLimitSec ?? this.timeLimitSec,
     lives: clearLives ? null : lives ?? this.lives,
     dateFrom: clearDateFrom ? null : dateFrom ?? this.dateFrom,

@@ -59,6 +59,7 @@ public sealed class QuizSessionBuilder : IQuizSessionBuilder
             addedBefore,
             NormalizeTopicIds(request.TopicIds),
             request.ListId,
+            request.ScopeType == ScopeType.WrongWords,
             cancellationToken);
 
         var orderedCandidates = ApplyWordOrder(candidates, request.WordOrder);
@@ -81,6 +82,7 @@ public sealed class QuizSessionBuilder : IQuizSessionBuilder
         return request.ScopeType switch
         {
             ScopeType.All => Result<(DateTime?, DateTime?)>.Ok((null, null)),
+            ScopeType.WrongWords => Result<(DateTime?, DateTime?)>.Ok((null, null)),
             ScopeType.DateRange => BuildDateRangeScope(request),
             ScopeType.StartDate => BuildStartDateScope(request),
             ScopeType.EndDate => BuildEndDateScope(request),
@@ -153,6 +155,10 @@ public sealed class QuizSessionBuilder : IQuizSessionBuilder
                 .ThenBy(candidate => candidate.WordId)
                 .ToList(),
             WordOrder.Random => Shuffle(candidates.ToList()),
+            WordOrder.ByDifficulty => candidates
+                .OrderByDescending(candidate => candidate.WrongCount)
+                .ThenBy(candidate => candidate.WordId)
+                .ToList(),
             _ => candidates
                 .OrderByDescending(candidate => candidate.AddedAt)
                 .ThenByDescending(candidate => candidate.WordId)

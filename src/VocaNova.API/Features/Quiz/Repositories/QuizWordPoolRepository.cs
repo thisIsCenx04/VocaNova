@@ -20,6 +20,7 @@ public sealed class QuizWordPoolRepository : IQuizWordPoolRepository
         DateTime? addedBefore,
         IReadOnlyCollection<uint>? topicIds,
         uint? listId,
+        bool wrongWordsOnly = false,
         CancellationToken cancellationToken = default)
     {
         var query = _dbContext.UserListWords
@@ -50,11 +51,24 @@ public sealed class QuizWordPoolRepository : IQuizWordPoolRepository
                 .Any(wordTopic => topicIds.Contains(wordTopic.TopicId)));
         }
 
+        if (wrongWordsOnly)
+        {
+            query = query.Where(listWord => _dbContext.UserWordProgresses
+                .Any(progress => progress.UserId == userId
+                    && progress.WordId == listWord.WordId
+                    && progress.IsInWrongList));
+        }
+
         return await query
             .GroupBy(listWord => listWord.WordId)
             .Select(group => new QuizPoolWordDto(
                 group.Key,
-                group.Max(listWord => listWord.AddedAt)))
+                group.Max(listWord => listWord.AddedAt),
+                _dbContext.UserWordProgresses
+                    .Where(progress => progress.UserId == userId
+                        && progress.WordId == group.Key)
+                    .Select(progress => progress.WrongCount)
+                    .FirstOrDefault()))
             .ToListAsync(cancellationToken);
     }
 }
