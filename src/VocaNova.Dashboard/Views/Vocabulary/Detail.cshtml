@@ -32,9 +32,13 @@
 
 @Html.AntiForgeryToken()
 <div id="detail-root" data-word-id="@Model.WordId"
-     data-msg-request-failed="@T["Request failed."]" data-msg-confirm="@T["Are you sure?"]">
+     data-msg-request-failed="@T["Request failed."]" data-msg-confirm="@T["Are you sure?"]"
+     data-msg-image-required="@T["Please choose an image file."]"
+     data-msg-audio-required="@T["Please choose an audio file."]">
 
     <nav class="breadcrumb">
+        <a href="/vocabulary">@T["Vocabulary Bank"]</a>
+        <span class="breadcrumb-sep">›</span>
         <a href="/vocabulary">@T["Vocabulary Metadata"]</a>
         <span class="breadcrumb-sep">›</span>
         <span class="breadcrumb-current">@T["Details"]</span>
@@ -156,8 +160,9 @@
 
                     @if (sense.Examples.Count > 0)
                     {
-                        <p class="illustrative-label">@T["ILLUSTRATIVE EXAMPLES"]</p>
-                        <div class="vd-examples">
+                        <div class="vd-examples-panel">
+                            <p class="illustrative-label">@T["ILLUSTRATIVE EXAMPLES"]</p>
+                            <div class="vd-examples">
                             @foreach (var ex in sense.Examples.OrderBy(e => e.Order))
                             {
                                 <div class="vd-example">
@@ -168,6 +173,7 @@
                                     }
                                 </div>
                             }
+                            </div>
                         </div>
                     }
                 </div>
@@ -221,7 +227,7 @@
                 {
                     <p class="text-muted">@T["No image."]</p>
                 }
-                <form class="upload-form" id="image-upload-form">
+                <form class="upload-form" id="image-upload-form" novalidate>
                     <input type="file" name="file" accept="image/png,image/jpeg,image/webp" class="form-control" required />
                     <button type="submit" class="btn-secondary btn-sm">@T["Upload image"]</button>
                 </form>
@@ -246,7 +252,7 @@
                             </li>
                     </ul>
                 }
-                <form class="upload-form" id="audio-upload-form">
+                <form class="upload-form" id="audio-upload-form" novalidate>
                     <input type="file" name="file" accept="audio/mpeg,audio/wav,audio/ogg" class="form-control" required />
                     <button type="submit" class="btn-secondary btn-sm">@(usAudio is null ? T["Upload audio"] : T["Replace"])</button>
                 </form>
@@ -255,6 +261,21 @@
     }
 
     <div id="detail-toast" class="detail-toast" hidden></div>
+
+    <div class="confirm-modal" id="detail-delete-modal" hidden>
+        <div class="confirm-overlay" data-close></div>
+        <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="detail-delete-title">
+            <span class="confirm-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="26" height="26"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Zm4 0v8h2v-8h-2Z" fill="currentColor"/></svg>
+            </span>
+            <h3 class="confirm-title" id="detail-delete-title">@T["Are you sure?"]</h3>
+            <p class="confirm-note" id="detail-delete-message"></p>
+            <div class="confirm-actions">
+                <button type="button" class="btn-secondary" data-close>@T["Cancel"]</button>
+                <button type="button" class="btn-danger-solid" id="detail-delete-confirm">@T["Delete"]</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {

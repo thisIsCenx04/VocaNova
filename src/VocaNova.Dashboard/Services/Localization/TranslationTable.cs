@@ -70,6 +70,7 @@ public static class TranslationTable
         ("Unable to load your profile.", "Không tải được hồ sơ của bạn."),
         ("Display name must be 2–150 characters.", "Tên hiển thị phải từ 2–150 ký tự."),
         ("Please choose an image file.", "Vui lòng chọn một tệp ảnh."),
+        ("Please choose an audio file.", "Vui lòng chọn một tệp âm thanh."),
         ("Please fill in all password fields.", "Vui lòng điền đầy đủ các trường mật khẩu."),
         ("New password and confirmation do not match.", "Mật khẩu mới và xác nhận không khớp."),
         ("Password must be at least 8 characters with upper, lower and a digit.", "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường và số."),
