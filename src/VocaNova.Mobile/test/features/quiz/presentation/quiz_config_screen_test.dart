@@ -42,13 +42,19 @@ void main() {
   ) async {
     await pumpConfig(tester, repository, searchRepository);
 
-    expect(find.text('Phạm vi từ'), findsOneWidget);
-    expect(find.text('Chủ đề'), findsOneWidget);
-    expect(find.text('Chế độ'), findsOneWidget);
+    expect(find.text('PHẠM VI TỪ VỰNG'), findsOneWidget);
+    expect(find.text('CHỦ ĐỀ'), findsOneWidget);
+    expect(find.text('CHẾ ĐỘ'), findsOneWidget);
     expect(find.text('Du lịch'), findsOneWidget);
     expect(find.textContaining('Mở từ danh sách #3'), findsOneWidget);
-    expect(find.text('Loại câu hỏi'), findsOneWidget);
-    expect(find.text('Cách trả lời'), findsOneWidget);
+    expect(find.text('LOẠI CÂU HỎI'), findsOneWidget);
+    expect(find.text('CÁCH TRẢ LỜI'), findsOneWidget);
+    expect(find.text('THỨ TỰ'), findsOneWidget);
+    expect(find.text('SỐ CÂU HỎI'), findsOneWidget);
+    expect(find.byKey(const Key('scope-this-week')), findsOneWidget);
+    expect(find.byKey(const Key('scope-wrong-words')), findsOneWidget);
+    expect(find.byKey(const Key('order-by-difficulty')), findsOneWidget);
+    expect(find.byKey(const Key('question-limit-all')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('quiz-mode-timed')));
     await tester.pump();
@@ -77,6 +83,26 @@ void main() {
     expect(router.state.uri.path, AppRoutes.quizActive);
     expect(router.state.uri.queryParameters['sessionId'], '9');
     verify(() => repository.createSession(any())).called(1);
+  });
+
+  testWidgets('sends scope, order, and question limit to repository', (
+    tester,
+  ) async {
+    await pumpConfig(tester, repository, searchRepository);
+
+    await tester.tap(find.byKey(const Key('scope-wrong-words')));
+    await tester.tap(find.byKey(const Key('order-by-difficulty')));
+    await tester.tap(find.byKey(const Key('question-limit-all')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('start-quiz-button')));
+    await tester.pumpAndSettle();
+
+    final request =
+        verify(() => repository.createSession(captureAny())).captured.single
+            as QuizConfigRequest;
+    expect(request.scopeType, 'wrong_words');
+    expect(request.wordOrder, 'by_difficulty');
+    expect(request.wordLimit, isNull);
   });
 
   testWidgets('offline disables start with connectivity tooltip', (

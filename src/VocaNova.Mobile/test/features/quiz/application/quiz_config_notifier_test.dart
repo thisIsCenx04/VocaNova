@@ -59,6 +59,45 @@ void main() {
     expect(notifier.validate(), contains('trước hoặc bằng'));
   });
 
+  test('maps this_week scope to start_date from Monday', () async {
+    when(
+      () => repository.createSession(any()),
+    ).thenAnswer((_) async => testSession);
+    final notifier = container.read(quizConfigProvider.notifier);
+    notifier.setScope('this_week');
+    notifier.setWordOrder('by_difficulty');
+    notifier.setQuestionLimit(null);
+
+    await notifier.createSession();
+
+    final request =
+        verify(() => repository.createSession(captureAny())).captured.single
+            as QuizConfigRequest;
+    expect(request.scopeType, 'start_date');
+    expect(request.scopeDateFrom, isNotNull);
+    expect(request.scopeDateFrom!.weekday, DateTime.monday);
+    expect(request.scopeDateTo, isNull);
+    expect(request.wordOrder, 'by_difficulty');
+    expect(request.wordLimit, isNull);
+  });
+
+  test('passes wrong_words scope through unchanged', () async {
+    when(
+      () => repository.createSession(any()),
+    ).thenAnswer((_) async => testSession);
+    final notifier = container.read(quizConfigProvider.notifier);
+    notifier.setScope('wrong_words');
+
+    await notifier.createSession();
+
+    final request =
+        verify(() => repository.createSession(captureAny())).captured.single
+            as QuizConfigRequest;
+    expect(request.scopeType, 'wrong_words');
+    expect(request.scopeDateFrom, isNull);
+    expect(request.wordLimit, 20);
+  });
+
   test('creates session with selected config', () async {
     when(
       () => repository.createSession(any()),
