@@ -93,6 +93,26 @@ void main() {
     expect(request.topicIds, isEmpty);
   });
 
+  testWidgets('sends scope, order, and question limit to repository', (
+    tester,
+  ) async {
+    await pumpConfig(tester, repository, searchRepository);
+
+    await tester.tap(find.byKey(const Key('scope-wrong-words')));
+    await tester.tap(find.byKey(const Key('order-by-difficulty')));
+    await tester.tap(find.byKey(const Key('question-limit-all')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('start-quiz-button')));
+    await tester.pumpAndSettle();
+
+    final request =
+        verify(() => repository.createSession(captureAny())).captured.single
+            as QuizConfigRequest;
+    expect(request.scopeType, 'wrong_words');
+    expect(request.wordOrder, 'by_difficulty');
+    expect(request.wordLimit, isNull);
+  });
+
   testWidgets('offline disables start with connectivity tooltip', (
     tester,
   ) async {

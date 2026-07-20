@@ -143,12 +143,18 @@
 
 @if (Model.TotalPages > 1)
 {
-    <nav class="pager" aria-label="@T["Pagination"]">
+    var winStart = Math.Max(1, Model.Page - 2);
+    var winEnd = Math.Min(Model.TotalPages, winStart + 4);
+    winStart = Math.Max(1, winEnd - 4);
+    <nav class="pager" aria-label="@T["Pagination"]" data-page="@Model.Page" data-total-pages="@Model.TotalPages">
         @if (Model.HasPrevious)
         {
             <a class="pager-link" href="@PageUrl(Model.Page - 1)">‹ @T["Prev"]</a>
         }
-        <span class="pager-info">@T["Page"] @Model.Page / @Model.TotalPages</span>
+        @for (var p = winStart; p <= winEnd; p++)
+        {
+            <a class="pager-link @(p == Model.Page ? "active" : "")" href="@PageUrl(p)">@p</a>
+        }
         @if (Model.HasNext)
         {
             <a class="pager-link" href="@PageUrl(Model.Page + 1)">@T["Next"] ›</a>

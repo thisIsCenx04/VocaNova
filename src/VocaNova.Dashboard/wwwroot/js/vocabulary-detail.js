@@ -13,6 +13,8 @@
     // Localized fallback messages (rendered by @T).
     var MSG_FAIL = root.dataset.msgRequestFailed || 'Request failed.';
     var MSG_CONFIRM = root.dataset.msgConfirm || 'Are you sure?';
+    var MSG_IMAGE_REQUIRED = root.dataset.msgImageRequired || 'Please choose an image file.';
+    var MSG_AUDIO_REQUIRED = root.dataset.msgAudioRequired || 'Please choose an audio file.';
 
     function toast(message, ok) {
         var el = document.getElementById('detail-toast');
@@ -81,11 +83,17 @@
     }
 
     // ----- Image / Audio upload (reload sau khi thành công) -----
-    function wireUpload(formId, url) {
+    function wireUpload(formId, url, requiredMessage) {
         var form = document.getElementById(formId);
         if (!form) { return; }
         form.addEventListener('submit', function (e) {
             e.preventDefault();
+            var fileInput = form.querySelector('input[type="file"]');
+            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                toast(requiredMessage, false);
+                if (fileInput) { fileInput.focus(); }
+                return;
+            }
             postForm(url, new FormData(form))
                 .then(function (data) {
                     toast(data.message, data.success);
@@ -94,8 +102,8 @@
                 .catch(function () { toast(MSG_FAIL, false); });
         });
     }
-    wireUpload('image-upload-form', '/vocabulary/' + wordId + '/image');
-    wireUpload('audio-upload-form', '/vocabulary/' + wordId + '/audio');
+    wireUpload('image-upload-form', '/vocabulary/' + wordId + '/image', MSG_IMAGE_REQUIRED);
+    wireUpload('audio-upload-form', '/vocabulary/' + wordId + '/audio', MSG_AUDIO_REQUIRED);
 
     // ----- Phát audio phát âm (nút loa UK/US trên thẻ từ) -----
     var playerEl = null;
@@ -109,17 +117,60 @@
         });
     });
 
-    // ----- Audio delete (confirm + AJAX) -----
+    // ----- Image / audio delete (custom confirm modal + AJAX) -----
+    var deleteModal = document.getElementById('detail-delete-modal');
+    var deleteMessage = document.getElementById('detail-delete-message');
+    var deleteConfirm = document.getElementById('detail-delete-confirm');
+    var pendingDeleteForm = null;
+
+    function closeDeleteModal() {
+        if (deleteModal) { deleteModal.hidden = true; }
+        pendingDeleteForm = null;
+    }
+
+    function submitDelete(form) {
+        postForm(form.getAttribute('data-ajax'), new FormData())
+            .then(function (data) {
+                toast(data.message, data.success);
+                if (data.success) { window.setTimeout(function () { window.location.reload(); }, 600); }
+            })
+            .catch(function () { toast(MSG_FAIL, false); });
+    }
+
     root.querySelectorAll('form.js-confirm[data-ajax]').forEach(function (form) {
         form.addEventListener('submit', function (e) {
             e.preventDefault();
-            if (!window.confirm(form.getAttribute('data-confirm') || MSG_CONFIRM)) { return; }
-            postForm(form.getAttribute('data-ajax'), new FormData())
-                .then(function (data) {
-                    toast(data.message, data.success);
-                    if (data.success) { window.setTimeout(function () { window.location.reload(); }, 600); }
-                })
-                .catch(function () { toast(MSG_FAIL, false); });
+            pendingDeleteForm = form;
+            if (deleteMessage) {
+                deleteMessage.textContent = form.getAttribute('data-confirm') || MSG_CONFIRM;
+            }
+            if (deleteModal) {
+                deleteModal.hidden = false;
+                if (deleteConfirm) { deleteConfirm.focus(); }
+            } else {
+                submitDelete(form);
+            }
         });
+    });
+
+    if (deleteConfirm) {
+        deleteConfirm.addEventListener('click', function () {
+            if (!pendingDeleteForm) { return; }
+            var form = pendingDeleteForm;
+            closeDeleteModal();
+            submitDelete(form);
+        });
+    }
+
+    if (deleteModal) {
+        deleteModal.querySelectorAll('[data-close]').forEach(function (el) {
+            el.addEventListener('click', closeDeleteModal);
+        });
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && deleteModal && !deleteModal.hidden) {
+            closeDeleteModal();
+        }
     });
 })();
