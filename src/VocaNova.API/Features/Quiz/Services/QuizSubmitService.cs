@@ -148,6 +148,14 @@ public sealed class QuizSubmitService : IQuizSubmitService
     {
         // list_id is not stored on the session (no schema change); the client
         // carries it and sends it with each answer so scoping stays consistent.
+        //
+        // WordLimit is intentionally NOT applied here. The selected word set is
+        // not persisted, and word_order "random" reshuffles on every rebuild, so
+        // applying the limit would produce a different random subset each submit
+        // and could exclude the very word the user is answering (400 "Word is not
+        // in this quiz session"). We validate against the full candidate set and
+        // instead cap the quiz length by session.QuestionCount when picking the
+        // next question.
         return await _quizSessionBuilder.BuildPoolAsync(
             session.UserId,
             new BuildQuizPoolRequest(
@@ -156,7 +164,7 @@ public sealed class QuizSubmitService : IQuizSubmitService
                 session.ScopeDateTo,
                 session.TestSessionTopics.Select(topic => topic.TopicId).ToArray(),
                 session.WordOrder,
-                session.WordLimit,
+                null,
                 session.TestType,
                 listId),
             cancellationToken);
@@ -214,6 +222,13 @@ public sealed class QuizSubmitService : IQuizSubmitService
             .Where(answer => answer.IsCorrect.HasValue)
             .Select(answer => answer.WordId)
             .ToHashSet();
+
+        // The pool is the full candidate set (not truncated to WordLimit), so the
+        // session's fixed length is enforced here instead.
+        if (answeredWordIds.Count >= session.QuestionCount)
+        {
+            return null;
+        }
 
         foreach (var nextWord in pool.Where(word => !answeredWordIds.Contains(word.WordId)))
         {

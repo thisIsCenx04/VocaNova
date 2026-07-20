@@ -88,6 +88,61 @@ public class QuizSubmitAnswerFeatureTests
     }
 
     [Fact]
+    public async Task SubmitAnswerAsync_Should_Accept_Candidate_Even_When_WordLimit_Below_Pool()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedQuizDataAsync(
+            dbContext,
+            AnswerMethod.MultipleChoice,
+            wordOrder: WordOrder.Random,
+            wordLimit: 2,
+            questionCount: 2);
+        var service = CreateService(dbContext);
+
+        // Word 4 is a valid candidate. With the old behaviour the submit pool was
+        // re-shuffled and truncated to word_limit (2 of 4), which could exclude
+        // word 4 and reject the answer. Validation now uses the full candidate set.
+        var result = await service.SubmitAnswerAsync(
+            1,
+            100,
+            new SubmitAnswerRequest(4, "bay"));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.IsCorrect.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SubmitAnswerAsync_Should_Complete_After_QuestionCount_Answers()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedQuizDataAsync(
+            dbContext,
+            AnswerMethod.ExactTyping,
+            wordOrder: WordOrder.Random,
+            wordLimit: 2,
+            questionCount: 2);
+        var service = CreateService(dbContext);
+
+        var first = await service.SubmitAnswerAsync(
+            1,
+            100,
+            new SubmitAnswerRequest(4, "bay"));
+        first.IsSuccess.Should().BeTrue();
+        first.Value!.NextQuestion.Should().NotBeNull();
+
+        var second = await service.SubmitAnswerAsync(
+            1,
+            100,
+            new SubmitAnswerRequest(first.Value.NextQuestion!.WordId, "anything"));
+        second.IsSuccess.Should().BeTrue();
+        // Two answers reach the session's question_count, so the quiz ends here.
+        second.Value!.NextQuestion.Should().BeNull();
+
+        var session = await dbContext.TestSessions.SingleAsync(entity => entity.SessionId == 100);
+        session.Status.Should().Be(TestSessionStatus.Completed);
+    }
+
+    [Fact]
     public async Task SubmitAnswerAsync_Should_Return_409_When_Session_Not_InProgress()
     {
         await using var dbContext = CreateDbContext();
@@ -132,7 +187,10 @@ public class QuizSubmitAnswerFeatureTests
     private static async Task SeedQuizDataAsync(
         VocaNovaDbContext dbContext,
         string answerMethod,
-        string sessionStatus = TestSessionStatus.InProgress)
+        string sessionStatus = TestSessionStatus.InProgress,
+        string wordOrder = WordOrder.Newest,
+        int? wordLimit = null,
+        int questionCount = 4)
     {
         var now = new DateTime(2026, 1, 1, 8, 0, 0, DateTimeKind.Utc);
 
@@ -174,8 +232,9 @@ public class QuizSubmitAnswerFeatureTests
             Mode = TestMode.Standard,
             QuestionType = 1,
             ScopeType = ScopeType.All,
-            WordOrder = WordOrder.Newest,
-            QuestionCount = 4,
+            WordOrder = wordOrder,
+            WordLimit = wordLimit,
+            QuestionCount = questionCount,
             CorrectCount = 0,
             WrongCount = 0,
             Score = 0,

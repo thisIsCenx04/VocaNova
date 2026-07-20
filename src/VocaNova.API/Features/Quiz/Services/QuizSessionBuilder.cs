@@ -63,14 +63,19 @@ public sealed class QuizSessionBuilder : IQuizSessionBuilder
             cancellationToken);
 
         var orderedCandidates = ApplyWordOrder(candidates, request.WordOrder);
-        if (request.WordLimit.HasValue)
-        {
-            orderedCandidates = orderedCandidates.Take(request.WordLimit.Value).ToList();
-        }
 
+        // Multiple choice needs at least 4 available words. Check the full
+        // candidate set BEFORE applying the question-count limit, so requesting
+        // fewer questions than the source has (e.g. 3 of 4) does not spuriously
+        // fail — word_limit caps the number of questions, not the word pool.
         if (request.AnswerMethod == AnswerMethod.MultipleChoice && orderedCandidates.Count < 4)
         {
             return Result<IReadOnlyCollection<QuizPoolWordDto>>.Fail(NotEnoughWordsMessage);
+        }
+
+        if (request.WordLimit.HasValue)
+        {
+            orderedCandidates = orderedCandidates.Take(request.WordLimit.Value).ToList();
         }
 
         return Result<IReadOnlyCollection<QuizPoolWordDto>>.Ok(orderedCandidates);

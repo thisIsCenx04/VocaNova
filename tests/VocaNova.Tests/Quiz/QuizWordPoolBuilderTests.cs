@@ -161,6 +161,27 @@ public class QuizWordPoolBuilderTests
         await dbContext.SaveChangesAsync();
     }
 
+    [Fact]
+    public async Task BuildPoolAsync_Should_Allow_MultipleChoice_When_WordLimit_Below_Full_Pool()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedPoolWordsAsync(dbContext);
+        var builder = CreateBuilder(dbContext);
+
+        // Source has 4 words; asking for 3 multiple-choice questions must not
+        // fail just because the truncated pool would be < 4.
+        var result = await builder.BuildPoolAsync(
+            1,
+            CreateRequest(
+                scopeType: ScopeType.All,
+                wordOrder: WordOrder.Newest,
+                wordLimit: 3,
+                answerMethod: AnswerMethod.MultipleChoice));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Select(word => word.WordId).Should().Equal(4u, 3u, 2u);
+    }
+
     private static VocaNovaDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<VocaNovaDbContext>()

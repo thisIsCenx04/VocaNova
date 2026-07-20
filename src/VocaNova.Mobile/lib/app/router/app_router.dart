@@ -117,16 +117,16 @@ class AppRouter {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: AppRoutes.progress,
-                builder: (_, _) => const ProgressOverviewScreen(),
-              ),
-              GoRoute(
                 path: AppRoutes.quizConfig,
                 builder: (_, state) => QuizConfigScreen(
                   initialListId: int.tryParse(
                     state.uri.queryParameters['listId'] ?? '',
                   ),
                 ),
+              ),
+              GoRoute(
+                path: AppRoutes.progress,
+                builder: (_, _) => const ProgressOverviewScreen(),
               ),
             ],
           ),

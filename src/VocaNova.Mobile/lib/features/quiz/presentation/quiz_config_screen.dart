@@ -45,6 +45,18 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant QuizConfigScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Điều hướng lại vào màn này với danh sách khác (ví dụ "Bắt đầu kiểm tra"
+    // từ một danh sách) thì cập nhật nguồn và tải lại số từ mới nhất.
+    if (oldWidget.initialListId != widget.initialListId) {
+      final notifier = ref.read(quizConfigProvider.notifier);
+      notifier.setListId(widget.initialListId);
+      notifier.loadSources();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final state = ref.watch(quizConfigProvider);
     final isOnline = ref.watch(connectivityProvider).value ?? true;
@@ -322,16 +334,44 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
   }
 
   Widget _buildQuestionLimit(QuizConfigState state) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+    final wordCount = _notifier.selectedSourceWordCount();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final option in _questionLimitOptions)
-          _choice(
-            key: Key('question-limit-${option ?? 'all'}'),
-            label: option?.toString() ?? 'Tất cả',
-            selected: state.questionLimit == option,
-            onSelected: () => _notifier.setQuestionLimit(option),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final option in _questionLimitOptions)
+              _choice(
+                key: Key('question-limit-${option ?? 'all'}'),
+                label: option?.toString() ?? 'Tất cả',
+                selected: !state.useCustomLimit && state.questionLimit == option,
+                onSelected: () => _notifier.setQuestionLimit(option),
+              ),
+            _choice(
+              key: const Key('question-limit-custom'),
+              label: 'Tùy chỉnh',
+              selected: state.useCustomLimit,
+              onSelected: _notifier.useCustomQuestionLimit,
+            ),
+          ],
+        ),
+        if (state.useCustomLimit)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: TextField(
+              key: const Key('custom-question-input'),
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Số câu hỏi mong muốn',
+                helperText: wordCount != null
+                    ? 'Nguồn hiện có $wordCount từ'
+                    : 'Nhập số câu bằng hoặc nhỏ hơn số từ trong nguồn',
+              ),
+              onChanged: (value) =>
+                  _notifier.setCustomQuestionLimit(int.tryParse(value)),
+            ),
           ),
       ],
     );
@@ -783,7 +823,9 @@ class _SummaryBar extends StatelessWidget {
           ),
           _SummaryChip(
             label: 'Số câu',
-            value: state.questionLimit?.toString() ?? 'Tất cả',
+            value: state.useCustomLimit
+                ? (state.questionLimit?.toString() ?? 'Tùy chỉnh')
+                : (state.questionLimit?.toString() ?? 'Tất cả'),
           ),
         ],
       ),

@@ -32,6 +32,8 @@ public sealed class UserWordProgressConfiguration : IEntityTypeConfiguration<Use
         entity.Property(e => e.EaseFactor)
             .HasColumnName("ease_factor")
             .HasDefaultValueSql("'2.5'");
+        entity.Property(e => e.IsInWrongList)
+            .HasColumnName("is_in_wrong_list");
         entity.Property(e => e.LastTestedAt)
             .HasColumnName("last_tested_at")
             .HasColumnType("timestamp");

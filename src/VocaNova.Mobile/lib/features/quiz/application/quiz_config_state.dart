@@ -16,6 +16,7 @@ class QuizConfigState {
     this.answerMethod = 'multiple_choice',
     this.wordOrder = 'random',
     this.questionLimit = 20,
+    this.useCustomLimit = false,
     this.timeLimitSec,
     this.lives,
     this.dateFrom,
@@ -37,8 +38,12 @@ class QuizConfigState {
   /// 'random' | 'newest' | 'oldest' | 'by_difficulty'
   final String wordOrder;
 
-  /// null nghĩa là làm tất cả từ trong phạm vi.
+  /// Số câu hỏi. null = "Tất cả" (khi [useCustomLimit] false) hoặc chưa nhập
+  /// (khi [useCustomLimit] true).
   final int? questionLimit;
+
+  /// Người dùng đang tự nhập số câu hỏi thay vì chọn mức có sẵn.
+  final bool useCustomLimit;
   final int? timeLimitSec;
   final int? lives;
   final DateTime? dateFrom;
@@ -58,6 +63,7 @@ class QuizConfigState {
     String? answerMethod,
     String? wordOrder,
     int? questionLimit,
+    bool? useCustomLimit,
     int? timeLimitSec,
     int? lives,
     DateTime? dateFrom,
@@ -85,6 +91,7 @@ class QuizConfigState {
     questionLimit: clearQuestionLimit
         ? null
         : questionLimit ?? this.questionLimit,
+    useCustomLimit: useCustomLimit ?? this.useCustomLimit,
     timeLimitSec: clearTime ? null : timeLimitSec ?? this.timeLimitSec,
     lives: clearLives ? null : lives ?? this.lives,
     dateFrom: clearDateFrom ? null : dateFrom ?? this.dateFrom,

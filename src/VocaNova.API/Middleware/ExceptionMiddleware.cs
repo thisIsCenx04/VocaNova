@@ -9,11 +9,16 @@ public sealed class ExceptionMiddleware
 
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionMiddleware> _logger;
+    private readonly IHostEnvironment _environment;
 
-    public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
+    public ExceptionMiddleware(
+        RequestDelegate next,
+        ILogger<ExceptionMiddleware> logger,
+        IHostEnvironment environment)
     {
         _next = next;
         _logger = logger;
+        _environment = environment;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -39,9 +44,15 @@ public sealed class ExceptionMiddleware
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             context.Response.ContentType = "application/json";
 
+            // In Development, surface the real exception so it shows up in the
+            // client instead of a bare "Internal server error." (aids debugging).
+            var errors = _environment.IsDevelopment()
+                ? BuildDevErrors(exception)
+                : new[] { "Internal server error." };
+
             var response = ApiResponseFormatter.Error(
                 "An unexpected error occurred.",
-                new[] { "Internal server error." });
+                errors);
 
             await JsonSerializer.SerializeAsync(
                 context.Response.Body,
@@ -49,5 +60,16 @@ public sealed class ExceptionMiddleware
                 JsonSerializerOptions,
                 context.RequestAborted);
         }
+    }
+
+    private static string[] BuildDevErrors(Exception exception)
+    {
+        var messages = new List<string>();
+        for (Exception? current = exception; current is not null; current = current.InnerException)
+        {
+            messages.Add($"{current.GetType().Name}: {current.Message}");
+        }
+
+        return messages.ToArray();
     }
 }
