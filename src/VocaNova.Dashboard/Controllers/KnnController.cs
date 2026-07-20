@@ -148,6 +148,7 @@ public sealed class KnnController : Controller
             Status = filter.Status,
             IncludeDeleted = includeDeleted,
             Page = page,
+            PageSize = PageSize,
             TotalItems = totalItems,
             TotalPages = totalPages,
         };

@@ -21,14 +21,12 @@
     }
 }
 
-<div class="page-header">
-    <nav class="breadcrumb">
-        <a href="/vocabulary">@T["Vocabulary Metadata"]</a>
-        <span class="breadcrumb-sep">›</span>
-        <span class="breadcrumb-current">@T["Edit"]</span>
-    </nav>
-    <h1 class="page-title">@T["Edit vocabulary"]</h1>
-    <p class="page-subtitle">@T["Update the vocabulary details."]</p>
+<div class="page-header page-header-row">
+    <div>
+        <a class="back-link" href="/vocabulary">&larr; @T["Back to vocabulary"]</a>
+        <h1 class="page-title">@T["Edit vocabulary"]</h1>
+        <p class="page-subtitle">@T["Update vocabulary metadata, meanings and status."]</p>
+    </div>
 </div>
 
 @if (TempData["VocabError"] is string errMsg)
@@ -219,7 +217,7 @@
                     <div class="meta-row"><dt>@T["Creator"]</dt><dd>Admin</dd></div>
                 </dl>
 
-                <button type="submit" class="btn-primary btn-block">💾 @T["Save"]</button>
+                <button type="submit" class="btn-primary btn-block">@T["Save changes"]</button>
                 <a href="/vocabulary" class="btn-secondary btn-block">@T["Cancel"]</a>
             </section>
         </aside>

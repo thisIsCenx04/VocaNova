@@ -9,6 +9,21 @@ import 'package:vocanova_mobile/core/widgets/offline_banner.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_state.dart';
 
+const _questionLimitOptions = [10, 20, 30, 50, null];
+
+const _modeLabels = {
+  'standard': 'Standard',
+  'timed': 'Timed',
+  'challenge': 'Challenge',
+  'elimination': 'Elimination',
+};
+
+const _answerLabels = {
+  'multiple_choice': 'Multiple choice',
+  'exact_typing': 'Typing',
+  'ai_typing': 'AI typing',
+};
+
 class QuizConfigScreen extends ConsumerStatefulWidget {
   const QuizConfigScreen({this.initialListId, super.key});
 
@@ -59,24 +74,34 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
                   runSpacing: 8,
                   children: [
                     _choice(
+                      key: const Key('scope-all'),
                       label: 'Tất cả',
                       selected: state.scopeType == 'all',
                       onSelected: () => _notifier.setScope('all'),
                     ),
                     _choice(
+                      key: const Key('scope-start-date'),
                       label: 'Từ ngày',
                       selected: state.scopeType == 'start_date',
                       onSelected: () => _notifier.setScope('start_date'),
                     ),
                     _choice(
+                      key: const Key('scope-end-date'),
                       label: 'Đến ngày',
                       selected: state.scopeType == 'end_date',
                       onSelected: () => _notifier.setScope('end_date'),
                     ),
                     _choice(
+                      key: const Key('scope-date-range'),
                       label: 'Khoảng ngày',
                       selected: state.scopeType == 'date_range',
                       onSelected: () => _notifier.setScope('date_range'),
+                    ),
+                    _choice(
+                      key: const Key('scope-wrong-words'),
+                      label: 'Từ sai gần đây',
+                      selected: state.scopeType == 'wrong_words',
+                      onSelected: () => _notifier.setScope('wrong_words'),
                     ),
                   ],
                 ),
@@ -111,9 +136,38 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
               onSourceSelected: _notifier.selectSource,
             ),
           ),
-      ],
+          _Section(title: 'Chế độ', child: _buildMode(state)),
+          _Section(title: 'Loại câu hỏi', child: _buildQuestionType(state)),
+          _Section(title: 'Cách trả lời', child: _buildAnswerMethod(state)),
+          _Section(title: 'Thứ tự', child: _buildWordOrder(state)),
+          _Section(title: 'Số câu hỏi', child: _buildQuestionLimit(state)),
+          _SummaryBar(state: state),
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: Tooltip(
+          message: isOnline ? '' : 'Cần kết nối mạng',
+          child: FilledButton.icon(
+            key: const Key('start-quiz-button'),
+            onPressed: state.isCreating || !isOnline ? null : _startQuiz,
+            icon: state.isCreating
+                ? const SizedBox.square(
+                    dimension: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.play_arrow),
+            label: const Text('Bắt đầu'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+            ),
+          ),
+        ),
+      ),
     );
   }
+
+  QuizConfigNotifier get _notifier => ref.read(quizConfigProvider.notifier);
 
   Widget _buildQuestionType(QuizConfigState state) {
     return Wrap(
@@ -250,8 +304,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
               key: const Key('time-limit-input'),
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(labelText: 'Thời gian (giây)'),
-              onChanged: (value) =>
-                  _notifier.setTimeLimit(int.tryParse(value)),
+              onChanged: (value) => _notifier.setTimeLimit(int.tryParse(value)),
             ),
           ),
         if (state.mode == 'elimination')
@@ -636,7 +689,7 @@ class _Section extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title.toUpperCase(),
+            title,
             style: theme.textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
               letterSpacing: 0.8,
@@ -696,9 +749,9 @@ class _ModeCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               subtitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -751,9 +804,7 @@ class _SummaryChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.6,
-        ),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
       ),
       child: Text.rich(
         TextSpan(

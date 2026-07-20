@@ -3,9 +3,9 @@
     ViewData["Title"] = T["Create topic"];
 }
 
-<div class="page-header">
+<div class="page-header page-header-row">
     <div>
-        <a href="/topics" class="text-muted">&larr; @T["Topics"]</a>
+        <a href="/topics" class="back-link">&larr; @T["Back to topics"]</a>
         <h1 class="page-title">@T["Create topic"]</h1>
         <p class="page-subtitle">@T["Add the topic information and related keywords."]</p>
     </div>
@@ -24,7 +24,7 @@
     @Html.AntiForgeryToken()
 
     <div class="panel topic-create-panel">
-        <h4>@T["Topic information"]</h4>
+        <div class="panel-head"><h2 class="panel-title">@T["Topic information"]</h2></div>
         <div class="topic-create-grid">
             <label class="form-field topic-icon-field">
                 <span>@T["Icon"]</span>
@@ -44,7 +44,7 @@
     </div>
 
     <div class="panel topic-create-panel">
-        <h4>@T["Keywords"]</h4>
+        <div class="panel-head"><h2 class="panel-title">@T["Vocabulary"]</h2></div>
         <p class="text-muted topic-keyword-help">@T["Add words that describe or belong to this topic. Press Enter or click Add after each keyword."]</p>
         <div class="topic-keyword-entry">
             <div class="topic-keyword-autocomplete">
@@ -79,7 +79,7 @@
 
     <div class="topic-create-actions">
         <a href="/topics" class="btn-secondary">@T["Cancel"]</a>
-        <button type="submit" class="btn-primary">@T["Save"]</button>
+        <button type="submit" class="btn-primary">@T["Save topic"]</button>
     </div>
 </form>
 

@@ -96,7 +96,7 @@ void main() {
   testWidgets('sends scope, order, and question limit to repository', (
     tester,
   ) async {
-    await pumpConfig(tester, repository, searchRepository);
+    await pumpConfig(tester, repository, searchRepository, listsRepository);
 
     await tester.tap(find.byKey(const Key('scope-wrong-words')));
     await tester.tap(find.byKey(const Key('order-by-difficulty')));

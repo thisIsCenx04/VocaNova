@@ -11,8 +11,7 @@
         pendingForm = form;
         if (wordEl) {
             var w = form.getAttribute('data-word');
-            wordEl.textContent = w ? '“' + w + '”' : '';
-            wordEl.hidden = !w;
+            wordEl.textContent = w || '';
         }
         if (modal) { modal.hidden = false; }
         if (confirmBtn) { confirmBtn.focus(); }
@@ -35,14 +34,17 @@
         confirmBtn.addEventListener('click', function () {
             if (pendingForm) {
                 pendingForm.dataset.confirmed = 'true';
-                pendingForm.submit();
+                pendingForm.requestSubmit();
             }
         });
     }
 
     if (modal) {
-        modal.querySelectorAll('[data-close]').forEach(function (el) {
+        modal.querySelectorAll('[data-close-modal]').forEach(function (el) {
             el.addEventListener('click', closeModal);
+        });
+        modal.addEventListener('click', function (event) {
+            if (event.target === modal) { closeModal(); }
         });
     }
 

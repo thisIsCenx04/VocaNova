@@ -70,6 +70,7 @@ class QuizConfigState {
     bool clearListId = false,
     bool clearTime = false,
     bool clearLives = false,
+    bool clearQuestionLimit = false,
     bool clearDateFrom = false,
     bool clearDateTo = false,
     bool clearError = false,
