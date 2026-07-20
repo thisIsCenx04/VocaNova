@@ -52,6 +52,8 @@ public interface IVocaNovaApiClient
 
     Task<ApiActionResult> UploadImageAsync(uint wordId, ImageUpload upload, CancellationToken cancellationToken = default);
 
+    Task<ApiActionResult> UpdateImageUrlAsync(uint wordId, string? imageUrl, CancellationToken cancellationToken = default);
+
     // F059 — CSV import. Trả về kết quả import (imported/skipped/errors) hoặc lỗi.
     Task<ImportWordsResult> ImportWordsAsync(FileUpload upload, CancellationToken cancellationToken = default);
 
@@ -75,6 +77,8 @@ public interface IVocaNovaApiClient
 
     Task<ApiActionResult> CreateTopicAsync(TopicInput input, CancellationToken cancellationToken = default);
 
+    Task<ApiActionResult> AddWordsToTopicAsync(uint topicId, IReadOnlyCollection<uint> wordIds, CancellationToken cancellationToken = default);
+
     Task<ApiActionResult> UpdateTopicAsync(uint topicId, TopicInput input, CancellationToken cancellationToken = default);
 
     Task<ApiActionResult> DeleteTopicAsync(uint topicId, CancellationToken cancellationToken = default);
@@ -97,13 +101,26 @@ public interface IVocaNovaApiClient
     Task<ApiActionResult> DeleteKnnLookupAsync(string lookup, uint id, CancellationToken cancellationToken = default);
 
     Task<ApiActionResult> RestoreKnnLookupAsync(string lookup, uint id, CancellationToken cancellationToken = default);
+
+    // F063A — Admin profile (hồ sơ của chính người đăng nhập).
+    Task<Models.Api.Auth.MeProfile?> GetMyProfileAsync(CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> UpdateMyProfileAsync(string? displayName, string? avatarUrl, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> ChangeMyPasswordAsync(string? currentPassword, string? newPassword, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> UploadMyAvatarAsync(ImageUpload upload, CancellationToken cancellationToken = default);
 }
 
 /// <summary>Bộ lọc danh sách lookup KNN (F063). API dùng query key snake_case <c>include_deleted</c>.</summary>
 public sealed record KnnLookupFilter(string? Q, string? Status, bool IncludeDeleted, int Page, int Limit);
 
 /// <summary>Payload tạo/cập nhật topic (khớp CreateTopicRequest/UpdateTopicRequest của API).</summary>
-public sealed record TopicInput(string? TopicName, string? TopicNameVi, string? Icon);
+public sealed record TopicInput(
+    string? TopicName,
+    string? TopicNameVi,
+    string? Icon,
+    IReadOnlyCollection<uint>? WordIds = null);
 
 /// <summary>Bộ lọc danh sách user (F060).</summary>
 public sealed record UserListFilter(string? Status, string? Search, bool IncludeDeleted, int Page, int Limit, string? Role = null);

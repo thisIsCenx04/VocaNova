@@ -9,5 +9,7 @@ public interface IQuizWordPoolRepository
         DateTime? addedFrom,
         DateTime? addedBefore,
         IReadOnlyCollection<uint>? topicIds,
+        uint? listId,
+        bool wrongWordsOnly = false,
         CancellationToken cancellationToken = default);
 }

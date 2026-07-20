@@ -81,6 +81,86 @@ public class QuizWordPoolBuilderTests
         result.Error.Should().Be("Không đủ từ để tạo bài kiểm tra");
     }
 
+    [Fact]
+    public async Task BuildPoolAsync_Should_Filter_By_Wrong_Words_Scope()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedPoolWordsAsync(dbContext);
+        await SeedProgressAsync(dbContext);
+        var builder = CreateBuilder(dbContext);
+
+        var result = await builder.BuildPoolAsync(
+            1,
+            CreateRequest(scopeType: ScopeType.WrongWords, answerMethod: AnswerMethod.ExactTyping));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Select(word => word.WordId).Should().Equal(3u, 1u);
+    }
+
+    [Fact]
+    public async Task BuildPoolAsync_Should_Order_By_Difficulty_Using_Wrong_Count()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedPoolWordsAsync(dbContext);
+        await SeedProgressAsync(dbContext);
+        var builder = CreateBuilder(dbContext);
+
+        var result = await builder.BuildPoolAsync(
+            1,
+            CreateRequest(
+                scopeType: ScopeType.All,
+                wordOrder: WordOrder.ByDifficulty,
+                answerMethod: AnswerMethod.ExactTyping));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Select(word => word.WordId).Should().Equal(3u, 1u, 2u, 4u);
+    }
+
+    private static async Task SeedProgressAsync(VocaNovaDbContext dbContext)
+    {
+        var now = DateTime.UtcNow;
+
+        dbContext.UserWordProgresses.AddRange(
+            new UserWordProgress
+            {
+                ProgressId = 1,
+                UserId = 1,
+                WordId = 1,
+                WrongCount = 5,
+                IsInWrongList = true,
+                UpdatedAt = now,
+            },
+            new UserWordProgress
+            {
+                ProgressId = 2,
+                UserId = 1,
+                WordId = 2,
+                WrongCount = 1,
+                IsInWrongList = false,
+                UpdatedAt = now,
+            },
+            new UserWordProgress
+            {
+                ProgressId = 3,
+                UserId = 1,
+                WordId = 3,
+                WrongCount = 8,
+                IsInWrongList = true,
+                UpdatedAt = now,
+            },
+            new UserWordProgress
+            {
+                ProgressId = 4,
+                UserId = 2,
+                WordId = 4,
+                WrongCount = 9,
+                IsInWrongList = true,
+                UpdatedAt = now,
+            });
+
+        await dbContext.SaveChangesAsync();
+    }
+
     private static VocaNovaDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<VocaNovaDbContext>()

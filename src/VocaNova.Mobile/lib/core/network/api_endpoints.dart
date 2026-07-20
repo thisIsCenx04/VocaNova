@@ -19,6 +19,7 @@ abstract final class ApiEndpoints {
 
   static const words = '/api/words';
   static const topics = '/api/topics';
+  static const personalTopics = '/api/personal-topics';
   static const lists = '/api/lists';
   static const quizSessions = '/api/quiz/sessions';
   static const quizWrongWords = '/api/quiz/wrong-words';
@@ -27,7 +28,18 @@ abstract final class ApiEndpoints {
   static const progressMasteryBreakdown = '/api/progress/mastery-breakdown';
   static const progressWeakestWords = '/api/progress/weakest-words';
 
+  // Notifications are derived on read; read state is tracked per-device on the client,
+  // so there is only a list endpoint.
+  static const notifications = '/api/notifications';
+
   static String word(int id) => '$words/$id';
+
+  static String topicWords(int id) => '$topics/$id/words';
+
+  static String personalTopicWords(int id) => '$personalTopics/$id/words';
+
+  static String personalTopicWord(int topicId, int wordId) =>
+      '$personalTopics/$topicId/words/$wordId';
 
   static String listWords(int id) => '$lists/$id/words';
 

@@ -84,17 +84,19 @@
         return '"' + v.replace(/"/g, '""') + '"';
     }
 
+    // Localized labels/messages come from data-* (rendered by @T).
+    var L = form.dataset;
     form.addEventListener('submit', function (e) {
         e.preventDefault();
         if (!fileInput.files.length) {
-            window.alert('Please choose a CSV file.');
+            window.alert(L.msgChoose || 'Please choose a CSV file.');
             return;
         }
         var data = new FormData();
         data.append('file', fileInput.files[0]);
 
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Importing...';
+        submitBtn.textContent = submitBtn.dataset.labelBusy || 'Importing...';
 
         fetch('/vocabulary/import', {
             method: 'POST',
@@ -106,13 +108,13 @@
                 if (data.success && data.result) {
                     renderResult(data.result);
                 } else {
-                    window.alert(data.message || 'Import failed.');
+                    window.alert(data.message || L.msgFailed || 'Import failed.');
                 }
             })
-            .catch(function () { window.alert('Import request failed.'); })
+            .catch(function () { window.alert(L.msgRequestFailed || 'Import request failed.'); })
             .finally(function () {
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Upload & import';
+                submitBtn.textContent = submitBtn.dataset.labelIdle || 'Upload & import';
             });
     });
 

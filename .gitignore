@@ -2,6 +2,8 @@
 bin/
 obj/
 out/
+.build-check/
+.build-check-2/
 TestResults/
 coverage/
 *.trx
@@ -75,9 +77,11 @@ windows/flutter/generated_plugin_registrant.*
 *.mobileprovision
 
 
-VocaNova_Activity_History.md
 VocaNova_Feature_Breakdown.md
+VocaNova_Activity_History.md
 input.txt
 
 # Figma working files (contains a read-only token — never commit)
 .figma-tmp/
+docs/*
+.artifacts-test/

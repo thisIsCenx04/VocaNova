@@ -1,11 +1,13 @@
 @using System.Security.Claims
+@inject VocaNova.Dashboard.Services.Api.IVocaNovaApiClient TopbarApiClient
 @{
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
-    var displayName = User.FindFirstValue(ClaimTypes.Name) ?? "Admin";
+    var currentProfile = isAuthenticated ? await TopbarApiClient.GetMyProfileAsync(Context.RequestAborted) : null;
+    var displayName = currentProfile?.DisplayName ?? User.FindFirstValue(ClaimTypes.Name) ?? "Admin";
     var avatarFallback = string.IsNullOrWhiteSpace(displayName) ? "A" : displayName[..1].ToUpperInvariant();
     var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
-    var phone = User.FindFirstValue("phone");
-    var avatarUrl = User.FindFirstValue("avatar_url");
+    var phone = currentProfile?.Phone ?? User.FindFirstValue("phone");
+    var avatarUrl = currentProfile?.AvatarUrl ?? User.FindFirstValue("avatar_url");
     var isSuperAdmin = string.Equals(role, "super_admin", StringComparison.Ordinal);
 
     // Theme đọc từ cookie để render server-side (không nhấp nháy). Mặc định light; đổi ở trang Settings.
@@ -33,9 +35,9 @@
     @if (isAuthenticated)
     {
         <div class="app-shell">
-            <input class="sidebar-toggle" type="checkbox" id="sidebar-toggle" aria-label="Toggle navigation" />
+            <input class="sidebar-toggle" type="checkbox" id="sidebar-toggle" aria-label="@T["Toggle navigation"]" />
             <label class="sidebar-scrim" for="sidebar-toggle" aria-hidden="true"></label>
-            <aside class="sidebar" aria-label="Primary navigation">
+            <aside class="sidebar" aria-label="@T["Primary navigation"]">
                 <div class="sidebar-brand">
                     <img class="brand-logo" src="~/img/logo.png" alt="" />
                     <span class="brand-word">VocaNova</span>
@@ -112,7 +114,7 @@
 
             <div class="content-shell">
                 <header class="topbar">
-                    <label class="icon-button menu-button" for="sidebar-toggle" aria-label="Toggle navigation">
+                    <label class="icon-button menu-button" for="sidebar-toggle" aria-label="@T["Toggle navigation"]">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4V6Zm0 5h16v2H4v-2Zm0 5h16v2H4v-2Z" /></svg>
                     </label>
 
@@ -121,7 +123,7 @@
                             <svg viewBox="0 0 24 24"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-5-1.5-1.6V11a5.5 5.5 0 0 0-4-5.3V5a1.5 1.5 0 0 0-3 0v.7A5.5 5.5 0 0 0 6.5 11v4.4L5 17v1h14v-1Z" /></svg>
                             <span class="notif-dot" aria-hidden="true"></span>
                         </span>
-                        <div class="account-link">
+                        <a class="account-link" href="/profile" title="@T["My Profile"]">
                             @if (!string.IsNullOrWhiteSpace(avatarUrl))
                             {
                                 <img src="@avatarUrl" alt="" />
@@ -134,7 +136,7 @@
                                 <span class="account-name">@displayName</span>
                                 <span class="account-role">@(string.IsNullOrWhiteSpace(phone) ? role.Replace("_", " ") : phone)</span>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 </header>
 

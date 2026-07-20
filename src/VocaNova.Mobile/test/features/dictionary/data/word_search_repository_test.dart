@@ -64,6 +64,73 @@ void main() {
     expect(topics.single.displayName, 'Du lịch');
     expect(topics.single.wordCount, 12);
   });
+
+  test(
+    'getTopicWords uses topic endpoint and parses learning progress',
+    () async {
+      final dio = Dio();
+      dio.httpClientAdapter = CallbackAdapter((options) {
+        expect(options.path, ApiEndpoints.topicWords(2));
+        expect(options.queryParameters, {'page': 1, 'limit': 100});
+        return jsonResponse({
+          'items': [
+            {
+              'word_id': 3,
+              'word': 'journey',
+              'learning_status': 'learning',
+              'mastery_score': 65,
+            },
+          ],
+        });
+      });
+
+      final words = await WordSearchRepository(dio: dio).getTopicWords(2);
+
+      expect(words.single.topicIds, contains(2));
+      expect(words.single.learningStatus, 'learning');
+      expect(words.single.masteryScore, 65);
+    },
+  );
+
+  test('personal topic APIs expose saved counts, words and removal', () async {
+    final dio = Dio();
+    final requests = <RequestOptions>[];
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      requests.add(options);
+      if (options.path == ApiEndpoints.personalTopics) {
+        return jsonResponse([
+          {
+            'topic_id': 2,
+            'list_id': 12,
+            'name': 'Travel',
+            'name_vi': null,
+            'icon': null,
+            'word_count': 1,
+            'contains_word': false,
+          },
+        ]);
+      }
+      if (options.method == 'DELETE') return jsonResponse(true);
+      return jsonResponse({
+        'items': [
+          {'word_id': 3, 'word': 'journey', 'primary_meaning': 'chuyến đi'},
+        ],
+      });
+    });
+    final repository = WordSearchRepository(dio: dio);
+
+    final topics = await repository.getPersonalTopics();
+    final words = await repository.getPersonalTopicWords(2);
+    await repository.removePersonalTopicWord(topicId: 2, wordId: 3);
+
+    expect(topics.single.listId, 12);
+    expect(words.single.word, 'journey');
+    expect(requests.map((request) => request.path), [
+      ApiEndpoints.personalTopics,
+      ApiEndpoints.personalTopicWords(2),
+      ApiEndpoints.personalTopicWord(2, 3),
+    ]);
+  });
 }
 
 typedef AdapterCallback = ResponseBody Function(RequestOptions options);

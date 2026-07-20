@@ -71,6 +71,33 @@ public class GeminiAiGradingProviderTests
         result.IsCorrect.Should().BeFalse();
         result.Score.Should().Be(0f);
         result.Explanation.Should().Be("AI không khả dụng");
+        result.FromAi.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GradeAsync_Should_Award_Fallback_Credit_On_Exact_Match_When_Client_Fails()
+    {
+        var client = new FakeGeminiClient(new InvalidOperationException("Gemini failed."));
+        var provider = CreateProvider(client);
+
+        var result = await provider.GradeAsync(10, 1, " Correct! ", "correct");
+
+        result.IsCorrect.Should().BeTrue();
+        result.Score.Should().Be(1f);
+        result.FromAi.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GradeAsync_Should_Rethrow_When_Request_Is_Cancelled()
+    {
+        var client = new FakeGeminiClient(new OperationCanceledException());
+        var provider = CreateProvider(client);
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var act = () => provider.GradeAsync(10, 1, "answer", "expected", cts.Token);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
     }
 
     private static GeminiAiGradingProvider CreateProvider(IGeminiClient client)

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:vocanova_mobile/core/network/api_endpoints.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_detail.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 
 class WordDetailRepository {
   const WordDetailRepository({required Dio dio}) : _dio = dio;
@@ -45,6 +46,36 @@ class WordDetailRepository {
         'note': note?.trim().isEmpty == true ? null : note,
       },
     );
+  }
+
+  Future<List<PersonalTopicSummary>> getPersonalTopics({int? wordId}) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiEndpoints.personalTopics,
+      queryParameters: {'wordId': ?wordId},
+    );
+    final data = response.data?['data'];
+    if (data is! List) {
+      throw const FormatException('Invalid personal topics response.');
+    }
+    return data
+        .whereType<Map<String, dynamic>>()
+        .map(PersonalTopicSummary.fromJson)
+        .toList(growable: false);
+  }
+
+  Future<PersonalTopicSummary> addWordToPersonalTopic({
+    required int topicId,
+    required int wordId,
+    String? note,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.personalTopicWords(topicId),
+      data: {
+        'word_id': wordId,
+        'note': note?.trim().isEmpty == true ? null : note,
+      },
+    );
+    return PersonalTopicSummary.fromJson(_dataMap(response));
   }
 
   Map<String, dynamic> _dataMap(Response<Map<String, dynamic>> response) {

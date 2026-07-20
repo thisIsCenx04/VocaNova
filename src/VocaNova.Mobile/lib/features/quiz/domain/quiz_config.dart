@@ -5,6 +5,7 @@ class QuizSessionStart {
     required this.mode,
     required this.questionCount,
     required this.firstQuestion,
+    this.listId,
     this.timeLimitSec,
     this.lives,
   });
@@ -13,6 +14,7 @@ class QuizSessionStart {
   final String answerMethod;
   final String mode;
   final int questionCount;
+  final int? listId;
   final int? timeLimitSec;
   final int? lives;
   final QuizQuestion firstQuestion;
@@ -27,6 +29,7 @@ class QuizSessionStart {
       answerMethod: session['answer_method'] as String,
       mode: session['mode'] as String,
       questionCount: session['question_count'] as int,
+      listId: session['list_id'] as int?,
       timeLimitSec: session['time_limit_sec'] as int?,
       lives: session['lives'] as int?,
       firstQuestion: QuizQuestion.fromJson(question),
@@ -106,6 +109,9 @@ class QuizConfigRequest {
     required this.scopeType,
     required this.topicIds,
     required this.answerMethod,
+    this.wordOrder = 'random',
+    this.wordLimit = 20,
+    this.listId,
     this.scopeDateFrom,
     this.scopeDateTo,
     this.timeLimitSec,
@@ -115,6 +121,11 @@ class QuizConfigRequest {
   final String mode;
   final int questionType;
   final String scopeType;
+  final String wordOrder;
+
+  /// Số câu hỏi tối đa; null nghĩa là lấy toàn bộ từ trong phạm vi.
+  final int? wordLimit;
+  final int? listId;
   final DateTime? scopeDateFrom;
   final DateTime? scopeDateTo;
   final List<int> topicIds;
@@ -126,11 +137,12 @@ class QuizConfigRequest {
     'mode': mode,
     'question_type': questionType,
     'scope_type': scopeType,
+    'list_id': listId,
     'scope_date_from': _date(scopeDateFrom),
     'scope_date_to': _date(scopeDateTo),
     'topic_ids': topicIds.isEmpty ? null : topicIds,
-    'word_order': 'random',
-    'word_limit': 20,
+    'word_order': wordOrder,
+    'word_limit': wordLimit,
     'time_limit_sec': timeLimitSec,
     'lives': lives,
     'answer_method': answerMethod,

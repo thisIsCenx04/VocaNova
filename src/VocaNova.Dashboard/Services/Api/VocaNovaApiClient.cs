@@ -171,6 +171,9 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         return SendMultipartActionAsync(HttpMethod.Post, $"api/admin/words/{wordId}/image", content, cancellationToken);
     }
 
+    public Task<ApiActionResult> UpdateImageUrlAsync(uint wordId, string? imageUrl, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Put, $"api/admin/words/{wordId}/image", new { image_url = imageUrl }, cancellationToken);
+
     public async Task<ImportWordsResult> ImportWordsAsync(FileUpload upload, CancellationToken cancellationToken = default)
     {
         try
@@ -257,6 +260,9 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> CreateTopicAsync(TopicInput input, CancellationToken cancellationToken = default) =>
         SendJsonActionAsync(HttpMethod.Post, "api/admin/topics", TopicPayload(input), cancellationToken);
 
+    public Task<ApiActionResult> AddWordsToTopicAsync(uint topicId, IReadOnlyCollection<uint> wordIds, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Post, $"api/admin/topics/{topicId}/words", new { WordIds = wordIds }, cancellationToken);
+
     public Task<ApiActionResult> UpdateTopicAsync(uint topicId, TopicInput input, CancellationToken cancellationToken = default) =>
         SendJsonActionAsync(HttpMethod.Put, $"api/admin/topics/{topicId}", TopicPayload(input), cancellationToken);
 
@@ -302,11 +308,39 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> RestoreKnnLookupAsync(string lookup, uint id, CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Patch, $"api/admin/knn/{lookup}/{id}/restore", cancellationToken);
 
+    public Task<Models.Api.Auth.MeProfile?> GetMyProfileAsync(CancellationToken cancellationToken = default) =>
+        GetDataAsync<Models.Api.Auth.MeProfile>("api/auth/me", cancellationToken);
+
+    public Task<ApiActionResult> UpdateMyProfileAsync(string? displayName, string? avatarUrl, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Put, "api/auth/me/profile", new
+        {
+            DisplayName = displayName,
+            AvatarUrl = avatarUrl,
+        }, cancellationToken);
+
+    public Task<ApiActionResult> ChangeMyPasswordAsync(string? currentPassword, string? newPassword, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Put, "api/auth/me/password", new
+        {
+            CurrentPassword = currentPassword,
+            NewPassword = newPassword,
+        }, cancellationToken);
+
+    public Task<ApiActionResult> UploadMyAvatarAsync(ImageUpload upload, CancellationToken cancellationToken = default)
+    {
+        var content = new MultipartFormDataContent();
+        var file = new StreamContent(upload.Content);
+        file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(upload.ContentType);
+        content.Add(file, "file", upload.FileName);
+
+        return SendMultipartActionAsync(HttpMethod.Post, "api/auth/me/avatar", content, cancellationToken);
+    }
+
     private static object TopicPayload(TopicInput input) => new
     {
         input.TopicName,
         input.TopicNameVi,
         input.Icon,
+        input.WordIds,
     };
 
     // Chỉ cần word_id từ response tạo word (POST /api/admin/words trả về word DTO đầy đủ).

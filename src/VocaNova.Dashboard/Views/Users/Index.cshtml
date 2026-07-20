@@ -141,9 +141,10 @@
     <span class="pager-info">Showing @pageStart to @pageEnd of @Model.TotalItems entries</span>
     @if (Model.TotalPages > 1)
     {
-        var winStart = Model.Page;
-        var winEnd = Math.Min(Model.Page + 2, Model.TotalPages);
-        <nav class="pager" aria-label="@T["Pagination"]">
+        var winStart = Math.Max(1, Model.Page - 2);
+        var winEnd = Math.Min(Model.TotalPages, winStart + 4);
+        winStart = Math.Max(1, winEnd - 4);
+        <nav class="pager" aria-label="@T["Pagination"]" data-page="@Model.Page" data-total-pages="@Model.TotalPages">
             @if (Model.HasPrevious)
             {
                 <a class="pager-link" href="@PageUrl(Model.Page - 1)">‹ @T["Prev"]</a>
@@ -168,7 +169,13 @@
     }
 </div>
 
-<div class="modal-overlay" id="user-modal" hidden>
+<div class="modal-overlay" id="user-modal" hidden
+     data-disable-title="@T["Disable user account"]"
+     data-disable-text="@T["Are you sure you want to disable {0}? This limits the user's access to the system. You can restore it later."]"
+     data-disable-confirm="@T["Disable"]"
+     data-restore-title="@T["Restore user account"]"
+     data-restore-text="@T["Restore {0} back to active? The user will regain access."]"
+     data-restore-confirm="@T["Restore"]">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="um-title">
         <div class="modal-icon" id="um-icon"><svg viewBox="0 0 24 24"><path d="M12 2 1 21h22L12 2Zm-1 6h2v7h-2V8Zm0 9h2v2h-2v-2Z"/></svg></div>
         <h3 class="modal-title" id="um-title">@T["Disable user account"]</h3>

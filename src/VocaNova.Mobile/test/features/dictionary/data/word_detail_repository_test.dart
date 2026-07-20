@@ -73,6 +73,53 @@ void main() {
       expect(list.listName, 'Study');
     },
   );
+
+  test('personal topic destinations and add request match backend', () async {
+    final dio = Dio();
+    final requests = <RequestOptions>[];
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      requests.add(options);
+      if (options.method == 'GET') {
+        expect(options.path, ApiEndpoints.personalTopics);
+        expect(options.queryParameters, {'wordId': 7});
+        return jsonResponse([
+          {
+            'topic_id': 2,
+            'list_id': null,
+            'name': 'Communication',
+            'name_vi': null,
+            'icon': null,
+            'word_count': 0,
+            'contains_word': false,
+          },
+        ]);
+      }
+      expect(options.path, ApiEndpoints.personalTopicWords(2));
+      expect(options.data, {'word_id': 7, 'note': 'Practice'});
+      return jsonResponse({
+        'topic_id': 2,
+        'list_id': 12,
+        'name': 'Communication',
+        'name_vi': null,
+        'icon': null,
+        'word_count': 1,
+        'contains_word': true,
+      });
+    });
+    final repository = WordDetailRepository(dio: dio);
+
+    final options = await repository.getPersonalTopics(wordId: 7);
+    final saved = await repository.addWordToPersonalTopic(
+      topicId: 2,
+      wordId: 7,
+      note: 'Practice',
+    );
+
+    expect(options.single.wordCount, 0);
+    expect(saved.listId, 12);
+    expect(saved.containsWord, isTrue);
+    expect(requests, hasLength(2));
+  });
 }
 
 typedef AdapterCallback = ResponseBody Function(RequestOptions options);

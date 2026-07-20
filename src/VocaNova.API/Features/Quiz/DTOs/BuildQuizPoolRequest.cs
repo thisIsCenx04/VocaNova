@@ -7,4 +7,5 @@ public sealed record BuildQuizPoolRequest(
     IReadOnlyCollection<uint>? TopicIds,
     string WordOrder,
     int? WordLimit,
-    string AnswerMethod);
+    string AnswerMethod,
+    uint? ListId = null);

@@ -45,7 +45,7 @@
                 <dd>@(rb.IsRunning ? "Yes" : "No")</dd>
             </dl>
         }
-        <form method="post" action="/knn/trigger-rebuild" class="inline-form js-confirm" data-confirm="Trigger a KNN recommendation rebuild now?">
+        <form method="post" action="/knn/trigger-rebuild" class="inline-form js-confirm" data-confirm="@T["Trigger a KNN recommendation rebuild now?"]">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn-primary btn-sm">@T["Trigger rebuild"]</button>
         </form>

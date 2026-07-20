@@ -21,6 +21,11 @@ public interface ITopicService
         CreateTopicRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<Result<int>> AddWordsAsync(
+        uint topicId,
+        AddTopicWordsRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<Result<TopicSummaryDto>> UpdateAsync(
         uint topicId,
         UpdateTopicRequest request,

@@ -11,7 +11,7 @@
 
 @if (TempData["SettingsSaved"] is string saved)
 {
-    <div class="alert alert-success">@saved</div>
+    <div class="alert alert-success">@T[saved]</div>
 }
 
 <form method="post" action="/settings" id="settings-form" class="settings-form">
@@ -31,8 +31,7 @@
                     <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 4V2m0 20v-2m8-8h2M2 12h2m13.66-5.66 1.41-1.41M4.93 19.07l1.41-1.41m0-11.32L4.93 4.93m14.14 14.14-1.41-1.41M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
                 <span class="appearance-text">
-                    <span class="appearance-title">Chế độ Sáng</span>
-                    <span class="appearance-sub">Light Mode</span>
+                    <span class="appearance-title">@T["Light Mode"]</span>
                 </span>
                 <span class="radio-dot" aria-hidden="true"></span>
             </button>
@@ -42,8 +41,7 @@
                     <svg viewBox="0 0 24 24" width="20" height="20"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
                 <span class="appearance-text">
-                    <span class="appearance-title">Chế độ Tối</span>
-                    <span class="appearance-sub">Dark Mode</span>
+                    <span class="appearance-title">@T["Dark Mode"]</span>
                 </span>
                 <span class="radio-dot" aria-hidden="true"></span>
             </button>
@@ -62,8 +60,7 @@
                     <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18" fill="none" stroke="currentColor" stroke-width="2"/></svg>
                 </span>
                 <span class="language-text">
-                    <span class="language-title">Tiếng Việt</span>
-                    <span class="language-sub">Vietnamese</span>
+                    <span class="language-title">@T["Vietnamese"]</span>
                 </span>
                 <span class="radio-dot" aria-hidden="true"></span>
             </button>
@@ -73,8 +70,7 @@
                     <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18" fill="none" stroke="currentColor" stroke-width="2"/></svg>
                 </span>
                 <span class="language-text">
-                    <span class="language-title">Tiếng Anh</span>
-                    <span class="language-sub">English</span>
+                    <span class="language-title">@T["English"]</span>
                 </span>
                 <span class="radio-dot" aria-hidden="true"></span>
             </button>
@@ -82,8 +78,8 @@
     </section>
 
     <div class="settings-actions">
-        <a href="/settings" class="btn-secondary">Hủy / Cancel</a>
-        <button type="submit" class="btn-primary">Lưu thay đổi / Save Changes</button>
+        <a href="/settings" class="btn-secondary">@T["Cancel"]</a>
+        <button type="submit" class="btn-primary">@T["Save Changes"]</button>
     </div>
 </form>
 

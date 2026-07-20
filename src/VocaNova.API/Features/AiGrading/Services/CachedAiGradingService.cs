@@ -52,6 +52,13 @@ public sealed class CachedAiGradingService : IAiGradingService
             expectedAnswer,
             cancellationToken);
 
+        // Do not cache fallback grades (AI was unavailable); caching them would
+        // poison future grading for 7 days even after the provider recovers.
+        if (!result.FromAi)
+        {
+            return result;
+        }
+
         var now = DateTime.UtcNow;
         await _aiGradingCacheRepository.SaveAsync(
             new AiGradingCache

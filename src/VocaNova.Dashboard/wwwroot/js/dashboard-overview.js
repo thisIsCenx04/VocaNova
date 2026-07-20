@@ -46,12 +46,12 @@
                 labels: data.labels,
                 datasets: [
                     {
-                        type: 'line', label: 'Sessions', data: data.sessions,
+                        type: 'line', label: ctx.dataset.labelSessions || 'Sessions', data: data.sessions,
                         borderColor: VIOLET, backgroundColor: 'rgba(108,92,231,0.12)',
                         fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2.5, yAxisID: 'y'
                     },
                     {
-                        type: 'line', label: 'Accuracy %', data: data.accuracy,
+                        type: 'line', label: ctx.dataset.labelAccuracy || 'Accuracy %', data: data.accuracy,
                         borderColor: CYAN, backgroundColor: 'transparent',
                         fill: false, tension: 0.4, pointRadius: 0, borderWidth: 2, borderDash: [5, 4], yAxisID: 'y1'
                     }

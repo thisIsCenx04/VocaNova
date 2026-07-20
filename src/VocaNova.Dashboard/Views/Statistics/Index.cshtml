@@ -40,8 +40,8 @@
         </select>
     </div>
     <div class="chart-grid">
-        <div class="chart-box"><canvas id="sessions-chart" height="120"></canvas></div>
-        <div class="chart-box"><canvas id="accuracy-chart" height="120"></canvas></div>
+        <div class="chart-box"><canvas id="sessions-chart" height="120" data-label="@T["Sessions"]"></canvas></div>
+        <div class="chart-box"><canvas id="accuracy-chart" height="120" data-label="@T["Accuracy %"]"></canvas></div>
     </div>
 </section>
 
@@ -73,9 +73,9 @@
     <section class="panel">
         <div class="panel-head"><h2 class="panel-title">@T["Demographics"]</h2></div>
         <div class="demo-charts">
-            <div class="demo-chart"><h4>@T["Age range"]</h4><div class="chart-box chart-box-sm"><canvas id="age-chart"></canvas></div></div>
-            <div class="demo-chart"><h4>@T["Occupation"]</h4><div class="chart-box chart-box-sm"><canvas id="occupation-chart"></canvas></div></div>
-            <div class="demo-chart"><h4>@T["Education level"]</h4><div class="chart-box chart-box-sm"><canvas id="education-chart"></canvas></div></div>
+            <div class="demo-chart"><h4>@T["Age range"]</h4><div class="chart-box chart-box-sm"><canvas id="age-chart" data-label="@T["Users"]"></canvas></div></div>
+            <div class="demo-chart"><h4>@T["Occupation"]</h4><div class="chart-box chart-box-sm"><canvas id="occupation-chart" data-label="@T["Users"]"></canvas></div></div>
+            <div class="demo-chart"><h4>@T["Education level"]</h4><div class="chart-box chart-box-sm"><canvas id="education-chart" data-label="@T["Users"]"></canvas></div></div>
         </div>
     </section>
 </div>

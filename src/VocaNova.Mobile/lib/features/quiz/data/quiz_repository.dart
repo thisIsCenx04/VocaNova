@@ -24,10 +24,11 @@ class QuizRepository {
     required int sessionId,
     required int wordId,
     required String answer,
+    int? listId,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       ApiEndpoints.quizAnswer(sessionId),
-      data: {'word_id': wordId, 'user_answer': answer},
+      data: {'word_id': wordId, 'user_answer': answer, 'list_id': listId},
     );
     final data = response.data?['data'];
     if (data is! Map<String, dynamic>) {

@@ -17,6 +17,24 @@ public interface ITopicRepository
         uint? excludingTopicId = null,
         CancellationToken cancellationToken = default);
 
+    Task<bool> ActiveTopicNameExistsAsync(
+        string topicName,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> ActiveTopicNameViExistsAsync(
+        string topicNameVi,
+        uint? excludingTopicId = null,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> WordIdsExistAsync(
+        IReadOnlyCollection<uint> wordIds,
+        CancellationToken cancellationToken = default);
+
+    Task<int> AddWordsAsync(
+        uint topicId,
+        IReadOnlyCollection<uint> wordIds,
+        CancellationToken cancellationToken = default);
+
     Task<TopicSummaryDto> CreateAsync(
         CreateTopicRequest request,
         CancellationToken cancellationToken = default);

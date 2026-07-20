@@ -23,12 +23,30 @@
     }
 
     string StatusBadgeClass(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
+
+    // Thanh A–Z: giữ nguyên mọi filter, chỉ đổi q = chữ cái (hoặc bỏ q khi "Tất cả"); page reset về 1.
+    string LetterUrl(string? letter)
+    {
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(letter)) qs.Add($"q={Uri.EscapeDataString(letter)}");
+        if (!string.IsNullOrWhiteSpace(Model.Cefr)) qs.Add($"cefr={Uri.EscapeDataString(Model.Cefr)}");
+        if (!string.IsNullOrWhiteSpace(Model.WordType)) qs.Add($"wordType={Uri.EscapeDataString(Model.WordType)}");
+        if (Model.TopicId is { } tid) qs.Add($"topicId={tid}");
+        if (!string.IsNullOrWhiteSpace(Model.Status)) qs.Add($"status={Uri.EscapeDataString(Model.Status)}");
+        if (Model.IncludeDeleted) qs.Add("includeDeleted=true");
+        return qs.Count == 0 ? "/vocabulary" : "/vocabulary?" + string.Join("&", qs);
+    }
+
+    // Chữ cái đang chọn = khi q đúng 1 ký tự chữ (A–Z). Prefix search dài hơn không highlight chữ nào.
+    char? selectedLetter = !string.IsNullOrEmpty(Model.Q) && Model.Q.Length == 1 && char.IsLetter(Model.Q[0])
+        ? char.ToUpperInvariant(Model.Q[0])
+        : null;
 }
 
 <div class="page-header page-header-row">
     <div>
         <h1 class="page-title">@T["Vocabulary Metadata Management"]</h1>
-        <p class="page-subtitle">Quản lý dữ liệu từ vựng — @Model.TotalItems @T["word(s)."]</p>
+        <p class="page-subtitle">@T["Manage vocabulary metadata"] — @Model.TotalItems @T["word(s)."]</p>
     </div>
     <a href="/vocabulary/create" class="btn-primary">@T["+ Create New Vocabulary"]</a>
 </div>
@@ -77,6 +95,14 @@
     <button type="submit" class="btn-primary">@T["Filter"]</button>
     <a href="/vocabulary" class="btn-secondary">@T["Reset"]</a>
 </form>
+
+<nav class="alpha-bar" aria-label="@T["Filter by first letter"]">
+    <a class="alpha-link @(string.IsNullOrWhiteSpace(Model.Q) ? "active" : "")" href="@LetterUrl(null)">@T["All"]</a>
+    @for (var c = 'A'; c <= 'Z'; c++)
+    {
+        <a class="alpha-link @(selectedLetter == c ? "active" : "")" href="@LetterUrl(c.ToString())" aria-label="@c">@c</a>
+    }
+</nav>
 
 <div class="panel table-panel">
     <table class="data-table">
@@ -138,7 +164,7 @@
                                 {
                                     <form method="post" action="/vocabulary/delete" class="inline-form js-confirm"
                                           data-word="@item.Word"
-                                          data-confirm="Delete '@item.Word'? It will be soft-deleted.">
+                                          data-confirm="@(T.Format("Delete '{0}'? It will be soft-deleted.", item.Word))">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@item.WordId" />
                                         <input type="hidden" name="returnUrl" value="@returnUrl" />
@@ -171,9 +197,10 @@
     <span class="pager-info">@T["Showing"] @pageStart @T["to"] @pageEnd @T["of"] @Model.TotalItems @T["entries"]</span>
     @if (Model.TotalPages > 1)
     {
-        var winStart = Model.Page;
-        var winEnd = Math.Min(Model.Page + 2, Model.TotalPages);
-        <nav class="pager" aria-label="@T["Pagination"]">
+        var winStart = Math.Max(1, Model.Page - 2);
+        var winEnd = Math.Min(Model.TotalPages, winStart + 4);
+        winStart = Math.Max(1, winEnd - 4);
+        <nav class="pager" aria-label="@T["Pagination"]" data-page="@Model.Page" data-total-pages="@Model.TotalPages">
             @if (Model.HasPrevious)
             {
                 <a class="pager-link" href="@PageUrl(Model.Page - 1)">@T["‹ Prev"]</a>

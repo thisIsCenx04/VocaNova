@@ -149,7 +149,9 @@
                                                 <textarea name="exampleVi" class="form-control" rows="2">@ex.ExampleVi</textarea>
                                             </div>
                                         </div>
-                                        <button type="button" class="example-remove" aria-label="@T["Remove"]">✕</button>
+                                        <button type="button" class="example-remove is-locked" disabled
+                                                title="@T["Removing saved examples is temporarily disabled."]"
+                                                aria-label="@T["Remove"]">✕</button>
                                     </div>
                                 }
                             </div>
@@ -187,7 +189,7 @@
                             </div>
                             <div class="form-group">
                                 <label>@T["Vietnamese meaning"]</label>
-                                <textarea name="newVietnameseMeaning" class="form-control" rows="2" placeholder="Nghĩa tiếng Việt"></textarea>
+                                <textarea name="newVietnameseMeaning" class="form-control" rows="2" placeholder="@T["Vietnamese meaning"]"></textarea>
                             </div>
                         </div>
                     </div>
@@ -203,7 +205,7 @@
                 <h2 class="side-card-title">@T["Status & Storage"]</h2>
 
                 <div class="status-toggle-row">
-                    <span class="status-label" id="status-label">@(isActive ? T["Active"] : T["Inactive"])</span>
+                    <span class="status-label" id="status-label" data-active="@T["Active"]" data-inactive="@T["Inactive"]">@(isActive ? T["Active"] : T["Inactive"])</span>
                     <label class="switch">
                         <input type="checkbox" name="isActive" value="true" id="isActive" @(isActive ? "checked" : "") />
                         <input type="hidden" name="isActive" value="false" />

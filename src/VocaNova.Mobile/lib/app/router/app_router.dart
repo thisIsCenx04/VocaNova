@@ -12,7 +12,11 @@ import 'package:vocanova_mobile/features/auth/presentation/otp_screen.dart';
 import 'package:vocanova_mobile/features/auth/presentation/register_screen.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/word_search_screen.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/word_detail_screen.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_detail_screen.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topics_screen.dart';
 import 'package:vocanova_mobile/features/home/presentation/home_screen.dart';
+import 'package:vocanova_mobile/features/notifications/presentation/notifications_screen.dart';
 import 'package:vocanova_mobile/features/lists/presentation/lists_screen.dart';
 import 'package:vocanova_mobile/features/lists/presentation/list_detail_screen.dart';
 import 'package:vocanova_mobile/features/progress/presentation/progress_overview_screen.dart';
@@ -86,6 +90,20 @@ class AppRouter {
                   wordId: int.parse(state.pathParameters['id']!),
                 ),
               ),
+              GoRoute(
+                path: AppRoutes.topics,
+                builder: (_, _) => const TopicsScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.topic,
+                builder: (_, state) => TopicDetailScreen(
+                  topicId: int.parse(state.pathParameters['id']!),
+                  isPersonal: state.uri.queryParameters['personal'] == 'true',
+                  initialTopic: state.extra is TopicSummary
+                      ? state.extra! as TopicSummary
+                      : null,
+                ),
+              ),
             ],
           ),
           StatefulShellBranch(
@@ -101,6 +119,14 @@ class AppRouter {
               GoRoute(
                 path: AppRoutes.progress,
                 builder: (_, _) => const ProgressOverviewScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.quizConfig,
+                builder: (_, state) => QuizConfigScreen(
+                  initialListId: int.tryParse(
+                    state.uri.queryParameters['listId'] ?? '',
+                  ),
+                ),
               ),
             ],
           ),
@@ -127,17 +153,13 @@ class AppRouter {
         builder: (_, _) => const ProgressChartsScreen(),
       ),
       GoRoute(
+        path: AppRoutes.notifications,
+        builder: (_, _) => const NotificationsScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.list,
         builder: (_, state) =>
             ListDetailScreen(listId: int.parse(state.pathParameters['id']!)),
-      ),
-      GoRoute(
-        path: AppRoutes.quizConfig,
-        builder: (_, state) => QuizConfigScreen(
-          initialListId: int.tryParse(
-            state.uri.queryParameters['listId'] ?? '',
-          ),
-        ),
       ),
       GoRoute(
         path: AppRoutes.quizActive,
