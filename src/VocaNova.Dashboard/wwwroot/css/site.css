@@ -3177,3 +3177,219 @@ html, body {
     cursor: pointer;
 }
 .btn-danger-solid:hover { background: #9f1515; }
+
+/* =================================================================
+   Management CRUD contract
+   Shared by Users, Vocabulary, Topics and KNN lookup management.
+   ================================================================= */
+.page-header-row > .btn-primary,
+.header-actions .btn-primary,
+.header-actions .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+}
+
+.icon-link {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+}
+
+.topic-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.topic-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.management-form,
+.topic-create-form {
+    display: grid;
+    width: 100%;
+    max-width: 1000px;
+    gap: 16px;
+}
+
+.management-form-panel {
+    margin: 0;
+}
+
+.management-form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.topic-create-actions .btn-primary,
+.topic-create-actions .btn-secondary {
+    min-height: auto;
+}
+
+.form-field {
+    display: grid;
+    min-width: 0;
+    gap: 6px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.topic-summary-panel {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding: 18px 20px;
+}
+
+.topic-summary-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    border-radius: 14px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 25px;
+    font-weight: 700;
+}
+
+.topic-summary-main {
+    min-width: 0;
+    flex: 1;
+}
+
+.topic-summary-name {
+    margin: 1px 0 0;
+    color: var(--text);
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.topic-summary-sub {
+    margin: 1px 0 0;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.topic-add-word-panel {
+    margin-bottom: 20px;
+}
+
+.modal-overlay[hidden] {
+    display: none;
+}
+
+body.crud-modal-open {
+    overflow: hidden;
+}
+
+.management-modal-card {
+    max-width: 720px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    padding: 26px;
+    text-align: left;
+}
+
+.management-modal-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+}
+
+.management-modal-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.management-modal-icon svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+}
+
+.management-modal-head .modal-title {
+    margin-top: 1px;
+}
+
+.management-modal-head .modal-text {
+    margin: 3px 0 0;
+}
+
+.management-modal-form {
+    margin-top: 22px;
+}
+
+.management-modal-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.management-modal-actions {
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+}
+
+.management-modal-actions .btn-primary,
+.management-modal-actions .btn-secondary {
+    min-width: 104px;
+}
+
+@media (max-width: 700px) {
+    .page-header-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .page-header-row > .btn-primary,
+    .page-header-row > .header-actions {
+        align-self: flex-start;
+    }
+
+    .management-modal-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .management-modal-card {
+        max-height: calc(100vh - 24px);
+        padding: 22px 18px;
+    }
+
+    .topic-summary-panel {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+}

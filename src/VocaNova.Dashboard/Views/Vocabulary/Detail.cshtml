@@ -36,24 +36,16 @@
      data-msg-image-required="@T["Please choose an image file."]"
      data-msg-audio-required="@T["Please choose an audio file."]">
 
-    <nav class="breadcrumb">
-        <a href="/vocabulary">@T["Vocabulary Bank"]</a>
-        <span class="breadcrumb-sep">›</span>
-        <a href="/vocabulary">@T["Vocabulary Metadata"]</a>
-        <span class="breadcrumb-sep">›</span>
-        <span class="breadcrumb-current">@T["Details"]</span>
-    </nav>
-
-    <div class="page-header vd-head">
+    <div class="page-header page-header-row">
         <div>
+            <a class="back-link" href="/vocabulary">&larr; @T["Back to vocabulary"]</a>
             <h1 class="page-title">@T["Vocabulary details"]</h1>
-            <p class="page-subtitle">@T["Review and edit detailed linguistic metadata."]</p>
+            <p class="page-subtitle">@T["Review vocabulary metadata, meanings and media."]</p>
         </div>
-        <div class="vd-head-actions">
-            <a href="/vocabulary" class="btn-secondary">← @T["Back"]</a>
+        <div class="header-actions">
             @if (canManage)
             {
-                <a href="/vocabulary/@Model.WordId/edit" class="btn-primary">✎ @T["Edit Item"]</a>
+                <a href="/vocabulary/@Model.WordId/edit" class="btn-primary">@T["Edit vocabulary"]</a>
             }
         </div>
     </div>
