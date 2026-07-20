@@ -1,0 +1,73 @@
+@model VocaNova.Dashboard.Models.AdminAccounts.EditAdminAccountViewModel
+@{
+    ViewData["Title"] = T["Edit Admin Account"];
+}
+
+<div class="admin-account-editor-shell">
+<nav class="breadcrumb">
+    <a href="/admin-accounts">@T["Super Admin Dashboard"]</a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">@T["Edit Admin Account"]</span>
+</nav>
+
+<div class="page-header">
+    <h1 class="page-title">@T["Edit Admin Account"]</h1>
+    <p class="page-subtitle">@T["Update administrator identity, credentials and access status."]</p>
+</div>
+
+<form method="post" action="/admin-accounts/@Model.AdminId/edit" class="panel admin-account-form">
+    @Html.AntiForgeryToken()
+    <input asp-for="AdminId" type="hidden" />
+    <input asp-for="CreatedAt" type="hidden" />
+    <input asp-for="LastLoginAt" type="hidden" />
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger validation-summary">
+            <ul>
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(value => value.Errors))
+                {
+                    <li>@T[error.ErrorMessage]</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <div class="admin-account-meta">
+        <span><strong>@T["Admin ID"]:</strong> #@Model.AdminId</span>
+        <span><strong>@T["Created"]:</strong> @Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+        <span><strong>@T["Last login"]:</strong> @(Model.LastLoginAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")</span>
+    </div>
+
+    <div class="form-grid-2">
+        <div class="form-group">
+            <label asp-for="FullName">@T["Full name"] <span class="req">*</span></label>
+            <input asp-for="FullName" class="form-control" autocomplete="name" autofocus />
+        </div>
+        <div class="form-group">
+            <label asp-for="Email">@T["Email"] <span class="req">*</span></label>
+            <input asp-for="Email" class="form-control" type="email" autocomplete="email" />
+        </div>
+        <div class="form-group">
+            <label asp-for="Phone">@T["Phone"] <span class="req">*</span></label>
+            <input asp-for="Phone" class="form-control" inputmode="tel" autocomplete="tel" />
+        </div>
+        <div class="form-group">
+            <label asp-for="Password">@T["New password"]</label>
+            <input asp-for="Password" class="form-control" autocomplete="new-password" />
+            <small class="form-help">@T["Leave blank to keep the current password."]</small>
+        </div>
+        <div class="form-group">
+            <label asp-for="Status">@T["Status"]</label>
+            <select asp-for="Status" class="form-control">
+                <option value="active">@T["active"]</option>
+                <option value="locked">@T["locked"]</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="admin-account-form-actions">
+        <a href="/admin-accounts" class="btn-secondary">@T["Cancel"]</a>
+        <button type="submit" class="btn-primary">@T["Save changes"]</button>
+    </div>
+</form>
+</div>

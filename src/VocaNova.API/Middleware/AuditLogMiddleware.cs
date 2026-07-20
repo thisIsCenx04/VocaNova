@@ -57,7 +57,8 @@ public sealed class AuditLogMiddleware
     private static bool ShouldAudit(HttpRequest request)
     {
         return WriteMethods.Contains(request.Method)
-            && request.Path.StartsWithSegments("/api/admin", StringComparison.OrdinalIgnoreCase);
+            && (request.Path.StartsWithSegments("/api/admin", StringComparison.OrdinalIgnoreCase)
+                || request.Path.StartsWithSegments("/api/superadmin", StringComparison.OrdinalIgnoreCase));
     }
 
     private static async Task<string?> ReadRequestBodyAsync(HttpRequest request)
@@ -199,11 +200,33 @@ public sealed class AuditLogMiddleware
         try
         {
             using var _ = JsonDocument.Parse(value);
-            return value;
+            var root = JsonSerializer.Deserialize<JsonElement>(value);
+            return JsonSerializer.Serialize(RedactSensitiveValues(root));
         }
         catch (JsonException)
         {
             return JsonSerializer.Serialize(new { raw = value });
         }
     }
+
+    private static object? RedactSensitiveValues(JsonElement element)
+    {
+        return element.ValueKind switch
+        {
+            JsonValueKind.Object => element.EnumerateObject().ToDictionary(
+                property => property.Name,
+                property => IsSensitive(property.Name) ? (object?)"[REDACTED]" : RedactSensitiveValues(property.Value)),
+            JsonValueKind.Array => element.EnumerateArray().Select(RedactSensitiveValues).ToArray(),
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Number => element.TryGetInt64(out var integer) ? integer : element.GetDouble(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            _ => null,
+        };
+    }
+
+    private static bool IsSensitive(string propertyName) =>
+        propertyName.Contains("password", StringComparison.OrdinalIgnoreCase)
+        || propertyName.Contains("token", StringComparison.OrdinalIgnoreCase)
+        || propertyName.Contains("secret", StringComparison.OrdinalIgnoreCase);
 }

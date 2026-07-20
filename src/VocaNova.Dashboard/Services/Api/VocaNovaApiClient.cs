@@ -240,6 +240,48 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> RestoreUserAsync(uint userId, CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Patch, $"api/admin/users/{userId}/restore", cancellationToken);
 
+    public Task<PagedData<Models.Api.SuperAdmin.AdminAccount>> GetAdminAccountsAsync(
+        AdminAccountFilter filter,
+        CancellationToken cancellationToken = default)
+    {
+        var queryParams = new Dictionary<string, string?>
+        {
+            ["page"] = filter.Page.ToString(CultureInfo.InvariantCulture),
+            ["limit"] = filter.Limit.ToString(CultureInfo.InvariantCulture),
+            ["includeDeleted"] = filter.IncludeDeleted ? "true" : "false",
+        };
+        if (!string.IsNullOrWhiteSpace(filter.Status)) queryParams["status"] = filter.Status;
+        if (!string.IsNullOrWhiteSpace(filter.Search)) queryParams["search"] = filter.Search;
+
+        var uri = QueryHelpers.AddQueryString("api/superadmin/admins", queryParams);
+        return GetPagedAsync<Models.Api.SuperAdmin.AdminAccount>(uri, filter.Page, filter.Limit, cancellationToken);
+    }
+
+    public Task<Models.Api.SuperAdmin.AdminAccount?> GetAdminAccountAsync(
+        uint adminId,
+        CancellationToken cancellationToken = default) =>
+        GetDataAsync<Models.Api.SuperAdmin.AdminAccount>($"api/superadmin/admins/{adminId}", cancellationToken);
+
+    public Task<ApiActionResult> CreateAdminAccountAsync(
+        AdminAccountInput input,
+        CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Post, "api/superadmin/admins", AdminAccountPayload(input), cancellationToken);
+
+    public Task<ApiActionResult> UpdateAdminAccountAsync(
+        uint adminId,
+        AdminAccountInput input,
+        CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Put, $"api/superadmin/admins/{adminId}", AdminAccountPayload(input), cancellationToken);
+
+    public Task<ApiActionResult> LockAdminAccountAsync(uint adminId, CancellationToken cancellationToken = default) =>
+        SendActionAsync(HttpMethod.Patch, $"api/superadmin/admins/{adminId}/lock", cancellationToken);
+
+    public Task<ApiActionResult> UnlockAdminAccountAsync(uint adminId, CancellationToken cancellationToken = default) =>
+        SendActionAsync(HttpMethod.Patch, $"api/superadmin/admins/{adminId}/unlock", cancellationToken);
+
+    public Task<ApiActionResult> DeleteAdminAccountAsync(uint adminId, CancellationToken cancellationToken = default) =>
+        SendActionAsync(HttpMethod.Delete, $"api/superadmin/admins/{adminId}", cancellationToken);
+
     public Task<IReadOnlyList<Models.Api.Dictionary.AdminTopic>> GetAdminTopicsAsync(
         string? q,
         string? status,
@@ -341,6 +383,15 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         input.TopicNameVi,
         input.Icon,
         input.WordIds,
+    };
+
+    private static object AdminAccountPayload(AdminAccountInput input) => new
+    {
+        input.FullName,
+        input.Email,
+        input.Phone,
+        input.Password,
+        input.Status,
     };
 
     // Chỉ cần word_id từ response tạo word (POST /api/admin/words trả về word DTO đầy đủ).

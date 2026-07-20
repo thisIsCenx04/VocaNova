@@ -1,0 +1,151 @@
+@model VocaNova.Dashboard.Models.AdminAccounts.AdminAccountListViewModel
+@{
+    ViewData["Title"] = T["Admin Accounts"];
+    var pageStart = Model.TotalItems == 0 ? 0 : (Model.Page - 1) * Model.Limit + 1;
+    var pageEnd = pageStart == 0 ? 0 : pageStart + Model.Items.Count - 1;
+    var returnUrl = $"{ViewContext.HttpContext.Request.Path}{ViewContext.HttpContext.Request.QueryString}";
+
+    string StatusBadge(string status) => status switch
+    {
+        "active" => "badge badge-success",
+        "locked" => "badge badge-warning",
+        "deleted" => "badge badge-danger",
+        _ => "badge badge-muted",
+    };
+
+    string PageUrl(int page)
+    {
+        var values = new List<string> { $"page={page}" };
+        if (!string.IsNullOrWhiteSpace(Model.Search)) values.Add($"search={Uri.EscapeDataString(Model.Search)}");
+        if (!string.IsNullOrWhiteSpace(Model.Status)) values.Add($"status={Uri.EscapeDataString(Model.Status)}");
+        if (Model.IncludeDeleted) values.Add("includeDeleted=true");
+        return "/admin-accounts?" + string.Join("&", values);
+    }
+}
+
+<div class="page-header admin-accounts-header">
+    <div>
+        <h1 class="page-title">@T["Admin Accounts"]</h1>
+        <p class="page-subtitle">@Model.TotalItems @T["admin account(s). Manage administrator access."]</p>
+    </div>
+    <a class="btn-primary" href="/admin-accounts/create">@T["Add Admin Account"]</a>
+</div>
+
+@if (TempData["AdminAccountSuccess"] is string success)
+{
+    <div class="alert alert-success">@T[success]</div>
+}
+@if (TempData["AdminAccountError"] is string error)
+{
+    <div class="alert alert-danger">@T[error]</div>
+}
+
+<form method="get" action="/admin-accounts" class="filter-bar">
+    <input type="text" name="search" value="@Model.Search" class="form-control"
+           placeholder="@T["Search by name, email or phone..."]" />
+    <select name="status" class="form-control select-arrow">
+        <option value="">@T["All status"]</option>
+        <option value="active" selected="@(Model.Status == "active")">@T["Active"]</option>
+        <option value="locked" selected="@(Model.Status == "locked")">@T["Locked"]</option>
+        <option value="deleted" selected="@(Model.Status == "deleted")">@T["Deleted"]</option>
+    </select>
+    <label class="checkbox-inline"><input type="checkbox" name="includeDeleted" value="true" checked="@Model.IncludeDeleted" /> @T["Show deleted"]</label>
+    <button type="submit" class="btn-primary">@T["Filter"]</button>
+    <a href="/admin-accounts" class="btn-secondary">@T["Reset"]</a>
+</form>
+
+<div class="panel table-panel">
+    <table class="data-table admin-account-table">
+        <thead>
+            <tr>
+                <th class="admin-id-column">@T["ID"]</th>
+                <th>@T["Admin account"]</th>
+                <th>@T["Email"]</th>
+                <th>@T["Phone"]</th>
+                <th>@T["Status"]</th>
+                <th>@T["Last login"]</th>
+                <th class="col-actions">@T["Actions"]</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr><td colspan="7" class="empty-row">@T["No admin accounts found."]</td></tr>
+        }
+        else
+        {
+            foreach (var admin in Model.Items)
+            {
+                <tr class="@(admin.Status == "deleted" ? "row-muted" : "")">
+                    <td class="topic-id">@admin.AdminId</td>
+                    <td>
+                        <div class="user-cell">
+                            <span class="user-avatar user-avatar-fallback">@(string.IsNullOrWhiteSpace(admin.FullName) ? "A" : admin.FullName[..1].ToUpperInvariant())</span>
+                            <div class="user-cell-text">
+                                <strong>@admin.FullName</strong>
+                                <span class="user-role-sub">@T["Administrator"]</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>@(admin.Email ?? "—")</td>
+                    <td>@(admin.Phone ?? "—")</td>
+                    <td><span class="@StatusBadge(admin.Status)">@(admin.Status switch { "active" => T["Active"], "locked" => T["Locked"], "deleted" => T["Deleted"], _ => admin.Status })</span></td>
+                    <td>@(admin.LastLoginAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
+                    <td class="col-actions">
+                        @if (admin.Status != "deleted")
+                        {
+                            <div class="action-icons admin-actions">
+                                <a class="btn-icon topic-action-icon" href="/admin-accounts/@admin.AdminId/edit" title="@T["Edit"]" aria-label="@T["Edit"]">
+                                    <svg viewBox="0 0 24 24"><path d="m4 16.5 9.9-9.9 3.5 3.5L7.5 20H4v-3.5ZM19.8 7.7l-3.5-3.5 1.4-1.4a2 2 0 0 1 2.8 0l.7.7a2 2 0 0 1 0 2.8l-1.4 1.4Z"/></svg>
+                                </a>
+                                @if (admin.Status == "active")
+                                {
+                                    <form method="post" action="/admin-accounts/@admin.AdminId/lock" class="inline-form" onsubmit="return confirm('@T["Lock this admin account?"]');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button class="btn-icon btn-warning-outline topic-action-icon" type="submit" title="@T["Lock"]" aria-label="@T["Lock"]">
+                                            <svg viewBox="0 0 24 24"><path d="M17 9V6a5 5 0 0 0-10 0v3H5v13h14V9h-2Zm-8 0V6a3 3 0 0 1 6 0v3H9Z"/></svg>
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form method="post" action="/admin-accounts/@admin.AdminId/unlock" class="inline-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button class="btn-icon btn-success topic-action-icon" type="submit" title="@T["Unlock"]" aria-label="@T["Unlock"]">
+                                            <svg viewBox="0 0 24 24"><path d="M17 9V6a5 5 0 0 0-9.9-1H9a3 3 0 0 1 6 1v3H5v13h14V9h-2Z"/></svg>
+                                        </button>
+                                    </form>
+                                }
+                                <form method="post" action="/admin-accounts/@admin.AdminId/delete" class="inline-form" onsubmit="return confirm('@T["Delete this admin account? This action removes its login credentials."]');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                    <button class="btn-icon btn-danger topic-action-icon" type="submit" title="@T["Delete"]" aria-label="@T["Delete"]">
+                                        <svg viewBox="0 0 24 24"><path d="M7 21h10l1-14H6l1 14ZM9 3h6l1 2h4v2H4V5h4l1-2Z"/></svg>
+                                    </button>
+                                </form>
+                            </div>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
+
+<div class="table-foot-bar">
+    <span class="pager-info">@T["Showing"] @pageStart @T["to"] @pageEnd @T["of"] @Model.TotalItems @T["entries"]</span>
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="pager" aria-label="@T["Pagination"]">
+            <a class="pager-link @(!Model.HasPrevious ? "disabled" : "")" href="@PageUrl(Model.Page - 1)">← @T["Prev"]</a>
+            @for (var p = Math.Max(1, Model.Page - 2); p <= Math.Min(Model.TotalPages, Model.Page + 2); p++)
+            {
+                <a class="pager-link @(p == Model.Page ? "active" : "")" href="@PageUrl(p)">@p</a>
+            }
+            <a class="pager-link @(!Model.HasNext ? "disabled" : "")" href="@PageUrl(Model.Page + 1)">@T["Next"] →</a>
+        </nav>
+    }
+</div>

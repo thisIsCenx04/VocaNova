@@ -99,7 +99,7 @@ public sealed class AuthController : Controller
             return Redirect(model.ReturnUrl);
         }
 
-        return RedirectToDashboard();
+        return RedirectToDashboard(result.User.Role);
     }
 
     [Authorize]
@@ -116,8 +116,14 @@ public sealed class AuthController : Controller
         return RedirectToAction(nameof(Login));
     }
 
-    private IActionResult RedirectToDashboard()
+    private IActionResult RedirectToDashboard(string? role = null)
     {
+        role ??= User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role");
+        if (string.Equals(role, "super_admin", StringComparison.Ordinal))
+        {
+            return RedirectToAction("Index", "AdminAccounts");
+        }
+
         return RedirectToAction("Index", "Dashboard");
     }
 }

@@ -56,10 +56,9 @@ public class JwtAuthenticationTests
             .Should()
             .BeEquivalentTo(new[] { UserRole.Admin, UserRole.SuperAdmin });
 
-        // Tạm thời SuperAdmin policy chấp nhận cả Admin (admin = super_admin để dễ test); siết lại sau.
         GetAllowedRoles(options, JwtAuthenticationExtensions.SuperAdminPolicy)
             .Should()
-            .BeEquivalentTo(new[] { UserRole.Admin, UserRole.SuperAdmin });
+            .Equal(UserRole.SuperAdmin);
 
         GetAllowedRoles(options, JwtAuthenticationExtensions.UserPolicy)
             .Should()

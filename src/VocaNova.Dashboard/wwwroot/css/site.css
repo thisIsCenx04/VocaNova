@@ -3178,122 +3178,55 @@ html, body {
 }
 .btn-danger-solid:hover { background: #9f1515; }
 
-/* =================================================================
-   Management CRUD contract
-   Shared by Users, Vocabulary, Topics and KNN lookup management.
-   ================================================================= */
-.page-header-row > .btn-primary,
-.header-actions .btn-primary,
-.header-actions .btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: none;
+/* Super Admin account dashboard */
+.admin-accounts-header .btn-primary { text-decoration: none; white-space: nowrap; }
+.admin-account-table { min-width: 900px; }
+.admin-account-table .admin-id-column { width: 74px; }
+.admin-account-table .row-muted { opacity: .62; }
+.admin-actions .inline-form { display: inline-flex; }
+.btn-icon.btn-warning-outline { color: var(--warning); }
+.btn-icon.btn-warning-outline:hover { background: var(--warning-bg); }
+.admin-account-editor-shell {
+    width: min(100%, 1120px);
+    margin-inline: auto;
 }
-
-.icon-link {
-    padding: 0;
-    border: 0;
-    background: transparent;
-    font: inherit;
-    cursor: pointer;
-}
-
-.topic-cell {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.topic-avatar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    flex: 0 0 34px;
-    border-radius: 10px;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-size: 17px;
-    font-weight: 700;
-}
-
-.management-form,
-.topic-create-form {
-    display: grid;
+.admin-account-form {
     width: 100%;
-    max-width: 1000px;
-    gap: 16px;
+    max-width: none;
+    padding: 30px;
 }
-
-.management-form-panel {
-    margin: 0;
+.admin-account-form .form-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+    row-gap: 20px;
 }
-
-.management-form-actions {
+.admin-account-form .form-group { margin-bottom: 2px; }
+.admin-account-form-actions {
     display: flex;
-    align-items: center;
     justify-content: flex-end;
     gap: 10px;
-    padding-top: 16px;
+    padding-top: 22px;
+    margin-top: 20px;
     border-top: 1px solid var(--border);
 }
-
-.topic-create-actions .btn-primary,
-.topic-create-actions .btn-secondary {
-    min-height: auto;
-}
-
-.form-field {
-    display: grid;
-    min-width: 0;
-    gap: 6px;
-    color: var(--text);
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.topic-summary-panel {
+.form-help { display: block; color: var(--text-muted); font-size: 12px; margin-top: 5px; }
+.admin-account-meta {
     display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 16px;
-    padding: 18px 20px;
-}
-
-.topic-summary-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 52px;
-    height: 52px;
-    flex: 0 0 52px;
-    border-radius: 14px;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-size: 25px;
-    font-weight: 700;
-}
-
-.topic-summary-main {
-    min-width: 0;
-    flex: 1;
-}
-
-.topic-summary-name {
-    margin: 1px 0 0;
-    color: var(--text);
-    font-size: 19px;
-    font-weight: 700;
-}
-
-.topic-summary-sub {
-    margin: 1px 0 0;
+    flex-wrap: wrap;
+    gap: 10px 24px;
+    padding: 12px 14px;
+    margin-bottom: 22px;
+    border-radius: var(--radius);
+    background: var(--surface-2);
     color: var(--text-muted);
     font-size: 13px;
 }
 
+@media (max-width: 768px) {
+    .admin-accounts-header { align-items: stretch !important; flex-direction: column; }
+    .admin-accounts-header .btn-primary { text-align: center; }
+    .admin-account-form { padding: 20px; }
+    .admin-account-form .form-grid-2 { grid-template-columns: 1fr; }
 .topic-add-word-panel {
     margin-bottom: 20px;
 }
