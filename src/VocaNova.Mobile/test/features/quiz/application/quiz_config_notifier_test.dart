@@ -95,11 +95,92 @@ void main() {
     expect(notifier.validate(), contains('trước hoặc bằng'));
   });
 
+  test('blocks creation when the source has fewer words than requested', () async {
+    final notifier = container.read(quizConfigProvider.notifier);
+    await notifier.loadSources();
+    notifier.setSourceType(QuizSourceType.myList);
+    notifier.selectSource(7); // Tiny list: 6 words
+    notifier.setQuestionLimit(20);
+
+    final error = notifier.validate();
+    expect(error, contains('ít nhất 20 từ'));
+    expect(error, contains('6 từ'));
+
+    final result = await notifier.createSession();
+    expect(result, isNull);
+    verifyNever(() => repository.createSession(any()));
+  });
+
+  test('allows the All option for a small source', () async {
+    when(
+      () => repository.createSession(any()),
+    ).thenAnswer((_) async => testSession);
+    final notifier = container.read(quizConfigProvider.notifier);
+    await notifier.loadSources();
+    notifier.setSourceType(QuizSourceType.myList);
+    notifier.selectSource(7); // 6 words
+    notifier.setQuestionLimit(null); // "Tất cả"
+
+    expect(notifier.validate(), isNull);
+    final result = await notifier.createSession();
+    expect(result?.sessionId, 9);
+    final request =
+        verify(() => repository.createSession(captureAny())).captured.single
+            as QuizConfigRequest;
+    expect(request.wordLimit, isNull);
+  });
+
+  test('custom question count above the word count is blocked', () async {
+    final notifier = container.read(quizConfigProvider.notifier);
+    await notifier.loadSources();
+    notifier.setSourceType(QuizSourceType.myList);
+    notifier.selectSource(7); // 6 words
+    notifier.useCustomQuestionLimit();
+    notifier.setCustomQuestionLimit(10);
+
+    final error = notifier.validate();
+    expect(error, contains('cần ít nhất 10 từ'));
+    expect(error, contains('6 từ'));
+    expect(await notifier.createSession(), isNull);
+    verifyNever(() => repository.createSession(any()));
+  });
+
+  test('custom question count within the word count is allowed', () async {
+    when(
+      () => repository.createSession(any()),
+    ).thenAnswer((_) async => testSession);
+    final notifier = container.read(quizConfigProvider.notifier);
+    await notifier.loadSources();
+    notifier.setSourceType(QuizSourceType.myList);
+    notifier.selectSource(7); // 6 words
+    notifier.useCustomQuestionLimit();
+    notifier.setCustomQuestionLimit(5);
+
+    expect(notifier.validate(), isNull);
+    final result = await notifier.createSession();
+    expect(result?.sessionId, 9);
+    final request =
+        verify(() => repository.createSession(captureAny())).captured.single
+            as QuizConfigRequest;
+    expect(request.wordLimit, 5);
+  });
+
+  test('requires a number when custom option is selected', () async {
+    final notifier = container.read(quizConfigProvider.notifier);
+    await notifier.loadSources();
+    notifier.setSourceType(QuizSourceType.myList);
+    notifier.selectSource(7);
+    notifier.useCustomQuestionLimit();
+
+    expect(notifier.validate(), contains('nhập số câu hỏi'));
+  });
+
   test('creates session from the selected personal collection', () async {
     when(
       () => repository.createSession(any()),
     ).thenAnswer((_) async => testSession);
     final notifier = container.read(quizConfigProvider.notifier);
+    await notifier.loadSources();
     notifier.setSourceType(QuizSourceType.personalTopic);
     notifier.selectSource(12);
     notifier.setMode('timed');
@@ -132,7 +213,13 @@ final testLists = [
   UserList(
     listId: 3,
     listName: 'Favorites',
-    wordCount: 5,
+    wordCount: 25,
+    createdAt: DateTime(2026),
+  ),
+  UserList(
+    listId: 7,
+    listName: 'Tiny',
+    wordCount: 6,
     createdAt: DateTime(2026),
   ),
 ];
@@ -143,7 +230,7 @@ const testPersonalTopics = [
     listId: 12,
     name: 'Travel',
     nameVi: 'Du lịch',
-    wordCount: 4,
+    wordCount: 30,
     containsWord: false,
   ),
 ];

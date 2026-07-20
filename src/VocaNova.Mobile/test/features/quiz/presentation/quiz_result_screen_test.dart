@@ -10,9 +10,7 @@ import 'package:vocanova_mobile/features/quiz/domain/quiz_result.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/quiz_result_screen.dart';
 
 void main() {
-  testWidgets('renders animated score, stats, breakdown, and actions', (
-    tester,
-  ) async {
+  Future<GoRouter> pumpResult(WidgetTester tester) async {
     final repository = MockQuizRepository();
     when(() => repository.getResult(9)).thenAnswer((_) async => result);
     final router = GoRouter(
@@ -30,6 +28,10 @@ void main() {
           path: AppRoutes.quizConfig,
           builder: (_, _) => const Scaffold(body: Text('Quiz config')),
         ),
+        GoRoute(
+          path: AppRoutes.home,
+          builder: (_, _) => const Scaffold(body: Text('Home')),
+        ),
       ],
     );
     await tester.pumpWidget(
@@ -40,13 +42,29 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
+    return router;
+  }
+
+  testWidgets('renders accuracy ring, headline, stats, and breakdown', (
+    tester,
+  ) async {
+    await pumpResult(tester);
 
     expect(find.byKey(const Key('score-animation')), findsOneWidget);
     expect(find.text('50%'), findsWidgets);
-    expect(find.text('1/2'), findsOneWidget);
-    expect(find.text('1:15'), findsOneWidget);
+    expect(find.text('Làm tốt lắm!'), findsOneWidget);
+    expect(find.textContaining('1/2 câu đúng'), findsOneWidget);
+    expect(find.textContaining('1m 15s'), findsOneWidget);
+    expect(find.text('Chuỗi tốt nhất'), findsOneWidget);
+    expect(find.text('KẾT QUẢ'), findsOneWidget);
     expect(find.textContaining('Bạn trả lời: orange'), findsOneWidget);
     expect(find.textContaining('Đáp án: apple'), findsOneWidget);
+  });
+
+  testWidgets('review, retry, and done buttons navigate correctly', (
+    tester,
+  ) async {
+    final router = await pumpResult(tester);
 
     await tester.tap(find.byKey(const Key('review-wrong-words-button')));
     await tester.pumpAndSettle();
@@ -54,10 +72,15 @@ void main() {
 
     router.go(AppRoutes.quizResultFor('9'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('retry-quiz-button')));
     await tester.tap(find.byKey(const Key('retry-quiz-button')));
     await tester.pumpAndSettle();
     expect(router.state.uri.path, AppRoutes.quizConfig);
+
+    router.go(AppRoutes.quizResultFor('9'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('done-button')));
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, AppRoutes.home);
   });
 }
 

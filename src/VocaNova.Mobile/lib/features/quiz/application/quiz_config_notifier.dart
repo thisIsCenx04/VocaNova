@@ -105,6 +105,21 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
   void setQuestionLimit(int? value) => state = state.copyWith(
     questionLimit: value,
     clearQuestionLimit: value == null,
+    useCustomLimit: false,
+    clearError: true,
+  );
+
+  /// Bật ô nhập số câu hỏi tùy chỉnh, xóa số cũ để người dùng tự nhập.
+  void useCustomQuestionLimit() => state = state.copyWith(
+    useCustomLimit: true,
+    clearQuestionLimit: true,
+    clearError: true,
+  );
+
+  void setCustomQuestionLimit(int? value) => state = state.copyWith(
+    questionLimit: value,
+    clearQuestionLimit: value == null,
+    useCustomLimit: true,
     clearError: true,
   );
 
@@ -114,9 +129,38 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
   void setLives(int? value) =>
       state = state.copyWith(lives: value, clearError: true);
 
+  /// Số từ của nguồn đang chọn; null khi chưa tải hoặc không tìm thấy nguồn.
+  int? selectedSourceWordCount() {
+    final listId = state.listId;
+    if (listId == null) return null;
+    if (state.sourceType == QuizSourceType.personalTopic) {
+      for (final topic in state.personalTopics) {
+        if (topic.listId == listId) return topic.wordCount;
+      }
+      return null;
+    }
+    for (final list in state.lists) {
+      if (list.listId == listId) return list.wordCount;
+    }
+    return null;
+  }
+
   String? validate() {
     if (state.listId == null) {
       return 'Vui lòng chọn danh sách hoặc chủ đề cá nhân để kiểm tra.';
+    }
+    if (state.useCustomLimit && state.questionLimit == null) {
+      return 'Vui lòng nhập số câu hỏi.';
+    }
+    final requested = state.questionLimit;
+    if (requested != null && requested <= 0) {
+      return 'Số câu hỏi phải lớn hơn 0.';
+    }
+    final wordCount = selectedSourceWordCount();
+    if (wordCount != null && requested != null && requested > wordCount) {
+      return 'Danh sách của bạn không đủ từ (cần ít nhất $requested từ). '
+          'Vui lòng nhập số câu hỏi bằng hoặc nhỏ hơn số từ hiện có trong '
+          'danh sách ($wordCount từ).';
     }
     if ((state.scopeType == 'start_date' || state.scopeType == 'date_range') &&
         state.dateFrom == null) {

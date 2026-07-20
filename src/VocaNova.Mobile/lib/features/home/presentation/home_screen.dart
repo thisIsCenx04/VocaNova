@@ -6,7 +6,14 @@ import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
+import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/home/application/home_topics_provider.dart';
+import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
+import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
 import 'package:vocanova_mobile/features/notifications/application/notifications_notifier.dart';
+import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
+import 'package:vocanova_mobile/features/quiz/application/wrong_words_notifier.dart';
 
 class _HomePalette {
   const _HomePalette({
@@ -46,57 +53,196 @@ class _HomePalette {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(_loadData);
+  }
+
+  void _loadData() {
+    if (!mounted) return;
+    if (ref.read(authProvider).user == null) {
+      ref.read(authProvider.notifier).loadCurrentUser();
+    }
+    ref.read(progressOverviewProvider.notifier).load();
+    ref.read(listsProvider.notifier).load();
+    ref.read(wrongWordsProvider.notifier).load();
+  }
+
+  Future<void> _refresh() async {
+    ref.invalidate(homeTopicsProvider);
+    await Future.wait([
+      ref.read(progressOverviewProvider.notifier).load(),
+      ref.read(listsProvider.notifier).load(),
+      ref.read(wrongWordsProvider.notifier).load(),
+      ref.read(authProvider.notifier).loadCurrentUser(),
+    ]);
+  }
 
   @override
   Widget build(BuildContext context) {
     final palette = _HomePalette.of(context);
+    final displayName = ref.watch(
+      authProvider.select((state) => state.user?.displayName),
+    );
     return Scaffold(
       backgroundColor: palette.background,
       body: SafeArea(
         bottom: false,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            _HomeHeader(
-              onNotification: () => context.push(AppRoutes.notifications),
+        child: RefreshIndicator(
+          onRefresh: _refresh,
+          color: AppColors.primary,
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              _HomeHeader(
+                onNotification: () => context.push(AppRoutes.notifications),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(25, 17, 25, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      _greeting(),
+                      style: AppTextStyles.caption.copyWith(
+                        color: palette.secondaryText,
+                        fontSize: 13,
+                        height: 19.5 / 13,
+                      ),
+                    ),
+                    Text(
+                      displayName == null ? 'Welcome back' : 'Hi, $displayName',
+                      style: AppTextStyles.heading.copyWith(
+                        color: palette.text,
+                        fontSize: 28,
+                        height: 32.2 / 28,
+                        letterSpacing: -0.7,
+                      ),
+                    ),
+                    const SizedBox(height: 13),
+                    _SearchPill(onTap: () => context.go(AppRoutes.search)),
+                    const SizedBox(height: 16),
+                    const _DailyGoalCard(),
+                    const SizedBox(height: 15),
+                    const _WordOfTheDayCard(),
+                    const SizedBox(height: 14),
+                    const _StatsRow(),
+                    const SizedBox(height: 16),
+                    const _ContinueCard(),
+                    const _QuickActionsCard(),
+                    const SizedBox(height: 16),
+                    const _TopicsForYou(),
+                    const _OverdueBanner(),
+                    const _MyListsCard(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  }
+}
+
+/// Section title with an optional "See all" trailing action.
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, this.onSeeAll});
+
+  final String title;
+  final VoidCallback? onSeeAll;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = _HomePalette.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: AppTextStyles.heading.copyWith(
+              color: palette.text,
+              fontSize: 17,
+              height: 22 / 17,
+              letterSpacing: -0.3,
+              fontWeight: FontWeight.w800,
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(25, 17, 25, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Good morning',
+          ),
+          const Spacer(),
+          if (onSeeAll != null)
+            Material(
+              color: palette.elevatedSurface,
+              borderRadius: BorderRadius.circular(999),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(999),
+                onTap: onSeeAll,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  child: Text(
+                    'See all',
                     style: AppTextStyles.caption.copyWith(
-                      color: palette.secondaryText,
-                      fontSize: 13,
-                      height: 19.5 / 13,
-                    ),
-                  ),
-                  Text(
-                    'Hi, An',
-                    style: AppTextStyles.heading.copyWith(
                       color: palette.text,
-                      fontSize: 28,
-                      height: 32.2 / 28,
-                      letterSpacing: -0.7,
+                      fontSize: 12,
+                      height: 16 / 12,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 13),
-                  _SearchPill(onTap: () => context.go(AppRoutes.search)),
-                  const SizedBox(height: 16),
-                  const _DailyGoalCard(),
-                  const SizedBox(height: 15),
-                  const _WordOfTheDayCard(),
-                  const SizedBox(height: 14),
-                  const _StatsRow(),
-                ],
+                ),
               ),
             ),
-          ],
-        ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Reusable outlined section container matching the Home card language.
+class _HomeCard extends StatelessWidget {
+  const _HomeCard({required this.child, this.onTap});
+
+  final Widget child;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = _HomePalette.of(context);
+    final content = Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: palette.surface,
+        border: Border.all(color: palette.border, width: 1.25),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: child,
+    );
+    if (onTap == null) return content;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: content,
       ),
     );
   }
@@ -288,13 +434,24 @@ class _SearchPill extends StatelessWidget {
   }
 }
 
-class _DailyGoalCard extends StatelessWidget {
+class _DailyGoalCard extends ConsumerWidget {
   const _DailyGoalCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = _HomePalette.of(context);
     final foreground = palette.isDark ? AppColors.onSurface : Colors.black;
+    final summary = ref.watch(
+      progressOverviewProvider.select((state) => state.summary),
+    );
+    final total = summary?.totalWordsInProgress ?? 0;
+    final mastered = summary?.masteredWords ?? 0;
+    final streak = summary?.currentStreakDays ?? 0;
+    final progress = total == 0 ? 0.0 : (mastered / total).clamp(0.0, 1.0);
+    final goalText = summary == null ? '— / —' : '$mastered / $total words';
+    final streakText = streak > 0
+        ? 'Keep your $streak-day streak'
+        : 'Start a streak today';
     return Container(
       constraints: const BoxConstraints(minHeight: 142),
       padding: const EdgeInsets.fromLTRB(19, 17, 19, 13),
@@ -325,14 +482,14 @@ class _DailyGoalCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _DashedGoalRing(foreground: foreground),
+              _DashedGoalRing(foreground: foreground, progress: progress),
               const SizedBox(width: 19),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '18 / 25 words',
+                      goalText,
                       style: AppTextStyles.button.copyWith(
                         color: foreground,
                         fontSize: 18,
@@ -342,7 +499,7 @@ class _DailyGoalCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '7 more to keep your streak',
+                      'mastered so far',
                       style: AppTextStyles.caption.copyWith(
                         color: palette.isDark
                             ? palette.secondaryText
@@ -362,7 +519,7 @@ class _DailyGoalCard extends StatelessWidget {
                         const SizedBox(width: 5),
                         Expanded(
                           child: Text(
-                            '7-day streak',
+                            streakText,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: AppTextStyles.caption.copyWith(
@@ -378,7 +535,10 @@ class _DailyGoalCard extends StatelessWidget {
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerRight,
-                            child: _StreakDots(foreground: foreground),
+                            child: _StreakDots(
+                              foreground: foreground,
+                              filled: streak.clamp(0, 7),
+                            ),
                           ),
                         ),
                       ],
@@ -395,9 +555,10 @@ class _DailyGoalCard extends StatelessWidget {
 }
 
 class _DashedGoalRing extends StatelessWidget {
-  const _DashedGoalRing({required this.foreground});
+  const _DashedGoalRing({required this.foreground, required this.progress});
 
   final Color foreground;
+  final double progress;
 
   @override
   Widget build(BuildContext context) {
@@ -407,12 +568,20 @@ class _DashedGoalRing extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          CustomPaint(
-            size: const Size.square(62),
-            painter: _DashedRingPainter(progress: 0.72, foreground: foreground),
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: progress),
+            duration: const Duration(milliseconds: 700),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, _) => CustomPaint(
+              size: const Size.square(62),
+              painter: _DashedRingPainter(
+                progress: value,
+                foreground: foreground,
+              ),
+            ),
           ),
           Text(
-            '72%',
+            '${(progress * 100).round()}%',
             style: AppTextStyles.caption.copyWith(
               color: foreground,
               fontSize: 13,
@@ -469,9 +638,10 @@ class _DashedRingPainter extends CustomPainter {
 }
 
 class _StreakDots extends StatelessWidget {
-  const _StreakDots({required this.foreground});
+  const _StreakDots({required this.foreground, this.filled = 0});
 
   final Color foreground;
+  final int filled;
 
   static const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -486,10 +656,12 @@ class _StreakDots extends StatelessWidget {
                 width: 13,
                 height: 13,
                 decoration: BoxDecoration(
-                  color: i < 5 ? foreground : foreground.withValues(alpha: 0.2),
+                  color: i < filled
+                      ? foreground
+                      : foreground.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
-                child: i < 5
+                child: i < filled
                     ? Icon(
                         Icons.check,
                         size: 8,
@@ -598,7 +770,7 @@ class _WordOfTheDayCard extends StatelessWidget {
             width: 135,
             height: 35,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () => context.go(AppRoutes.search),
               style: ElevatedButton.styleFrom(
                 backgroundColor: palette.isDark
                     ? AppColors.primary
@@ -633,37 +805,51 @@ class _WordOfTheDayCard extends StatelessWidget {
   }
 }
 
-class _StatsRow extends StatelessWidget {
+class _StatsRow extends ConsumerWidget {
   const _StatsRow();
 
   @override
-  Widget build(BuildContext context) {
-    return const Row(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final summary = ref.watch(
+      progressOverviewProvider.select((state) => state.summary),
+    );
+    final loading = ref.watch(
+      progressOverviewProvider.select((state) => state.isLoading),
+    );
+    String words = '—';
+    String accuracy = '—';
+    String mastered = '—';
+    if (summary != null) {
+      words = '${summary.totalWordsInProgress}';
+      accuracy = '${summary.accuracy7Days.round()}%';
+      mastered = '${summary.masteredWords}';
+    }
+    return Row(
       children: [
         Expanded(
           child: _StatCard(
             icon: Icons.menu_book_outlined,
             iconColor: AppColors.primary,
-            value: '248',
+            value: loading && summary == null ? '—' : words,
             label: 'Words',
           ),
         ),
-        SizedBox(width: 10),
+        const SizedBox(width: 10),
         Expanded(
           child: _StatCard(
             icon: Icons.trending_up,
-            iconColor: Color(0xFF20C7A3),
-            value: '84%',
+            iconColor: const Color(0xFF20C7A3),
+            value: loading && summary == null ? '—' : accuracy,
             label: 'Accuracy',
           ),
         ),
-        SizedBox(width: 10),
+        const SizedBox(width: 10),
         Expanded(
           child: _StatCard(
             icon: Icons.emoji_events_outlined,
-            iconColor: Color(0xFFFFA425),
-            value: '#142',
-            label: 'Rank',
+            iconColor: const Color(0xFFFFA425),
+            value: loading && summary == null ? '—' : mastered,
+            label: 'Mastered',
           ),
         ),
       ],
@@ -726,6 +912,619 @@ class _StatCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Dark "Continue" card that resumes the user's most recent list.
+class _ContinueCard extends ConsumerWidget {
+  const _ContinueCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(listsProvider);
+    if (state.isLoading && state.lists.isEmpty) {
+      return const _ContinueSkeleton();
+    }
+    if (state.lists.isEmpty) return const SizedBox.shrink();
+    final list = state.lists.first;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Material(
+        color: const Color(0xFF1E1B2E),
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () => context.push(
+            AppRoutes.listDetail(list.listId.toString()),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 16, 18),
+            child: Row(
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.menu_book_outlined,
+                    size: 20,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'CONTINUE',
+                        style: AppTextStyles.caption.copyWith(
+                          color: Colors.white.withValues(alpha: 0.55),
+                          fontSize: 10,
+                          height: 15 / 10,
+                          letterSpacing: 0.8,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        list.listName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.button.copyWith(
+                          color: Colors.white,
+                          fontSize: 17,
+                          height: 22 / 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${list.wordCount} '
+                        '${list.wordCount == 1 ? "word" : "words"}',
+                        style: AppTextStyles.caption.copyWith(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          fontSize: 12,
+                          height: 17 / 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: Colors.white.withValues(alpha: 0.6),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ContinueSkeleton extends StatelessWidget {
+  const _ContinueSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 82,
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1B2E),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: const Center(
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.4,
+            color: Colors.white54,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Quick action shortcuts: Quiz, Review, Topics.
+class _QuickActionsCard extends StatelessWidget {
+  const _QuickActionsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = _HomePalette.of(context);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+      decoration: BoxDecoration(
+        color: palette.surface,
+        border: Border.all(color: palette.border, width: 1.25),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Quick actions',
+            style: AppTextStyles.heading.copyWith(
+              color: palette.text,
+              fontSize: 16,
+              height: 21 / 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _QuickAction(
+                  icon: Icons.bolt,
+                  iconColor: AppColors.primary,
+                  label: 'Quiz',
+                  onTap: () => context.go(AppRoutes.quizConfig),
+                ),
+              ),
+              Expanded(
+                child: _QuickAction(
+                  icon: Icons.replay,
+                  iconColor: const Color(0xFFFF6B6B),
+                  label: 'Review',
+                  onTap: () => context.push(AppRoutes.wrongWords),
+                ),
+              ),
+              Expanded(
+                child: _QuickAction(
+                  icon: Icons.menu_book_outlined,
+                  iconColor: const Color(0xFF20C7A3),
+                  label: 'Topics',
+                  onTap: () => context.push(AppRoutes.topics),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickAction extends StatelessWidget {
+  const _QuickAction({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = _HomePalette.of(context);
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 21, color: iconColor),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: AppTextStyles.caption.copyWith(
+                color: palette.text,
+                fontSize: 13,
+                height: 18 / 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Horizontal "Topics for you" carousel loaded from the topic catalogue.
+class _TopicsForYou extends ConsumerWidget {
+  const _TopicsForYou();
+
+  static const _emoji = ['🎓', '💼', '💻', '🗣️', '🔬', '✈️', '🍽️', '⚽'];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final topicsAsync = ref.watch(homeTopicsProvider);
+    return topicsAsync.when(
+      loading: () => const _TopicsSection(child: _TopicsSkeleton()),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (topics) {
+        if (topics.isEmpty) return const SizedBox.shrink();
+        final shown = topics.take(8).toList();
+        return _TopicsSection(
+          onSeeAll: () => context.push(AppRoutes.topics),
+          child: SizedBox(
+            height: 118,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.zero,
+              itemCount: shown.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final topic = shown[index];
+                return _TopicCard(
+                  topic: topic,
+                  emoji: topic.icon?.trim().isNotEmpty == true
+                      ? topic.icon!.trim()
+                      : _emoji[index % _emoji.length],
+                  onTap: () => context.push(
+                    AppRoutes.topicDetail(topic.topicId.toString()),
+                    extra: topic,
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _TopicsSection extends StatelessWidget {
+  const _TopicsSection({required this.child, this.onSeeAll});
+
+  final Widget child;
+  final VoidCallback? onSeeAll;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionHeader(title: 'Topics for you', onSeeAll: onSeeAll),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _TopicCard extends StatelessWidget {
+  const _TopicCard({
+    required this.topic,
+    required this.emoji,
+    required this.onTap,
+  });
+
+  final TopicSummary topic;
+  final String emoji;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = _HomePalette.of(context);
+    return SizedBox(
+      width: 128,
+      child: Material(
+        color: palette.surface,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              border: Border.all(color: palette.border, width: 1.25),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(emoji, style: const TextStyle(fontSize: 26)),
+                const Spacer(),
+                Text(
+                  topic.displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.button.copyWith(
+                    color: palette.text,
+                    fontSize: 14,
+                    height: 18 / 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${topic.wordCount} words',
+                  style: AppTextStyles.caption.copyWith(
+                    color: palette.secondaryText,
+                    fontSize: 11,
+                    height: 15 / 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TopicsSkeleton extends StatelessWidget {
+  const _TopicsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = _HomePalette.of(context);
+    return SizedBox(
+      height: 118,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.zero,
+        itemCount: 3,
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
+        itemBuilder: (_, _) => Container(
+          width: 128,
+          decoration: BoxDecoration(
+            color: palette.elevatedSurface,
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Peach banner surfacing words that need review (wrong-words list).
+class _OverdueBanner extends ConsumerWidget {
+  const _OverdueBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(wrongWordsProvider);
+    if (state.isLoading && state.words.isEmpty) return const SizedBox.shrink();
+    final count = state.words.length;
+    if (count == 0) return const SizedBox.shrink();
+    final countLabel = state.hasMore ? '$count+' : '$count';
+    final palette = _HomePalette.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Material(
+        color: palette.isDark
+            ? const Color(0xFF3A2A24)
+            : const Color(0xFFF4CDBD),
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => context.push(AppRoutes.wrongWords),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 14, 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.replay,
+                    size: 19,
+                    color: palette.isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$countLabel words to review',
+                        style: AppTextStyles.button.copyWith(
+                          color: palette.isDark ? Colors.white : Colors.black,
+                          fontSize: 16,
+                          height: 21 / 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        'Tap to review your mistakes',
+                        style: AppTextStyles.caption.copyWith(
+                          color: palette.isDark
+                              ? Colors.white70
+                              : const Color(0xFF6B4A3C),
+                          fontSize: 12,
+                          height: 17 / 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: palette.isDark ? Colors.white70 : Colors.black54,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "My lists" card with the user's lists and word counts.
+class _MyListsCard extends ConsumerWidget {
+  const _MyListsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(listsProvider);
+    final palette = _HomePalette.of(context);
+    if (state.isLoading && state.lists.isEmpty) {
+      return _HomeCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _SectionHeader(title: 'My lists'),
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(8),
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2.4),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    if (state.lists.isEmpty) {
+      return _HomeCard(
+        onTap: () => context.go(AppRoutes.lists),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _SectionHeader(title: 'My lists'),
+            Row(
+              children: [
+                Icon(Icons.add_circle_outline, color: AppColors.primary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Create your first list to start learning',
+                    style: AppTextStyles.caption.copyWith(
+                      color: palette.secondaryText,
+                      fontSize: 13,
+                      height: 18 / 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+    final lists = state.lists.take(3).toList();
+    return _HomeCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionHeader(
+            title: 'My lists',
+            onSeeAll: () => context.go(AppRoutes.lists),
+          ),
+          for (var i = 0; i < lists.length; i++) ...[
+            if (i > 0)
+              Divider(height: 20, color: palette.border.withValues(alpha: 0.7)),
+            _MyListRow(list: lists[i], color: _listColors[i % _listColors.length]),
+          ],
+        ],
+      ),
+    );
+  }
+
+  static const _listColors = [
+    AppColors.primary,
+    Color(0xFFFF6B6B),
+    Color(0xFF20C7A3),
+  ];
+}
+
+class _MyListRow extends StatelessWidget {
+  const _MyListRow({required this.list, required this.color});
+
+  final UserList list;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = _HomePalette.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () =>
+            context.push(AppRoutes.listDetail(list.listId.toString())),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.menu_book_outlined, size: 18, color: color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      list.listName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.button.copyWith(
+                        color: palette.text,
+                        fontSize: 14,
+                        height: 19 / 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      '${list.wordCount} ${list.wordCount == 1 ? "word" : "words"}',
+                      style: AppTextStyles.caption.copyWith(
+                        color: palette.secondaryText,
+                        fontSize: 12,
+                        height: 16 / 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: palette.secondaryText,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

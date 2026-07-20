@@ -19,8 +19,8 @@ public class ConstantsTests
     {
         CefrLevel.All.Should().BeEquivalentTo(new[] { "A1", "A2", "B1", "B2", "C1", "C2" });
         TestMode.All.Should().BeEquivalentTo(new[] { "standard", "timed", "challenge", "elimination" });
-        ScopeType.Values.Should().BeEquivalentTo(new[] { "all", "date_range", "start_date", "end_date" });
-        WordOrder.All.Should().BeEquivalentTo(new[] { "newest", "oldest", "random" });
+        ScopeType.Values.Should().BeEquivalentTo(new[] { "all", "date_range", "start_date", "end_date", "wrong_words" });
+        WordOrder.All.Should().BeEquivalentTo(new[] { "newest", "oldest", "random", "by_difficulty" });
         AnswerMethod.All.Should().BeEquivalentTo(new[] { "multiple_choice", "exact_typing", "ai_typing" });
         AddMethod.All.Should().BeEquivalentTo(new[] { "manual", "search", "random_topic", "random_synonym", "random_antonym" });
         UserStatus.All.Should().BeEquivalentTo(new[] { "active", "locked", "deleted" });

@@ -93,6 +93,53 @@ void main() {
     expect(request.topicIds, isEmpty);
   });
 
+  testWidgets('blocks start when the chosen list has too few words', (
+    tester,
+  ) async {
+    await pumpConfig(tester, repository, searchRepository, listsRepository);
+
+    await tester.tap(find.byKey(const Key('quiz-source-list-7')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('start-quiz-button')));
+    await tester.pump();
+
+    expect(find.textContaining('ít nhất 20 từ'), findsOneWidget);
+    verifyNever(() => repository.createSession(any()));
+  });
+
+  testWidgets('custom question count validates against the word count', (
+    tester,
+  ) async {
+    final router = await pumpConfig(
+      tester,
+      repository,
+      searchRepository,
+      listsRepository,
+    );
+    await tester.tap(find.byKey(const Key('quiz-source-list-7')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('question-limit-custom')));
+    await tester.pump();
+
+    await tester.enterText(
+      find.byKey(const Key('custom-question-input')),
+      '10',
+    );
+    await tester.tap(find.byKey(const Key('start-quiz-button')));
+    await tester.pump();
+    expect(find.textContaining('cần ít nhất 10 từ'), findsOneWidget);
+    verifyNever(() => repository.createSession(any()));
+
+    await tester.enterText(find.byKey(const Key('custom-question-input')), '5');
+    await tester.tap(find.byKey(const Key('start-quiz-button')));
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, AppRoutes.quizActive);
+    final request =
+        verify(() => repository.createSession(captureAny())).captured.single
+            as QuizConfigRequest;
+    expect(request.wordLimit, 5);
+  });
+
   testWidgets('sends scope, order, and question limit to repository', (
     tester,
   ) async {
@@ -189,7 +236,13 @@ final testLists = [
   UserList(
     listId: 3,
     listName: 'Favorites',
-    wordCount: 5,
+    wordCount: 25,
+    createdAt: DateTime(2026),
+  ),
+  UserList(
+    listId: 7,
+    listName: 'Tiny',
+    wordCount: 6,
     createdAt: DateTime(2026),
   ),
 ];
@@ -200,7 +253,7 @@ const testPersonalTopics = [
     listId: 12,
     name: 'Travel',
     nameVi: 'Du lịch',
-    wordCount: 4,
+    wordCount: 30,
     containsWord: false,
   ),
 ];

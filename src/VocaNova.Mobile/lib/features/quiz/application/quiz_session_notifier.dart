@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vocanova_mobile/core/network/app_exception.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_session_state.dart';
 import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
@@ -57,12 +59,30 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
       if (exhaustedLives && result.nextQuestion != null) {
         await finish();
       }
-    } catch (_) {
+    } catch (error) {
       state = state.copyWith(
         isSubmitting: false,
-        errorMessage: 'Không thể gửi câu trả lời. Vui lòng thử lại.',
+        errorMessage: _errorMessage(
+          error,
+          'Không thể gửi câu trả lời. Vui lòng thử lại.',
+        ),
       );
     }
+  }
+
+  /// Ưu tiên hiển thị thông báo lỗi thật từ máy chủ để dễ chẩn đoán, thay vì
+  /// một câu chung chung che mất nguyên nhân.
+  String _errorMessage(Object error, String fallback) {
+    final appError = error is DioException && error.error is AppException
+        ? error.error as AppException
+        : error is AppException
+        ? error
+        : null;
+    if (appError != null) {
+      if (appError.errors.isNotEmpty) return appError.errors.join('; ');
+      if (appError.message.trim().isNotEmpty) return appError.message;
+    }
+    return fallback;
   }
 
   void nextQuestion() {
@@ -84,10 +104,13 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
       await ref.read(quizRepositoryProvider).finishSession(session.sessionId);
       state = state.copyWith(isFinishing: false, isFinished: true);
       return true;
-    } catch (_) {
+    } catch (error) {
       state = state.copyWith(
         isFinishing: false,
-        errorMessage: 'Không thể kết thúc bài kiểm tra. Vui lòng thử lại.',
+        errorMessage: _errorMessage(
+          error,
+          'Không thể kết thúc bài kiểm tra. Vui lòng thử lại.',
+        ),
       );
       return false;
     }

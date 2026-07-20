@@ -6,6 +6,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vocanova_mobile/app/router/app_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/core/storage/token_storage.dart';
+import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
+import 'package:vocanova_mobile/features/home/application/home_topics_provider.dart';
+import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
+import 'package:vocanova_mobile/features/notifications/application/notifications_notifier.dart';
+import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
+import 'package:vocanova_mobile/features/quiz/application/wrong_words_notifier.dart';
+
+import '../../support/home_test_overrides.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -101,7 +109,19 @@ Future<void> pumpRouter(
   bool settle = true,
 }) async {
   await tester.pumpWidget(
-    ProviderScope(child: MaterialApp.router(routerConfig: router)),
+    ProviderScope(
+      overrides: [
+        notificationsUnreadCountProvider.overrideWith((ref) async => 0),
+        homeTopicsProvider.overrideWith((ref) async => const []),
+        authProvider.overrideWith(FakeAuthNotifier.new),
+        progressOverviewProvider.overrideWith(
+          FakeProgressOverviewNotifier.new,
+        ),
+        listsProvider.overrideWith(FakeListsNotifier.new),
+        wrongWordsProvider.overrideWith(FakeWrongWordsNotifier.new),
+      ],
+      child: MaterialApp.router(routerConfig: router),
+    ),
   );
   if (settle) {
     await tester.pumpAndSettle();
