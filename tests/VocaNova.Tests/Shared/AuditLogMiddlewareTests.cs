@@ -84,6 +84,37 @@ public class AuditLogMiddlewareTests
         queue.Messages.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task InvokeAsync_Should_Audit_SuperAdmin_Request_And_Redact_Password()
+    {
+        const string payload = """{"full_name":"Admin","password":"Strong123","refresh_token":"secret"}""";
+        var queue = new CapturingAuditLogQueue();
+        var context = CreateContext(HttpMethods.Post, "/api/superadmin/admins", payload, userId: "7");
+
+        var middleware = new AuditLogMiddleware(
+            httpContext =>
+            {
+                httpContext.Items[AuditLogHttpContextKeys.EntityType] = "admin_accounts";
+                httpContext.Items[AuditLogHttpContextKeys.EntityId] = 12u;
+                httpContext.Response.StatusCode = StatusCodes.Status201Created;
+                return Task.CompletedTask;
+            },
+            queue,
+            NullLogger<AuditLogMiddleware>.Instance);
+
+        await middleware.InvokeAsync(context);
+
+        var message = queue.Messages.Should().ContainSingle().Subject;
+        message.UserId.Should().Be(7);
+        message.Action.Should().Be("Create");
+        message.EntityType.Should().Be("admin_accounts");
+        message.EntityId.Should().Be(12);
+        message.PayloadAfter.Should().Contain("\"password\":\"[REDACTED]\"");
+        message.PayloadAfter.Should().Contain("\"refresh_token\":\"[REDACTED]\"");
+        message.PayloadAfter.Should().NotContain("Strong123");
+        message.PayloadAfter.Should().NotContain("secret");
+    }
+
     private static DefaultHttpContext CreateContext(string method, string path, string? body, string? userId)
     {
         var context = new DefaultHttpContext();

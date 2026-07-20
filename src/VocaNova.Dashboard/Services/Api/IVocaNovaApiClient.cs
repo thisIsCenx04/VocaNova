@@ -72,6 +72,30 @@ public interface IVocaNovaApiClient
 
     Task<ApiActionResult> RestoreUserAsync(uint userId, CancellationToken cancellationToken = default);
 
+    // Super Admin - quản lý tài khoản Admin.
+    Task<PagedData<Models.Api.SuperAdmin.AdminAccount>> GetAdminAccountsAsync(
+        AdminAccountFilter filter,
+        CancellationToken cancellationToken = default);
+
+    Task<Models.Api.SuperAdmin.AdminAccount?> GetAdminAccountAsync(
+        uint adminId,
+        CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> CreateAdminAccountAsync(
+        AdminAccountInput input,
+        CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> UpdateAdminAccountAsync(
+        uint adminId,
+        AdminAccountInput input,
+        CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> LockAdminAccountAsync(uint adminId, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> UnlockAdminAccountAsync(uint adminId, CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> DeleteAdminAccountAsync(uint adminId, CancellationToken cancellationToken = default);
+
     // F061 — Topic management.
     Task<IReadOnlyList<AdminTopic>> GetAdminTopicsAsync(string? q, string? status, bool includeDeleted, CancellationToken cancellationToken = default);
 
@@ -124,6 +148,15 @@ public sealed record TopicInput(
 
 /// <summary>Bộ lọc danh sách user (F060).</summary>
 public sealed record UserListFilter(string? Status, string? Search, bool IncludeDeleted, int Page, int Limit, string? Role = null);
+
+public sealed record AdminAccountFilter(string? Status, string? Search, bool IncludeDeleted, int Page, int Limit);
+
+public sealed record AdminAccountInput(
+    string? FullName,
+    string? Email,
+    string? Phone,
+    string? Password,
+    string? Status);
 
 /// <summary>Payload tạo/cập nhật sense (khớp CreateSenseRequest/UpdateSenseRequest của API).</summary>
 public sealed record SenseInput(int SenseOrder, string? WordClass, string? EnglishDefinition, string? VietnameseMeaning,

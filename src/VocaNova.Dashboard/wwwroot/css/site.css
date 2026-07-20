@@ -3000,3 +3000,54 @@ html, body {
     cursor: pointer;
 }
 .btn-danger-solid:hover { background: #9f1515; }
+
+/* Super Admin account dashboard */
+.admin-accounts-header .btn-primary { text-decoration: none; white-space: nowrap; }
+.admin-account-table { min-width: 900px; }
+.admin-account-table .admin-id-column { width: 74px; }
+.admin-account-table .row-muted { opacity: .62; }
+.admin-actions .inline-form { display: inline-flex; }
+.btn-icon.btn-warning-outline { color: var(--warning); }
+.btn-icon.btn-warning-outline:hover { background: var(--warning-bg); }
+.admin-account-editor-shell {
+    width: min(100%, 1120px);
+    margin-inline: auto;
+}
+.admin-account-form {
+    width: 100%;
+    max-width: none;
+    padding: 30px;
+}
+.admin-account-form .form-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+    row-gap: 20px;
+}
+.admin-account-form .form-group { margin-bottom: 2px; }
+.admin-account-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 22px;
+    margin-top: 20px;
+    border-top: 1px solid var(--border);
+}
+.form-help { display: block; color: var(--text-muted); font-size: 12px; margin-top: 5px; }
+.admin-account-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 24px;
+    padding: 12px 14px;
+    margin-bottom: 22px;
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+@media (max-width: 768px) {
+    .admin-accounts-header { align-items: stretch !important; flex-direction: column; }
+    .admin-accounts-header .btn-primary { text-align: center; }
+    .admin-account-form { padding: 20px; }
+    .admin-account-form .form-grid-2 { grid-template-columns: 1fr; }
+}
