@@ -10,10 +10,12 @@ import 'package:vocanova_mobile/features/dictionary/presentation/add_to_list_she
 class TopicDetailScreen extends ConsumerStatefulWidget {
   const TopicDetailScreen({
     required this.topicId,
+    this.isPersonal = false,
     this.initialTopic,
     super.key,
   });
   final int topicId;
+  final bool isPersonal;
   final TopicSummary? initialTopic;
 
   @override
@@ -32,16 +34,23 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
   }
 
   void _load() {
-    _words = ref
-        .read(wordSearchRepositoryProvider)
-        .getTopicWords(widget.topicId);
+    final repository = ref.read(wordSearchRepositoryProvider);
+    _words = widget.isPersonal
+        ? repository.getPersonalTopicWords(widget.topicId)
+        : repository.getTopicWords(widget.topicId);
   }
 
   @override
   Widget build(BuildContext context) {
     final topic = widget.initialTopic;
     return Scaffold(
-      appBar: AppBar(title: Text(topic?.displayName ?? 'Topic detail')),
+      appBar: AppBar(
+        title: Text(
+          widget.isPersonal
+              ? 'My ${topic?.displayName ?? 'topic'}'
+              : topic?.displayName ?? 'Topic detail',
+        ),
+      ),
       body: FutureBuilder<List<WordSummary>>(
         future: _words,
         builder: (context, snapshot) {
@@ -74,6 +83,22 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
               children: [
                 if (topic != null) _TopicHero(topic: topic),
+                if (widget.isPersonal &&
+                    topic is PersonalTopicSummary &&
+                    topic.listId != null) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      key: const Key('practice-personal-topic'),
+                      onPressed: () => context.push(
+                        AppRoutes.quizConfigForList('${topic.listId}'),
+                      ),
+                      icon: const Icon(Icons.quiz_outlined),
+                      label: const Text('Practice my saved words'),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 14),
                 _Stats(words: all),
                 const SizedBox(height: 16),
@@ -111,6 +136,9 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                         useSafeArea: true,
                         builder: (_) => AddToListSheet(wordId: word.wordId),
                       ),
+                      onRemove: widget.isPersonal
+                          ? () => _removePersonalWord(word.wordId)
+                          : null,
                     ),
               ],
             ),
@@ -118,6 +146,24 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _removePersonalWord(int wordId) async {
+    try {
+      await ref
+          .read(wordSearchRepositoryProvider)
+          .removePersonalTopicWord(topicId: widget.topicId, wordId: wordId);
+      if (!mounted) return;
+      setState(_load);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Removed from your topic.')));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to remove this word.')),
+      );
+    }
   }
 }
 
@@ -199,10 +245,12 @@ class _TopicWordTile extends StatelessWidget {
     required this.word,
     required this.onOpen,
     required this.onAdd,
+    this.onRemove,
   });
   final WordSummary word;
   final VoidCallback onOpen;
   final VoidCallback onAdd;
+  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -213,10 +261,16 @@ class _TopicWordTile extends StatelessWidget {
       title: Text(word.word),
       subtitle: Text(word.primaryMeaning ?? word.phonetic ?? ''),
       trailing: IconButton(
-        key: Key('add-topic-word-${word.wordId}'),
-        tooltip: 'Add to list',
-        onPressed: onAdd,
-        icon: const Icon(Icons.playlist_add),
+        key: Key(
+          onRemove == null
+              ? 'add-topic-word-${word.wordId}'
+              : 'remove-personal-topic-word-${word.wordId}',
+        ),
+        tooltip: onRemove == null ? 'Add to list' : 'Remove from my topic',
+        onPressed: onRemove ?? onAdd,
+        icon: Icon(
+          onRemove == null ? Icons.playlist_add : Icons.remove_circle_outline,
+        ),
       ),
     ),
   );

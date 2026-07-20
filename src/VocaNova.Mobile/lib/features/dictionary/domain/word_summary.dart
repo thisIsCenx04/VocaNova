@@ -120,3 +120,30 @@ class TopicSummary {
     'word_count': wordCount,
   };
 }
+
+class PersonalTopicSummary extends TopicSummary {
+  const PersonalTopicSummary({
+    required super.topicId,
+    required super.name,
+    required super.wordCount,
+    required this.containsWord,
+    super.nameVi,
+    super.icon,
+    this.listId,
+  });
+
+  final int? listId;
+  final bool containsWord;
+
+  factory PersonalTopicSummary.fromJson(Map<String, dynamic> json) {
+    return PersonalTopicSummary(
+      topicId: json['topic_id'] as int,
+      listId: json['list_id'] as int?,
+      name: json['name'] as String,
+      nameVi: json['name_vi'] as String?,
+      icon: json['icon'] as String?,
+      wordCount: json['word_count'] as int,
+      containsWord: json['contains_word'] as bool? ?? false,
+    );
+  }
+}

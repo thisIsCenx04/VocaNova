@@ -23,7 +23,9 @@ public sealed class UserListRepository : IUserListRepository
     {
         return await _dbContext.UserLists
             .AsNoTracking()
-            .Where(list => list.UserId == userId && list.Status == UserStatus.Active)
+            .Where(list => list.UserId == userId
+                && list.Status == UserStatus.Active
+                && !list.ListName.StartsWith(PersonalTopicListName.Prefix))
             .OrderByDescending(list => list.CreatedAt)
             .ThenByDescending(list => list.ListId)
             .Select(list => new UserListDto(
@@ -40,7 +42,9 @@ public sealed class UserListRepository : IUserListRepository
     {
         return _dbContext.UserLists
             .CountAsync(
-                list => list.UserId == userId && list.Status == UserStatus.Active,
+                list => list.UserId == userId
+                    && list.Status == UserStatus.Active
+                    && !list.ListName.StartsWith(PersonalTopicListName.Prefix),
                 cancellationToken);
     }
 
@@ -91,7 +95,11 @@ public sealed class UserListRepository : IUserListRepository
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(list => list.ListId == listId)
-            .Select(list => new UserListOwnershipDto(list.ListId, list.UserId, list.Status))
+            .Select(list => new UserListOwnershipDto(
+                list.ListId,
+                list.UserId,
+                list.Status,
+                list.ListName))
             .SingleOrDefaultAsync(cancellationToken);
     }
 
