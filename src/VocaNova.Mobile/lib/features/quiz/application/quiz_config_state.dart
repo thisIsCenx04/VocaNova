@@ -1,10 +1,16 @@
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
+
+abstract final class QuizSourceType {
+  static const myList = 'my_list';
+  static const personalTopic = 'personal_topic';
+}
 
 class QuizConfigState {
   const QuizConfigState({
     this.listId,
+    this.sourceType = QuizSourceType.myList,
     this.scopeType = 'all',
-    this.selectedTopicIds = const {},
     this.mode = 'standard',
     this.questionType = 1,
     this.answerMethod = 'multiple_choice',
@@ -12,15 +18,16 @@ class QuizConfigState {
     this.lives,
     this.dateFrom,
     this.dateTo,
-    this.topics = const [],
-    this.isLoadingTopics = true,
+    this.lists = const [],
+    this.personalTopics = const [],
+    this.isLoadingSources = true,
     this.isCreating = false,
     this.errorMessage,
   });
 
   final int? listId;
+  final String sourceType;
   final String scopeType;
-  final Set<int> selectedTopicIds;
   final String mode;
   final int questionType;
   final String answerMethod;
@@ -28,15 +35,16 @@ class QuizConfigState {
   final int? lives;
   final DateTime? dateFrom;
   final DateTime? dateTo;
-  final List<TopicSummary> topics;
-  final bool isLoadingTopics;
+  final List<UserList> lists;
+  final List<PersonalTopicSummary> personalTopics;
+  final bool isLoadingSources;
   final bool isCreating;
   final String? errorMessage;
 
   QuizConfigState copyWith({
     int? listId,
+    String? sourceType,
     String? scopeType,
-    Set<int>? selectedTopicIds,
     String? mode,
     int? questionType,
     String? answerMethod,
@@ -44,19 +52,21 @@ class QuizConfigState {
     int? lives,
     DateTime? dateFrom,
     DateTime? dateTo,
-    List<TopicSummary>? topics,
-    bool? isLoadingTopics,
+    List<UserList>? lists,
+    List<PersonalTopicSummary>? personalTopics,
+    bool? isLoadingSources,
     bool? isCreating,
     String? errorMessage,
+    bool clearListId = false,
     bool clearTime = false,
     bool clearLives = false,
     bool clearDateFrom = false,
     bool clearDateTo = false,
     bool clearError = false,
   }) => QuizConfigState(
-    listId: listId ?? this.listId,
+    listId: clearListId ? null : listId ?? this.listId,
+    sourceType: sourceType ?? this.sourceType,
     scopeType: scopeType ?? this.scopeType,
-    selectedTopicIds: selectedTopicIds ?? this.selectedTopicIds,
     mode: mode ?? this.mode,
     questionType: questionType ?? this.questionType,
     answerMethod: answerMethod ?? this.answerMethod,
@@ -64,8 +74,9 @@ class QuizConfigState {
     lives: clearLives ? null : lives ?? this.lives,
     dateFrom: clearDateFrom ? null : dateFrom ?? this.dateFrom,
     dateTo: clearDateTo ? null : dateTo ?? this.dateTo,
-    topics: topics ?? this.topics,
-    isLoadingTopics: isLoadingTopics ?? this.isLoadingTopics,
+    lists: lists ?? this.lists,
+    personalTopics: personalTopics ?? this.personalTopics,
+    isLoadingSources: isLoadingSources ?? this.isLoadingSources,
     isCreating: isCreating ?? this.isCreating,
     errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
   );

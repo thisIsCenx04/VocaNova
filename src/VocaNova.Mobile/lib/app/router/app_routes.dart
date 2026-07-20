@@ -24,7 +24,12 @@ abstract final class AppRoutes {
 
   static String wordDetail(String id) => '/word/$id';
 
-  static String topicDetail(String id) => '/topic/$id';
+  static String topicDetail(String id, {bool personal = false}) => personal
+      ? Uri(
+          path: '/topic/$id',
+          queryParameters: const {'personal': 'true'},
+        ).toString()
+      : '/topic/$id';
 
   static String listDetail(String id) => '/list/$id';
 

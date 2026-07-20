@@ -34,6 +34,16 @@ class WordSearchRepository {
     ).map(TopicSummary.fromJson).toList(growable: false);
   }
 
+  Future<List<PersonalTopicSummary>> getPersonalTopics({int? wordId}) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiEndpoints.personalTopics,
+      queryParameters: {'wordId': ?wordId},
+    );
+    return _dataList(
+      response,
+    ).map(PersonalTopicSummary.fromJson).toList(growable: false);
+  }
+
   Future<List<WordSummary>> getTopicWords(int topicId) async {
     final response = await _dio.get<Map<String, dynamic>>(
       ApiEndpoints.topicWords(topicId),
@@ -43,6 +53,26 @@ class WordSearchRepository {
         .map(WordSummary.fromJson)
         .map((word) => word.withTopic(topicId))
         .toList(growable: false);
+  }
+
+  Future<List<WordSummary>> getPersonalTopicWords(int topicId) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiEndpoints.personalTopicWords(topicId),
+      queryParameters: const {'page': 1, 'limit': 100},
+    );
+    return _dataList(response)
+        .map(WordSummary.fromJson)
+        .map((word) => word.withTopic(topicId))
+        .toList(growable: false);
+  }
+
+  Future<void> removePersonalTopicWord({
+    required int topicId,
+    required int wordId,
+  }) async {
+    await _dio.delete<Map<String, dynamic>>(
+      ApiEndpoints.personalTopicWord(topicId, wordId),
+    );
   }
 
   List<Map<String, dynamic>> _dataList(

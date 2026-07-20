@@ -110,7 +110,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
           ),
         ),
         _DetailActions(
-          onAddToList: () => _showAddToList(word.wordId),
+          onAddToList: () => _showAddToList(word),
           onPractice: () => context.push(AppRoutes.quizConfig),
         ),
       ],
@@ -184,14 +184,15 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
     }
   }
 
-  Future<void> _showAddToList(int wordId) {
+  Future<void> _showAddToList(WordDetail word) {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: false,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.38),
-      builder: (_) => AddToListSheet(wordId: wordId),
+      builder: (_) =>
+          AddToListSheet(wordId: word.wordId, eligibleTopics: word.topics),
     );
   }
 }

@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
+import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/core/widgets/offline_banner.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
+import 'package:vocanova_mobile/features/quiz/application/quiz_config_state.dart';
 
 class QuizConfigScreen extends ConsumerStatefulWidget {
   const QuizConfigScreen({this.initialListId, super.key});
@@ -23,7 +25,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
     Future.microtask(() {
       final notifier = ref.read(quizConfigProvider.notifier);
       notifier.setListId(widget.initialListId);
-      notifier.loadTopics();
+      notifier.loadSources();
     });
   }
 
@@ -47,16 +49,6 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
           if (!isOnline) const OfflineBanner(),
-          if (widget.initialListId != null)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Text(
-                  'Mở từ danh sách #${widget.initialListId}. '
-                  'Bài kiểm tra chỉ lấy từ trong danh sách này, kết hợp với các bộ lọc bên dưới.',
-                ),
-              ),
-            ),
           _Section(
             title: 'Phạm vi từ',
             child: Column(
@@ -112,31 +104,12 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
             ),
           ),
           _Section(
-            title: 'Chủ đề',
-            child: state.isLoadingTopics
-                ? const Center(child: CircularProgressIndicator())
-                : Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      FilterChip(
-                        key: const Key('all-topics'),
-                        label: const Text('Tất cả'),
-                        selected: state.selectedTopicIds.isEmpty,
-                        onSelected: (_) => _notifier.clearTopics(),
-                      ),
-                      for (final topic in state.topics)
-                        FilterChip(
-                          key: Key('quiz-topic-${topic.topicId}'),
-                          label: Text(topic.displayName),
-                          selected: state.selectedTopicIds.contains(
-                            topic.topicId,
-                          ),
-                          onSelected: (_) =>
-                              _notifier.toggleTopic(topic.topicId),
-                        ),
-                    ],
-                  ),
+            title: 'Nguồn kiểm tra',
+            child: _QuizSourcePicker(
+              state: state,
+              onTypeChanged: _notifier.setSourceType,
+              onSourceSelected: _notifier.selectSource,
+            ),
           ),
           _Section(
             title: 'Chế độ',
@@ -296,6 +269,298 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
         extra: session,
       );
     }
+  }
+}
+
+class _QuizSourcePicker extends StatelessWidget {
+  const _QuizSourcePicker({
+    required this.state,
+    required this.onTypeChanged,
+    required this.onSourceSelected,
+  });
+
+  final QuizConfigState state;
+  final ValueChanged<String> onTypeChanged;
+  final ValueChanged<int> onSourceSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    if (state.isLoadingSources) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final showingLists = state.sourceType == QuizSourceType.myList;
+    final items = showingLists
+        ? state.lists
+              .map(
+                (list) => _SourceItem(
+                  id: list.listId,
+                  name: list.listName,
+                  wordCount: list.wordCount,
+                  icon: Icons.bookmark_outline,
+                ),
+              )
+              .toList(growable: false)
+        : state.personalTopics
+              .map(
+                (topic) => _SourceItem(
+                  id: topic.listId,
+                  name: topic.displayName,
+                  wordCount: topic.wordCount,
+                  icon: Icons.auto_stories_outlined,
+                  emoji: topic.icon,
+                ),
+              )
+              .toList(growable: false);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 46,
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0EDF4),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _SourceTypeButton(
+                  key: const Key('quiz-source-my-list'),
+                  label: 'Danh sách của tôi',
+                  icon: Icons.bookmark_outline,
+                  selected: showingLists,
+                  onTap: () => onTypeChanged(QuizSourceType.myList),
+                ),
+              ),
+              Expanded(
+                child: _SourceTypeButton(
+                  key: const Key('quiz-source-personal-topic'),
+                  label: 'Chủ đề cá nhân',
+                  icon: Icons.auto_stories_outlined,
+                  selected: !showingLists,
+                  onTap: () => onTypeChanged(QuizSourceType.personalTopic),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          showingLists
+              ? 'Chọn một danh sách từ của bạn.'
+              : 'Chọn một chủ đề chứa các từ bạn đã lưu.',
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: const Color(0xFF706A76)),
+        ),
+        const SizedBox(height: 10),
+        if (items.isEmpty)
+          _SourceEmptyState(personalTopic: !showingLists)
+        else
+          for (final item in items) ...[
+            _SourceCard(
+              item: item,
+              sourceType: state.sourceType,
+              selected: item.id != null && item.id == state.listId,
+              onTap: item.id == null || item.wordCount == 0
+                  ? null
+                  : () => onSourceSelected(item.id!),
+            ),
+            const SizedBox(height: 8),
+          ],
+      ],
+    );
+  }
+}
+
+class _SourceItem {
+  const _SourceItem({
+    required this.id,
+    required this.name,
+    required this.wordCount,
+    required this.icon,
+    this.emoji,
+  });
+
+  final int? id;
+  final String name;
+  final int wordCount;
+  final IconData icon;
+  final String? emoji;
+}
+
+class _SourceTypeButton extends StatelessWidget {
+  const _SourceTypeButton({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+    super.key,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? Colors.white : Colors.transparent,
+      borderRadius: BorderRadius.circular(10),
+      elevation: selected ? 1 : 0,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 17,
+              color: selected ? AppColors.primary : const Color(0xFF77717D),
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                  color: selected
+                      ? const Color(0xFF2D2634)
+                      : const Color(0xFF77717D),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SourceCard extends StatelessWidget {
+  const _SourceCard({
+    required this.item,
+    required this.sourceType,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _SourceItem item;
+  final String sourceType;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = onTap == null;
+    final kind = sourceType == QuizSourceType.myList ? 'list' : 'topic';
+    return Material(
+      color: selected
+          ? AppColors.primary.withValues(alpha: 0.09)
+          : const Color(0xFFFAF9FB),
+      borderRadius: BorderRadius.circular(13),
+      child: InkWell(
+        key: Key('quiz-source-$kind-${item.id ?? item.name}'),
+        borderRadius: BorderRadius.circular(13),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(
+              color: selected ? AppColors.primary : const Color(0xFFE1DCE5),
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEDE7FF),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: item.emoji?.trim().isNotEmpty == true
+                    ? Text(item.emoji!, style: const TextStyle(fontSize: 19))
+                    : Icon(item.icon, size: 18, color: AppColors.primary),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: disabled
+                            ? const Color(0xFF928C96)
+                            : const Color(0xFF28232D),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      item.wordCount == 0
+                          ? 'Chưa có từ để kiểm tra'
+                          : '${item.wordCount} từ',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: disabled
+                            ? const Color(0xFFA19AA5)
+                            : AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                selected ? Icons.radio_button_checked : Icons.radio_button_off,
+                color: disabled
+                    ? const Color(0xFFC9C4CC)
+                    : selected
+                    ? AppColors.primary
+                    : const Color(0xFF8D8791),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SourceEmptyState extends StatelessWidget {
+  const _SourceEmptyState({required this.personalTopic});
+
+  final bool personalTopic;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F6FA),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        personalTopic
+            ? 'Hãy lưu từ vào một chủ đề cá nhân trước khi kiểm tra.'
+            : 'Hãy tạo danh sách và thêm từ trước khi kiểm tra.',
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+    );
   }
 }
 

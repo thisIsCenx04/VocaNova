@@ -98,6 +98,7 @@ class AppRouter {
                 path: AppRoutes.topic,
                 builder: (_, state) => TopicDetailScreen(
                   topicId: int.parse(state.pathParameters['id']!),
+                  isPersonal: state.uri.queryParameters['personal'] == 'true',
                   initialTopic: state.extra is TopicSummary
                       ? state.extra! as TopicSummary
                       : null,

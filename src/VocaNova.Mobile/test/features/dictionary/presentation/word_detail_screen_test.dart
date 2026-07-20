@@ -9,6 +9,7 @@ import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_detail_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/data/word_detail_repository.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_detail.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/word_detail_screen.dart';
 
 void main() {
@@ -39,6 +40,16 @@ void main() {
         UserListSummary(listId: 3, listName: 'Favorites', wordCount: 2),
       ],
     );
+    when(() => repository.getPersonalTopics(wordId: 7)).thenAnswer(
+      (_) async => const [
+        PersonalTopicSummary(
+          topicId: 2,
+          name: 'Communication',
+          wordCount: 0,
+          containsWord: false,
+        ),
+      ],
+    );
     when(
       () => repository.addWordToList(
         listId: 3,
@@ -49,6 +60,21 @@ void main() {
     when(() => repository.createList('Study')).thenAnswer(
       (_) async =>
           const UserListSummary(listId: 9, listName: 'Study', wordCount: 0),
+    );
+    when(
+      () => repository.addWordToPersonalTopic(
+        topicId: 2,
+        wordId: 7,
+        note: any(named: 'note'),
+      ),
+    ).thenAnswer(
+      (_) async => const PersonalTopicSummary(
+        topicId: 2,
+        listId: 12,
+        name: 'Communication',
+        wordCount: 1,
+        containsWord: true,
+      ),
     );
     when(() => audio.play(any())).thenAnswer((_) async {});
   });
@@ -124,6 +150,26 @@ void main() {
 
     expect(find.text('Study'), findsOneWidget);
     verify(() => repository.createList('Study')).called(1);
+  });
+
+  testWidgets('Add to list sheet saves into an eligible personal topic', (
+    tester,
+  ) async {
+    await pumpDetail(tester, repository, connectivity, storage, audio);
+
+    await tester.tap(find.byKey(const Key('add-to-list-fab')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('My topics'));
+    await tester.pumpAndSettle();
+    expect(find.text('Communication'), findsOneWidget);
+    expect(find.text('0 personal words'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('add-to-topic-2')));
+    await tester.tap(find.byKey(const Key('save-add-to-list')));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => repository.addWordToPersonalTopic(topicId: 2, wordId: 7, note: ''),
+    ).called(1);
   });
 }
 

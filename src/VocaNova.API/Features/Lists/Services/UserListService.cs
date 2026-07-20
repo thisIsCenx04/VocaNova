@@ -59,6 +59,11 @@ public sealed class UserListService : IUserListService
         }
 
         var listName = request.ListName!.Trim();
+        if (PersonalTopicListName.IsReserved(listName))
+        {
+            return Result<UserListDto>.Fail("List name is reserved.");
+        }
+
         var normalizedListName = listName.ToLowerInvariant();
 
         var activeListCount = await _userListRepository.CountActiveAsync(userId, cancellationToken);
@@ -103,6 +108,11 @@ public sealed class UserListService : IUserListService
         }
 
         var listName = request.ListName!.Trim();
+        if (PersonalTopicListName.IsReserved(listName))
+        {
+            return Result<UserListDto>.Fail("List name is reserved.");
+        }
+
         var normalizedListName = listName.ToLowerInvariant();
         if (await _userListRepository.ListNameExistsAsync(userId, normalizedListName, listId, cancellationToken))
         {
@@ -393,6 +403,11 @@ public sealed class UserListService : IUserListService
 
         var ownership = await _userListRepository.FindOwnershipAsync(listId, cancellationToken);
         if (ownership is null || ownership.Status == UserStatus.Deleted)
+        {
+            return Result<bool>.NotFound("List not found.");
+        }
+
+        if (PersonalTopicListName.IsReserved(ownership.ListName))
         {
             return Result<bool>.NotFound("List not found.");
         }
