@@ -3,8 +3,7 @@
 @model VocaNova.Dashboard.Models.Users.UserListViewModel
 @{
     ViewData["Title"] = "User Management";
-    var pageStart = Model.TotalItems == 0 ? 0 : (Model.Page - 1) * Model.Limit + 1;
-    var pageEnd = pageStart == 0 ? 0 : pageStart + Model.Items.Count - 1;
+    var pageSizes = new[] { 10, 20, 50, 100 };
 
     var actorRole = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
     // Admin chỉ khóa/mở user thường; chỉ super_admin mới thao tác trên admin; super_admin không bị khóa.
@@ -19,6 +18,7 @@
         if (!string.IsNullOrWhiteSpace(Model.Status)) qs.Add($"status={Model.Status}");
         if (!string.IsNullOrWhiteSpace(Model.Role)) qs.Add($"role={Model.Role}");
         if (Model.IncludeDeleted) qs.Add("includeDeleted=true");
+        qs.Add($"limit={Model.Limit}");
         qs.Add($"page={page}");
         return "/users?" + string.Join("&", qs);
     }
@@ -40,6 +40,7 @@
 
 <form method="get" action="/users" class="filter-bar">
     <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="@T["Search by name, email or phone..."]" />
+    <input type="hidden" name="limit" value="@Model.Limit" />
     <select name="status" class="form-control">
         <option value="">@T["All status"]</option>
         @foreach (var s in VocaNova.Dashboard.Models.Users.UserListViewModel.Statuses)
@@ -138,7 +139,21 @@
 </div>
 
 <div class="table-foot-bar">
-    <span class="pager-info">Showing @pageStart to @pageEnd of @Model.TotalItems entries</span>
+    <form method="get" action="/users" class="page-size-form">
+        @if (!string.IsNullOrWhiteSpace(Model.Search)) { <input type="hidden" name="search" value="@Model.Search" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.Status)) { <input type="hidden" name="status" value="@Model.Status" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.Role)) { <input type="hidden" name="role" value="@Model.Role" /> }
+        @if (Model.IncludeDeleted) { <input type="hidden" name="includeDeleted" value="true" /> }
+        <label class="page-size-control">
+            <span>@T["Items per page"]</span>
+            <select name="limit" class="form-control" data-page-size-select aria-label="@T["Items per page"]">
+                @foreach (var size in pageSizes)
+                {
+                    <option value="@size" selected="@(Model.Limit == size)">@size</option>
+                }
+            </select>
+        </label>
+    </form>
     @if (Model.TotalPages > 1)
     {
         var winStart = Math.Max(1, Model.Page - 2);

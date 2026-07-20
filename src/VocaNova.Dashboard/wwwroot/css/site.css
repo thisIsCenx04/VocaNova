@@ -2102,6 +2102,25 @@ html, body {
 
 .table-foot-bar .pager { margin-top: 0; }
 
+.page-size-form {
+    margin: 0;
+}
+
+.page-size-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.page-size-control .form-control {
+    width: 76px;
+    min-height: 36px;
+    padding: 6px 28px 6px 10px;
+}
+
 /* ---- Detail ---- */
 .user-detail-grid {
     display: grid;
@@ -2461,13 +2480,18 @@ html, body {
 .breadcrumb-sep { margin: 0 6px; color: var(--text-soft); }
 .breadcrumb-current { color: var(--text); font-weight: 600; }
 
-.edit-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px;
-    gap: 24px;
-    align-items: start;
+.edit-form {
+    width: 100%;
+    max-width: 980px;
+    margin-inline: auto;
+    padding-bottom: 72px;
 }
 .edit-main { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.edit-form .field-grid-3,
+.edit-form .field-grid-2 {
+    display: flex;
+    flex-direction: column;
+}
 
 .edit-panel { padding: 0; overflow: hidden; }
 .edit-panel-head {
@@ -2559,11 +2583,6 @@ html, body {
 }
 .add-meaning-btn:hover { background: var(--accent-soft); border-color: var(--accent); }
 
-/* Right sidebar — Status & Storage */
-.edit-side { position: sticky; top: calc(var(--topbar-h) + 16px); }
-.side-card { display: flex; flex-direction: column; gap: 16px; }
-.side-card-title { font-size: 15px; font-weight: 700; margin: 0; color: var(--text); }
-
 .status-toggle-row {
     display: flex;
     align-items: center;
@@ -2596,20 +2615,63 @@ html, body {
 .switch input:checked + .switch-track { background: var(--accent); }
 .switch input:checked + .switch-track .switch-thumb { transform: translateX(18px); }
 
-.meta-list { margin: 0; display: flex; flex-direction: column; gap: 10px; }
-.meta-row { display: flex; align-items: center; justify-content: space-between; }
-.meta-row dt { color: var(--text-muted); font-size: 13px; margin: 0; }
-.meta-row dd { color: var(--text); font-size: 13px; font-weight: 600; margin: 0; }
+.edit-status-panel .status-toggle-row {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
 
-.side-card .btn-primary,
-.side-card .btn-secondary { justify-content: center; }
-.side-card .btn-secondary { margin-top: -4px; }
+.edit-form-actions {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: var(--sidebar-w);
+    z-index: 18;
+    padding: 12px 28px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -8px 24px rgba(20, 24, 40, .08);
+}
+
+.edit-form-actions-inner {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    width: 100%;
+    max-width: 980px;
+    margin-inline: auto;
+}
+
+.edit-form-actions-inner .btn-primary,
+.edit-form-actions-inner .btn-secondary {
+    min-width: 132px;
+    justify-content: center;
+}
 
 @media (max-width: 992px) {
-    .edit-grid { grid-template-columns: 1fr; }
-    .edit-side { position: static; }
     .field-grid-3 { grid-template-columns: 1fr; }
     .field-grid-2 { grid-template-columns: 1fr; }
+
+    .edit-form-actions {
+        left: 0;
+        padding-inline: 16px;
+    }
+}
+
+@media (max-width: 600px) {
+    .edit-form {
+        padding-bottom: 126px;
+    }
+
+    .edit-form-actions-inner {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    .edit-form-actions-inner .btn-primary,
+    .edit-form-actions-inner .btn-secondary {
+        width: 100%;
+    }
 }
 
 /* ===== Settings screen ===== */
@@ -2808,10 +2870,15 @@ html, body {
     border-top: 1px solid var(--border);
 }
 .profile-file-label { font-size: 13px; font-weight: 600; color: var(--text); text-align: left; }
-.profile-main { display: flex; flex-direction: column; gap: 20px; }
+.profile-main { display: flex; flex-direction: column; gap: 20px; align-self: start; width: 100%; }
 .profile-form { display: flex; flex-direction: column; gap: 14px; }
 .profile-form .form-actions { display: flex; justify-content: flex-end; }
 .profile-hint { font-size: 12px; color: var(--text-muted); margin: -4px 0 0; }
+.profile-settings { width: 100%; margin: 0; padding: 24px 20px; }
+.profile-form-divider { height: 1px; margin: 4px 0 2px; background: var(--border); }
+.profile-form-section { display: flex; flex-direction: column; gap: 4px; }
+.profile-form-section h3 { margin: 0; color: var(--text); font-size: 16px; font-weight: 700; }
+.profile-form-section p { margin: 0; color: var(--text-muted); font-size: 13px; }
 
 @media (max-width: 860px) {
     .profile-grid { grid-template-columns: 1fr; }
@@ -2945,8 +3012,7 @@ html, body {
     margin-bottom: 16px;
 }
 
-.vd-word-card,
-.vd-meta-card {
+.vd-word-card {
     position: relative;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -3012,18 +3078,6 @@ html, body {
     color: var(--text-muted);
     background: var(--surface-2);
 }
-
-.vd-meta-title { margin: 0 0 10px; font-size: 14px; font-weight: 700; color: var(--text); }
-.vd-meta-list { margin: 0; display: flex; flex-direction: column; gap: 0; }
-.vd-meta-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.vd-meta-row { min-height: 28px; border-bottom: 1px solid var(--border); }
-.vd-meta-row:last-child { border-bottom: 0; }
-.vd-meta-row dt { margin: 0; font-size: 11px; color: var(--text); }
-.vd-meta-row dd { margin: 0; font-size: 11px; font-weight: 400; color: var(--text); text-align: right; }
-.vd-status { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
-.vd-status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.vd-status.is-active { color: #16a34a; }
-.vd-status.is-deleted { color: #e05260; }
 
 .vd-meanings {
     background: var(--surface);
@@ -3391,5 +3445,116 @@ body.crud-modal-open {
     .topic-summary-panel {
         align-items: flex-start;
         flex-wrap: wrap;
+    }
+}
+
+/* ============================================================
+   Single-flow records and forms
+   Keep admin work in one deliberate reading path instead of
+   distributing related fields across dashboard-style columns.
+   ============================================================ */
+
+/* KNN lookup create/edit dialogs */
+.management-modal-card {
+    max-width: 520px;
+    border-radius: 10px;
+}
+
+.management-modal-head {
+    position: relative;
+    display: block;
+    padding-left: 16px;
+}
+
+.management-modal-head::before {
+    content: "";
+    position: absolute;
+    inset: 2px auto 2px 0;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+}
+
+.management-modal-icon {
+    display: none;
+}
+
+.management-modal-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.management-modal-fields .form-field {
+    width: 100%;
+}
+
+/* Vocabulary detail: one editorial reading column */
+#detail-root {
+    max-width: 980px;
+    margin-inline: auto;
+}
+
+.vd-top-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+}
+
+.vd-word-card {
+    border: 0;
+    border-radius: 0;
+}
+
+.vd-word-card {
+    border-left: 3px solid var(--accent);
+}
+
+.vd-word-card::after {
+    display: none;
+}
+
+.vd-sense-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 8px;
+}
+
+.vd-def-box {
+    padding: 11px 0;
+    background: transparent;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+}
+
+.vd-sense-title + .vd-sense-grid .vd-def-box:first-child {
+    border-top: 0;
+}
+
+.vd-manage-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.vd-manage-grid .vd-extra {
+    margin-top: 0;
+}
+
+@media (max-width: 700px) {
+    .management-modal-actions {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    .management-modal-actions .btn-primary,
+    .management-modal-actions .btn-secondary {
+        width: 100%;
     }
 }

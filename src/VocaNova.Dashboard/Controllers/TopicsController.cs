@@ -8,7 +8,7 @@ namespace VocaNova.Dashboard.Controllers;
 public sealed class TopicsController : Controller
 {
     private const int DefaultPageSize = 10;
-    private static readonly int[] AllowedPageSizes = [10, 20, 30, 40, 50];
+    private static readonly int[] AllowedPageSizes = [10, 20, 50, 100];
     private readonly IVocaNovaApiClient _apiClient;
 
     public TopicsController(IVocaNovaApiClient apiClient)
@@ -54,10 +54,11 @@ public sealed class TopicsController : Controller
     [HttpGet("/topics/{id:uint}")]
     public async Task<IActionResult> Detail(
         uint id, string? q, string? cefr, string? status, string? wordType,
-        bool includeDeleted = false, int page = 1,
+        bool includeDeleted = false, int page = 1, int limit = DefaultPageSize,
         CancellationToken cancellationToken = default)
     {
         page = Math.Max(1, page);
+        limit = AllowedPageSizes.Contains(limit) ? limit : DefaultPageSize;
         var topics = await _apiClient.GetAdminTopicsAsync(null, null, true, cancellationToken);
         var topic = topics.SingleOrDefault(item => item.TopicId == id);
         if (topic is null)
@@ -72,7 +73,7 @@ public sealed class TopicsController : Controller
             string.IsNullOrWhiteSpace(status) ? null : status,
             includeDeleted,
             page,
-            DefaultPageSize,
+            limit,
             string.IsNullOrWhiteSpace(wordType) ? null : wordType);
         var words = await _apiClient.GetWordsAsync(filter, cancellationToken);
 

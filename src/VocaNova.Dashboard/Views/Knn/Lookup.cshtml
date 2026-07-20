@@ -4,8 +4,7 @@
     ViewData["Title"] = $"{Model.Title} Management";
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
     var colSpan = Model.Columns.Count + 3;
-    var pageStart = Model.TotalItems == 0 ? 0 : (Model.Page - 1) * Model.PageSize + 1;
-    var pageEnd = pageStart == 0 ? 0 : pageStart + Model.Rows.Count - 1;
+    var pageSizes = new[] { 10, 20, 50, 100 };
 
     string StatusBadge(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
 
@@ -15,6 +14,7 @@
         if (!string.IsNullOrWhiteSpace(Model.Q)) qs.Add($"q={Uri.EscapeDataString(Model.Q)}");
         if (!string.IsNullOrWhiteSpace(Model.Status)) qs.Add($"status={Model.Status}");
         if (Model.IncludeDeleted) qs.Add("includeDeleted=true");
+        qs.Add($"limit={Model.PageSize}");
         qs.Add($"page={page}");
         return $"/knn/{Model.Slug}?" + string.Join("&", qs);
     }
@@ -47,6 +47,7 @@
 
 <form method="get" action="/knn/@Model.Slug" class="filter-bar">
     <input type="text" name="q" value="@Model.Q" class="form-control" placeholder="@T["Search by name..."]" />
+    <input type="hidden" name="limit" value="@Model.PageSize" />
     <select name="status" class="form-control">
         <option value="">@T["All status"]</option>
         <option value="active" selected="@(Model.Status == "active")">@T["Active"]</option>
@@ -125,7 +126,20 @@
 </div>
 
 <div class="table-foot-bar">
-    <span class="pager-info">@T["Showing"] @pageStart @T["to"] @pageEnd @T["of"] @Model.TotalItems @T["entries"]</span>
+    <form method="get" action="/knn/@Model.Slug" class="page-size-form">
+        @if (!string.IsNullOrWhiteSpace(Model.Q)) { <input type="hidden" name="q" value="@Model.Q" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.Status)) { <input type="hidden" name="status" value="@Model.Status" /> }
+        @if (Model.IncludeDeleted) { <input type="hidden" name="includeDeleted" value="true" /> }
+        <label class="page-size-control">
+            <span>@T["Items per page"]</span>
+            <select name="limit" class="form-control" data-page-size-select aria-label="@T["Items per page"]">
+                @foreach (var size in pageSizes)
+                {
+                    <option value="@size" selected="@(Model.PageSize == size)">@size</option>
+                }
+            </select>
+        </label>
+    </form>
     @if (Model.TotalPages > 1)
     {
         var winStart = Math.Max(1, Model.Page - 2);

@@ -6,7 +6,6 @@
     var confirmBtn = document.getElementById('delete-modal-confirm');
     var wordEl = document.getElementById('delete-modal-word');
     var pendingForm = null;
-
     function openModal(form) {
         pendingForm = form;
         if (wordEl) {

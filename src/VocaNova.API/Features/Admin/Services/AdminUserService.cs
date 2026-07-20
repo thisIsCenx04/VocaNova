@@ -8,6 +8,9 @@ namespace VocaNova.API.Features.Admin.Services;
 
 public sealed class AdminUserService : IAdminUserService
 {
+    private static readonly IReadOnlySet<string> SortColumns =
+        new HashSet<string>(StringComparer.Ordinal) { "id", "name", "email", "status", "phone" };
+
     private readonly IAdminUserRepository _repository;
     private readonly IUserProfileCache? _userProfileCache;
 
@@ -39,10 +42,24 @@ public sealed class AdminUserService : IAdminUserService
             return Result<PagedResult<AdminUserSummaryDto>>.Fail("Status is invalid.");
         }
 
+        var sortBy = NormalizeNullable(query.SortBy)?.ToLowerInvariant();
+        if (sortBy is not null && !SortColumns.Contains(sortBy))
+        {
+            return Result<PagedResult<AdminUserSummaryDto>>.Fail("Sort column is invalid.");
+        }
+
+        var sortDirection = NormalizeNullable(query.SortDirection)?.ToLowerInvariant();
+        if (sortDirection is not null && sortDirection is not ("asc" or "desc"))
+        {
+            return Result<PagedResult<AdminUserSummaryDto>>.Fail("Sort direction must be 'asc' or 'desc'.");
+        }
+
         var normalized = query with
         {
             Status = status,
             Search = NormalizeNullable(query.Search),
+            SortBy = sortBy,
+            SortDirection = sortDirection,
         };
 
         var result = await _repository.GetUsersAsync(normalized, cancellationToken);

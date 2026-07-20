@@ -523,6 +523,8 @@ public sealed class AdminKnnLookupService : IAdminKnnLookupService
         {
             Q = NormalizeNullable(query.Q),
             Status = NormalizeNullable(query.Status),
+            SortBy = NormalizeNullable(query.SortBy)?.ToLowerInvariant(),
+            SortDirection = NormalizeNullable(query.SortDirection)?.ToLowerInvariant(),
         };
     }
 

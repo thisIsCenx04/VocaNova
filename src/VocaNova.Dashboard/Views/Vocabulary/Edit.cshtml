@@ -9,16 +9,6 @@
                   ?? Model.Audio.FirstOrDefault();
     var isActive = !string.Equals(Model.Status, "deleted", StringComparison.OrdinalIgnoreCase);
 
-    string Relative(DateTime utc)
-    {
-        if (utc == default) return "—";
-        var span = DateTime.UtcNow - utc;
-        if (span.TotalMinutes < 1) return "just now";
-        if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes} min ago";
-        if (span.TotalHours < 24) return $"{(int)span.TotalHours} hrs ago";
-        if (span.TotalDays < 30) return $"{(int)span.TotalDays} days ago";
-        return utc.ToString("dd MMM, yyyy");
-    }
 }
 
 <div class="page-header page-header-row">
@@ -40,8 +30,24 @@
     <input type="hidden" name="isPhrase" value="@Model.IsPhrase.ToString().ToLowerInvariant()" />
     <input type="hidden" name="wasActive" value="@isActive.ToString().ToLowerInvariant()" />
 
-    <div class="edit-grid">
-        <div class="edit-main">
+    <div class="edit-main">
+        <!-- Status -->
+        <section class="panel edit-panel edit-status-panel">
+            <header class="edit-panel-head">
+                <h2 class="edit-panel-title">@T["Status"]</h2>
+            </header>
+            <div class="edit-panel-body">
+                <div class="status-toggle-row">
+                    <span class="status-label" id="status-label" data-active="@T["Active"]" data-inactive="@T["Inactive"]">@(isActive ? T["Active"] : T["Inactive"])</span>
+                    <label class="switch">
+                        <input type="checkbox" name="isActive" value="true" id="isActive" @(isActive ? "checked" : "") />
+                        <input type="hidden" name="isActive" value="false" />
+                        <span class="switch-track"><span class="switch-thumb"></span></span>
+                    </label>
+                </div>
+            </div>
+        </section>
+
             <!-- Vocabulary information -->
             <section class="panel edit-panel">
                 <header class="edit-panel-head">
@@ -195,32 +201,12 @@
                     <button type="button" class="add-meaning-btn" id="add-meaning-btn">⊕ @T["Add new meaning"]</button>
                 </div>
             </section>
+        <div class="edit-form-actions">
+            <div class="edit-form-actions-inner">
+                <a href="/vocabulary" class="btn-secondary">@T["Cancel"]</a>
+                <button type="submit" class="btn-primary">@T["Save changes"]</button>
+            </div>
         </div>
-
-        <!-- Status & Storage -->
-        <aside class="edit-side">
-            <section class="panel side-card">
-                <h2 class="side-card-title">@T["Status & Storage"]</h2>
-
-                <div class="status-toggle-row">
-                    <span class="status-label" id="status-label" data-active="@T["Active"]" data-inactive="@T["Inactive"]">@(isActive ? T["Active"] : T["Inactive"])</span>
-                    <label class="switch">
-                        <input type="checkbox" name="isActive" value="true" id="isActive" @(isActive ? "checked" : "") />
-                        <input type="hidden" name="isActive" value="false" />
-                        <span class="switch-track"><span class="switch-thumb"></span></span>
-                    </label>
-                </div>
-
-                <dl class="meta-list">
-                    <div class="meta-row"><dt>@T["Date created"]</dt><dd>@(Model.CreatedAt == default ? "—" : Model.CreatedAt.ToString("dd MMM, yyyy"))</dd></div>
-                    <div class="meta-row"><dt>@T["Update"]</dt><dd>@Relative(Model.UpdatedAt)</dd></div>
-                    <div class="meta-row"><dt>@T["Creator"]</dt><dd>Admin</dd></div>
-                </dl>
-
-                <button type="submit" class="btn-primary btn-block">@T["Save changes"]</button>
-                <a href="/vocabulary" class="btn-secondary btn-block">@T["Cancel"]</a>
-            </section>
-        </aside>
     </div>
 </form>
 

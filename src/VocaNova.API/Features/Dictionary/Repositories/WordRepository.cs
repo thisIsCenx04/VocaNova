@@ -75,6 +75,8 @@ public sealed class WordRepository : IWordRepository
         string? status,
         bool includeDeleted,
         string? wordType,
+        string? sortBy,
+        string? sortDirection,
         CancellationToken cancellationToken = default)
     {
         // includeDeleted = bỏ global query filter để thấy cả từ status='deleted'.
@@ -107,10 +109,23 @@ public sealed class WordRepository : IWordRepository
             query = query.Where(word => word.WordSenses.Any(sense => sense.WordClass == wordType));
         }
 
-        // Vocabulary management remains consistently sorted A-Z across searches and filters.
-        var ordered = query
-            .OrderBy(word => word.WordKey)
-            .ThenBy(word => word.WordId);
+        var ordered = (sortBy, sortDirection) switch
+        {
+            ("word", "desc") => query.OrderByDescending(word => word.WordKey),
+            ("type", "desc") => query.OrderByDescending(word => word.WordSenses
+                .OrderBy(sense => sense.SenseOrder).Select(sense => sense.WordClass).FirstOrDefault()),
+            ("type", _) => query.OrderBy(word => word.WordSenses
+                .OrderBy(sense => sense.SenseOrder).Select(sense => sense.WordClass).FirstOrDefault()),
+            ("cefr", "desc") => query.OrderByDescending(word => word.CefrLevel),
+            ("cefr", _) => query.OrderBy(word => word.CefrLevel),
+            ("phonetic", "desc") => query.OrderByDescending(word => word.PhoneticUs ?? word.PhoneticUk),
+            ("phonetic", _) => query.OrderBy(word => word.PhoneticUs ?? word.PhoneticUk),
+            ("status", "desc") => query.OrderByDescending(word => word.Status),
+            ("status", _) => query.OrderBy(word => word.Status),
+            _ => query.OrderBy(word => word.WordKey),
+        };
+
+        ordered = ordered.ThenBy(word => word.WordId);
 
         return ordered
             .Select(word => new AdminWordListItemDto(

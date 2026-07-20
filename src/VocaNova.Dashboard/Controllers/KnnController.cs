@@ -9,7 +9,8 @@ namespace VocaNova.Dashboard.Controllers;
 // F063 — KNN Management. Overview (config + rebuild) + 5 lookup CRUD pages dùng chung 1 view generic.
 public sealed class KnnController : Controller
 {
-    private const int PageSize = 20;
+    private const int DefaultPageSize = 10;
+    private static readonly int[] AllowedPageSizes = [10, 20, 50, 100];
 
     private static readonly IReadOnlyList<KnnLookupLink> Lookups = new[]
     {
@@ -70,6 +71,7 @@ public sealed class KnnController : Controller
         string? status,
         bool includeDeleted = false,
         int page = 1,
+        int limit = DefaultPageSize,
         CancellationToken cancellationToken = default)
     {
         if (!IsValidSlug(slug))
@@ -82,12 +84,17 @@ public sealed class KnnController : Controller
             page = 1;
         }
 
+        if (!AllowedPageSizes.Contains(limit))
+        {
+            limit = DefaultPageSize;
+        }
+
         var filter = new KnnLookupFilter(
             string.IsNullOrWhiteSpace(q) ? null : q.Trim(),
             string.IsNullOrWhiteSpace(status) ? null : status,
             includeDeleted,
             page,
-            PageSize);
+            limit);
 
         IReadOnlyList<KnnLookupRow> rows;
         int totalItems;
@@ -148,7 +155,7 @@ public sealed class KnnController : Controller
             Status = filter.Status,
             IncludeDeleted = includeDeleted,
             Page = page,
-            PageSize = PageSize,
+            PageSize = limit,
             TotalItems = totalItems,
             TotalPages = totalPages,
         };

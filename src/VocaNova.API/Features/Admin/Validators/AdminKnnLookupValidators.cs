@@ -7,6 +7,12 @@ namespace VocaNova.API.Features.Admin.Validators;
 
 public sealed class KnnLookupQueryValidator : AbstractValidator<KnnLookupQuery>
 {
+    private static readonly string[] SortFields =
+    [
+        "id", "name", "status", "min_age", "max_age", "display_order",
+        "code", "parent", "description",
+    ];
+
     public KnnLookupQueryValidator()
     {
         RuleFor(query => query.Page).GreaterThan(0);
@@ -16,6 +22,14 @@ public sealed class KnnLookupQueryValidator : AbstractValidator<KnnLookupQuery>
         RuleFor(query => query.Status)
             .Must(status => string.IsNullOrWhiteSpace(status) || UserStatus.All.Contains(status))
             .WithMessage("Status is invalid.");
+        RuleFor(query => query.SortBy)
+            .Must(sortBy => string.IsNullOrWhiteSpace(sortBy) || SortFields.Contains(sortBy, StringComparer.OrdinalIgnoreCase))
+            .WithMessage("Sort field is invalid.");
+        RuleFor(query => query.SortDirection)
+            .Must(direction => string.IsNullOrWhiteSpace(direction)
+                || direction.Equals("asc", StringComparison.OrdinalIgnoreCase)
+                || direction.Equals("desc", StringComparison.OrdinalIgnoreCase))
+            .WithMessage("Sort direction is invalid.");
     }
 }
 
