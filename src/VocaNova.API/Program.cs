@@ -72,6 +72,8 @@ builder.Services.AddScoped<ITopicRepository, TopicRepository>();
 builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<IUserListRepository, UserListRepository>();
 builder.Services.AddScoped<IUserListService, UserListService>();
+builder.Services.AddScoped<IPersonalTopicRepository, PersonalTopicRepository>();
+builder.Services.AddScoped<IPersonalTopicService, PersonalTopicService>();
 builder.Services.AddScoped<IQuizWordPoolRepository, QuizWordPoolRepository>();
 builder.Services.AddScoped<IQuizSessionBuilder, QuizSessionBuilder>();
 builder.Services.AddScoped<IQuizQuestionRepository, QuizQuestionRepository>();

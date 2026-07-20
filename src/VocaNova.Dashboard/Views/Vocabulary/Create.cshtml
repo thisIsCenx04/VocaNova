@@ -15,23 +15,23 @@
     };
 }
 
-<nav class="breadcrumb">
-    <a href="/vocabulary">@T["Vocabulary Metadata"]</a>
-    <span class="breadcrumb-sep">›</span>
-    <span class="breadcrumb-current">@T["Add new"]</span>
-</nav>
+<div class="page-header page-header-row">
+    <div>
+        <a class="back-link" href="/vocabulary">&larr; @T["Back to vocabulary"]</a>
+        <h1 class="page-title">@T["Create vocabulary"]</h1>
+        <p class="page-subtitle">@T["Add vocabulary metadata, meanings and examples."]</p>
+    </div>
+</div>
 
 @if (TempData["VocabError"] is string errMsg)
 {
     <div class="alert alert-danger">@errMsg</div>
 }
 
-<form method="post" action="/vocabulary/create" class="create-card" id="create-form">
+<form method="post" action="/vocabulary/create" class="management-form" id="create-form">
     @Html.AntiForgeryToken()
 
-    <h1 class="create-title">@T["Add new vocabulary"]</h1>
-
-    <section class="create-section">
+    <section class="panel management-form-panel create-section">
         <header class="create-section-head">
             <span class="create-section-icon">
                 <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 5a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6Zm1.5 11h-3v-1.4h.8V12h-.8v-1.4h2.2v5.6h.8V18Z" fill="currentColor"/></svg>
@@ -70,9 +70,7 @@
         </div>
     </section>
 
-    <hr class="create-divider" />
-
-    <section class="create-section">
+    <section class="panel management-form-panel create-section">
         <header class="create-section-head">
             <span class="create-section-icon">
                 <svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 8h5M9 12h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -118,9 +116,9 @@
         </div>
     </section>
 
-    <div class="create-footer">
+    <div class="management-form-actions">
         <a href="/vocabulary" class="btn-secondary">@T["Cancel"]</a>
-        <button type="submit" class="btn-primary">@T["Save"]</button>
+        <button type="submit" class="btn-primary">@T["Save vocabulary"]</button>
     </div>
 </form>
 

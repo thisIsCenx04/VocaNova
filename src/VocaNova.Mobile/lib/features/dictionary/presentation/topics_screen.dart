@@ -21,18 +21,40 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
     'Travel',
     'Daily life',
   ];
-  late Future<List<TopicSummary>> _topics;
+  late Future<List<TopicSummary>> _systemTopics;
+  Future<List<TopicSummary>>? _personalTopics;
+  bool _showPersonal = false;
   String _query = '';
   String _category = 'All';
 
   @override
   void initState() {
     super.initState();
-    _reload();
+    _systemTopics = ref.read(wordSearchRepositoryProvider).getTopics();
+  }
+
+  Future<List<TopicSummary>> get _currentTopics {
+    if (!_showPersonal) return _systemTopics;
+    return _personalTopics ??= ref
+        .read(wordSearchRepositoryProvider)
+        .getPersonalTopics()
+        .then<List<TopicSummary>>((topics) => topics);
+  }
+
+  void _selectMode(bool personal) {
+    if (_showPersonal == personal) return;
+    setState(() => _showPersonal = personal);
   }
 
   void _reload() {
-    _topics = ref.read(wordSearchRepositoryProvider).getTopics();
+    if (_showPersonal) {
+      _personalTopics = ref
+          .read(wordSearchRepositoryProvider)
+          .getPersonalTopics()
+          .then<List<TopicSummary>>((topics) => topics);
+    } else {
+      _systemTopics = ref.read(wordSearchRepositoryProvider).getTopics();
+    }
   }
 
   @override
@@ -42,13 +64,28 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
       body: RefreshIndicator(
         onRefresh: () async {
           setState(_reload);
-          await _topics;
+          await _currentTopics;
         },
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              sliver: SliverToBoxAdapter(
+                child: _TopicModeSwitch(
+                  showPersonal: _showPersonal,
+                  onChanged: _selectMode,
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              sliver: SliverToBoxAdapter(
+                child: _ModeNote(personal: _showPersonal),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
               sliver: SliverToBoxAdapter(
                 child: TextField(
                   key: const Key('topics-search'),
@@ -81,7 +118,7 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
               ),
             ),
             FutureBuilder<List<TopicSummary>>(
-              future: _topics,
+              future: _currentTopics,
               builder: (context, snapshot) {
                 if (snapshot.connectionState != ConnectionState.done) {
                   return const SliverFillRemaining(
@@ -97,8 +134,14 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
                     .where(_matches)
                     .toList(growable: false);
                 if (topics.isEmpty) {
-                  return const SliverFillRemaining(
-                    child: Center(child: Text('No topics found.')),
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Text(
+                        _showPersonal
+                            ? 'No personal topics match your search.'
+                            : 'No system topics found.',
+                      ),
+                    ),
                   );
                 }
                 return SliverPadding(
@@ -109,15 +152,19 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
                           crossAxisCount: 2,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
-                          childAspectRatio: 1.2,
+                          childAspectRatio: 1.14,
                         ),
                     itemCount: topics.length,
                     itemBuilder: (_, index) {
                       final topic = topics[index];
                       return _TopicGridCard(
                         topic: topic,
+                        personal: _showPersonal,
                         onTap: () => context.push(
-                          AppRoutes.topicDetail('${topic.topicId}'),
+                          AppRoutes.topicDetail(
+                            '${topic.topicId}',
+                            personal: _showPersonal,
+                          ),
                           extra: topic,
                         ),
                       );
@@ -156,10 +203,139 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
   }
 }
 
+class _TopicModeSwitch extends StatelessWidget {
+  const _TopicModeSwitch({required this.showPersonal, required this.onChanged});
+
+  final bool showPersonal;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1EEF6),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _ModeButton(
+              key: const Key('topics-mode-system'),
+              selected: !showPersonal,
+              icon: Icons.public,
+              label: 'System library',
+              onTap: () => onChanged(false),
+            ),
+          ),
+          Expanded(
+            child: _ModeButton(
+              key: const Key('topics-mode-personal'),
+              selected: showPersonal,
+              icon: Icons.auto_stories,
+              label: 'My topics',
+              onTap: () => onChanged(true),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModeButton extends StatelessWidget {
+  const _ModeButton({
+    required this.selected,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    super.key,
+  });
+
+  final bool selected;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? Colors.white : Colors.transparent,
+      borderRadius: BorderRadius.circular(11),
+      elevation: selected ? 1 : 0,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(11),
+        onTap: onTap,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 17,
+              color: selected ? AppColors.primary : const Color(0xFF77717D),
+            ),
+            const SizedBox(width: 7),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: selected
+                      ? const Color(0xFF2F2440)
+                      : const Color(0xFF77717D),
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModeNote extends StatelessWidget {
+  const _ModeNote({required this.personal});
+
+  final bool personal;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          personal ? Icons.quiz_outlined : Icons.info_outline,
+          size: 16,
+          color: AppColors.primary,
+        ),
+        const SizedBox(width: 7),
+        Expanded(
+          child: Text(
+            personal
+                ? 'Only words you saved appear here, ready for practice.'
+                : 'Browse all words organized by the VocaNova team.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF6F6876)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _TopicGridCard extends StatelessWidget {
-  const _TopicGridCard({required this.topic, required this.onTap});
+  const _TopicGridCard({
+    required this.topic,
+    required this.personal,
+    required this.onTap,
+  });
 
   final TopicSummary topic;
+  final bool personal;
   final VoidCallback onTap;
 
   @override
@@ -175,9 +351,24 @@ class _TopicGridCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                topic.icon?.trim().isNotEmpty == true ? topic.icon! : '📚',
-                style: const TextStyle(fontSize: 30),
+              Row(
+                children: [
+                  Text(
+                    topic.icon?.trim().isNotEmpty == true ? topic.icon! : '📚',
+                    style: const TextStyle(fontSize: 30),
+                  ),
+                  const Spacer(),
+                  if (personal)
+                    Icon(
+                      topic.wordCount > 0
+                          ? Icons.check_circle
+                          : Icons.add_circle_outline,
+                      size: 18,
+                      color: topic.wordCount > 0
+                          ? const Color(0xFF36A269)
+                          : const Color(0xFFB6AFBD),
+                    ),
+                ],
               ),
               const SizedBox(height: 10),
               Text(
@@ -188,7 +379,9 @@ class _TopicGridCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '${topic.wordCount} words',
+                personal
+                    ? '${topic.wordCount} personal words'
+                    : '${topic.wordCount} system words',
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: AppColors.primary),

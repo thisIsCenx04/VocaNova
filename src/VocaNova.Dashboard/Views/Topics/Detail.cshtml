@@ -13,21 +13,37 @@
         return $"/topics/{Model.Topic.TopicId}?{string.Join("&", qs)}";
     }
     string Badge(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
+    var pageStart = Model.TotalItems == 0 ? 0 : (Model.Page - 1) * Model.Limit + 1;
+    var pageEnd = pageStart == 0 ? 0 : pageStart + Model.Items.Count - 1;
 }
 
 <div class="page-header page-header-row">
     <div>
-        <a href="/topics" class="text-muted">&larr; @T["Topics"]</a>
-        <h1 class="page-title">@(Model.Topic.Icon ?? "") @Model.Topic.TopicName</h1>
-        <p class="page-subtitle">@(Model.Topic.TopicNameVi ?? T["No Vietnamese name"]) · <span class="@Badge(Model.Topic.Status)">@Model.Topic.Status</span> · @Model.TotalItems @T["word(s)."]</p>
+        <a href="/topics" class="back-link">&larr; @T["Back to topics"]</a>
+        <h1 class="page-title">@T["Topic Details"]</h1>
+        <p class="page-subtitle">@T["Review topic information and its assigned vocabulary."]</p>
     </div>
+    @if (Model.Topic.Status != "deleted")
+    {
+        <a href="/topics/@Model.Topic.TopicId/edit" class="btn-primary">@T["Edit topic"]</a>
+    }
 </div>
 
 @if (TempData["TopicSuccess"] is string successMessage) { <div class="alert alert-success">@successMessage</div> }
 @if (TempData["TopicError"] is string topicError) { <div class="alert alert-danger">@topicError</div> }
 
+<section class="panel topic-summary-panel">
+    <div class="topic-summary-icon" aria-hidden="true">@(string.IsNullOrWhiteSpace(Model.Topic.Icon) ? "#" : Model.Topic.Icon)</div>
+    <div class="topic-summary-main">
+        <span class="info-label">@T["Topic"] #@Model.Topic.TopicId</span>
+        <h2 class="topic-summary-name">@Model.Topic.TopicName</h2>
+        <p class="topic-summary-sub">@(Model.Topic.TopicNameVi ?? T["No Vietnamese name"])</p>
+    </div>
+    <span class="@Badge(Model.Topic.Status)">@Model.Topic.Status</span>
+</section>
+
 <div class="panel topic-add-word-panel">
-    <h4>@T["Add vocabulary to topic"]</h4>
+    <div class="panel-head"><h2 class="panel-title">@T["Add vocabulary to topic"]</h2></div>
     <form method="post" action="/topics/@Model.Topic.TopicId/words" id="topic-add-word-form" class="topic-keyword-entry">
         @Html.AntiForgeryToken()
         <div class="topic-keyword-autocomplete">
@@ -57,20 +73,39 @@
 </form>
 
 <div class="panel table-panel"><table class="data-table">
-    <thead><tr><th>@T["Vocabulary"]</th><th>@T["Word Type"]</th><th>@T["Level"]</th><th>@T["Phonetics"]</th><th>@T["Status"]</th><th class="col-actions">@T["Action"]</th></tr></thead>
+    <thead><tr><th>@T["Vocabulary"]</th><th>@T["Word Type"]</th><th>@T["Level"]</th><th>@T["Phonetics"]</th><th>@T["Status"]</th><th style="width:80px;" class="col-actions">@T["Action"]</th></tr></thead>
     <tbody>
     @if (Model.Items.Count == 0) { <tr><td colspan="6" class="empty-row">@T["No words found."]</td></tr> }
     @foreach (var item in Model.Items) {
-        <tr><td><a class="vocab-word" href="/vocabulary/@item.WordId">@item.Word</a></td><td>@(item.WordType ?? "—")</td><td>@(item.Cefr ?? "—")</td><td>@(item.Phonetic ?? "—")</td><td><span class="@Badge(item.Status)">@item.Status</span></td><td class="col-actions"><a class="btn-icon" href="/vocabulary/@item.WordId">@T["View details"]</a></td></tr>
+        <tr>
+            <td><a class="vocab-word" href="/vocabulary/@item.WordId">@item.Word</a></td>
+            <td>@(item.WordType ?? "—")</td>
+            <td>@(item.Cefr ?? "—")</td>
+            <td>@(item.Phonetic ?? "—")</td>
+            <td><span class="@Badge(item.Status)">@item.Status</span></td>
+            <td class="col-actions">
+                <div class="action-icons">
+                    <a class="icon-link" href="/vocabulary/@item.WordId" title="@T["View details"]" aria-label="@T["View details"]">
+                        <svg viewBox="0 0 24 24"><path d="M12 5c-5 0-8.5 4.5-9.5 7 1 2.5 4.5 7 9.5 7s8.5-4.5 9.5-7c-1-2.5-4.5-7-9.5-7Zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
+                    </a>
+                </div>
+            </td>
+        </tr>
     }
     </tbody>
 </table></div>
 
-<div class="table-foot-bar"><span class="pager-info">@T["Showing"] @Model.Items.Count @T["of"] @Model.TotalItems @T["entries"]</span>
-@if (Model.TotalPages > 1) { <nav class="pager">
-    <a class="pager-link @(Model.HasPrevious ? "" : "disabled")" href="@(Model.HasPrevious ? Url(Model.Page - 1) : "#")">@T["Prev"]</a>
-    @for (var p = 1; p <= Model.TotalPages; p++) { <a class="pager-link @(p == Model.Page ? "active" : "")" href="@Url(p)">@p</a> }
-    <a class="pager-link @(Model.HasNext ? "" : "disabled")" href="@(Model.HasNext ? Url(Model.Page + 1) : "#")">@T["Next"]</a>
+<div class="table-foot-bar"><span class="pager-info">@T["Showing"] @pageStart @T["to"] @pageEnd @T["of"] @Model.TotalItems @T["entries"]</span>
+@if (Model.TotalPages > 1) {
+    var winStart = Math.Max(1, Model.Page - 2);
+    var winEnd = Math.Min(Model.TotalPages, winStart + 4);
+    winStart = Math.Max(1, winEnd - 4);
+<nav class="pager" data-page="@Model.Page" data-total-pages="@Model.TotalPages">
+    @if (Model.HasPrevious) { <a class="pager-link" href="@Url(Model.Page - 1)">&lsaquo; @T["Prev"]</a> }
+    else { <span class="pager-link disabled">&lsaquo; @T["Prev"]</span> }
+    @for (var p = winStart; p <= winEnd; p++) { <a class="pager-link @(p == Model.Page ? "active" : "")" href="@Url(p)">@p</a> }
+    @if (Model.HasNext) { <a class="pager-link" href="@Url(Model.Page + 1)">@T["Next"] &rsaquo;</a> }
+    else { <span class="pager-link disabled">@T["Next"] &rsaquo;</span> }
 </nav> }
 </div>
 

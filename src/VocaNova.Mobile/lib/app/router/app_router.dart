@@ -98,6 +98,7 @@ class AppRouter {
                 path: AppRoutes.topic,
                 builder: (_, state) => TopicDetailScreen(
                   topicId: int.parse(state.pathParameters['id']!),
+                  isPersonal: state.uri.queryParameters['personal'] == 'true',
                   initialTopic: state.extra is TopicSummary
                       ? state.extra! as TopicSummary
                       : null,
@@ -118,6 +119,14 @@ class AppRouter {
               GoRoute(
                 path: AppRoutes.progress,
                 builder: (_, _) => const ProgressOverviewScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.quizConfig,
+                builder: (_, state) => QuizConfigScreen(
+                  initialListId: int.tryParse(
+                    state.uri.queryParameters['listId'] ?? '',
+                  ),
+                ),
               ),
             ],
           ),
@@ -151,14 +160,6 @@ class AppRouter {
         path: AppRoutes.list,
         builder: (_, state) =>
             ListDetailScreen(listId: int.parse(state.pathParameters['id']!)),
-      ),
-      GoRoute(
-        path: AppRoutes.quizConfig,
-        builder: (_, state) => QuizConfigScreen(
-          initialListId: int.tryParse(
-            state.uri.queryParameters['listId'] ?? '',
-          ),
-        ),
       ),
       GoRoute(
         path: AppRoutes.quizActive,

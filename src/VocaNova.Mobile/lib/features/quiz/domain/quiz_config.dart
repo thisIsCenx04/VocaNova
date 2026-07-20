@@ -109,6 +109,8 @@ class QuizConfigRequest {
     required this.scopeType,
     required this.topicIds,
     required this.answerMethod,
+    this.wordOrder = 'random',
+    this.wordLimit = 20,
     this.listId,
     this.scopeDateFrom,
     this.scopeDateTo,
@@ -119,6 +121,10 @@ class QuizConfigRequest {
   final String mode;
   final int questionType;
   final String scopeType;
+  final String wordOrder;
+
+  /// Số câu hỏi tối đa; null nghĩa là lấy toàn bộ từ trong phạm vi.
+  final int? wordLimit;
   final int? listId;
   final DateTime? scopeDateFrom;
   final DateTime? scopeDateTo;
@@ -135,8 +141,8 @@ class QuizConfigRequest {
     'scope_date_from': _date(scopeDateFrom),
     'scope_date_to': _date(scopeDateTo),
     'topic_ids': topicIds.isEmpty ? null : topicIds,
-    'word_order': 'random',
-    'word_limit': 20,
+    'word_order': wordOrder,
+    'word_limit': wordLimit,
     'time_limit_sec': timeLimitSec,
     'lives': lives,
     'answer_method': answerMethod,
