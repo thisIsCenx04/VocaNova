@@ -8,7 +8,9 @@ public sealed record AdminUserQuery(
     [property: JsonPropertyName("status")] string? Status = null,
     [property: JsonPropertyName("search")] string? Search = null,
     [property: JsonPropertyName("includeDeleted")] bool IncludeDeleted = false,
-    [property: JsonPropertyName("role")] string? Role = null);
+    [property: JsonPropertyName("role")] string? Role = null,
+    [property: JsonPropertyName("sortBy")] string? SortBy = null,
+    [property: JsonPropertyName("sortDirection")] string? SortDirection = null);
 
 public sealed record AdminUserSummaryDto(
     [property: JsonPropertyName("user_id")] uint UserId,

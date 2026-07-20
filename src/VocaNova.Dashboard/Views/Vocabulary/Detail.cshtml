@@ -14,9 +14,6 @@
 
     var usAudio = Model.Audio.FirstOrDefault(a => string.Equals(a.Accent, "us", StringComparison.OrdinalIgnoreCase));
 
-    var itemId = $"VOC-{Model.WordId:0000}";
-    var statusActive = !string.Equals(Model.Status, "deleted", StringComparison.OrdinalIgnoreCase);
-
     // Tô đậm từ mục tiêu trong câu ví dụ (encode trước rồi mới bọc <span> để tránh injection).
     string Highlight(string? text)
     {
@@ -40,7 +37,7 @@
         <div>
             <a class="back-link" href="/vocabulary">&larr; @T["Back to vocabulary"]</a>
             <h1 class="page-title">@T["Vocabulary details"]</h1>
-            <p class="page-subtitle">@T["Review vocabulary metadata, meanings and media."]</p>
+            <p class="page-subtitle">@T["Review vocabulary meanings, examples and media."]</p>
         </div>
         <div class="header-actions">
             @if (canManage)
@@ -90,31 +87,6 @@
             }
         </section>
 
-        <section class="vd-meta-card">
-            <h3 class="vd-meta-title">@T["System Metadata"]</h3>
-            <dl class="vd-meta-list">
-                <div class="vd-meta-row">
-                    <dt>@T["Item ID"]</dt>
-                    <dd>@itemId</dd>
-                </div>
-                <div class="vd-meta-row">
-                    <dt>@T["Added By"]</dt>
-                    <dd>@T["System Auto-Import"]</dd>
-                </div>
-                <div class="vd-meta-row">
-                    <dt>@T["Last Modified"]</dt>
-                    <dd>@(Model.UpdatedAt == default ? "—" : Model.UpdatedAt.ToString("MMM dd, yyyy - HH:mm"))</dd>
-                </div>
-                <div class="vd-meta-row">
-                    <dt>@T["Status"]</dt>
-                    <dd>
-                        <span class="vd-status @(statusActive ? "is-active" : "is-deleted")">
-                            <span class="vd-status-dot"></span>@(statusActive ? T["Active"] : T["Deleted"])
-                        </span>
-                    </dd>
-                </div>
-            </dl>
-        </section>
     </div>
 
     <section class="vd-meanings">

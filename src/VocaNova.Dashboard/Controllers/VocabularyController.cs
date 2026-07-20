@@ -7,7 +7,8 @@ namespace VocaNova.Dashboard.Controllers;
 // F057 — Vocabulary List & Filter. Phân trang server-side; xóa/khôi phục proxy qua API rồi redirect giữ nguyên bộ lọc.
 public sealed class VocabularyController : Controller
 {
-    private const int PageSize = 10;
+    private const int DefaultPageSize = 10;
+    private static readonly int[] AllowedPageSizes = [10, 20, 50, 100];
 
     private readonly IVocaNovaApiClient _apiClient;
 
@@ -25,11 +26,17 @@ public sealed class VocabularyController : Controller
         string? wordType,
         bool includeDeleted = false,
         int page = 1,
+        int limit = DefaultPageSize,
         CancellationToken cancellationToken = default)
     {
         if (page < 1)
         {
             page = 1;
+        }
+
+        if (!AllowedPageSizes.Contains(limit))
+        {
+            limit = DefaultPageSize;
         }
 
         var filter = new WordListFilter(
@@ -39,7 +46,7 @@ public sealed class VocabularyController : Controller
             Status: string.IsNullOrWhiteSpace(status) ? null : status,
             IncludeDeleted: includeDeleted,
             Page: page,
-            Limit: PageSize,
+            Limit: limit,
             WordType: string.IsNullOrWhiteSpace(wordType) ? null : wordType);
 
         var words = await _apiClient.GetWordsAsync(filter, cancellationToken);

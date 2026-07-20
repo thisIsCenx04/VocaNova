@@ -50,9 +50,23 @@ public sealed class AdminUserRepository : IAdminUserRepository
                 || (user.UserProfile != null && user.UserProfile.FullName.ToLower().Contains(search)));
         }
 
-        return source
-            .OrderByDescending(user => user.CreatedAt)
-            .ThenByDescending(user => user.UserId)
+        var ordered = (query.SortBy, query.SortDirection) switch
+        {
+            ("id", "desc") => source.OrderByDescending(user => user.UserId),
+            ("id", _) => source.OrderBy(user => user.UserId),
+            ("name", "desc") => source.OrderByDescending(user => user.UserProfile == null ? string.Empty : user.UserProfile.FullName),
+            ("name", _) => source.OrderBy(user => user.UserProfile == null ? string.Empty : user.UserProfile.FullName),
+            ("email", "desc") => source.OrderByDescending(user => user.UserAuth == null ? string.Empty : user.UserAuth.GoogleEmail),
+            ("email", _) => source.OrderBy(user => user.UserAuth == null ? string.Empty : user.UserAuth.GoogleEmail),
+            ("status", "desc") => source.OrderByDescending(user => user.Status),
+            ("status", _) => source.OrderBy(user => user.Status),
+            ("phone", "desc") => source.OrderByDescending(user => user.UserAuth == null ? string.Empty : user.UserAuth.Phone),
+            ("phone", _) => source.OrderBy(user => user.UserAuth == null ? string.Empty : user.UserAuth.Phone),
+            _ => source.OrderByDescending(user => user.CreatedAt),
+        };
+
+        return ordered
+            .ThenBy(user => user.UserId)
             .Select(user => new AdminUserSummaryDto(
                 user.UserId,
                 user.UserAuth == null ? null : user.UserAuth.Phone,

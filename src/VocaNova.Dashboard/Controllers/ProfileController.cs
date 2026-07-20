@@ -41,7 +41,9 @@ public sealed class ProfileController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateProfile(
         [FromForm] string? displayName,
-        [FromForm] string? avatarUrl,
+        [FromForm] string? currentPassword,
+        [FromForm] string? newPassword,
+        [FromForm] string? confirmPassword,
         CancellationToken cancellationToken)
     {
         var name = displayName?.Trim();
@@ -51,12 +53,50 @@ public sealed class ProfileController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        var result = await _apiClient.UpdateMyProfileAsync(
-            name,
-            string.IsNullOrWhiteSpace(avatarUrl) ? null : avatarUrl.Trim(),
-            cancellationToken);
+        var wantsPasswordChange = !string.IsNullOrWhiteSpace(currentPassword)
+            || !string.IsNullOrWhiteSpace(newPassword)
+            || !string.IsNullOrWhiteSpace(confirmPassword);
 
-        await ApplyResultAndRefreshAsync(result, "Profile updated.", cancellationToken);
+        if (wantsPasswordChange)
+        {
+            if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword))
+            {
+                TempData["UserError"] = "Please fill in all password fields.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (!string.Equals(newPassword, confirmPassword, StringComparison.Ordinal))
+            {
+                TempData["UserError"] = "New password and confirmation do not match.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (!IsStrongPassword(newPassword))
+            {
+                TempData["UserError"] = "Password must be at least 8 characters with upper, lower and a digit.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var passwordResult = await _apiClient.ChangeMyPasswordAsync(currentPassword, newPassword, cancellationToken);
+            if (!passwordResult.IsSuccess)
+            {
+                TempData["UserError"] = passwordResult.StatusCode switch
+                {
+                    400 or 401 => passwordResult.Message ?? "Current password is incorrect.",
+                    _ => passwordResult.Message ?? "Unable to change password.",
+                };
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // Avatar is managed only by the upload control. Preserve the existing URL.
+        var currentProfile = await _apiClient.GetMyProfileAsync(cancellationToken);
+        var result = await _apiClient.UpdateMyProfileAsync(name, currentProfile?.AvatarUrl ?? User.FindFirstValue("avatar_url"), cancellationToken);
+
+        await ApplyResultAndRefreshAsync(
+            result,
+            wantsPasswordChange ? "Profile and password updated." : "Profile updated.",
+            cancellationToken);
         return RedirectToAction(nameof(Index));
     }
 

@@ -7,7 +7,9 @@ public sealed record KnnLookupQuery(
     [property: JsonPropertyName("limit")] int Limit = 20,
     [property: JsonPropertyName("q")] string? Q = null,
     [property: JsonPropertyName("status")] string? Status = null,
-    [property: JsonPropertyName("include_deleted")] bool IncludeDeleted = false);
+    [property: JsonPropertyName("include_deleted")] bool IncludeDeleted = false,
+    [property: JsonPropertyName("sort_by")] string? SortBy = null,
+    [property: JsonPropertyName("sort_direction")] string? SortDirection = null);
 
 public sealed record AgeRangeDto(
     [property: JsonPropertyName("age_range_id")] uint AgeRangeId,

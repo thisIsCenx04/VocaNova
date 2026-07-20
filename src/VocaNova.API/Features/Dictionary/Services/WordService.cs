@@ -11,6 +11,9 @@ namespace VocaNova.API.Features.Dictionary.Services;
 
 public sealed class WordService : IWordService
 {
+    private static readonly IReadOnlySet<string> AdminSortColumns =
+        new HashSet<string>(StringComparer.Ordinal) { "word", "type", "cefr", "phonetic", "status" };
+
     private const string CsvWordColumn = "word";
     private const string CsvCefrColumn = "cefr_level";
     private const string CsvPhoneticUkColumn = "phonetic_uk";
@@ -142,6 +145,22 @@ public sealed class WordService : IWordService
             ? null
             : query.WordType.Trim().ToLowerInvariant();
 
+        var sortBy = string.IsNullOrWhiteSpace(query.SortBy)
+            ? null
+            : query.SortBy.Trim().ToLowerInvariant();
+        if (sortBy is not null && !AdminSortColumns.Contains(sortBy))
+        {
+            return Result<PagedResult<AdminWordListItemDto>>.Fail("Sort column is invalid.");
+        }
+
+        var sortDirection = string.IsNullOrWhiteSpace(query.SortDirection)
+            ? null
+            : query.SortDirection.Trim().ToLowerInvariant();
+        if (sortDirection is not null && sortDirection is not ("asc" or "desc"))
+        {
+            return Result<PagedResult<AdminWordListItemDto>>.Fail("Sort direction must be 'asc' or 'desc'.");
+        }
+
         var result = await _wordRepository.SearchAdminAsync(
             normalizedQuery,
             query.Page,
@@ -151,6 +170,8 @@ public sealed class WordService : IWordService
             status,
             includeDeleted,
             wordType,
+            sortBy,
+            sortDirection,
             cancellationToken);
 
         return Result<PagedResult<AdminWordListItemDto>>.Ok(result);

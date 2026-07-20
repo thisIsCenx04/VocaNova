@@ -2,6 +2,7 @@
 @model VocaNova.Dashboard.Models.Topics.TopicDetailViewModel
 @{
     ViewData["Title"] = "Topic details";
+    var pageSizes = new[] { 10, 20, 50, 100 };
     string Url(int page) {
         var qs = new List<string>();
         if (!string.IsNullOrWhiteSpace(Model.Q)) qs.Add($"q={Uri.EscapeDataString(Model.Q)}");
@@ -9,12 +10,11 @@
         if (!string.IsNullOrWhiteSpace(Model.WordType)) qs.Add($"wordType={Uri.EscapeDataString(Model.WordType)}");
         if (!string.IsNullOrWhiteSpace(Model.Status)) qs.Add($"status={Uri.EscapeDataString(Model.Status)}");
         if (Model.IncludeDeleted) qs.Add("includeDeleted=true");
+        qs.Add($"limit={Model.Limit}");
         qs.Add($"page={page}");
         return $"/topics/{Model.Topic.TopicId}?{string.Join("&", qs)}";
     }
     string Badge(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
-    var pageStart = Model.TotalItems == 0 ? 0 : (Model.Page - 1) * Model.Limit + 1;
-    var pageEnd = pageStart == 0 ? 0 : pageStart + Model.Items.Count - 1;
 }
 
 <div class="page-header page-header-row">
@@ -58,6 +58,7 @@
 
 <form method="get" action="/topics/@Model.Topic.TopicId" class="filter-bar">
     <input type="text" name="q" value="@Model.Q" class="form-control" placeholder="@T["Search for vocabulary..."]" />
+    <input type="hidden" name="limit" value="@Model.Limit" />
     <select name="cefr" class="form-control"><option value="">@T["CEFR Level"]</option>
         @foreach (var level in VocabularyListViewModel.CefrLevels) { <option value="@level" selected="@(Model.Cefr == level)">@level</option> }
     </select>
@@ -95,7 +96,23 @@
     </tbody>
 </table></div>
 
-<div class="table-foot-bar"><span class="pager-info">@T["Showing"] @pageStart @T["to"] @pageEnd @T["of"] @Model.TotalItems @T["entries"]</span>
+<div class="table-foot-bar">
+<form method="get" action="/topics/@Model.Topic.TopicId" class="page-size-form">
+    @if (!string.IsNullOrWhiteSpace(Model.Q)) { <input type="hidden" name="q" value="@Model.Q" /> }
+    @if (!string.IsNullOrWhiteSpace(Model.Cefr)) { <input type="hidden" name="cefr" value="@Model.Cefr" /> }
+    @if (!string.IsNullOrWhiteSpace(Model.WordType)) { <input type="hidden" name="wordType" value="@Model.WordType" /> }
+    @if (!string.IsNullOrWhiteSpace(Model.Status)) { <input type="hidden" name="status" value="@Model.Status" /> }
+    @if (Model.IncludeDeleted) { <input type="hidden" name="includeDeleted" value="true" /> }
+    <label class="page-size-control">
+        <span>@T["Items per page"]</span>
+        <select name="limit" class="form-control" data-page-size-select aria-label="@T["Items per page"]">
+            @foreach (var size in pageSizes)
+            {
+                <option value="@size" selected="@(Model.Limit == size)">@size</option>
+            }
+        </select>
+    </label>
+</form>
 @if (Model.TotalPages > 1) {
     var winStart = Math.Max(1, Model.Page - 2);
     var winEnd = Math.Min(Model.TotalPages, winStart + 4);

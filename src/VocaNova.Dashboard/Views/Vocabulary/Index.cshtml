@@ -6,8 +6,7 @@
     var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
     var canManage = role is "admin" or "super_admin";
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
-    var pageStart = Model.TotalItems == 0 ? 0 : (Model.Page - 1) * Model.Limit + 1;
-    var pageEnd = pageStart == 0 ? 0 : pageStart + Model.Items.Count - 1;
+    var pageSizes = new[] { 10, 20, 50, 100 };
 
     string PageUrl(int page)
     {
@@ -18,6 +17,7 @@
         if (Model.TopicId is { } tid) qs.Add($"topicId={tid}");
         if (!string.IsNullOrWhiteSpace(Model.Status)) qs.Add($"status={Uri.EscapeDataString(Model.Status)}");
         if (Model.IncludeDeleted) qs.Add("includeDeleted=true");
+        qs.Add($"limit={Model.Limit}");
         qs.Add($"page={page}");
         return "/vocabulary?" + string.Join("&", qs);
     }
@@ -34,6 +34,7 @@
         if (Model.TopicId is { } tid) qs.Add($"topicId={tid}");
         if (!string.IsNullOrWhiteSpace(Model.Status)) qs.Add($"status={Uri.EscapeDataString(Model.Status)}");
         if (Model.IncludeDeleted) qs.Add("includeDeleted=true");
+        qs.Add($"limit={Model.Limit}");
         return qs.Count == 0 ? "/vocabulary" : "/vocabulary?" + string.Join("&", qs);
     }
 
@@ -61,6 +62,7 @@
 }
 
 <form method="get" action="/vocabulary" class="filter-bar">
+    <input type="hidden" name="limit" value="@Model.Limit" />
     <input type="text" name="q" value="@Model.Q" class="form-control" placeholder="@T["Search for vocabulary..."]" />
     <select name="cefr" class="form-control">
         <option value="">@T["CEFR Level"]</option>
@@ -194,7 +196,23 @@
 </div>
 
 <div class="table-foot-bar">
-    <span class="pager-info">@T["Showing"] @pageStart @T["to"] @pageEnd @T["of"] @Model.TotalItems @T["entries"]</span>
+    <form method="get" action="/vocabulary" class="page-size-form">
+        @if (!string.IsNullOrWhiteSpace(Model.Q)) { <input type="hidden" name="q" value="@Model.Q" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.Cefr)) { <input type="hidden" name="cefr" value="@Model.Cefr" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.WordType)) { <input type="hidden" name="wordType" value="@Model.WordType" /> }
+        @if (Model.TopicId is { } topicId) { <input type="hidden" name="topicId" value="@topicId" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.Status)) { <input type="hidden" name="status" value="@Model.Status" /> }
+        @if (Model.IncludeDeleted) { <input type="hidden" name="includeDeleted" value="true" /> }
+        <label class="page-size-control">
+            <span>@T["Items per page"]</span>
+            <select name="limit" class="form-control" data-page-size-select aria-label="@T["Items per page"]">
+                @foreach (var size in pageSizes)
+                {
+                    <option value="@size" selected="@(Model.Limit == size)">@size</option>
+                }
+            </select>
+        </label>
+    </form>
     @if (Model.TotalPages > 1)
     {
         var winStart = Math.Max(1, Model.Page - 2);

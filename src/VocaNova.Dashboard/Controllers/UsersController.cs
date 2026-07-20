@@ -9,7 +9,8 @@ namespace VocaNova.Dashboard.Controllers;
 // Deactivate/Restore yêu cầu super_admin (API enforce SuperAdminPolicy).
 public sealed class UsersController : Controller
 {
-    private const int PageSize = 10;
+    private const int DefaultPageSize = 10;
+    private static readonly int[] AllowedPageSizes = [10, 20, 50, 100];
     private const int TabPageSize = 10;
 
     private readonly IVocaNovaApiClient _apiClient;
@@ -26,6 +27,7 @@ public sealed class UsersController : Controller
         string? role,
         bool includeDeleted = false,
         int page = 1,
+        int limit = DefaultPageSize,
         CancellationToken cancellationToken = default)
     {
         if (page < 1)
@@ -33,12 +35,17 @@ public sealed class UsersController : Controller
             page = 1;
         }
 
+        if (!AllowedPageSizes.Contains(limit))
+        {
+            limit = DefaultPageSize;
+        }
+
         var filter = new UserListFilter(
             Status: string.IsNullOrWhiteSpace(status) ? null : status,
             Search: string.IsNullOrWhiteSpace(search) ? null : search.Trim(),
             IncludeDeleted: includeDeleted,
             Page: page,
-            Limit: PageSize,
+            Limit: limit,
             Role: string.IsNullOrWhiteSpace(role) ? null : role);
 
         var users = await _apiClient.GetUsersAsync(filter, cancellationToken);

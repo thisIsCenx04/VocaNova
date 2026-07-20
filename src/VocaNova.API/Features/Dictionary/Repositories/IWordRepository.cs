@@ -27,6 +27,8 @@ public interface IWordRepository
         string? status,
         bool includeDeleted,
         string? wordType,
+        string? sortBy,
+        string? sortDirection,
         CancellationToken cancellationToken = default);
 
     Task<bool> WordKeyExistsAsync(

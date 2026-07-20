@@ -31,4 +31,10 @@ public sealed class AdminWordQuery
 
     [JsonPropertyName("limit")]
     public int Limit { get; set; } = 20;
+
+    [JsonPropertyName("sortBy")]
+    public string? SortBy { get; set; }
+
+    [JsonPropertyName("sortDirection")]
+    public string? SortDirection { get; set; }
 }

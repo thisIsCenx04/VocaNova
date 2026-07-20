@@ -15,6 +15,19 @@
     });
 })();
 
+// Submit page-size controls consistently across all paginated lists.
+(function () {
+    'use strict';
+
+    document.querySelectorAll('[data-page-size-select]').forEach(function (select) {
+        select.addEventListener('change', function () {
+            if (select.form) {
+                select.form.submit();
+            }
+        });
+    });
+})();
+
 // Direct page jump shared by all paginated lists. Existing query filters are preserved.
 (function () {
     'use strict';

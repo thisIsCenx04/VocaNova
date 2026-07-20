@@ -42,10 +42,9 @@
         </form>
     </aside>
 
-    <!-- Forms -->
+    <!-- Account settings -->
     <div class="profile-main">
-        <!-- Edit profile -->
-        <section class="panel">
+        <section class="panel profile-settings">
             <div class="panel-head"><h2 class="panel-title">@T["Edit profile"]</h2></div>
             <form method="post" action="/profile" class="profile-form">
                 @Html.AntiForgeryToken()
@@ -53,38 +52,27 @@
                     <label for="displayName">@T["Display name"]</label>
                     <input id="displayName" name="displayName" class="form-control" value="@Model.DisplayName" maxlength="150" required />
                 </div>
-                <div class="form-group">
-                    <label for="avatarUrl">@T["Avatar URL"]</label>
-                    <input id="avatarUrl" name="avatarUrl" class="form-control" value="@Model.AvatarUrl" placeholder="https://..." />
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn-primary">@T["Save profile"]</button>
-                </div>
-            </form>
-        </section>
 
-        <!-- Change password -->
-        <section class="panel">
-            <div class="panel-head"><h2 class="panel-title">@T["Change password"]</h2></div>
-            <form method="post" action="/profile/password" class="profile-form">
-                @Html.AntiForgeryToken()
+                <div class="profile-form-divider" role="separator"></div>
+                <div class="profile-form-section">
+                    <h3>@T["Change password"]</h3>
+                    <p>@T["Leave these fields blank if you do not want to change your password."]</p>
+                </div>
                 <div class="form-group">
                     <label for="currentPassword">@T["Current password"]</label>
-                    <input id="currentPassword" name="currentPassword" type="password" class="form-control" required />
+                    <input id="currentPassword" name="currentPassword" type="password" class="form-control" autocomplete="current-password" />
                 </div>
-                <div class="field-grid-2">
-                    <div class="form-group">
-                        <label for="newPassword">@T["New password"]</label>
-                        <input id="newPassword" name="newPassword" type="password" class="form-control" minlength="8" required />
-                    </div>
-                    <div class="form-group">
-                        <label for="confirmPassword">@T["Confirm new password"]</label>
-                        <input id="confirmPassword" name="confirmPassword" type="password" class="form-control" minlength="8" required />
-                    </div>
+                <div class="form-group">
+                    <label for="newPassword">@T["New password"]</label>
+                    <input id="newPassword" name="newPassword" type="password" class="form-control" minlength="8" autocomplete="new-password" />
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">@T["Confirm new password"]</label>
+                    <input id="confirmPassword" name="confirmPassword" type="password" class="form-control" minlength="8" autocomplete="new-password" />
                 </div>
                 <p class="profile-hint">@T["At least 8 characters, including uppercase, lowercase and a digit."]</p>
                 <div class="form-actions">
-                    <button type="submit" class="btn-primary">@T["Update password"]</button>
+                    <button type="submit" class="btn-primary">@T["Save changes"]</button>
                 </div>
             </form>
         </section>

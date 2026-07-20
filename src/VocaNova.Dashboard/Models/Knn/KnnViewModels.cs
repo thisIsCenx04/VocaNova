@@ -29,7 +29,7 @@ public sealed class KnnLookupViewModel
 
     public int Page { get; init; } = 1;
 
-    public int PageSize { get; init; } = 20;
+    public int PageSize { get; init; } = 10;
 
     public int TotalItems { get; init; }
 
