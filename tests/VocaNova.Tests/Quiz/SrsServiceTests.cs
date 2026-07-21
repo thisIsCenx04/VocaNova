@@ -1,4 +1,4 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Features.Quiz.Repositories;
 using VocaNova.API.Features.Quiz.Services;
@@ -16,6 +16,7 @@ public class SrsServiceTests
         var service = CreateService(dbContext);
 
         var result = await service.UpdateProgressAsync(1, 10, isCorrect: true);
+        await dbContext.SaveChangesAsync();
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.UserId.Should().Be(1);
@@ -40,6 +41,7 @@ public class SrsServiceTests
         for (var attempt = 0; attempt < 5; attempt++)
         {
             await service.UpdateProgressAsync(1, 10, isCorrect: true);
+            await dbContext.SaveChangesAsync();
         }
 
         var progress = await dbContext.UserWordProgresses.SingleAsync();
@@ -59,9 +61,11 @@ public class SrsServiceTests
         for (var attempt = 0; attempt < 4; attempt++)
         {
             await service.UpdateProgressAsync(1, 10, isCorrect: true);
+            await dbContext.SaveChangesAsync();
         }
 
         await service.UpdateProgressAsync(1, 10, isCorrect: false);
+        await dbContext.SaveChangesAsync();
 
         var progress = await dbContext.UserWordProgresses.SingleAsync();
         progress.TestCount.Should().Be(5);
@@ -96,6 +100,7 @@ public class SrsServiceTests
         var service = CreateService(dbContext);
 
         await service.UpdateProgressAsync(1, 10, isCorrect: false);
+        await dbContext.SaveChangesAsync();
 
         var progress = await dbContext.UserWordProgresses.SingleAsync();
         progress.EaseFactor.Should().Be(1.3f);

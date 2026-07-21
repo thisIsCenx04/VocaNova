@@ -10,6 +10,4 @@ public interface ISrsRepository
         CancellationToken cancellationToken = default);
 
     void Add(UserWordProgress progress);
-
-    Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

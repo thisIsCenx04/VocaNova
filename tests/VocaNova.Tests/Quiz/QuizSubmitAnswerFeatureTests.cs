@@ -4,6 +4,7 @@ using VocaNova.API.Common.Constants;
 using VocaNova.API.Features.Quiz.DTOs;
 using VocaNova.API.Features.Quiz.Repositories;
 using VocaNova.API.Features.Quiz.Services;
+using VocaNova.API.Infrastructure.Caching;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -160,6 +161,41 @@ public class QuizSubmitAnswerFeatureTests
         (await dbContext.TestAnswers.CountAsync()).Should().Be(0);
     }
 
+    [Fact]
+    public async Task SubmitAnswerAsync_Should_Build_Word_Pool_Once_And_Reuse_It_From_Cache()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedQuizDataAsync(dbContext, AnswerMethod.MultipleChoice);
+        var cache = new FakeQuizPoolCache();
+        var service = CreateService(dbContext, cache);
+
+        var first = await service.SubmitAnswerAsync(1, 100, new SubmitAnswerRequest(4, "bay"));
+        first.IsSuccess.Should().BeTrue();
+        cache.SetCount.Should().Be(1, "tập từ được dựng và cache ở lần nộp đầu");
+        cache.HitCount.Should().Be(0);
+
+        var second = await service.SubmitAnswerAsync(1, 100, new SubmitAnswerRequest(3, "nhay"));
+
+        second.IsSuccess.Should().BeTrue();
+        cache.HitCount.Should().Be(1, "lần nộp sau đọc lại từ cache");
+        cache.SetCount.Should().Be(1, "không dựng lại tập từ");
+    }
+
+    [Fact]
+    public async Task SubmitAnswerAsync_Should_Drop_Cached_Pool_When_Session_Completes()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedQuizDataAsync(dbContext, AnswerMethod.MultipleChoice, questionCount: 1);
+        var cache = new FakeQuizPoolCache();
+        var service = CreateService(dbContext, cache);
+
+        var result = await service.SubmitAnswerAsync(1, 100, new SubmitAnswerRequest(4, "bay"));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.NextQuestion.Should().BeNull("phiên chỉ có một câu");
+        cache.RemoveCount.Should().Be(1, "phiên kết thúc thì bỏ cache");
+    }
+
     private static VocaNovaDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<VocaNovaDbContext>()
@@ -169,7 +205,9 @@ public class QuizSubmitAnswerFeatureTests
         return new VocaNovaDbContext(options);
     }
 
-    private static QuizSubmitService CreateService(VocaNovaDbContext dbContext)
+    private static QuizSubmitService CreateService(
+        VocaNovaDbContext dbContext,
+        IQuizPoolCache? quizPoolCache = null)
     {
         return new QuizSubmitService(
             new QuizSubmitRepository(dbContext),
@@ -181,7 +219,64 @@ public class QuizSubmitAnswerFeatureTests
                 new MultipleChoiceGrader(),
             },
             new StubAiGradingService(),
-            new SrsService(new SrsRepository(dbContext)));
+            new SrsService(new SrsRepository(dbContext)),
+            progressSummaryCache: null,
+            quizPoolCache: quizPoolCache);
+    }
+
+    /// <summary>
+    /// Cache trong bộ nhớ, đếm số lần đọc/ghi để khẳng định tập từ chỉ được
+    /// dựng một lần cho mỗi phiên.
+    /// </summary>
+    private sealed class FakeQuizPoolCache : IQuizPoolCache
+    {
+        private readonly Dictionary<string, IReadOnlyCollection<QuizPoolWordDto>> _entries = new();
+
+        public int SetCount { get; private set; }
+
+        public int HitCount { get; private set; }
+
+        public int RemoveCount { get; private set; }
+
+        public Task<IReadOnlyCollection<QuizPoolWordDto>?> GetAsync(
+            uint sessionId,
+            uint? listId,
+            CancellationToken cancellationToken = default)
+        {
+            if (_entries.TryGetValue(Key(sessionId, listId), out var pool))
+            {
+                HitCount++;
+                return Task.FromResult<IReadOnlyCollection<QuizPoolWordDto>?>(pool);
+            }
+
+            return Task.FromResult<IReadOnlyCollection<QuizPoolWordDto>?>(null);
+        }
+
+        public Task SetAsync(
+            uint sessionId,
+            uint? listId,
+            IReadOnlyCollection<QuizPoolWordDto> pool,
+            CancellationToken cancellationToken = default)
+        {
+            SetCount++;
+            _entries[Key(sessionId, listId)] = pool;
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveAsync(
+            uint sessionId,
+            uint? listId,
+            CancellationToken cancellationToken = default)
+        {
+            RemoveCount++;
+            _entries.Remove(Key(sessionId, listId));
+            return Task.CompletedTask;
+        }
+
+        private static string Key(uint sessionId, uint? listId)
+        {
+            return $"{sessionId}:{listId?.ToString() ?? "all"}";
+        }
     }
 
     private static async Task SeedQuizDataAsync(

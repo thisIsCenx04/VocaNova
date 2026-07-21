@@ -17,6 +17,7 @@ public sealed class QuizSubmitService : IQuizSubmitService
     private readonly IAiGradingService _aiGradingService;
     private readonly ISrsService _srsService;
     private readonly IProgressSummaryCache? _progressSummaryCache;
+    private readonly IQuizPoolCache? _quizPoolCache;
 
     public QuizSubmitService(
         IQuizSubmitRepository quizSubmitRepository,
@@ -25,8 +26,10 @@ public sealed class QuizSubmitService : IQuizSubmitService
         IEnumerable<IAnswerGrader> answerGraders,
         IAiGradingService aiGradingService,
         ISrsService srsService,
-        IProgressSummaryCache? progressSummaryCache = null)
+        IProgressSummaryCache? progressSummaryCache = null,
+        IQuizPoolCache? quizPoolCache = null)
     {
+        _quizPoolCache = quizPoolCache;
         _quizSubmitRepository = quizSubmitRepository;
         _quizSessionBuilder = quizSessionBuilder;
         _quizQuestionBuilder = quizQuestionBuilder;
@@ -96,15 +99,14 @@ public sealed class QuizSubmitService : IQuizSubmitService
             return ToAnswerResultFailure(grade);
         }
 
-        await _quizSubmitRepository.UpsertAnswerAsync(
+        _quizSubmitRepository.UpsertAnswer(
             session,
             question,
             request,
             grade.Value!.IsCorrect,
             grade.Value.AiScore,
             grade.Value.AiExplanation,
-            grade.Value.AiSuggestion,
-            cancellationToken);
+            grade.Value.AiSuggestion);
 
         var srsResult = await _srsService.UpdateProgressAsync(
             userId,
@@ -119,8 +121,17 @@ public sealed class QuizSubmitService : IQuizSubmitService
         var nextQuestion = await BuildNextQuestionAsync(session, pool, cancellationToken);
         if (nextQuestion is null)
         {
-            await _quizSubmitRepository.CompleteSessionAsync(session, cancellationToken);
+            _quizSubmitRepository.CompleteSession(session);
+            if (_quizPoolCache is not null)
+            {
+                await _quizPoolCache.RemoveAsync(session.SessionId, request.ListId, cancellationToken);
+            }
         }
+
+        // Câu trả lời, tiến độ SRS và trạng thái phiên là một thao tác duy nhất
+        // nên phải ghi trong cùng một transaction. Trước đây mỗi phần tự gọi
+        // SaveChanges, nên một lỗi ở bước sau sẽ để lại dữ liệu lệch nhau.
+        await _quizSubmitRepository.SaveChangesAsync(cancellationToken);
 
         if (_progressSummaryCache is not null)
         {
@@ -156,7 +167,20 @@ public sealed class QuizSubmitService : IQuizSubmitService
         // in this quiz session"). We validate against the full candidate set and
         // instead cap the quiz length by session.QuestionCount when picking the
         // next question.
-        return await _quizSessionBuilder.BuildPoolAsync(
+        //
+        // Tập từ này không đổi trong suốt một phiên, nên cache lại thay vì dựng
+        // lại mỗi lần nộp đáp án. Cache cũng làm thứ tự "random" ổn định trong
+        // phiên, thay vì đảo lại sau mỗi câu như trước.
+        if (_quizPoolCache is not null)
+        {
+            var cached = await _quizPoolCache.GetAsync(session.SessionId, listId, cancellationToken);
+            if (cached is { Count: > 0 })
+            {
+                return Result<IReadOnlyCollection<QuizPoolWordDto>>.Ok(cached);
+            }
+        }
+
+        var poolResult = await _quizSessionBuilder.BuildPoolAsync(
             session.UserId,
             new BuildQuizPoolRequest(
                 session.ScopeType,
@@ -168,6 +192,17 @@ public sealed class QuizSubmitService : IQuizSubmitService
                 session.TestType,
                 listId),
             cancellationToken);
+
+        if (poolResult.IsSuccess && _quizPoolCache is not null)
+        {
+            await _quizPoolCache.SetAsync(
+                session.SessionId,
+                listId,
+                poolResult.Value!,
+                cancellationToken);
+        }
+
+        return poolResult;
     }
 
     private async Task<Result<SubmitGradeResult>> GradeAsync(

@@ -113,6 +113,7 @@ builder.Services.AddSingleton<IWordDetailCache, RedisWordDetailCache>();
 builder.Services.AddSingleton<ITopicCache, RedisTopicCache>();
 builder.Services.AddSingleton<IUserListCache, RedisUserListCache>();
 builder.Services.AddSingleton<IProgressSummaryCache, RedisProgressSummaryCache>();
+builder.Services.AddSingleton<IQuizPoolCache, RedisQuizPoolCache>();
 builder.Services.AddSingleton<IKnnTopicRecommendationCache, RedisKnnTopicRecommendationCache>();
 builder.Services.AddSingleton<IKnnWordRecommendationCache, RedisKnnWordRecommendationCache>();
 builder.Services.AddSingleton<IKnnRebuildStateCache, RedisKnnRebuildStateCache>();

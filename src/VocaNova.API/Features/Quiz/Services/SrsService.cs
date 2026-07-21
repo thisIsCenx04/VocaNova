@@ -47,8 +47,6 @@ public sealed class SrsService : ISrsService
         var now = DateTime.UtcNow;
         ApplyResult(progress, isCorrect, now);
 
-        await _srsRepository.SaveChangesAsync(cancellationToken);
-
         return Result<UserWordProgressDto>.Ok(ToDto(progress));
     }
 

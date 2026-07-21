@@ -10,19 +10,21 @@ public interface IQuizSubmitRepository
         uint sessionId,
         CancellationToken cancellationToken = default);
 
-    Task<TestAnswer> UpsertAnswerAsync(
+    /// <summary>
+    /// Chỉ dựng thay đổi trong bộ nhớ; người gọi chịu trách nhiệm
+    /// <see cref="SaveChangesAsync"/> để cả thao tác nằm trong một transaction.
+    /// </summary>
+    TestAnswer UpsertAnswer(
         TestSession session,
         QuestionDto question,
         SubmitAnswerRequest request,
         bool isCorrect,
         float? aiScore,
         string? aiExplanation,
-        string? aiSuggestion,
-        CancellationToken cancellationToken = default);
+        string? aiSuggestion);
 
-    Task CompleteSessionAsync(
-        TestSession session,
-        CancellationToken cancellationToken = default);
+    /// <inheritdoc cref="UpsertAnswer"/>
+    void CompleteSession(TestSession session);
 
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

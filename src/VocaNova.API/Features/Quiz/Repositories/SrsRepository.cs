@@ -28,9 +28,4 @@ public sealed class SrsRepository : ISrsRepository
     {
         _dbContext.UserWordProgresses.Add(progress);
     }
-
-    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        return _dbContext.SaveChangesAsync(cancellationToken);
-    }
 }

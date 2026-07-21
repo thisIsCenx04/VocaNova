@@ -29,15 +29,18 @@ public sealed class QuizSubmitRepository : IQuizSubmitRepository
                 cancellationToken);
     }
 
-    public async Task<TestAnswer> UpsertAnswerAsync(
+    /// <summary>
+    /// Chỉ dựng thay đổi trong bộ nhớ; người gọi chịu trách nhiệm
+    /// <see cref="SaveChangesAsync"/> để cả thao tác nằm trong một transaction.
+    /// </summary>
+    public TestAnswer UpsertAnswer(
         TestSession session,
         QuestionDto question,
         SubmitAnswerRequest request,
         bool isCorrect,
         float? aiScore,
         string? aiExplanation,
-        string? aiSuggestion,
-        CancellationToken cancellationToken = default)
+        string? aiSuggestion)
     {
         var answer = session.TestAnswers
             .SingleOrDefault(entity => entity.WordId == request.WordId);
@@ -67,18 +70,15 @@ public sealed class QuizSubmitRepository : IQuizSubmitRepository
 
         QuizSessionStatsCalculator.ApplyStats(session);
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
         return answer;
     }
 
-    public async Task CompleteSessionAsync(
-        TestSession session,
-        CancellationToken cancellationToken = default)
+    /// <inheritdoc cref="UpsertAnswer"/>
+    public void CompleteSession(TestSession session)
     {
         QuizSessionStatsCalculator.ApplyStats(session);
         session.Status = TestSessionStatus.Completed;
         session.EndedAt ??= DateTime.UtcNow;
-        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
