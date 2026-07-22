@@ -46,7 +46,8 @@ void main() {
 
     final state = container.read(quizConfigProvider);
     expect(state.lists, testLists);
-    expect(state.personalTopics, testPersonalTopics);
+    expect(state.personalTopics, [testPersonalTopics.first]);
+    expect(state.personalTopics.every((topic) => topic.wordCount > 0), isTrue);
     expect(state.isLoadingSources, isFalse);
   });
 
@@ -95,21 +96,24 @@ void main() {
     expect(notifier.validate(), contains('trước hoặc bằng'));
   });
 
-  test('blocks creation when the source has fewer words than requested', () async {
-    final notifier = container.read(quizConfigProvider.notifier);
-    await notifier.loadSources();
-    notifier.setSourceType(QuizSourceType.myList);
-    notifier.selectSource(7); // Tiny list: 6 words
-    notifier.setQuestionLimit(20);
+  test(
+    'blocks creation when the source has fewer words than requested',
+    () async {
+      final notifier = container.read(quizConfigProvider.notifier);
+      await notifier.loadSources();
+      notifier.setSourceType(QuizSourceType.myList);
+      notifier.selectSource(7); // Tiny list: 6 words
+      notifier.setQuestionLimit(20);
 
-    final error = notifier.validate();
-    expect(error, contains('ít nhất 20 từ'));
-    expect(error, contains('6 từ'));
+      final error = notifier.validate();
+      expect(error, contains('ít nhất 20 từ'));
+      expect(error, contains('6 từ'));
 
-    final result = await notifier.createSession();
-    expect(result, isNull);
-    verifyNever(() => repository.createSession(any()));
-  });
+      final result = await notifier.createSession();
+      expect(result, isNull);
+      verifyNever(() => repository.createSession(any()));
+    },
+  );
 
   test('allows the All option for a small source', () async {
     when(
@@ -231,6 +235,13 @@ const testPersonalTopics = [
     name: 'Travel',
     nameVi: 'Du lịch',
     wordCount: 30,
+    containsWord: false,
+  ),
+  PersonalTopicSummary(
+    topicId: 3,
+    name: 'Education',
+    nameVi: 'Giáo dục',
+    wordCount: 0,
     containsWord: false,
   ),
 ];

@@ -27,7 +27,9 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
           .getPersonalTopics();
       final sources = await Future.wait<Object>([listsFuture, topicsFuture]);
       final lists = sources[0] as List<UserList>;
-      final personalTopics = sources[1] as List<PersonalTopicSummary>;
+      final personalTopics = (sources[1] as List<PersonalTopicSummary>)
+          .where((topic) => topic.listId != null && topic.wordCount > 0)
+          .toList(growable: false);
       var sourceType = state.sourceType;
       final selectedListId = state.listId;
       if (selectedListId != null &&

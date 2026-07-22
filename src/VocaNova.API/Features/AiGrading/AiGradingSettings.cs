@@ -10,7 +10,15 @@ public sealed class AiGradingSettings
 
     public string ApiKey { get; set; } = string.Empty;
 
-    public string Model { get; set; } = "gemini-3.5-flash";
+    public string Model { get; set; } = "gemini-3.1-flash-lite";
+
+    public string[] FallbackModels { get; set; } = ["gemini-3.5-flash"];
+
+    public int MaxAttempts { get; set; } = 2;
+
+    public int RetryBaseDelayMs { get; set; } = 400;
+
+    public int AttemptTimeoutSeconds { get; set; } = 6;
 
     public double PassThreshold { get; set; } = 0.75;
 }

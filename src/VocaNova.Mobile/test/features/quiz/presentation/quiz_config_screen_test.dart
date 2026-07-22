@@ -53,6 +53,7 @@ void main() {
     await tester.tap(find.byKey(const Key('quiz-source-personal-topic')));
     await tester.pump();
     expect(find.text('Du lịch'), findsOneWidget);
+    expect(find.text('Giáo dục'), findsNothing);
     expect(find.text('Favorites'), findsNothing);
 
     await tester.tap(find.byKey(const Key('quiz-mode-timed')));
@@ -254,6 +255,13 @@ const testPersonalTopics = [
     name: 'Travel',
     nameVi: 'Du lịch',
     wordCount: 30,
+    containsWord: false,
+  ),
+  PersonalTopicSummary(
+    topicId: 3,
+    name: 'Education',
+    nameVi: 'Giáo dục',
+    wordCount: 0,
     containsWord: false,
   ),
 ];

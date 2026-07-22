@@ -146,4 +146,11 @@ class PersonalTopicSummary extends TopicSummary {
       containsWord: json['contains_word'] as bool? ?? false,
     );
   }
+
+  @override
+  Map<String, dynamic> toJson() => {
+    ...super.toJson(),
+    'list_id': listId,
+    'contains_word': containsWord,
+  };
 }
