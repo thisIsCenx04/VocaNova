@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
 import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
@@ -23,6 +24,9 @@ void main() {
     when(() => storage.get<String>(any())).thenAnswer((_) async => null);
     when(() => storage.set<String>(any(), any())).thenAnswer((_) async {});
     when(() => repository.getLists()).thenAnswer((_) async => [favorites]);
+    when(
+      () => repository.getPersonalTopics(),
+    ).thenAnswer((_) async => [travelTopic]);
     when(() => repository.create('Travel')).thenAnswer((_) async => travel);
     when(
       () => repository.rename(listId: 3, name: 'Daily'),
@@ -39,6 +43,10 @@ void main() {
     expect(find.text('Favorites'), findsOneWidget);
     expect(find.text('2 từ'), findsOneWidget);
     expect(find.text('Tạo ngày 15/06/2026'), findsOneWidget);
+    expect(find.byKey(const Key('personal-topics-section')), findsOneWidget);
+    expect(find.byKey(const Key('personal-topic-card-8')), findsOneWidget);
+    expect(find.text('Du lịch'), findsOneWidget);
+    expect(find.text('4 từ'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('create-list-fab')));
     await tester.pumpAndSettle();
@@ -124,4 +132,13 @@ final daily = UserList(
   listName: 'Daily',
   wordCount: 2,
   createdAt: DateTime.utc(2026, 6, 15),
+);
+
+const travelTopic = PersonalTopicSummary(
+  topicId: 8,
+  listId: 18,
+  name: 'Travel',
+  nameVi: 'Du lịch',
+  wordCount: 4,
+  containsWord: false,
 );

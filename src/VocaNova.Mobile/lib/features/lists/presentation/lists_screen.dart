@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
 
@@ -55,33 +56,81 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
           Expanded(
             child: state.isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : state.lists.isEmpty
+                : state.lists.isEmpty && state.personalTopics.isEmpty
                 ? const _EmptyLists()
                 : RefreshIndicator(
                     onRefresh: ref.read(listsProvider.notifier).load,
-                    child: GridView.builder(
+                    child: CustomScrollView(
                       key: const Key('lists-grid'),
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-                      gridDelegate:
-                          const SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: 280,
-                            mainAxisExtent: 170,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        if (state.lists.isNotEmpty) ...[
+                          const SliverPadding(
+                            padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+                            sliver: SliverToBoxAdapter(
+                              child: _ListSectionTitle(
+                                key: Key('user-lists-section'),
+                                title: 'Danh sách của tôi',
+                              ),
+                            ),
                           ),
-                      itemCount: state.lists.length,
-                      itemBuilder: (_, index) {
-                        final list = state.lists[index];
-                        return _ListCard(
-                          list: list,
-                          onTap: () => context.push(
-                            AppRoutes.listDetail(list.listId.toString()),
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            sliver: SliverGrid.builder(
+                              gridDelegate: _gridDelegate,
+                              itemCount: state.lists.length,
+                              itemBuilder: (_, index) {
+                                final list = state.lists[index];
+                                return _ListCard(
+                                  list: list,
+                                  onTap: () => context.push(
+                                    AppRoutes.listDetail(
+                                      list.listId.toString(),
+                                    ),
+                                  ),
+                                  onLongPress: state.isOffline
+                                      ? null
+                                      : () => _showActions(list),
+                                );
+                              },
+                            ),
                           ),
-                          onLongPress: state.isOffline
-                              ? () {}
-                              : () => _showActions(list),
-                        );
-                      },
+                        ],
+                        if (state.personalTopics.isNotEmpty) ...[
+                          const SliverPadding(
+                            padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+                            sliver: SliverToBoxAdapter(
+                              child: _ListSectionTitle(
+                                key: Key('personal-topics-section'),
+                                title: 'Chủ đề cá nhân',
+                              ),
+                            ),
+                          ),
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            sliver: SliverGrid.builder(
+                              gridDelegate: _gridDelegate,
+                              itemCount: state.personalTopics.length,
+                              itemBuilder: (_, index) {
+                                final topic = state.personalTopics[index];
+                                return _PersonalTopicCard(
+                                  topic: topic,
+                                  onTap: () => context.push(
+                                    AppRoutes.topicDetail(
+                                      topic.topicId.toString(),
+                                      personal: true,
+                                    ),
+                                    extra: topic,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                        const SliverPadding(
+                          padding: EdgeInsets.only(bottom: 96),
+                        ),
+                      ],
                     ),
                   ),
           ),
@@ -89,6 +138,13 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
       ),
     );
   }
+
+  static const _gridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
+    maxCrossAxisExtent: 280,
+    mainAxisExtent: 170,
+    crossAxisSpacing: 12,
+    mainAxisSpacing: 12,
+  );
 
   Future<void> _showNameDialog({UserList? list}) async {
     final controller = TextEditingController(text: list?.listName);
@@ -213,7 +269,7 @@ class _ListCard extends StatelessWidget {
 
   final UserList list;
   final VoidCallback onTap;
-  final VoidCallback onLongPress;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -254,6 +310,70 @@ class _ListCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _PersonalTopicCard extends StatelessWidget {
+  const _PersonalTopicCard({required this.topic, required this.onTap});
+
+  final PersonalTopicSummary topic;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = topic.icon?.trim();
+    return Card(
+      child: InkWell(
+        key: Key('personal-topic-card-${topic.topicId}'),
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (icon?.isNotEmpty == true)
+                Text(icon!, style: const TextStyle(fontSize: 30))
+              else
+                Icon(
+                  Icons.auto_stories_outlined,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 32,
+                ),
+              const Spacer(),
+              Text(
+                topic.displayName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 6),
+              Text('${topic.wordCount} từ'),
+              Text(
+                'Chủ đề cá nhân',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ListSectionTitle extends StatelessWidget {
+  const _ListSectionTitle({required this.title, super.key});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    title,
+    style: Theme.of(
+      context,
+    ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+  );
 }
 
 class _OfflineBanner extends StatelessWidget {

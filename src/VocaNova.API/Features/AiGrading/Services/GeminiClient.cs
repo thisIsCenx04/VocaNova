@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
@@ -11,38 +12,161 @@ public sealed class GeminiClient : IGeminiClient
 
     private readonly HttpClient _httpClient;
     private readonly AiGradingSettings _settings;
+    private readonly ILogger<GeminiClient> _logger;
 
     public GeminiClient(
         HttpClient httpClient,
-        IOptions<AiGradingSettings> settings)
+        IOptions<AiGradingSettings> settings,
+        ILogger<GeminiClient> logger)
     {
         _httpClient = httpClient;
         _settings = settings.Value;
+        _logger = logger;
     }
 
     public async Task<string> GenerateContentAsync(
         string prompt,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_settings.ApiKey)
-            || string.IsNullOrWhiteSpace(_settings.Model))
+        var models = GetModelCandidates();
+        if (string.IsNullOrWhiteSpace(_settings.ApiKey) || models.Count == 0)
         {
             throw new InvalidOperationException("Gemini configuration is missing.");
         }
 
+        var maxAttempts = Math.Clamp(_settings.MaxAttempts, 1, 4);
+        var unavailableModels = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        Exception? lastException = null;
+
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            if (attempt > 1)
+            {
+                await DelayBeforeRetryAsync(attempt, cancellationToken);
+            }
+
+            foreach (var model in models)
+            {
+                if (unavailableModels.Contains(model))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    return await GenerateWithModelAsync(
+                        model,
+                        prompt,
+                        cancellationToken);
+                }
+                catch (HttpRequestException exception) when (IsModelUnavailable(exception))
+                {
+                    lastException = exception;
+                    unavailableModels.Add(model);
+                    _logger.LogWarning(
+                        exception,
+                        "Gemini model {Model} is unavailable; trying the next configured model.",
+                        model);
+                }
+                catch (HttpRequestException exception) when (IsTransient(exception))
+                {
+                    lastException = exception;
+                    _logger.LogWarning(
+                        exception,
+                        "Transient Gemini failure for model {Model} on attempt {Attempt}/{MaxAttempts}.",
+                        model,
+                        attempt,
+                        maxAttempts);
+                }
+                catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
+                {
+                    lastException = new TimeoutException(
+                        $"Gemini model {model} exceeded the per-attempt timeout.",
+                        exception);
+                    _logger.LogWarning(
+                        lastException,
+                        "Gemini model {Model} timed out on attempt {Attempt}/{MaxAttempts}.",
+                        model,
+                        attempt,
+                        maxAttempts);
+                }
+            }
+
+            if (unavailableModels.Count == models.Count)
+            {
+                break;
+            }
+        }
+
+        throw new InvalidOperationException(
+            "All configured Gemini models failed.",
+            lastException);
+    }
+
+    private async Task<string> GenerateWithModelAsync(
+        string model,
+        string prompt,
+        CancellationToken cancellationToken)
+    {
+        using var attemptCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        attemptCts.CancelAfter(TimeSpan.FromSeconds(
+            Math.Clamp(_settings.AttemptTimeoutSeconds, 1, 15)));
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            $"{NormalizeModelName(_settings.Model)}:generateContent");
+            $"{NormalizeModelName(model)}:generateContent");
         request.Headers.Add("x-goog-api-key", _settings.ApiKey);
         request.Content = JsonContent.Create(CreateRequestBody(prompt), options: JsonOptions);
 
-        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        using var response = await _httpClient.SendAsync(request, attemptCts.Token);
         response.EnsureSuccessStatusCode();
 
-        await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var json = await JsonDocument.ParseAsync(contentStream, cancellationToken: cancellationToken);
+        await using var contentStream = await response.Content.ReadAsStreamAsync(attemptCts.Token);
+        using var json = await JsonDocument.ParseAsync(
+            contentStream,
+            cancellationToken: attemptCts.Token);
 
         return ExtractText(json.RootElement);
+    }
+
+    private IReadOnlyList<string> GetModelCandidates()
+    {
+        return new[] { _settings.Model }
+            .Concat(_settings.FallbackModels ?? [])
+            .Where(model => !string.IsNullOrWhiteSpace(model))
+            .Select(model => model.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private async Task DelayBeforeRetryAsync(
+        int attempt,
+        CancellationToken cancellationToken)
+    {
+        var baseDelayMs = Math.Clamp(_settings.RetryBaseDelayMs, 0, 5_000);
+        if (baseDelayMs == 0)
+        {
+            return;
+        }
+
+        var exponentialDelay = baseDelayMs * (1 << (attempt - 2));
+        var jitter = Random.Shared.Next(0, Math.Max(1, baseDelayMs / 2));
+        await Task.Delay(exponentialDelay + jitter, cancellationToken);
+    }
+
+    private static bool IsModelUnavailable(HttpRequestException exception)
+    {
+        return exception.StatusCode == HttpStatusCode.NotFound;
+    }
+
+    private static bool IsTransient(HttpRequestException exception)
+    {
+        return exception.StatusCode is null
+            or HttpStatusCode.RequestTimeout
+            or HttpStatusCode.TooManyRequests
+            or HttpStatusCode.InternalServerError
+            or HttpStatusCode.BadGateway
+            or HttpStatusCode.ServiceUnavailable
+            or HttpStatusCode.GatewayTimeout;
     }
 
     private static object CreateRequestBody(string prompt)

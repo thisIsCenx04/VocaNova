@@ -9,6 +9,7 @@ import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
 import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
@@ -52,11 +53,31 @@ void main() {
     expect(state.isOffline, isTrue);
     expect(state.lists.single.listName, 'Favorites');
     verifyNever(repository.getLists);
+    verifyNever(repository.getPersonalTopics);
+  });
+
+  test('online load includes personal topics and caches them', () async {
+    when(() => connectivity.isOnline).thenAnswer((_) async => true);
+    when(() => repository.getLists()).thenAnswer((_) async => [favorites]);
+    when(
+      () => repository.getPersonalTopics(),
+    ).thenAnswer((_) async => [travelTopic]);
+
+    await container.read(listsProvider.notifier).load();
+
+    final state = container.read(listsProvider);
+    expect(state.lists, [favorites]);
+    expect(state.personalTopics, [travelTopic]);
+    expect(
+      await storage.get<String>(StorageKeys.personalTopicsCacheJson),
+      contains('Travel'),
+    );
   });
 
   test('delete is optimistic and rolls back when API fails', () async {
     when(() => connectivity.isOnline).thenAnswer((_) async => true);
     when(() => repository.getLists()).thenAnswer((_) async => [favorites]);
+    when(() => repository.getPersonalTopics()).thenAnswer((_) async => []);
     final deleteResponse = Completer<void>();
     when(() => repository.delete(3)).thenAnswer((_) => deleteResponse.future);
     final notifier = container.read(listsProvider.notifier);
@@ -74,6 +95,7 @@ void main() {
   test('create and rename update state and cache', () async {
     when(() => connectivity.isOnline).thenAnswer((_) async => true);
     when(() => repository.getLists()).thenAnswer((_) async => []);
+    when(() => repository.getPersonalTopics()).thenAnswer((_) async => []);
     when(() => repository.create('Travel')).thenAnswer((_) async => travel);
     when(
       () => repository.rename(listId: 4, name: 'Trips'),
@@ -130,4 +152,12 @@ final trips = UserList(
   listName: 'Trips',
   wordCount: 0,
   createdAt: DateTime.utc(2026, 6, 15),
+);
+
+const travelTopic = PersonalTopicSummary(
+  topicId: 8,
+  listId: 18,
+  name: 'Travel',
+  wordCount: 4,
+  containsWord: false,
 );

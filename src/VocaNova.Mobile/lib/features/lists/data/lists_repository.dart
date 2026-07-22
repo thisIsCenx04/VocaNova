@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:vocanova_mobile/core/network/api_endpoints.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 import 'package:vocanova_mobile/features/lists/domain/list_word.dart';
 import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
 
@@ -15,6 +16,21 @@ class ListsRepository {
     return data
         .whereType<Map<String, dynamic>>()
         .map(UserList.fromJson)
+        .toList(growable: false);
+  }
+
+  Future<List<PersonalTopicSummary>> getPersonalTopics() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiEndpoints.personalTopics,
+    );
+    final data = response.data?['data'];
+    if (data is! List) {
+      throw const FormatException('Invalid personal topics response.');
+    }
+    return data
+        .whereType<Map<String, dynamic>>()
+        .map(PersonalTopicSummary.fromJson)
+        .where((topic) => topic.listId != null)
         .toList(growable: false);
   }
 

@@ -1,6 +1,7 @@
 abstract final class StorageKeys {
   static const userProfileJson = 'user_profile_json';
   static const listsCacheJson = 'lists_cache_json';
+  static const personalTopicsCacheJson = 'personal_topics_cache_json';
   static const progressSummaryJson = 'progress_summary_json';
   static const searchHistoryJson = 'search_history_json';
   static const wordSearchCacheJson = 'word_search_cache_json';

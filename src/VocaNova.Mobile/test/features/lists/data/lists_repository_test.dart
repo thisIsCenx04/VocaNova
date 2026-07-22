@@ -13,6 +13,9 @@ void main() {
     dio.httpClientAdapter = CallbackAdapter((options) {
       requests.add(options);
       if (options.method == 'DELETE') return jsonResponse(true);
+      if (options.path == ApiEndpoints.personalTopics) {
+        return jsonResponse([personalTopicJson]);
+      }
       return jsonResponse(
         options.method == 'GET'
             ? [listJson]
@@ -22,6 +25,10 @@ void main() {
     final repository = ListsRepository(dio: dio);
 
     expect((await repository.getLists()).single.listName, 'Favorites');
+    expect(
+      (await repository.getPersonalTopics()).single.displayName,
+      'Du lịch',
+    );
     expect((await repository.create('Travel')).listName, 'Travel');
     expect(
       (await repository.rename(listId: 3, name: 'Daily')).listName,
@@ -31,18 +38,20 @@ void main() {
 
     expect(requests.map((request) => request.method), [
       'GET',
+      'GET',
       'POST',
       'PUT',
       'DELETE',
     ]);
     expect(requests.map((request) => request.path), [
       ApiEndpoints.lists,
+      ApiEndpoints.personalTopics,
       ApiEndpoints.lists,
       ApiEndpoints.list(3),
       ApiEndpoints.list(3),
     ]);
-    expect(requests[1].data, {'list_name': 'Travel'});
-    expect(requests[2].data, {'list_name': 'Daily'});
+    expect(requests[2].data, {'list_name': 'Travel'});
+    expect(requests[3].data, {'list_name': 'Daily'});
   });
 }
 
@@ -76,4 +85,14 @@ const listJson = {
   'list_name': 'Favorites',
   'word_count': 2,
   'created_at': '2026-06-15T10:00:00Z',
+};
+
+const personalTopicJson = {
+  'topic_id': 8,
+  'list_id': 18,
+  'name': 'Travel',
+  'name_vi': 'Du lịch',
+  'icon': '✈️',
+  'word_count': 4,
+  'contains_word': false,
 };
