@@ -2057,6 +2057,47 @@ html, body {
     gap: 4px;
 }
 
+.icon-link:disabled {
+    opacity: .38;
+    cursor: not-allowed;
+}
+
+.role-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.assignment-panel {
+    padding: 24px;
+}
+
+.assignment-filter-bar select[name="adminId"] {
+    min-width: 180px;
+}
+
+.assignment-form {
+    margin-top: 18px;
+}
+
+.assignment-card.is-unavailable {
+    opacity: .58;
+    cursor: not-allowed;
+    background: var(--surface-muted, #f7f8fc);
+}
+
+.assignment-results-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.assignment-results-footer .pager {
+    margin-top: 0;
+}
+
 /* Numbered pager (Prev 1 2 3 Next) */
 .pager-link.active {
     background: var(--accent);
@@ -2712,7 +2753,8 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 22px;
-    max-width: 880px;
+    width: 100%;
+    max-width: none;
 }
 .settings-panel {
     background: var(--surface);
@@ -3176,6 +3218,40 @@ html, body {
     .vd-head { align-items: flex-start; flex-direction: column; }
 }
 
+.assignment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.assignment-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--surface);
+    cursor: pointer;
+}
+
+.assignment-card:hover {
+    border-color: var(--accent);
+}
+
+.assignment-card span {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.assignment-card small {
+    color: var(--muted);
+    overflow-wrap: anywhere;
+}
+
 /* ===== Edit screen: editable examples ===== */
 .example-rows { display: flex; flex-direction: column; gap: 12px; margin-bottom: 8px; }
 .example-row { display: flex; align-items: flex-start; gap: 10px; }
@@ -3274,8 +3350,9 @@ html, body {
 .btn-icon.btn-warning-outline { color: var(--warning); }
 .btn-icon.btn-warning-outline:hover { background: var(--warning-bg); }
 .admin-account-editor-shell {
-    width: min(100%, 1120px);
-    margin-inline: auto;
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
 }
 .admin-account-form {
     width: 100%;

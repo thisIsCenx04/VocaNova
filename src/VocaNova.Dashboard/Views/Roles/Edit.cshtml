@@ -1,0 +1,46 @@
+@model VocaNova.Dashboard.Models.Roles.SaveRoleViewModel
+@{
+    ViewData["Title"] = T["Edit Role"];
+}
+
+<div class="admin-account-editor-shell">
+    <nav class="breadcrumb">
+        <a href="/roles">@T["Role Management"]</a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current">@T["Edit Role"]</span>
+    </nav>
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">@T["Edit Role"]</h1>
+            <p class="page-subtitle">@T["Update the selected role name."]</p>
+        </div>
+    </div>
+
+    <form method="post" action="/roles/@Model.RoleId/edit" class="panel admin-account-form">
+        @Html.AntiForgeryToken()
+        <input asp-for="RoleId" type="hidden" />
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger validation-summary">
+                <ul>
+                    @foreach (var error in ViewData.ModelState.Values.SelectMany(value => value.Errors))
+                    {
+                        <li>@T[error.ErrorMessage]</li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <div class="form-group">
+            <label asp-for="RoleName">@T["Role Name"] <span class="req">*</span></label>
+            <input asp-for="RoleName" class="form-control" autocomplete="off" autofocus />
+            <small class="form-help">@T["System role names cannot be changed."]</small>
+        </div>
+
+        <div class="admin-account-form-actions">
+            <a href="/roles" class="btn-secondary">@T["Cancel"]</a>
+            <button type="submit" class="btn-primary">@T["Save Changes"]</button>
+        </div>
+    </form>
+</div>

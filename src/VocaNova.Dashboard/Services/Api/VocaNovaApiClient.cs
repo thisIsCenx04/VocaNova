@@ -284,6 +284,40 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> DeleteAdminAccountAsync(uint adminId, CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Delete, $"api/superadmin/admins/{adminId}", cancellationToken);
 
+    public Task<PagedData<Models.Api.SuperAdmin.ManagedRole>> GetRolesAsync(CancellationToken cancellationToken = default) =>
+        GetRolesAsync(null, null, cancellationToken);
+
+    public Task<PagedData<Models.Api.SuperAdmin.ManagedRole>> GetRolesAsync(
+        string? search, string? type, CancellationToken cancellationToken = default)
+    {
+        var query = new Dictionary<string, string?> { ["page"] = "1", ["limit"] = "100" };
+        if (!string.IsNullOrWhiteSpace(search)) query["search"] = search;
+        if (!string.IsNullOrWhiteSpace(type)) query["type"] = type;
+        return GetPagedAsync<Models.Api.SuperAdmin.ManagedRole>(
+            QueryHelpers.AddQueryString("api/superadmin/roles", query), 1, 100, cancellationToken);
+    }
+
+    public Task<ApiActionResult> CreateRoleAsync(string roleName, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Post, "api/superadmin/roles", new { RoleName = roleName }, cancellationToken);
+
+    public Task<ApiActionResult> UpdateRoleAsync(uint roleId, string roleName, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Put, $"api/superadmin/roles/{roleId}", new { RoleName = roleName }, cancellationToken);
+
+    public Task<ApiActionResult> DeleteRoleAsync(uint roleId, CancellationToken cancellationToken = default) =>
+        SendActionAsync(HttpMethod.Delete, $"api/superadmin/roles/{roleId}", cancellationToken);
+
+    public Task<ApiActionResult> AssignRoleAsync(uint roleId, uint userId, CancellationToken cancellationToken = default) =>
+        SendActionAsync(HttpMethod.Post, $"api/superadmin/roles/{roleId}/users/{userId}", cancellationToken);
+
+    public Task<Models.Api.SuperAdmin.AdminUserAssignmentOverview?> GetAdminUserAssignmentsAsync(CancellationToken cancellationToken = default) =>
+        GetDataAsync<Models.Api.SuperAdmin.AdminUserAssignmentOverview>(
+            "api/superadmin/admin-user-assignments", cancellationToken);
+
+    public Task<ApiActionResult> SaveAdminUserAssignmentsAsync(
+        uint adminId, IReadOnlyCollection<uint> userIds, CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Put, $"api/superadmin/admin-user-assignments/{adminId}",
+            new { UserIds = userIds }, cancellationToken);
+
     public Task<IReadOnlyList<Models.Api.Dictionary.AdminTopic>> GetAdminTopicsAsync(
         string? q,
         string? status,
