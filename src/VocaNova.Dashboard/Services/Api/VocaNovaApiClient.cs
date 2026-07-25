@@ -52,6 +52,8 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         if (!string.IsNullOrWhiteSpace(filter.Status)) queryParams["status"] = filter.Status;
         if (!string.IsNullOrWhiteSpace(filter.WordType)) queryParams["wordType"] = filter.WordType;
         if (filter.TopicId is { } topicId) queryParams["topicId"] = topicId.ToString(CultureInfo.InvariantCulture);
+        if (!string.IsNullOrWhiteSpace(filter.SortBy)) queryParams["sortBy"] = filter.SortBy;
+        if (!string.IsNullOrWhiteSpace(filter.SortDirection)) queryParams["sortDirection"] = filter.SortDirection;
 
         var uri = QueryHelpers.AddQueryString("api/admin/words", queryParams);
         return GetPagedAsync<WordListItem>(uri, filter.Page, filter.Limit, cancellationToken);

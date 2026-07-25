@@ -8,7 +8,8 @@
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
     var pageSizes = new[] { 10, 20, 50, 100 };
 
-    string PageUrl(int page)
+    // Các tham số lọc + sort dùng chung cho mọi link (phân trang, A–Z, sort header).
+    List<string> BaseQuery()
     {
         var qs = new List<string>();
         if (!string.IsNullOrWhiteSpace(Model.Q)) qs.Add($"q={Uri.EscapeDataString(Model.Q)}");
@@ -17,14 +18,34 @@
         if (Model.TopicId is { } tid) qs.Add($"topicId={tid}");
         if (!string.IsNullOrWhiteSpace(Model.Status)) qs.Add($"status={Uri.EscapeDataString(Model.Status)}");
         if (Model.IncludeDeleted) qs.Add("includeDeleted=true");
+        return qs;
+    }
+
+    string PageUrl(int page)
+    {
+        var qs = BaseQuery();
+        if (!string.IsNullOrWhiteSpace(Model.SortBy)) qs.Add($"sortBy={Model.SortBy}");
+        if (!string.IsNullOrWhiteSpace(Model.SortDirection)) qs.Add($"sortDirection={Model.SortDirection}");
         qs.Add($"limit={Model.Limit}");
         qs.Add($"page={page}");
         return "/vocabulary?" + string.Join("&", qs);
     }
 
+    // Bấm vào tên cột: đang sort tăng theo cột đó thì đảo sang giảm, còn lại thì tăng. Reset về trang 1.
+    string SortUrl(string column)
+    {
+        var direction = Model.SortBy == column && Model.SortDirection == "asc" ? "desc" : "asc";
+        var qs = BaseQuery();
+        qs.Add($"limit={Model.Limit}");
+        qs.Add("page=1");
+        qs.Add($"sortBy={column}");
+        qs.Add($"sortDirection={direction}");
+        return "/vocabulary?" + string.Join("&", qs);
+    }
+
     string StatusBadgeClass(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
 
-    // Thanh A–Z: giữ nguyên mọi filter, chỉ đổi q = chữ cái (hoặc bỏ q khi "Tất cả"); page reset về 1.
+    // Thanh A–Z: giữ nguyên mọi filter + sort, chỉ đổi q = chữ cái (hoặc bỏ q khi "Tất cả"); page reset về 1.
     string LetterUrl(string? letter)
     {
         var qs = new List<string>();
@@ -34,9 +55,16 @@
         if (Model.TopicId is { } tid) qs.Add($"topicId={tid}");
         if (!string.IsNullOrWhiteSpace(Model.Status)) qs.Add($"status={Uri.EscapeDataString(Model.Status)}");
         if (Model.IncludeDeleted) qs.Add("includeDeleted=true");
+        if (!string.IsNullOrWhiteSpace(Model.SortBy)) qs.Add($"sortBy={Model.SortBy}");
+        if (!string.IsNullOrWhiteSpace(Model.SortDirection)) qs.Add($"sortDirection={Model.SortDirection}");
         qs.Add($"limit={Model.Limit}");
         return qs.Count == 0 ? "/vocabulary" : "/vocabulary?" + string.Join("&", qs);
     }
+
+    // Class icon cho header: caret lên/xuống nếu đang sort cột đó, mờ hai chiều nếu chưa.
+    string SortIcon(string column) => Model.SortBy != column
+        ? "bi bi-arrow-down-up th-sort-idle"
+        : (Model.SortDirection == "desc" ? "bi bi-caret-down-fill" : "bi bi-caret-up-fill");
 
     // Chữ cái đang chọn = khi q đúng 1 ký tự chữ (A–Z). Prefix search dài hơn không highlight chữ nào.
     char? selectedLetter = !string.IsNullOrEmpty(Model.Q) && Model.Q.Length == 1 && char.IsLetter(Model.Q[0])
@@ -63,6 +91,8 @@
 
 <form method="get" action="/vocabulary" class="filter-bar">
     <input type="hidden" name="limit" value="@Model.Limit" />
+    @if (!string.IsNullOrWhiteSpace(Model.SortBy)) { <input type="hidden" name="sortBy" value="@Model.SortBy" /> }
+    @if (!string.IsNullOrWhiteSpace(Model.SortDirection)) { <input type="hidden" name="sortDirection" value="@Model.SortDirection" /> }
     <input type="text" name="q" value="@Model.Q" class="form-control" placeholder="@T["Search for vocabulary..."]" />
     <select name="cefr" class="form-control">
         <option value="">@T["CEFR Level"]</option>
@@ -110,11 +140,31 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th>@T["Vocabulary"]</th>
-                <th style="width:130px;">@T["Word Type"]</th>
-                <th style="width:80px;">@T["Level"]</th>
-                <th style="width:150px;">@T["Phonetics"]</th>
-                <th style="width:110px;">@T["Status"]</th>
+                <th>
+                    <a class="th-sort @(Model.SortBy == "word" ? "active" : "")" href="@SortUrl("word")">
+                        @T["Vocabulary"] <i class="@SortIcon("word")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th style="width:130px;">
+                    <a class="th-sort @(Model.SortBy == "type" ? "active" : "")" href="@SortUrl("type")">
+                        @T["Word Type"] <i class="@SortIcon("type")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th style="width:80px;">
+                    <a class="th-sort @(Model.SortBy == "cefr" ? "active" : "")" href="@SortUrl("cefr")">
+                        @T["Level"] <i class="@SortIcon("cefr")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th style="width:150px;">
+                    <a class="th-sort @(Model.SortBy == "phonetic" ? "active" : "")" href="@SortUrl("phonetic")">
+                        @T["Phonetics"] <i class="@SortIcon("phonetic")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th style="width:110px;">
+                    <a class="th-sort @(Model.SortBy == "status" ? "active" : "")" href="@SortUrl("status")">
+                        @T["Status"] <i class="@SortIcon("status")" aria-hidden="true"></i>
+                    </a>
+                </th>
                 <th style="width:120px;" class="col-actions">@T["Action"]</th>
             </tr>
         </thead>
@@ -203,6 +253,8 @@
         @if (Model.TopicId is { } topicId) { <input type="hidden" name="topicId" value="@topicId" /> }
         @if (!string.IsNullOrWhiteSpace(Model.Status)) { <input type="hidden" name="status" value="@Model.Status" /> }
         @if (Model.IncludeDeleted) { <input type="hidden" name="includeDeleted" value="true" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.SortBy)) { <input type="hidden" name="sortBy" value="@Model.SortBy" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.SortDirection)) { <input type="hidden" name="sortDirection" value="@Model.SortDirection" /> }
         <label class="page-size-control">
             <span>@T["Items per page"]</span>
             <select name="limit" class="form-control" data-page-size-select aria-label="@T["Items per page"]">

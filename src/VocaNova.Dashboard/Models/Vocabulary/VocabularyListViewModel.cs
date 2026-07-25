@@ -21,6 +21,12 @@ public sealed class VocabularyListViewModel
 
     public bool IncludeDeleted { get; init; }
 
+    /// <summary>Cột đang sắp xếp: word | type | cefr | phonetic | status. Null = mặc định (theo bảng chữ cái).</summary>
+    public string? SortBy { get; init; }
+
+    /// <summary>asc | desc.</summary>
+    public string? SortDirection { get; init; }
+
     public int Page { get; init; } = 1;
 
     public int Limit { get; init; } = 10;
