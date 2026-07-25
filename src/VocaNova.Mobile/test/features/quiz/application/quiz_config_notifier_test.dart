@@ -97,21 +97,24 @@ void main() {
   });
 
   test(
-    'blocks creation when the source has fewer words than requested',
+    'clamps a preset larger than the source down to the word count',
     () async {
+      when(
+        () => repository.createSession(any()),
+      ).thenAnswer((_) async => testSession);
       final notifier = container.read(quizConfigProvider.notifier);
       await notifier.loadSources();
       notifier.setSourceType(QuizSourceType.myList);
       notifier.selectSource(7); // Tiny list: 6 words
       notifier.setQuestionLimit(20);
 
-      final error = notifier.validate();
-      expect(error, contains('ít nhất 20 từ'));
-      expect(error, contains('6 từ'));
-
+      expect(notifier.validate(), isNull);
       final result = await notifier.createSession();
-      expect(result, isNull);
-      verifyNever(() => repository.createSession(any()));
+      expect(result?.sessionId, 9);
+      final request =
+          verify(() => repository.createSession(captureAny())).captured.single
+              as QuizConfigRequest;
+      expect(request.wordLimit, 6);
     },
   );
 
@@ -134,7 +137,10 @@ void main() {
     expect(request.wordLimit, isNull);
   });
 
-  test('custom question count above the word count is blocked', () async {
+  test('clamps a custom count larger than the source to the word count', () async {
+    when(
+      () => repository.createSession(any()),
+    ).thenAnswer((_) async => testSession);
     final notifier = container.read(quizConfigProvider.notifier);
     await notifier.loadSources();
     notifier.setSourceType(QuizSourceType.myList);
@@ -142,11 +148,13 @@ void main() {
     notifier.useCustomQuestionLimit();
     notifier.setCustomQuestionLimit(10);
 
-    final error = notifier.validate();
-    expect(error, contains('cần ít nhất 10 từ'));
-    expect(error, contains('6 từ'));
-    expect(await notifier.createSession(), isNull);
-    verifyNever(() => repository.createSession(any()));
+    expect(notifier.validate(), isNull);
+    final result = await notifier.createSession();
+    expect(result?.sessionId, 9);
+    final request =
+        verify(() => repository.createSession(captureAny())).captured.single
+            as QuizConfigRequest;
+    expect(request.wordLimit, 6);
   });
 
   test('custom question count within the word count is allowed', () async {
