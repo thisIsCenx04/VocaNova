@@ -30,7 +30,7 @@ public sealed class AdminUsersController : ControllerBase
         [FromQuery] AdminUserQuery query,
         CancellationToken cancellationToken)
     {
-        var result = await _adminUserService.GetUsersAsync(query, cancellationToken);
+        var result = await _adminUserService.GetUsersAsync(query, ActorId(), ActorRole(), cancellationToken);
         if (!result.IsSuccess)
         {
             return this.ErrorResult(result);
@@ -44,7 +44,7 @@ public sealed class AdminUsersController : ControllerBase
         [FromRoute] uint id,
         CancellationToken cancellationToken)
     {
-        var result = await _adminUserService.GetUserDetailAsync(id, cancellationToken);
+        var result = await _adminUserService.GetUserDetailAsync(id, ActorId(), ActorRole(), cancellationToken);
         return result.IsSuccess
             ? this.OkResult(result.Value!, "User loaded successfully.")
             : this.ErrorResult(result);
@@ -57,7 +57,7 @@ public sealed class AdminUsersController : ControllerBase
         [FromQuery] int limit = 20,
         CancellationToken cancellationToken = default)
     {
-        var result = await _adminUserService.GetTestHistoryAsync(id, page, limit, cancellationToken);
+        var result = await _adminUserService.GetTestHistoryAsync(id, page, limit, ActorId(), ActorRole(), cancellationToken);
         if (!result.IsSuccess)
         {
             return this.ErrorResult(result);
@@ -71,7 +71,7 @@ public sealed class AdminUsersController : ControllerBase
         [FromRoute] uint id,
         CancellationToken cancellationToken)
     {
-        var result = await _adminUserService.GetUserTopicsAsync(id, cancellationToken);
+        var result = await _adminUserService.GetUserTopicsAsync(id, ActorId(), ActorRole(), cancellationToken);
         return result.IsSuccess
             ? this.OkResult(result.Value!, "User topics loaded successfully.")
             : this.ErrorResult(result);
@@ -83,7 +83,7 @@ public sealed class AdminUsersController : ControllerBase
         [FromRoute] uint id,
         CancellationToken cancellationToken)
     {
-        var result = await _adminUserService.DeactivateAsync(id, ActorRole(), cancellationToken);
+        var result = await _adminUserService.DeactivateAsync(id, ActorId(), ActorRole(), cancellationToken);
         if (!result.IsSuccess)
         {
             return this.ErrorResult(result);
@@ -98,7 +98,7 @@ public sealed class AdminUsersController : ControllerBase
         [FromRoute] uint id,
         CancellationToken cancellationToken)
     {
-        var result = await _adminUserService.RestoreAsync(id, ActorRole(), cancellationToken);
+        var result = await _adminUserService.RestoreAsync(id, ActorId(), ActorRole(), cancellationToken);
         if (!result.IsSuccess)
         {
             return this.ErrorResult(result);
@@ -109,6 +109,8 @@ public sealed class AdminUsersController : ControllerBase
     }
 
     private string ActorRole() => User.FindFirstValue("role") ?? string.Empty;
+
+    private uint ActorId() => uint.TryParse(User.FindFirstValue("user_id"), out var id) ? id : 0;
 
     private void SetAuditEntity(uint userId)
     {

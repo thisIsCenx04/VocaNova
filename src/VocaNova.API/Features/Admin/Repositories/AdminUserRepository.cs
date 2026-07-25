@@ -19,12 +19,18 @@ public sealed class AdminUserRepository : IAdminUserRepository
 
     public Task<PagedResult<AdminUserSummaryDto>> GetUsersAsync(
         AdminUserQuery query,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IReadOnlyCollection<uint>? allowedUserIds = null)
     {
         var source = _dbContext.Users
             .IgnoreQueryFilters()
             .AsNoTracking()
             .AsQueryable();
+
+        if (allowedUserIds is not null)
+        {
+            source = source.Where(user => allowedUserIds.Contains(user.UserId));
+        }
 
         if (!string.IsNullOrWhiteSpace(query.Status))
         {

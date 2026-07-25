@@ -96,6 +96,15 @@ public interface IVocaNovaApiClient
 
     Task<ApiActionResult> DeleteAdminAccountAsync(uint adminId, CancellationToken cancellationToken = default);
 
+    Task<PagedData<Models.Api.SuperAdmin.ManagedRole>> GetRolesAsync(CancellationToken cancellationToken = default);
+    Task<PagedData<Models.Api.SuperAdmin.ManagedRole>> GetRolesAsync(string? search, string? type, CancellationToken cancellationToken = default);
+    Task<ApiActionResult> CreateRoleAsync(string roleName, CancellationToken cancellationToken = default);
+    Task<ApiActionResult> UpdateRoleAsync(uint roleId, string roleName, CancellationToken cancellationToken = default);
+    Task<ApiActionResult> DeleteRoleAsync(uint roleId, CancellationToken cancellationToken = default);
+    Task<ApiActionResult> AssignRoleAsync(uint roleId, uint userId, CancellationToken cancellationToken = default);
+    Task<Models.Api.SuperAdmin.AdminUserAssignmentOverview?> GetAdminUserAssignmentsAsync(CancellationToken cancellationToken = default);
+    Task<ApiActionResult> SaveAdminUserAssignmentsAsync(uint adminId, IReadOnlyCollection<uint> userIds, CancellationToken cancellationToken = default);
+
     // F061 — Topic management.
     Task<IReadOnlyList<AdminTopic>> GetAdminTopicsAsync(string? q, string? status, bool includeDeleted, CancellationToken cancellationToken = default);
 

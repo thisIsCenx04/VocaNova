@@ -85,3 +85,6 @@ input.txt
 .figma-tmp/
 docs/*
 .artifacts-test/
+
+# Runtime-only Admin -> User assignments (kept outside the database)
+src/VocaNova.API/Data/admin-user-assignments.json
