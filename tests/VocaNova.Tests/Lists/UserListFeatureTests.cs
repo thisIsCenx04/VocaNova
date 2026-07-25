@@ -224,8 +224,10 @@ public class UserListFeatureTests
                 WordId = 2u,
                 Word = "walk",
                 PrimaryMeaning = "di bo",
-                CorrectCount = 0,
-                WrongCount = 0,
+                // Số đúng/sai lấy từ tiến độ học của từ (user_word_progress),
+                // là nơi quiz submit cập nhật — không phải user_list_word_stats.
+                CorrectCount = 4,
+                WrongCount = 1,
                 Note = "second",
             });
     }
@@ -742,13 +744,21 @@ public class UserListFeatureTests
                 AddedAt = now,
             });
 
-        dbContext.UserListWordStats.Add(new UserListWordStat
+        // Tiến độ học của từ được kiểm tra (walk = word 2); màn danh sách phải
+        // hiển thị đúng các con số này thay vì luôn 0.
+        dbContext.UserWordProgresses.Add(new UserWordProgress
         {
             UserId = 1,
-            ListId = 20,
-            WordId = 1,
-            CorrectCount = 3,
-            WrongCount = 2,
+            WordId = 2,
+            TestCount = 5,
+            CorrectCount = 4,
+            WrongCount = 1,
+            ConsecutiveCorrect = 1,
+            IsInWrongList = false,
+            MasteryLevel = 0,
+            SrsInterval = 1,
+            EaseFactor = 2.5f,
+            UpdatedAt = DateTime.UtcNow,
         });
 
         await dbContext.SaveChangesAsync();

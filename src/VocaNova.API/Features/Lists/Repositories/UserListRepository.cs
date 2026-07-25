@@ -176,17 +176,18 @@ public sealed class UserListRepository : IUserListRepository
                     .ThenBy(sense => sense.SenseId)
                     .Select(sense => sense.VietnameseMeaning)
                     .FirstOrDefault(),
-                _dbContext.UserListWordStats
-                    .Where(stat => stat.UserId == userId
-                        && stat.ListId == listId
-                        && stat.WordId == listWord.WordId)
-                    .Select(stat => (int?)stat.CorrectCount)
+                // Số đúng/sai lấy từ tiến độ học của từ (per user+word) — đây là
+                // nơi mỗi lần nộp đáp án quiz cập nhật. Bảng user_list_word_stats
+                // không có tiến trình ghi nào nên luôn rỗng.
+                _dbContext.UserWordProgresses
+                    .Where(progress => progress.UserId == userId
+                        && progress.WordId == listWord.WordId)
+                    .Select(progress => (int?)progress.CorrectCount)
                     .FirstOrDefault() ?? 0,
-                _dbContext.UserListWordStats
-                    .Where(stat => stat.UserId == userId
-                        && stat.ListId == listId
-                        && stat.WordId == listWord.WordId)
-                    .Select(stat => (int?)stat.WrongCount)
+                _dbContext.UserWordProgresses
+                    .Where(progress => progress.UserId == userId
+                        && progress.WordId == listWord.WordId)
+                    .Select(progress => (int?)progress.WrongCount)
                     .FirstOrDefault() ?? 0,
                 listWord.Note,
                 listWord.AddedAt))
@@ -395,17 +396,15 @@ public sealed class UserListRepository : IUserListRepository
                     .ThenBy(sense => sense.SenseId)
                     .Select(sense => sense.VietnameseMeaning)
                     .FirstOrDefault(),
-                _dbContext.UserListWordStats
-                    .Where(stat => stat.UserId == userId
-                        && stat.ListId == listId
-                        && stat.WordId == listWord.WordId)
-                    .Select(stat => (int?)stat.CorrectCount)
+                _dbContext.UserWordProgresses
+                    .Where(progress => progress.UserId == userId
+                        && progress.WordId == listWord.WordId)
+                    .Select(progress => (int?)progress.CorrectCount)
                     .FirstOrDefault() ?? 0,
-                _dbContext.UserListWordStats
-                    .Where(stat => stat.UserId == userId
-                        && stat.ListId == listId
-                        && stat.WordId == listWord.WordId)
-                    .Select(stat => (int?)stat.WrongCount)
+                _dbContext.UserWordProgresses
+                    .Where(progress => progress.UserId == userId
+                        && progress.WordId == listWord.WordId)
+                    .Select(progress => (int?)progress.WrongCount)
                     .FirstOrDefault() ?? 0,
                 listWord.Note,
                 listWord.AddedAt))

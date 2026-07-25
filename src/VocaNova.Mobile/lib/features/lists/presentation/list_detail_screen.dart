@@ -131,6 +131,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
               ),
               child: _ListWordCard(
                 word: word,
+                alternate: index.isOdd,
                 onTap: () =>
                     context.push(AppRoutes.wordDetail(word.wordId.toString())),
               ),
@@ -321,21 +322,39 @@ class _Actions extends StatelessWidget {
 }
 
 class _ListWordCard extends StatelessWidget {
-  const _ListWordCard({required this.word, required this.onTap});
+  const _ListWordCard({
+    required this.word,
+    required this.onTap,
+    this.alternate = false,
+  });
 
   final ListWord word;
   final VoidCallback onTap;
 
+  /// Dòng lẻ đổi nền nhạt hơn để hai dòng liền nhau dễ phân biệt khi lướt.
+  final bool alternate;
+
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Card(
+      // Nền trắng/xám so le để hai dòng liền nhau tách bạch khi lướt. Dòng lẻ
+      // đậm màu chữ 7% lên nền để luôn thấy rõ dù ở light hay dark theme.
+      color: alternate
+          ? Color.alphaBlend(
+              scheme.onSurface.withValues(alpha: 0.07),
+              scheme.surface,
+            )
+          : scheme.surface,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            // Kéo giãn hết chiều ngang để nền phủ nguyên dòng, không co lại theo
+            // độ dài nội dung.
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 word.word,
