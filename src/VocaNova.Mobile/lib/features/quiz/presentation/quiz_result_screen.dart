@@ -283,7 +283,6 @@ class _AnswerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final correct = answer.isCorrect == true;
     final color = correct ? _correctColor : _wrongColor;
     return Padding(
@@ -305,22 +304,65 @@ class _AnswerRow extends StatelessWidget {
                   answer.displayContent,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
-                if (!correct)
+                if (!correct) ...[
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      'Bạn trả lời: ${answer.userAnswer ?? "Chưa trả lời"} · '
-                      'Đáp án: ${answer.expectedAnswer}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                    padding: const EdgeInsets.only(top: 4),
+                    child: _AnswerLine(
+                      label: 'Bạn trả lời',
+                      value: answer.userAnswer ?? 'Chưa trả lời',
+                      valueColor: _wrongColor,
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: _AnswerLine(
+                      label: 'Đáp án',
+                      value: answer.expectedAnswer,
+                      valueColor: _correctColor,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
           const SizedBox(width: 10),
           _ResultBadge(correct: correct),
+        ],
+      ),
+    );
+  }
+}
+
+class _AnswerLine extends StatelessWidget {
+  const _AnswerLine({
+    required this.label,
+    required this.value,
+    required this.valueColor,
+  });
+
+  final String label;
+  final String value;
+  final Color valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: '$label: ',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          TextSpan(
+            text: value,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: valueColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
