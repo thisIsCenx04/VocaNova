@@ -10,6 +10,10 @@ public sealed class VocabularyController : Controller
     private const int DefaultPageSize = 10;
     private static readonly int[] AllowedPageSizes = [10, 20, 50, 100];
 
+    // Các cột cho phép sắp xếp — khớp AdminSortColumns của API; giá trị khác bị bỏ qua.
+    private static readonly HashSet<string> SortableColumns =
+        new(StringComparer.Ordinal) { "word", "type", "cefr", "phonetic", "status" };
+
     private readonly IVocaNovaApiClient _apiClient;
 
     public VocabularyController(IVocaNovaApiClient apiClient)
@@ -24,6 +28,8 @@ public sealed class VocabularyController : Controller
         uint? topicId,
         string? status,
         string? wordType,
+        string? sortBy = null,
+        string? sortDirection = null,
         bool includeDeleted = false,
         int page = 1,
         int limit = DefaultPageSize,
@@ -39,6 +45,19 @@ public sealed class VocabularyController : Controller
             limit = DefaultPageSize;
         }
 
+        // Chỉ chấp nhận cột hợp lệ và hướng asc/desc; ngược lại bỏ sort (về mặc định).
+        var normalizedSort = sortBy?.Trim().ToLowerInvariant();
+        if (normalizedSort is null || !SortableColumns.Contains(normalizedSort))
+        {
+            normalizedSort = null;
+        }
+
+        var normalizedDir = sortDirection?.Trim().ToLowerInvariant() == "desc" ? "desc" : "asc";
+        if (normalizedSort is null)
+        {
+            normalizedDir = "asc";
+        }
+
         var filter = new WordListFilter(
             Q: string.IsNullOrWhiteSpace(q) ? null : q.Trim(),
             Cefr: string.IsNullOrWhiteSpace(cefr) ? null : cefr,
@@ -47,7 +66,9 @@ public sealed class VocabularyController : Controller
             IncludeDeleted: includeDeleted,
             Page: page,
             Limit: limit,
-            WordType: string.IsNullOrWhiteSpace(wordType) ? null : wordType);
+            WordType: string.IsNullOrWhiteSpace(wordType) ? null : wordType,
+            SortBy: normalizedSort,
+            SortDirection: normalizedSort is null ? null : normalizedDir);
 
         var words = await _apiClient.GetWordsAsync(filter, cancellationToken);
         var topics = await _apiClient.GetTopicsAsync(cancellationToken);
@@ -62,6 +83,8 @@ public sealed class VocabularyController : Controller
             Status = filter.Status,
             WordType = filter.WordType,
             IncludeDeleted = includeDeleted,
+            SortBy = filter.SortBy,
+            SortDirection = filter.SortDirection,
             Page = words.Page,
             Limit = words.Limit,
             TotalItems = words.TotalItems,

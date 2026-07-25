@@ -188,7 +188,9 @@ public sealed record WordListFilter(
     bool IncludeDeleted,
     int Page,
     int Limit,
-    string? WordType = null);
+    string? WordType = null,
+    string? SortBy = null,
+    string? SortDirection = null);
 
 /// <summary>Payload tạo từ mới (khớp CreateWordRequest của API).</summary>
 public sealed record WordInput(string? Word, string? Cefr, string? PhoneticUk, string? PhoneticUs, bool IsPhrase);
