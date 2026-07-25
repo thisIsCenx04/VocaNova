@@ -153,7 +153,10 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
           _Section(title: 'Cách trả lời', child: _buildAnswerMethod(state)),
           _Section(title: 'Thứ tự', child: _buildWordOrder(state)),
           _Section(title: 'Số câu hỏi', child: _buildQuestionLimit(state)),
-          _SummaryBar(state: state),
+          _SummaryBar(
+            state: state,
+            effectiveLimit: _notifier.effectiveWordLimit(),
+          ),
         ],
       ),
       bottomNavigationBar: SafeArea(
@@ -366,8 +369,9 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
               decoration: InputDecoration(
                 labelText: 'Số câu hỏi mong muốn',
                 helperText: wordCount != null
-                    ? 'Nguồn hiện có $wordCount từ'
-                    : 'Nhập số câu bằng hoặc nhỏ hơn số từ trong nguồn',
+                    ? 'Nguồn hiện có $wordCount từ · nhập lớn hơn sẽ lấy tối đa '
+                          '$wordCount'
+                    : 'Nhập số câu hỏi mong muốn',
               ),
               onChanged: (value) =>
                   _notifier.setCustomQuestionLimit(int.tryParse(value)),
@@ -801,9 +805,10 @@ class _ModeCard extends StatelessWidget {
 }
 
 class _SummaryBar extends StatelessWidget {
-  const _SummaryBar({required this.state});
+  const _SummaryBar({required this.state, required this.effectiveLimit});
 
   final QuizConfigState state;
+  final int? effectiveLimit;
 
   @override
   Widget build(BuildContext context) {
@@ -823,9 +828,10 @@ class _SummaryBar extends StatelessWidget {
           ),
           _SummaryChip(
             label: 'Số câu',
-            value: state.useCustomLimit
-                ? (state.questionLimit?.toString() ?? 'Tùy chỉnh')
-                : (state.questionLimit?.toString() ?? 'Tất cả'),
+            // Hiển thị đúng số sẽ kiểm tra sau khi giới hạn theo tổng số từ.
+            value: state.questionLimit == null
+                ? (state.useCustomLimit ? 'Tùy chỉnh' : 'Tất cả')
+                : (effectiveLimit?.toString() ?? state.questionLimit.toString()),
           ),
         ],
       ),

@@ -94,21 +94,7 @@ void main() {
     expect(request.topicIds, isEmpty);
   });
 
-  testWidgets('blocks start when the chosen list has too few words', (
-    tester,
-  ) async {
-    await pumpConfig(tester, repository, searchRepository, listsRepository);
-
-    await tester.tap(find.byKey(const Key('quiz-source-list-7')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('start-quiz-button')));
-    await tester.pump();
-
-    expect(find.textContaining('ít nhất 20 từ'), findsOneWidget);
-    verifyNever(() => repository.createSession(any()));
-  });
-
-  testWidgets('custom question count validates against the word count', (
+  testWidgets('clamps a preset larger than the chosen list to its word count', (
     tester,
   ) async {
     final router = await pumpConfig(
@@ -117,7 +103,31 @@ void main() {
       searchRepository,
       listsRepository,
     );
-    await tester.tap(find.byKey(const Key('quiz-source-list-7')));
+
+    await tester.tap(find.byKey(const Key('quiz-source-list-7'))); // 6 words
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('question-limit-20')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('start-quiz-button')));
+    await tester.pumpAndSettle();
+
+    expect(router.state.uri.path, AppRoutes.quizActive);
+    final request =
+        verify(() => repository.createSession(captureAny())).captured.single
+            as QuizConfigRequest;
+    expect(request.wordLimit, 6);
+  });
+
+  testWidgets('clamps a custom count larger than the word count', (
+    tester,
+  ) async {
+    final router = await pumpConfig(
+      tester,
+      repository,
+      searchRepository,
+      listsRepository,
+    );
+    await tester.tap(find.byKey(const Key('quiz-source-list-7'))); // 6 words
     await tester.pump();
     await tester.tap(find.byKey(const Key('question-limit-custom')));
     await tester.pump();
@@ -127,18 +137,13 @@ void main() {
       '10',
     );
     await tester.tap(find.byKey(const Key('start-quiz-button')));
-    await tester.pump();
-    expect(find.textContaining('cần ít nhất 10 từ'), findsOneWidget);
-    verifyNever(() => repository.createSession(any()));
-
-    await tester.enterText(find.byKey(const Key('custom-question-input')), '5');
-    await tester.tap(find.byKey(const Key('start-quiz-button')));
     await tester.pumpAndSettle();
+
     expect(router.state.uri.path, AppRoutes.quizActive);
     final request =
         verify(() => repository.createSession(captureAny())).captured.single
             as QuizConfigRequest;
-    expect(request.wordLimit, 5);
+    expect(request.wordLimit, 6);
   });
 
   testWidgets('sends scope, order, and question limit to repository', (

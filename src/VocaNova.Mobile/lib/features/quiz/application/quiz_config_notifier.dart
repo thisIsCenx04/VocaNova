@@ -147,6 +147,18 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
     return null;
   }
 
+  /// Số câu thực tế sẽ kiểm tra. Người dùng có thể chọn option hoặc gõ số lớn
+  /// hơn số từ đang có; thay vì báo lỗi, ta chỉ giới hạn xuống tổng số từ của
+  /// nguồn. "Tất cả" (null) giữ null để backend lấy hết; khi chưa biết số từ
+  /// (nguồn chưa tải xong) thì giữ nguyên số yêu cầu cho backend tự xử lý.
+  int? effectiveWordLimit() {
+    final requested = state.questionLimit;
+    if (requested == null) return null;
+    final wordCount = selectedSourceWordCount();
+    if (wordCount == null) return requested;
+    return requested < wordCount ? requested : wordCount;
+  }
+
   String? validate() {
     if (state.listId == null) {
       return 'Vui lòng chọn danh sách hoặc chủ đề cá nhân để kiểm tra.';
@@ -157,12 +169,6 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
     final requested = state.questionLimit;
     if (requested != null && requested <= 0) {
       return 'Số câu hỏi phải lớn hơn 0.';
-    }
-    final wordCount = selectedSourceWordCount();
-    if (wordCount != null && requested != null && requested > wordCount) {
-      return 'Danh sách của bạn không đủ từ (cần ít nhất $requested từ). '
-          'Vui lòng nhập số câu hỏi bằng hoặc nhỏ hơn số từ hiện có trong '
-          'danh sách ($wordCount từ).';
     }
     if ((state.scopeType == 'start_date' || state.scopeType == 'date_range') &&
         state.dateFrom == null) {
@@ -215,7 +221,7 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
               questionType: state.questionType,
               scopeType: scopeType,
               wordOrder: state.wordOrder,
-              wordLimit: state.questionLimit,
+              wordLimit: effectiveWordLimit(),
               listId: state.listId,
               scopeDateFrom: dateFrom,
               scopeDateTo: dateTo,
