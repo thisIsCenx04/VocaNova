@@ -2068,36 +2068,6 @@ html, body {
     gap: 10px;
 }
 
-.assignment-panel {
-    padding: 24px;
-}
-
-.assignment-filter-bar select[name="adminId"] {
-    min-width: 180px;
-}
-
-.assignment-form {
-    margin-top: 18px;
-}
-
-.assignment-card.is-unavailable {
-    opacity: .58;
-    cursor: not-allowed;
-    background: var(--surface-muted, #f7f8fc);
-}
-
-.assignment-results-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    margin-top: 20px;
-}
-
-.assignment-results-footer .pager {
-    margin-top: 0;
-}
-
 /* Numbered pager (Prev 1 2 3 Next) */
 .pager-link.active {
     background: var(--accent);
@@ -3216,40 +3186,6 @@ html, body {
     .vd-sense-grid,
     .vd-manage-grid { grid-template-columns: 1fr; }
     .vd-head { align-items: flex-start; flex-direction: column; }
-}
-
-.assignment-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-    gap: 12px;
-    margin-top: 16px;
-}
-
-.assignment-card {
-    display: flex;
-    align-items: flex-start;
-    gap: 11px;
-    padding: 14px;
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    background: var(--surface);
-    cursor: pointer;
-}
-
-.assignment-card:hover {
-    border-color: var(--accent);
-}
-
-.assignment-card span {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-}
-
-.assignment-card small {
-    color: var(--muted);
-    overflow-wrap: anywhere;
 }
 
 /* ===== Edit screen: editable examples ===== */

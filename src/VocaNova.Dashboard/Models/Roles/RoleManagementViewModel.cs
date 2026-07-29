@@ -12,19 +12,6 @@ public sealed class RoleManagementViewModel
     public int TotalRoles { get; init; }
 }
 
-public sealed class AdminUserAssignmentViewModel
-{
-    public AdminUserAssignmentOverview Assignments { get; init; } = new([], []);
-    public IReadOnlyList<AssignmentUser> Users { get; init; } = [];
-    public uint? SelectedAdminId { get; init; }
-    public string? Search { get; init; }
-    public string? Status { get; init; }
-    public int Page { get; init; } = 1;
-    public int PageSize { get; init; } = 30;
-    public int TotalUsers { get; init; }
-    public int TotalPages => Math.Max(1, (int)Math.Ceiling(TotalUsers / (double)PageSize));
-}
-
 public sealed class SaveRoleViewModel
 {
     public uint? RoleId { get; set; }

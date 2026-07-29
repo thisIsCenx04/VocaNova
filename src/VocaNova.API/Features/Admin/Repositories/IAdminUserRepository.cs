@@ -8,8 +8,7 @@ public interface IAdminUserRepository
 {
     Task<PagedResult<AdminUserSummaryDto>> GetUsersAsync(
         AdminUserQuery query,
-        CancellationToken cancellationToken = default,
-        IReadOnlyCollection<uint>? allowedUserIds = null);
+        CancellationToken cancellationToken = default);
 
     Task<AdminUserDetailDto?> GetUserDetailAsync(
         uint userId,

@@ -9,16 +9,8 @@ public interface IAdminUserService
         AdminUserQuery query,
         CancellationToken cancellationToken = default);
 
-    Task<Result<PagedResult<AdminUserSummaryDto>>> GetUsersAsync(
-        AdminUserQuery query, uint actorId, string actorRole,
-        CancellationToken cancellationToken = default);
-
     Task<Result<AdminUserDetailDto>> GetUserDetailAsync(
         uint userId,
-        CancellationToken cancellationToken = default);
-
-    Task<Result<AdminUserDetailDto>> GetUserDetailAsync(
-        uint userId, uint actorId, string actorRole,
         CancellationToken cancellationToken = default);
 
     Task<Result<PagedResult<AdminUserTestSessionDto>>> GetTestHistoryAsync(
@@ -27,16 +19,8 @@ public interface IAdminUserService
         int limit,
         CancellationToken cancellationToken = default);
 
-    Task<Result<PagedResult<AdminUserTestSessionDto>>> GetTestHistoryAsync(
-        uint userId, int page, int limit, uint actorId, string actorRole,
-        CancellationToken cancellationToken = default);
-
     Task<Result<AdminUserTopicsDto>> GetUserTopicsAsync(
         uint userId,
-        CancellationToken cancellationToken = default);
-
-    Task<Result<AdminUserTopicsDto>> GetUserTopicsAsync(
-        uint userId, uint actorId, string actorRole,
         CancellationToken cancellationToken = default);
 
     // actorRole = vai trò người thực hiện. Admin chỉ khóa/mở user thường; chỉ super_admin
@@ -46,16 +30,9 @@ public interface IAdminUserService
         string actorRole,
         CancellationToken cancellationToken = default);
 
-    Task<Result<bool>> DeactivateAsync(
-        uint userId, uint actorId, string actorRole,
-        CancellationToken cancellationToken = default);
-
     Task<Result<bool>> RestoreAsync(
         uint userId,
         string actorRole,
         CancellationToken cancellationToken = default);
 
-    Task<Result<bool>> RestoreAsync(
-        uint userId, uint actorId, string actorRole,
-        CancellationToken cancellationToken = default);
 }

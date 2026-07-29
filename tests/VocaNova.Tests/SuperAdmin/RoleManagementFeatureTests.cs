@@ -70,6 +70,35 @@ public sealed class RoleManagementFeatureTests
         (await db.Users.FindAsync(10u))!.RoleId.Should().Be(1);
     }
 
+    [Fact]
+    public async Task AssignRole_Should_Promote_User_And_Demote_Admin()
+    {
+        await using var db = CreateDbContext();
+        await SeedAsync(db);
+        var service = new RoleManagementService(db);
+
+        var promoted = await service.AssignRoleAsync(2, 10);
+        var demoted = await service.AssignRoleAsync(1, 11);
+
+        promoted.IsSuccess.Should().BeTrue();
+        demoted.IsSuccess.Should().BeTrue();
+        (await db.Users.FindAsync(10u))!.RoleId.Should().Be(2);
+        (await db.Users.FindAsync(11u))!.RoleId.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task AssignRole_Should_Not_Change_SuperAdmin_Account()
+    {
+        await using var db = CreateDbContext();
+        await SeedAsync(db);
+        var service = new RoleManagementService(db);
+
+        var result = await service.AssignRoleAsync(1, 12);
+
+        result.StatusCode.Should().Be(403);
+        (await db.Users.FindAsync(12u))!.RoleId.Should().Be(3);
+    }
+
     private static VocaNovaDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<VocaNovaDbContext>()
@@ -83,7 +112,10 @@ public sealed class RoleManagementFeatureTests
             new Role { RoleId = 1, RoleName = UserRole.User },
             new Role { RoleId = 2, RoleName = UserRole.Admin },
             new Role { RoleId = 3, RoleName = UserRole.SuperAdmin });
-        db.Users.Add(NewUser(10, 1, "User A"));
+        db.Users.AddRange(
+            NewUser(10, 1, "User A"),
+            NewUser(11, 2, "Admin A"),
+            NewUser(12, 3, "Super Admin"));
         await db.SaveChangesAsync();
     }
 

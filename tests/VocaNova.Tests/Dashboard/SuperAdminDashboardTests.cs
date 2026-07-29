@@ -11,6 +11,7 @@ using Moq;
 using VocaNova.Dashboard.Controllers;
 using VocaNova.Dashboard.Models.AdminAccounts;
 using VocaNova.Dashboard.Models.Api.SuperAdmin;
+using VocaNova.Dashboard.Models.Api.Users;
 using VocaNova.Dashboard.Models.Auth;
 using VocaNova.Dashboard.Services.Api;
 using VocaNova.Dashboard.Services.Auth;
@@ -171,6 +172,62 @@ public sealed class SuperAdminDashboardTests
                 && input.Password == "Strong123"
                 && input.Status == "active"),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RoleAssignment_Should_Load_User_Accounts_In_Pages_Of_Thirty()
+    {
+        var apiClient = new Mock<IVocaNovaApiClient>();
+        apiClient.Setup(client => client.GetUsersAsync(
+                It.Is<UserListFilter>(filter =>
+                    filter.Search == "an" && filter.Role == "user"
+                    && filter.Page == 2 && filter.Limit == 30),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PagedData<AdminUserSummary>
+            {
+                Items =
+                [
+                    new AdminUserSummary(31, null, "an@example.com", "An", null, "user",
+                        "active", null, DateTime.UtcNow),
+                ],
+                Page = 2,
+                Limit = 30,
+                TotalItems = 31,
+                TotalPages = 2,
+            });
+        var controller = NewAdminAccountsController(apiClient.Object);
+
+        var result = await controller.RoleAssignment(" an ", "user", 2, CancellationToken.None);
+
+        var model = result.Should().BeOfType<ViewResult>().Which.Model
+            .Should().BeOfType<AccountRoleAssignmentViewModel>().Subject;
+        model.Items.Should().ContainSingle(item => item.UserId == 31);
+        model.Limit.Should().Be(30);
+        model.TotalPages.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task ChangeRole_Should_Assign_Admin_Role_To_User()
+    {
+        var apiClient = new Mock<IVocaNovaApiClient>();
+        apiClient.Setup(client => client.GetRolesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PagedData<ManagedRole>
+            {
+                Items = [new ManagedRole(1, "user"), new ManagedRole(2, "admin")],
+                Page = 1,
+                Limit = 100,
+                TotalItems = 2,
+                TotalPages = 1,
+            });
+        apiClient.Setup(client => client.AssignRoleAsync(2, 10, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiActionResult.Ok(StatusCodes.Status200OK));
+        var controller = NewAdminAccountsController(apiClient.Object);
+
+        var result = await controller.ChangeRole(10, "admin", null, CancellationToken.None);
+
+        result.Should().BeOfType<RedirectToActionResult>()
+            .Which.ActionName.Should().Be("RoleAssignment");
+        apiClient.Verify(client => client.AssignRoleAsync(2, 10, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private static AdminAccountsController NewAdminAccountsController(IVocaNovaApiClient apiClient)
