@@ -9,11 +9,69 @@ namespace VocaNova.Dashboard.Controllers;
 public sealed class AdminAccountsController : Controller
 {
     private const int PageSize = 10;
+    private const int RolePageSize = 30;
     private readonly IVocaNovaApiClient _apiClient;
 
     public AdminAccountsController(IVocaNovaApiClient apiClient)
     {
         _apiClient = apiClient;
+    }
+
+    [HttpGet("/admin-accounts/role-assignment")]
+    public async Task<IActionResult> RoleAssignment(
+        string? search,
+        string role = "user",
+        int page = 1,
+        CancellationToken cancellationToken = default)
+    {
+        search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+        role = role is "admin" ? "admin" : "user";
+        page = Math.Max(1, page);
+        var accounts = await _apiClient.GetUsersAsync(
+            new UserListFilter(null, search, false, page, RolePageSize, role),
+            cancellationToken);
+
+        return View(new AccountRoleAssignmentViewModel
+        {
+            Items = accounts.Items,
+            Search = search,
+            Role = role,
+            Page = accounts.Page,
+            Limit = accounts.Limit,
+            TotalItems = accounts.TotalItems,
+            TotalPages = accounts.TotalPages,
+        });
+    }
+
+    [HttpPost("/admin-accounts/{id:uint}/role")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangeRole(
+        uint id,
+        string role,
+        string? returnUrl,
+        CancellationToken cancellationToken)
+    {
+        role = role?.Trim().ToLowerInvariant() ?? string.Empty;
+        if (role is not ("user" or "admin"))
+        {
+            TempData["AdminAccountError"] = "Only user and admin roles can be assigned here.";
+            return SafeRedirect(returnUrl);
+        }
+
+        var roles = await _apiClient.GetRolesAsync(cancellationToken);
+        var targetRole = roles.Items.FirstOrDefault(item => item.RoleName == role);
+        if (targetRole is null)
+        {
+            TempData["AdminAccountError"] = "Target role was not found.";
+            return SafeRedirect(returnUrl);
+        }
+
+        var result = await _apiClient.AssignRoleAsync(targetRole.RoleId, id, cancellationToken);
+        TempData[result.IsSuccess ? "AdminAccountSuccess" : "AdminAccountError"] =
+            result.IsSuccess
+                ? role == "admin" ? "User promoted to administrator." : "Administrator changed to user."
+                : ErrorMessage(result, "Could not change the account role.");
+        return SafeRedirect(returnUrl);
     }
 
     [HttpGet("/admin-accounts")]
@@ -139,6 +197,11 @@ public sealed class AdminAccountsController : Controller
             ? Redirect(returnUrl)
             : RedirectToAction(nameof(Index));
     }
+
+    private IActionResult SafeRedirect(string? returnUrl) =>
+        !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+            ? Redirect(returnUrl)
+            : RedirectToAction(nameof(RoleAssignment));
 
     private void ValidateStatus(string? status)
     {

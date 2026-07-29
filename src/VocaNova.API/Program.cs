@@ -65,8 +65,6 @@ builder.Services.AddScoped<IAdminStatsRepository, AdminStatsRepository>();
 builder.Services.AddScoped<IAdminStatsService, AdminStatsService>();
 builder.Services.AddScoped<ISuperAdminAccountService, SuperAdminAccountService>();
 builder.Services.AddScoped<IRoleManagementService, RoleManagementService>();
-builder.Services.AddSingleton<IAdminUserAssignmentStore, JsonAdminUserAssignmentStore>();
-builder.Services.AddScoped<AdminUserAssignmentService>();
 builder.Services.AddScoped<IWordRepository, WordRepository>();
 builder.Services.AddScoped<IWordService, WordService>();
 builder.Services.AddScoped<VocaNova.API.Features.Notifications.Repositories.INotificationRepository, VocaNova.API.Features.Notifications.Repositories.NotificationRepository>();

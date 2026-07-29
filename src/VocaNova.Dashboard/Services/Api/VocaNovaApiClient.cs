@@ -309,15 +309,6 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> AssignRoleAsync(uint roleId, uint userId, CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Post, $"api/superadmin/roles/{roleId}/users/{userId}", cancellationToken);
 
-    public Task<Models.Api.SuperAdmin.AdminUserAssignmentOverview?> GetAdminUserAssignmentsAsync(CancellationToken cancellationToken = default) =>
-        GetDataAsync<Models.Api.SuperAdmin.AdminUserAssignmentOverview>(
-            "api/superadmin/admin-user-assignments", cancellationToken);
-
-    public Task<ApiActionResult> SaveAdminUserAssignmentsAsync(
-        uint adminId, IReadOnlyCollection<uint> userIds, CancellationToken cancellationToken = default) =>
-        SendJsonActionAsync(HttpMethod.Put, $"api/superadmin/admin-user-assignments/{adminId}",
-            new { UserIds = userIds }, cancellationToken);
-
     public Task<IReadOnlyList<Models.Api.Dictionary.AdminTopic>> GetAdminTopicsAsync(
         string? q,
         string? status,

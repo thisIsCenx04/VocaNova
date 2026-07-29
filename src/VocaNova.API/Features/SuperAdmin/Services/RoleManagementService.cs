@@ -112,10 +112,14 @@ public sealed partial class RoleManagementService : IRoleManagementService
     public async Task<Result<bool>> AssignRoleAsync(uint roleId, uint userId, CancellationToken cancellationToken = default)
     {
         var role = await _dbContext.Roles.SingleOrDefaultAsync(item => item.RoleId == roleId, cancellationToken);
-        var user = await _dbContext.Users.IgnoreQueryFilters().SingleOrDefaultAsync(item => item.UserId == userId, cancellationToken);
+        var user = await _dbContext.Users.IgnoreQueryFilters()
+            .Include(item => item.Role)
+            .SingleOrDefaultAsync(item => item.UserId == userId, cancellationToken);
         if (role is null || user is null) return Result<bool>.NotFound("Role or user not found.");
         if (role.RoleName == UserRole.SuperAdmin)
             return Result<bool>.Forbidden("Super Admin cannot be assigned through role management.");
+        if (user.Role.RoleName == UserRole.SuperAdmin)
+            return Result<bool>.Forbidden("The Super Admin account role cannot be changed.");
         if (user.RoleId == roleId) return Result<bool>.Conflict("User already has this role.");
 
         user.RoleId = roleId;

@@ -28,63 +28,6 @@ public sealed class RolesController : Controller
         });
     }
 
-    [HttpGet("/roles/admin-user-assignments")]
-    public async Task<IActionResult> Assignments(
-        uint? adminId,
-        string? search,
-        string? status,
-        int page = 1,
-        CancellationToken cancellationToken = default)
-    {
-        var assignments = await _apiClient.GetAdminUserAssignmentsAsync(cancellationToken)
-            ?? new Models.Api.SuperAdmin.AdminUserAssignmentOverview([], []);
-        var selectedAdminId = assignments.Admins.Any(admin => admin.AdminId == adminId)
-            ? adminId
-            : assignments.Admins.FirstOrDefault()?.AdminId;
-        search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
-        status = string.IsNullOrWhiteSpace(status) ? null : status.Trim().ToLowerInvariant();
-        page = Math.Max(1, page);
-
-        var filteredUsers = assignments.Users.AsEnumerable();
-        if (search is not null)
-        {
-            filteredUsers = filteredUsers.Where(user =>
-                user.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase)
-                || (user.Email?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
-                || user.UserId.ToString().Contains(search, StringComparison.OrdinalIgnoreCase));
-        }
-
-        filteredUsers = status switch
-        {
-            "assigned" => filteredUsers.Where(user => user.AssignedAdminId == selectedAdminId),
-            "unassigned" => filteredUsers.Where(user => user.AssignedAdminId is null),
-            "other" => filteredUsers.Where(user =>
-                user.AssignedAdminId.HasValue && user.AssignedAdminId != selectedAdminId),
-            _ => filteredUsers,
-        };
-
-        const int pageSize = 30;
-        var totalUsers = filteredUsers.Count();
-        var totalPages = Math.Max(1, (int)Math.Ceiling(totalUsers / (double)pageSize));
-        page = Math.Min(page, totalPages);
-        var users = filteredUsers
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToArray();
-
-        return View(new AdminUserAssignmentViewModel
-        {
-            Assignments = assignments,
-            Users = users,
-            SelectedAdminId = selectedAdminId,
-            Search = search,
-            Status = status,
-            Page = page,
-            PageSize = pageSize,
-            TotalUsers = totalUsers,
-        });
-    }
-
     [HttpGet("/roles/create")]
     public IActionResult Create() => View(new SaveRoleViewModel());
 
@@ -146,41 +89,6 @@ public sealed class RolesController : Controller
     {
         Feedback(await _apiClient.DeleteRoleAsync(roleId, cancellationToken), "Role deleted.");
         return RedirectToAction(nameof(Index));
-    }
-
-    [HttpPost("/roles/assign")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AssignRole(uint roleId, uint userId, CancellationToken cancellationToken)
-    {
-        Feedback(await _apiClient.AssignRoleAsync(roleId, userId, cancellationToken), "Role assigned.");
-        return RedirectToAction(nameof(Index));
-    }
-
-    [HttpPost("/roles/admin-user-assignments")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SaveAssignments(
-        uint adminId,
-        uint[] userIds,
-        uint[] visibleUserIds,
-        string? search,
-        string? status,
-        int page,
-        CancellationToken cancellationToken)
-    {
-        var assignments = await _apiClient.GetAdminUserAssignmentsAsync(cancellationToken)
-            ?? new Models.Api.SuperAdmin.AdminUserAssignmentOverview([], []);
-        var existingUserIds = assignments.Users
-            .Where(user => user.AssignedAdminId == adminId)
-            .Select(user => user.UserId);
-        var updatedUserIds = existingUserIds
-            .Except(visibleUserIds)
-            .Concat(userIds)
-            .Distinct()
-            .ToArray();
-
-        var result = await _apiClient.SaveAdminUserAssignmentsAsync(adminId, updatedUserIds, cancellationToken);
-        Feedback(result, "Assignments saved.");
-        return RedirectToAction(nameof(Assignments), new { adminId, search, status, page });
     }
 
     private void Feedback(ApiActionResult result, string success)

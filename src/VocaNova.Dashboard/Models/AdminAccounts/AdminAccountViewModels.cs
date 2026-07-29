@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using VocaNova.Dashboard.Models.Api.SuperAdmin;
+using VocaNova.Dashboard.Models.Api.Users;
 
 namespace VocaNova.Dashboard.Models.AdminAccounts;
 
@@ -16,6 +17,19 @@ public sealed class AdminAccountListViewModel
     public bool HasPrevious => Page > 1;
     public bool HasNext => Page < TotalPages;
     public static readonly IReadOnlyList<string> Statuses = ["active", "locked", "deleted"];
+}
+
+public sealed class AccountRoleAssignmentViewModel
+{
+    public IReadOnlyList<AdminUserSummary> Items { get; init; } = [];
+    public string? Search { get; init; }
+    public string Role { get; init; } = "user";
+    public int Page { get; init; } = 1;
+    public int Limit { get; init; } = 30;
+    public int TotalItems { get; init; }
+    public int TotalPages { get; init; }
+    public bool HasPrevious => Page > 1;
+    public bool HasNext => Page < TotalPages;
 }
 
 public sealed class CreateAdminAccountViewModel
