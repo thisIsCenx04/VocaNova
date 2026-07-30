@@ -25,6 +25,17 @@ public interface IKnnLearningRepository
         int minMasteryLevel,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Words the given neighbours are actually studying, optionally narrowed to
+    /// <paramref name="topicIds"/> (pass an empty collection to skip the topic filter). This is
+    /// the cold-start counterpart of <see cref="GetMasteredWordsAsync"/>: a new user's neighbours
+    /// are matched on profile, so requiring proven mastery would return far too little.
+    /// </summary>
+    Task<IReadOnlyCollection<KnnNeighborWordDto>> GetNeighborStudiedWordsAsync(
+        IReadOnlyCollection<uint> userIds,
+        IReadOnlyCollection<uint> topicIds,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyCollection<uint>> GetActiveListWordIdsAsync(
         uint userId,
         CancellationToken cancellationToken = default);

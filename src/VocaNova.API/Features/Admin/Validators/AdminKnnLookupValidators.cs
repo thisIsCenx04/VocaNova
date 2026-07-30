@@ -33,6 +33,65 @@ public sealed class KnnLookupQueryValidator : AbstractValidator<KnnLookupQuery>
     }
 }
 
+public sealed class UpdateKnnVectorWeightsRequestValidator
+    : AbstractValidator<UpdateKnnVectorWeightsRequest>
+{
+    // A negative weight would flip a block's contribution to the similarity score, and an
+    // unbounded one would let a single block drown out everything else.
+    private const double MaxWeight = 10.0;
+
+    public UpdateKnnVectorWeightsRequestValidator()
+    {
+        Weight(request => request.AgeRangeWeight, nameof(UpdateKnnVectorWeightsRequest.AgeRangeWeight));
+        Weight(request => request.RegionWeight, nameof(UpdateKnnVectorWeightsRequest.RegionWeight));
+        Weight(request => request.OccupationWeight, nameof(UpdateKnnVectorWeightsRequest.OccupationWeight));
+        Weight(
+            request => request.EducationLevelWeight,
+            nameof(UpdateKnnVectorWeightsRequest.EducationLevelWeight));
+        Weight(
+            request => request.LearningPurposeWeight,
+            nameof(UpdateKnnVectorWeightsRequest.LearningPurposeWeight));
+        Weight(
+            request => request.InterestTopicsWeight,
+            nameof(UpdateKnnVectorWeightsRequest.InterestTopicsWeight));
+
+        // All-zero weights would make every vector zero-length, and cosine similarity would
+        // collapse to 0 for every pair — no neighbours, no recommendations.
+        RuleFor(request => request)
+            .Must(HasANonZeroWeight)
+            .WithName("Weights")
+            .WithMessage("At least one weight must be greater than zero.");
+    }
+
+    private void Weight(
+        Expression<Func<UpdateKnnVectorWeightsRequest, double?>> selector,
+        string name)
+    {
+        RuleFor(selector)
+            .NotNull()
+            .WithMessage($"{name} is required.")
+            .DependentRules(() =>
+            {
+                RuleFor(selector)
+                    .Must(value => value >= 0 && value <= MaxWeight)
+                    .WithMessage($"{name} must be between 0 and {MaxWeight}.");
+            });
+    }
+
+    private static bool HasANonZeroWeight(UpdateKnnVectorWeightsRequest request)
+    {
+        return new[]
+        {
+            request.AgeRangeWeight,
+            request.RegionWeight,
+            request.OccupationWeight,
+            request.EducationLevelWeight,
+            request.LearningPurposeWeight,
+            request.InterestTopicsWeight,
+        }.Any(weight => weight is > 0);
+    }
+}
+
 public sealed class CreateAgeRangeRequestValidator : AbstractValidator<CreateAgeRangeRequest>
 {
     public CreateAgeRangeRequestValidator()

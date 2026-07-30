@@ -6,16 +6,40 @@
 
     string StatusBadge(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
 
-    string PageUrl(int page)
+    // Bộ lọc dùng chung cho link phân trang và link sort, để bấm cái này không mất cái kia.
+    List<string> BaseQuery()
     {
         var query = new List<string>();
         if (!string.IsNullOrWhiteSpace(Model.Q)) query.Add($"q={Uri.EscapeDataString(Model.Q)}");
         if (!string.IsNullOrWhiteSpace(Model.Status)) query.Add($"status={Uri.EscapeDataString(Model.Status)}");
         if (Model.IncludeDeleted) query.Add("includeDeleted=true");
         query.Add($"pageSize={Model.PageSize}");
+        return query;
+    }
+
+    string PageUrl(int page)
+    {
+        var query = BaseQuery();
+        if (!string.IsNullOrWhiteSpace(Model.SortBy)) query.Add($"sortBy={Model.SortBy}");
+        if (!string.IsNullOrWhiteSpace(Model.SortDirection)) query.Add($"sortDirection={Model.SortDirection}");
         query.Add($"page={page}");
         return $"/topics?{string.Join("&", query)}";
     }
+
+    // Đang sort tăng theo cột đó thì đảo sang giảm, còn lại thì tăng. Reset về trang 1.
+    string SortUrl(string column)
+    {
+        var direction = Model.SortBy == column && Model.SortDirection == "asc" ? "desc" : "asc";
+        var query = BaseQuery();
+        query.Add("page=1");
+        query.Add($"sortBy={column}");
+        query.Add($"sortDirection={direction}");
+        return $"/topics?{string.Join("&", query)}";
+    }
+
+    string SortIcon(string column) => Model.SortBy != column
+        ? "bi bi-arrow-down-up th-sort-idle"
+        : (Model.SortDirection == "desc" ? "bi bi-caret-down-fill" : "bi bi-caret-up-fill");
 }
 
 <div class="page-header page-header-row">
@@ -55,10 +79,26 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th style="width:80px;">@T["Topic ID"]</th>
-                <th>@T["Topic"]</th>
-                <th style="width:100px;">@T["Words"]</th>
-                <th style="width:110px;">@T["Status"]</th>
+                <th style="width:80px;">
+                    <a class="th-sort @(Model.SortBy == "id" ? "active" : "")" href="@SortUrl("id")">
+                        @T["Topic ID"] <i class="@SortIcon("id")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th>
+                    <a class="th-sort @(Model.SortBy == "name" ? "active" : "")" href="@SortUrl("name")">
+                        @T["Topic"] <i class="@SortIcon("name")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th style="width:100px;">
+                    <a class="th-sort @(Model.SortBy == "words" ? "active" : "")" href="@SortUrl("words")">
+                        @T["Words"] <i class="@SortIcon("words")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th style="width:110px;">
+                    <a class="th-sort @(Model.SortBy == "status" ? "active" : "")" href="@SortUrl("status")">
+                        @T["Status"] <i class="@SortIcon("status")" aria-hidden="true"></i>
+                    </a>
+                </th>
                 <th style="width:130px;" class="col-actions">@T["Action"]</th>
             </tr>
         </thead>

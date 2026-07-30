@@ -217,6 +217,8 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         if (!string.IsNullOrWhiteSpace(filter.Status)) queryParams["status"] = filter.Status;
         if (!string.IsNullOrWhiteSpace(filter.Search)) queryParams["search"] = filter.Search;
         if (!string.IsNullOrWhiteSpace(filter.Role)) queryParams["role"] = filter.Role;
+        if (!string.IsNullOrWhiteSpace(filter.SortBy)) queryParams["sortBy"] = filter.SortBy;
+        if (!string.IsNullOrWhiteSpace(filter.SortDirection)) queryParams["sortDirection"] = filter.SortDirection;
 
         var uri = QueryHelpers.AddQueryString("api/admin/users", queryParams);
         return GetPagedAsync<Models.Api.Users.AdminUserSummary>(uri, filter.Page, filter.Limit, cancellationToken);
@@ -254,6 +256,8 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         };
         if (!string.IsNullOrWhiteSpace(filter.Status)) queryParams["status"] = filter.Status;
         if (!string.IsNullOrWhiteSpace(filter.Search)) queryParams["search"] = filter.Search;
+        if (!string.IsNullOrWhiteSpace(filter.SortBy)) queryParams["sort_by"] = filter.SortBy;
+        if (!string.IsNullOrWhiteSpace(filter.SortDirection)) queryParams["sort_direction"] = filter.SortDirection;
 
         var uri = QueryHelpers.AddQueryString("api/superadmin/admins", queryParams);
         return GetPagedAsync<Models.Api.SuperAdmin.AdminAccount>(uri, filter.Page, filter.Limit, cancellationToken);
@@ -288,11 +292,21 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         GetRolesAsync(null, null, cancellationToken);
 
     public Task<PagedData<Models.Api.SuperAdmin.ManagedRole>> GetRolesAsync(
-        string? search, string? type, CancellationToken cancellationToken = default)
+        string? search, string? type, CancellationToken cancellationToken = default) =>
+        GetRolesAsync(search, type, null, null, cancellationToken);
+
+    public Task<PagedData<Models.Api.SuperAdmin.ManagedRole>> GetRolesAsync(
+        string? search,
+        string? type,
+        string? sortBy,
+        string? sortDirection,
+        CancellationToken cancellationToken = default)
     {
         var query = new Dictionary<string, string?> { ["page"] = "1", ["limit"] = "100" };
         if (!string.IsNullOrWhiteSpace(search)) query["search"] = search;
         if (!string.IsNullOrWhiteSpace(type)) query["type"] = type;
+        if (!string.IsNullOrWhiteSpace(sortBy)) query["sort_by"] = sortBy;
+        if (!string.IsNullOrWhiteSpace(sortDirection)) query["sort_direction"] = sortDirection;
         return GetPagedAsync<Models.Api.SuperAdmin.ManagedRole>(
             QueryHelpers.AddQueryString("api/superadmin/roles", query), 1, 100, cancellationToken);
     }
@@ -360,6 +374,8 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         };
         if (!string.IsNullOrWhiteSpace(filter.Q)) queryParams["q"] = filter.Q;
         if (!string.IsNullOrWhiteSpace(filter.Status)) queryParams["status"] = filter.Status;
+        if (!string.IsNullOrWhiteSpace(filter.SortBy)) queryParams["sort_by"] = filter.SortBy;
+        if (!string.IsNullOrWhiteSpace(filter.SortDirection)) queryParams["sort_direction"] = filter.SortDirection;
 
         var uri = QueryHelpers.AddQueryString($"api/admin/knn/{lookup}", queryParams);
         return GetPagedAsync<T>(uri, filter.Page, filter.Limit, cancellationToken);
@@ -376,6 +392,71 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
 
     public Task<ApiActionResult> RestoreKnnLookupAsync(string lookup, uint id, CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Patch, $"api/admin/knn/{lookup}/{id}/restore", cancellationToken);
+
+    public Task<ApiActionResult> UpdateKnnVectorWeightsAsync(
+        Models.Api.Knn.KnnVectorWeights weights,
+        CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Put, "api/admin/knn/config/vector-weights", new
+        {
+            weights.AgeRangeWeight,
+            weights.RegionWeight,
+            weights.OccupationWeight,
+            weights.EducationLevelWeight,
+            weights.LearningPurposeWeight,
+            weights.InterestTopicsWeight,
+        }, cancellationToken);
+
+    public Task<ApiActionResult> ResetKnnVectorWeightsAsync(CancellationToken cancellationToken = default) =>
+        SendActionAsync(HttpMethod.Post, "api/admin/knn/config/vector-weights/reset", cancellationToken);
+
+    public Task<Models.Api.Settings.AiGradingConfig?> GetAiGradingConfigAsync(CancellationToken cancellationToken = default) =>
+        GetDataAsync<Models.Api.Settings.AiGradingConfig>("api/admin/settings/ai-grading", cancellationToken);
+
+    public Task<ApiActionResult> UpdateAiGradingConfigAsync(
+        Models.Api.Settings.AiGradingConfigInput input,
+        CancellationToken cancellationToken = default) =>
+        SendJsonActionAsync(HttpMethod.Put, "api/admin/settings/ai-grading", new
+        {
+            input.Provider,
+            input.Endpoint,
+            input.Model,
+            input.FallbackModels,
+            input.ApiKey,
+            input.MaxAttempts,
+            input.RetryBaseDelayMs,
+            input.AttemptTimeoutSeconds,
+            input.PassThreshold,
+        }, cancellationToken);
+
+    public Task<ApiActionResult> ResetAiGradingConfigAsync(CancellationToken cancellationToken = default) =>
+        SendActionAsync(HttpMethod.Post, "api/admin/settings/ai-grading/reset", cancellationToken);
+
+    public async Task<Models.Api.Settings.AiGradingConnectionTest?> TestAiGradingConnectionAsync(
+        CancellationToken cancellationToken = default)
+    {
+        const string requestUri = "api/admin/settings/ai-grading/test";
+        try
+        {
+            using var response = await _httpClient.PostAsync(requestUri, content: null, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                LogNonSuccess(requestUri, (int)response.StatusCode);
+                return null;
+            }
+
+            var envelope = await response.Content
+                .ReadFromJsonAsync<ApiEnvelope<Models.Api.Settings.AiGradingConnectionTest>>(
+                    ApiJson.Default,
+                    cancellationToken);
+            return envelope?.Data;
+        }
+        catch (Exception ex)
+            when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
+        {
+            _logger.LogWarning(ex, "VocaNova.API POST {RequestUri} failed.", requestUri);
+            return null;
+        }
+    }
 
     public Task<Models.Api.Auth.MeProfile?> GetMyProfileAsync(CancellationToken cancellationToken = default) =>
         GetDataAsync<Models.Api.Auth.MeProfile>("api/auth/me", cancellationToken);

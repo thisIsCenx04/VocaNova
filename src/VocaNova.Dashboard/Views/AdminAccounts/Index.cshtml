@@ -13,14 +13,38 @@
         _ => "badge badge-muted",
     };
 
-    string PageUrl(int page)
+    // Bộ lọc dùng chung cho link phân trang và link sort.
+    List<string> BaseQuery()
     {
-        var values = new List<string> { $"page={page}" };
+        var values = new List<string>();
         if (!string.IsNullOrWhiteSpace(Model.Search)) values.Add($"search={Uri.EscapeDataString(Model.Search)}");
         if (!string.IsNullOrWhiteSpace(Model.Status)) values.Add($"status={Uri.EscapeDataString(Model.Status)}");
         if (Model.IncludeDeleted) values.Add("includeDeleted=true");
+        return values;
+    }
+
+    string PageUrl(int page)
+    {
+        var values = BaseQuery();
+        if (!string.IsNullOrWhiteSpace(Model.SortBy)) values.Add($"sortBy={Model.SortBy}");
+        if (!string.IsNullOrWhiteSpace(Model.SortDirection)) values.Add($"sortDirection={Model.SortDirection}");
+        values.Add($"page={page}");
         return "/admin-accounts?" + string.Join("&", values);
     }
+
+    string SortUrl(string column)
+    {
+        var direction = Model.SortBy == column && Model.SortDirection == "asc" ? "desc" : "asc";
+        var values = BaseQuery();
+        values.Add("page=1");
+        values.Add($"sortBy={column}");
+        values.Add($"sortDirection={direction}");
+        return "/admin-accounts?" + string.Join("&", values);
+    }
+
+    string SortIcon(string column) => Model.SortBy != column
+        ? "bi bi-arrow-down-up th-sort-idle"
+        : (Model.SortDirection == "desc" ? "bi bi-caret-down-fill" : "bi bi-caret-up-fill");
 }
 
 <div class="page-header admin-accounts-header">
@@ -61,12 +85,36 @@
     <table class="data-table admin-account-table">
         <thead>
             <tr>
-                <th class="admin-id-column">@T["ID"]</th>
-                <th>@T["Admin account"]</th>
-                <th>@T["Email"]</th>
-                <th>@T["Phone"]</th>
-                <th>@T["Status"]</th>
-                <th>@T["Last login"]</th>
+                <th class="admin-id-column">
+                    <a class="th-sort @(Model.SortBy == "id" ? "active" : "")" href="@SortUrl("id")">
+                        @T["ID"] <i class="@SortIcon("id")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th>
+                    <a class="th-sort @(Model.SortBy == "name" ? "active" : "")" href="@SortUrl("name")">
+                        @T["Admin account"] <i class="@SortIcon("name")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th>
+                    <a class="th-sort @(Model.SortBy == "email" ? "active" : "")" href="@SortUrl("email")">
+                        @T["Email"] <i class="@SortIcon("email")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th>
+                    <a class="th-sort @(Model.SortBy == "phone" ? "active" : "")" href="@SortUrl("phone")">
+                        @T["Phone"] <i class="@SortIcon("phone")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th>
+                    <a class="th-sort @(Model.SortBy == "status" ? "active" : "")" href="@SortUrl("status")">
+                        @T["Status"] <i class="@SortIcon("status")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th>
+                    <a class="th-sort @(Model.SortBy == "last_login" ? "active" : "")" href="@SortUrl("last_login")">
+                        @T["Last login"] <i class="@SortIcon("last_login")" aria-hidden="true"></i>
+                    </a>
+                </th>
                 <th class="col-actions">@T["Actions"]</th>
             </tr>
         </thead>

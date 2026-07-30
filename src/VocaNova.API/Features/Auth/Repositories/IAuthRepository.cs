@@ -53,6 +53,8 @@ public interface IAuthRepository
 
     Task<bool> ActiveAgeRangeExistsAsync(uint ageRangeId, CancellationToken cancellationToken = default);
 
+    Task<uint?> ResolveAgeRangeIdByAgeAsync(int age, CancellationToken cancellationToken = default);
+
     Task<bool> ActiveRegionExistsAsync(uint regionId, CancellationToken cancellationToken = default);
 
     Task<bool> ActiveOccupationExistsAsync(uint occupationId, CancellationToken cancellationToken = default);

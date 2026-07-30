@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
+using VocaNova.API.Features.AiGrading;
 using VocaNova.API.Features.AiGrading.Services;
 
 namespace VocaNova.Tests.AiGrading;
@@ -135,6 +136,14 @@ public class GeminiAiGradingProviderTests
             }
 
             return Task.FromResult(_response!);
+        }
+
+        public Task<string> GenerateContentAsync(
+            string prompt,
+            AiGradingSettings settings,
+            CancellationToken cancellationToken = default)
+        {
+            return GenerateContentAsync(prompt, cancellationToken);
         }
     }
 }

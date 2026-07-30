@@ -41,7 +41,27 @@ public sealed record LearningPurpose(
 
 public sealed record KnnConfig(
     [property: JsonPropertyName("onboarding")] KnnOnboardingConfig Onboarding,
-    [property: JsonPropertyName("learning")] KnnLearningConfig Learning);
+    [property: JsonPropertyName("learning")] KnnLearningConfig Learning,
+    [property: JsonPropertyName("vector")] KnnVectorConfig? Vector);
+
+public sealed record KnnVectorConfig(
+    [property: JsonPropertyName("weights")] KnnVectorWeights Weights,
+    [property: JsonPropertyName("defaults")] KnnVectorWeights Defaults,
+    [property: JsonPropertyName("is_overridden")] bool IsOverridden,
+    // "env_file" khi trọng số nằm trong .env, "fallback" khi không ghi được file.
+    [property: JsonPropertyName("storage")] string Storage,
+    [property: JsonPropertyName("can_write_env_file")] bool CanWriteEnvFile)
+{
+    public bool IsStoredInEnvFile => string.Equals(Storage, "env_file", StringComparison.Ordinal);
+}
+
+public sealed record KnnVectorWeights(
+    [property: JsonPropertyName("age_range_weight")] double AgeRangeWeight,
+    [property: JsonPropertyName("region_weight")] double RegionWeight,
+    [property: JsonPropertyName("occupation_weight")] double OccupationWeight,
+    [property: JsonPropertyName("education_level_weight")] double EducationLevelWeight,
+    [property: JsonPropertyName("learning_purpose_weight")] double LearningPurposeWeight,
+    [property: JsonPropertyName("interest_topics_weight")] double InterestTopicsWeight);
 
 public sealed record KnnOnboardingConfig(
     [property: JsonPropertyName("k_value")] int KValue,

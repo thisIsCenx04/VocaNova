@@ -1,0 +1,128 @@
+@model string
+@{
+    // Bảng emoji chia nhóm như bàn phím điện thoại. Mỗi emoji kèm từ khoá tiếng Anh để ô
+    // tìm kiếm lọc được; vẫn cho gõ tay vào ô input nên không bị giới hạn trong danh sách.
+    var groups = new (string Key, string Label, string Tab, (string Icon, string Keywords)[] Icons)[]
+    {
+        ("learning", "Learning", "📚",
+        [
+            ("📚", "book books study library"), ("📖", "open book read reading"),
+            ("✏️", "pencil write writing"), ("🎓", "graduation school university degree"),
+            ("🧠", "brain mind think memory"), ("🔤", "abc letters alphabet"),
+            ("📝", "note memo exam test"), ("🗣️", "speaking talk pronunciation"),
+            ("🔬", "science lab research"), ("🧮", "abacus math maths numbers"),
+            ("🗂️", "files index category"), ("🏫", "school building class"),
+        ]),
+        ("daily", "Daily life", "🏠",
+        [
+            ("🏠", "home house"), ("🍽️", "food eat meal dining"),
+            ("🛒", "shopping cart supermarket"), ("👕", "clothes shirt clothing"),
+            ("🛏️", "bed sleep bedroom"), ("🚿", "shower bath bathroom"),
+            ("🧹", "clean cleaning housework"), ("👨‍👩‍👧", "family parents children"),
+            ("☕", "coffee drink cafe"), ("🍳", "cooking cook kitchen"),
+            ("🐶", "pet dog animal"), ("💡", "light lamp idea"),
+        ]),
+        ("work", "Work", "💼",
+        [
+            ("💼", "work business briefcase job"), ("🏢", "office company building"),
+            ("💻", "computer laptop it technology"), ("📊", "chart report statistics"),
+            ("📈", "growth increase sales"), ("🤝", "meeting deal partner"),
+            ("⏰", "time clock schedule deadline"), ("✉️", "email mail letter"),
+            ("📞", "phone call telephone"), ("🖊️", "pen sign contract"),
+            ("💰", "money finance salary"), ("🏭", "factory industry"),
+        ]),
+        ("travel", "Travel", "✈️",
+        [
+            ("✈️", "plane flight airport travel"), ("🌍", "world earth global country"),
+            ("🗺️", "map direction navigation"), ("🏖️", "beach holiday vacation"),
+            ("🏨", "hotel accommodation stay"), ("🚗", "car drive road"),
+            ("🚆", "train railway station"), ("🧳", "luggage suitcase baggage"),
+            ("🚕", "taxi cab"), ("⛵", "boat sail ship"),
+            ("🏕️", "camping tent outdoor"), ("🎫", "ticket booking"),
+        ]),
+        ("nature", "Nature", "🌳",
+        [
+            ("🌳", "tree forest plant"), ("🌸", "flower blossom spring"),
+            ("🐾", "animal paw wildlife"), ("🌦️", "weather rain sun forecast"),
+            ("⛰️", "mountain hill"), ("🌊", "sea ocean wave water"),
+            ("🔥", "fire flame heat"), ("🌙", "moon night sky"),
+            ("☀️", "sun sunny day"), ("❄️", "snow winter cold"),
+            ("🍂", "autumn leaves fall"), ("🌱", "seed grow sprout"),
+        ]),
+        ("culture", "Culture", "🎨",
+        [
+            ("🎨", "art paint drawing"), ("🎵", "music song sound"),
+            ("🎬", "film movie cinema"), ("🎭", "theatre drama performance"),
+            ("📷", "photo camera picture"), ("🏛️", "museum history heritage"),
+            ("⚽", "sport football game"), ("🍿", "entertainment popcorn show"),
+            ("📺", "tv television media"), ("🎮", "game gaming video game"),
+            ("📰", "news newspaper press"), ("🎉", "festival party celebration"),
+        ]),
+        ("health", "Health", "❤️",
+        [
+            ("🏥", "hospital clinic medical"), ("💊", "medicine pill drug"),
+            ("🩺", "doctor checkup health"), ("🏃", "run exercise sport fitness"),
+            ("🧘", "yoga meditation relax"), ("🥗", "salad diet healthy food"),
+            ("😴", "sleep rest tired"), ("❤️", "heart love health"),
+            ("🦷", "tooth dental teeth"), ("🧴", "care lotion hygiene"),
+            ("🚑", "ambulance emergency"), ("🩹", "bandage injury first aid"),
+        ]),
+    };
+}
+
+<div class="topic-icon-picker" data-topic-icon-picker>
+    <button type="button" class="topic-icon-trigger" data-topic-icon-trigger
+            aria-haspopup="dialog" aria-labelledby="topic-icon-label">
+        <span class="topic-icon-preview" data-topic-icon-preview>@(string.IsNullOrWhiteSpace(Model) ? "🎨" : Model)</span>
+        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+    </button>
+
+    @* Giá trị chỉ đến từ modal, nên trường post lên là hidden thay vì ô gõ tay. *@
+    <input type="hidden" name="Icon" value="@Model" data-topic-icon-input />
+</div>
+<small>@T["Pick an icon from the list."]</small>
+
+<div class="modal-overlay" id="topic-icon-modal" data-topic-icon-modal role="dialog" aria-modal="true"
+     aria-labelledby="topic-icon-modal-title" hidden>
+    <div class="modal-card topic-icon-modal-card">
+        <div class="topic-icon-modal-head">
+            <h3 class="modal-title" id="topic-icon-modal-title">@T["Choose an icon"]</h3>
+            <button type="button" class="topic-icon-close" data-topic-icon-close
+                    aria-label="@T["Close"]">&times;</button>
+        </div>
+
+        <input type="search" class="form-control topic-icon-search" data-topic-icon-search
+               placeholder="@T["Search icons..."]" autocomplete="off" aria-label="@T["Search icons..."]" />
+
+        <div class="topic-icon-tabs" role="tablist">
+            @foreach (var group in groups)
+            {
+                <button type="button" class="topic-icon-tab" data-topic-icon-tab="@group.Key"
+                        role="tab" title="@T[group.Label]" aria-label="@T[group.Label]">@group.Tab</button>
+            }
+        </div>
+
+        <div class="topic-icon-scroll" data-topic-icon-scroll>
+            @foreach (var group in groups)
+            {
+                <section class="topic-icon-group" data-topic-icon-group="@group.Key">
+                    <span class="topic-icon-group-label">@T[group.Label]</span>
+                    <div class="topic-icon-grid">
+                        @foreach (var (icon, keywords) in group.Icons)
+                        {
+                            <button type="button" class="topic-icon-option @(icon == Model ? "is-selected" : "")"
+                                    data-topic-icon-option="@icon" data-keywords="@keywords"
+                                    title="@icon" aria-label="@keywords">@icon</button>
+                        }
+                    </div>
+                </section>
+            }
+            <p class="topic-icon-empty is-hidden" data-topic-icon-empty>@T["No icons match your search."]</p>
+        </div>
+
+        <div class="topic-icon-modal-foot">
+            <button type="button" class="btn-secondary btn-sm" data-topic-icon-clear>@T["Clear"]</button>
+            <button type="button" class="btn-secondary btn-sm" data-topic-icon-close>@T["Close"]</button>
+        </div>
+    </div>
+</div>

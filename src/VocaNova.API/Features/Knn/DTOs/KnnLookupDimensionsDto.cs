@@ -5,4 +5,5 @@ public sealed record KnnLookupDimensionsDto(
     IReadOnlyList<uint> RegionIds,
     IReadOnlyList<uint> OccupationIds,
     IReadOnlyList<uint> EducationLevelIds,
-    IReadOnlyList<uint> LearningPurposeIds);
+    IReadOnlyList<uint> LearningPurposeIds,
+    IReadOnlyList<uint> TopicIds);

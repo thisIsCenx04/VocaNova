@@ -3,6 +3,8 @@
     ViewData["Title"] = "KNN Management";
     var cfg = Model.Config;
     var rb = Model.RebuildStatus;
+    var vector = Model.Vector;
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
 }
 
 <div class="page-header">
@@ -54,6 +56,8 @@
 
     <section class="panel">
         <div class="panel-head"><h2 class="panel-title">@T["Algorithm config (read-only)"]</h2></div>
+        @* Neighbour count, thresholds and TTLs still come from deployment config; only the
+           profile-vector weights below are editable at runtime. *@
         @if (cfg is null)
         {
             <p class="text-muted">@T["Config unavailable."]</p>
@@ -80,6 +84,60 @@
         }
     </section>
 </div>
+
+@if (vector is not null)
+{
+    <section class="panel" style="margin-top:18px;">
+        <div class="panel-head">
+            <h2 class="panel-title">@T["Profile vector weights"]</h2>
+            @if (vector.IsOverridden)
+            {
+                <span class="badge badge-warning">@T["Overridden"]</span>
+            }
+        </div>
+        <p class="panel-muted">
+            @T["Each block of the profile vector is normalised then scaled by its weight, so these numbers set how much each answer counts when matching similar learners. 0 disables a block."]
+        </p>
+
+        <form method="post" action="/knn/vector-weights" class="knn-weights-form">
+            @Html.AntiForgeryToken()
+            <div class="knn-weights-grid">
+                @foreach (var field in Model.WeightFields)
+                {
+                    <label class="form-field">
+                        <span>@T[field.Label]</span>
+                        <input type="number" name="@field.Name" value="@field.Value.ToString(inv)"
+                               step="0.1" min="0" max="10" required class="form-control" />
+                        <small>@T[field.Source] · @T["default"] @field.Default.ToString(inv)</small>
+                    </label>
+                }
+            </div>
+            <div class="modal-actions" style="margin-top:14px;">
+                <button type="submit" class="btn-primary btn-sm">@T["Save weights"]</button>
+            </div>
+        </form>
+
+        <form method="post" action="/knn/vector-weights/reset" class="inline-form js-confirm"
+              data-confirm="@T["Reset vector weights to the deployment configuration?"]" style="margin-top:10px;">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn-secondary btn-sm">@T["Reset to defaults"]</button>
+        </form>
+
+        <p class="panel-muted" style="margin-top:10px;">
+            @if (vector.IsStoredInEnvFile)
+            {
+                @T["Saved to the .env file and reloaded automatically."]
+            }
+            else
+            {
+                <strong>@T[".env is not writable — weights are held in the shared cache and will be lost if it is cleared."]</strong>
+            }
+        </p>
+        <p class="panel-muted">
+            @T["New weights apply to the next recommendation computed. Recommendations already cached keep serving until their TTL expires"] (@(cfg?.Onboarding.CacheTtlMinutes ?? 30) @T["min"]).
+        </p>
+    </section>
+}
 
 @section Scripts {
     <script src="~/js/knn.js" asp-append-version="true"></script>

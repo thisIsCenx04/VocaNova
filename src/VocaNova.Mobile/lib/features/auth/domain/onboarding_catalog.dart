@@ -1,47 +1,62 @@
+/// A single lookup choice (age range, region, occupation, ...) served by the backend.
 class OnboardingOption {
   const OnboardingOption({required this.id, required this.label});
 
   final int id;
   final String label;
+
+  factory OnboardingOption.fromJson(Map<String, dynamic> json) {
+    return OnboardingOption(
+      id: json['id'] as int,
+      label: json['name'] as String,
+    );
+  }
 }
 
-abstract final class OnboardingCatalog {
-  // Replace this catalog with backend lookups when a public lookup API exists.
-  static const ageRanges = [
-    OnboardingOption(id: 1, label: 'Dưới 18 tuổi'),
-    OnboardingOption(id: 2, label: '18 - 24 tuổi'),
-    OnboardingOption(id: 3, label: '25 - 34 tuổi'),
-    OnboardingOption(id: 4, label: '35 - 44 tuổi'),
-    OnboardingOption(id: 5, label: 'Từ 45 tuổi'),
-  ];
+/// The lookup catalog behind the sign-up form and the onboarding questions.
+///
+/// These used to be hard-coded ids on the client, which silently broke whenever an
+/// admin edited a lookup. They now come from `/api/recommendations/learning-profile-options`.
+class LearningProfileOptions {
+  const LearningProfileOptions({
+    required this.ageRanges,
+    required this.regions,
+    required this.occupations,
+    required this.educationLevels,
+    required this.learningPurposes,
+  });
 
-  static const regions = [
-    OnboardingOption(id: 1, label: 'Miền Bắc'),
-    OnboardingOption(id: 2, label: 'Miền Trung'),
-    OnboardingOption(id: 3, label: 'Miền Nam'),
-  ];
+  final List<OnboardingOption> ageRanges;
+  final List<OnboardingOption> regions;
+  final List<OnboardingOption> occupations;
+  final List<OnboardingOption> educationLevels;
+  final List<OnboardingOption> learningPurposes;
 
-  static const occupations = [
-    OnboardingOption(id: 1, label: 'Học sinh'),
-    OnboardingOption(id: 2, label: 'Sinh viên'),
-    OnboardingOption(id: 3, label: 'Nhân viên văn phòng'),
-    OnboardingOption(id: 4, label: 'Kinh doanh tự do'),
-    OnboardingOption(id: 5, label: 'Khác'),
-  ];
+  static const empty = LearningProfileOptions(
+    ageRanges: [],
+    regions: [],
+    occupations: [],
+    educationLevels: [],
+    learningPurposes: [],
+  );
 
-  static const educationLevels = [
-    OnboardingOption(id: 1, label: 'Trung học cơ sở'),
-    OnboardingOption(id: 2, label: 'Trung học phổ thông'),
-    OnboardingOption(id: 3, label: 'Cao đẳng'),
-    OnboardingOption(id: 4, label: 'Đại học'),
-    OnboardingOption(id: 5, label: 'Sau đại học'),
-  ];
+  factory LearningProfileOptions.fromJson(Map<String, dynamic> json) {
+    return LearningProfileOptions(
+      ageRanges: _options(json['age_ranges']),
+      regions: _options(json['regions']),
+      occupations: _options(json['occupations']),
+      educationLevels: _options(json['education_levels']),
+      learningPurposes: _options(json['learning_purposes']),
+    );
+  }
 
-  static const learningPurposes = [
-    OnboardingOption(id: 1, label: 'Giao tiếp hằng ngày'),
-    OnboardingOption(id: 2, label: 'Học tập và thi cử'),
-    OnboardingOption(id: 3, label: 'Công việc'),
-    OnboardingOption(id: 4, label: 'Du lịch'),
-    OnboardingOption(id: 5, label: 'Phát triển bản thân'),
-  ];
+  static List<OnboardingOption> _options(Object? value) {
+    if (value is! List) {
+      return const [];
+    }
+    return value
+        .whereType<Map<String, dynamic>>()
+        .map(OnboardingOption.fromJson)
+        .toList(growable: false);
+  }
 }

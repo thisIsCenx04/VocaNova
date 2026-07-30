@@ -162,6 +162,21 @@ public sealed class AuthRepository : IAuthRepository
             cancellationToken);
     }
 
+    public async Task<uint?> ResolveAgeRangeIdByAgeAsync(int age, CancellationToken cancellationToken = default)
+    {
+        var matches = await _dbContext.AgeRanges
+            .AsNoTracking()
+            .Where(ageRange => ageRange.Status == UserStatus.Active
+                && (ageRange.MinAge == null || ageRange.MinAge <= age)
+                && (ageRange.MaxAge == null || ageRange.MaxAge >= age))
+            .OrderBy(ageRange => ageRange.DisplayOrder)
+            .ThenBy(ageRange => ageRange.AgeRangeId)
+            .Select(ageRange => (uint?)ageRange.AgeRangeId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return matches;
+    }
+
     public Task<bool> ActiveRegionExistsAsync(uint regionId, CancellationToken cancellationToken = default)
     {
         return _dbContext.Regions.AnyAsync(

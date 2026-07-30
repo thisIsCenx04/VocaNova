@@ -8,6 +8,8 @@ namespace VocaNova.API.Features.Knn.Repositories;
 
 public sealed class KnnProfileRepository : IKnnProfileRepository
 {
+    private static readonly string[] InterestSources = TopicPreferenceSource.NeighborSources.ToArray();
+
     private readonly VocaNovaDbContext _dbContext;
 
     public KnnProfileRepository(VocaNovaDbContext dbContext)
@@ -61,11 +63,16 @@ public sealed class KnnProfileRepository : IKnnProfileRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<KnnProfileVectorSourceDto?> GetProfileVectorSourceAsync(
+    public async Task<KnnProfileVectorSourceDto?> GetProfileVectorSourceAsync(
         uint userId,
         CancellationToken cancellationToken = default)
     {
-        return _dbContext.UserLearningProfiles
+        var interestTopicIds = await GetInterestTopicIdsQuery()
+            .Where(preference => preference.UserId == userId)
+            .Select(preference => preference.TopicId)
+            .ToListAsync(cancellationToken);
+
+        var profile = await _dbContext.UserLearningProfiles
             .AsNoTracking()
             .Where(profile => profile.UserId == userId)
             .Select(profile => new KnnProfileVectorSourceDto(
@@ -74,8 +81,20 @@ public sealed class KnnProfileRepository : IKnnProfileRepository
                 profile.RegionId,
                 profile.OccupationId,
                 profile.EducationLevelId,
-                profile.LearningPurposeId))
+                profile.LearningPurposeId,
+                null))
             .SingleOrDefaultAsync(cancellationToken);
+
+        // A user who skipped the sign-up questions has no learning-profile row yet, but may
+        // still have picked topics during onboarding. Those picks alone are enough for a vector.
+        if (profile is null)
+        {
+            return interestTopicIds.Count == 0
+                ? null
+                : new KnnProfileVectorSourceDto(userId, null, null, null, null, null, interestTopicIds);
+        }
+
+        return profile with { InterestTopicIds = interestTopicIds };
     }
 
     public async Task<KnnLookupDimensionsDto> GetActiveLookupDimensionsAsync(
@@ -111,20 +130,79 @@ public sealed class KnnProfileRepository : IKnnProfileRepository
             .OrderBy(learningPurpose => learningPurpose.LearningPurposeId)
             .Select(learningPurpose => learningPurpose.LearningPurposeId)
             .ToListAsync(cancellationToken);
+        var topicIds = await _dbContext.Topics
+            .AsNoTracking()
+            .OrderBy(topic => topic.TopicId)
+            .Select(topic => topic.TopicId)
+            .ToListAsync(cancellationToken);
 
         return new KnnLookupDimensionsDto(
             ageRangeIds,
             regionIds,
             occupationIds,
             educationLevelIds,
-            learningPurposeIds);
+            learningPurposeIds,
+            topicIds);
+    }
+
+    public async Task<LearningProfileOptionsDto> GetActiveLookupOptionsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var ageRanges = await _dbContext.AgeRanges
+            .AsNoTracking()
+            .Where(ageRange => ageRange.Status == UserStatus.Active)
+            .OrderBy(ageRange => ageRange.DisplayOrder)
+            .ThenBy(ageRange => ageRange.AgeRangeId)
+            .Select(ageRange => new LearningProfileOptionDto(ageRange.AgeRangeId, ageRange.Name))
+            .ToListAsync(cancellationToken);
+        var regions = await _dbContext.Regions
+            .AsNoTracking()
+            .Where(region => region.Status == UserStatus.Active)
+            .OrderBy(region => region.Name)
+            .ThenBy(region => region.RegionId)
+            .Select(region => new LearningProfileOptionDto(region.RegionId, region.Name))
+            .ToListAsync(cancellationToken);
+        var occupations = await _dbContext.Occupations
+            .AsNoTracking()
+            .Where(occupation => occupation.Status == UserStatus.Active)
+            .OrderBy(occupation => occupation.Name)
+            .ThenBy(occupation => occupation.OccupationId)
+            .Select(occupation => new LearningProfileOptionDto(occupation.OccupationId, occupation.Name))
+            .ToListAsync(cancellationToken);
+        var educationLevels = await _dbContext.EducationLevels
+            .AsNoTracking()
+            .Where(educationLevel => educationLevel.Status == UserStatus.Active)
+            .OrderBy(educationLevel => educationLevel.DisplayOrder)
+            .ThenBy(educationLevel => educationLevel.EducationLevelId)
+            .Select(educationLevel => new LearningProfileOptionDto(
+                educationLevel.EducationLevelId,
+                educationLevel.Name))
+            .ToListAsync(cancellationToken);
+        var learningPurposes = await _dbContext.LearningPurposes
+            .AsNoTracking()
+            .Where(learningPurpose => learningPurpose.Status == UserStatus.Active)
+            .OrderBy(learningPurpose => learningPurpose.Name)
+            .ThenBy(learningPurpose => learningPurpose.LearningPurposeId)
+            .Select(learningPurpose => new LearningProfileOptionDto(
+                learningPurpose.LearningPurposeId,
+                learningPurpose.Name))
+            .ToListAsync(cancellationToken);
+
+        return new LearningProfileOptionsDto(
+            ageRanges,
+            regions,
+            occupations,
+            educationLevels,
+            learningPurposes);
     }
 
     public async Task<IReadOnlyCollection<KnnProfileVectorSourceDto>> GetCandidateProfileSourcesAsync(
         uint excludingUserId,
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.UserLearningProfiles
+        // Two flat queries joined in memory rather than a per-candidate lookup, so the candidate
+        // scan stays at a constant number of round trips regardless of how many users exist.
+        var profiles = await _dbContext.UserLearningProfiles
             .AsNoTracking()
             .Where(profile => profile.UserId != excludingUserId
                 && profile.User.Status == UserStatus.Active
@@ -139,8 +217,53 @@ public sealed class KnnProfileRepository : IKnnProfileRepository
                 profile.RegionId,
                 profile.OccupationId,
                 profile.EducationLevelId,
-                profile.LearningPurposeId))
+                profile.LearningPurposeId,
+                null))
             .ToListAsync(cancellationToken);
+
+        var interestRows = await GetInterestTopicIdsQuery()
+            .Where(preference => preference.UserId != excludingUserId
+                && preference.User.Status == UserStatus.Active)
+            .Select(preference => new { preference.UserId, preference.TopicId })
+            .ToListAsync(cancellationToken);
+        var topicIdsByUserId = interestRows
+            .GroupBy(row => row.UserId)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyCollection<uint>)group.Select(row => row.TopicId).ToArray());
+
+        var candidates = profiles
+            .Select(profile => topicIdsByUserId.TryGetValue(profile.UserId, out var topicIds)
+                ? profile with { InterestTopicIds = topicIds }
+                : profile)
+            .ToList();
+
+        // Users whose only signal is their onboarding topic picks are still valid neighbours.
+        var profiledUserIds = profiles.Select(profile => profile.UserId).ToHashSet();
+        candidates.AddRange(topicIdsByUserId
+            .Where(entry => !profiledUserIds.Contains(entry.Key))
+            .Select(entry => new KnnProfileVectorSourceDto(
+                entry.Key,
+                null,
+                null,
+                null,
+                null,
+                null,
+                entry.Value)));
+
+        return candidates;
+    }
+
+    /// <summary>
+    /// Topic picks that express what the learner wants to study (onboarding answers and manual
+    /// selections), as opposed to topics the system itself suggested.
+    /// </summary>
+    private IQueryable<UserTopicPreference> GetInterestTopicIdsQuery()
+    {
+        return _dbContext.UserTopicPreferences
+            .AsNoTracking()
+            .Where(preference => preference.Status == UserStatus.Active
+                && InterestSources.Contains(preference.Source));
     }
 
     public async Task<IReadOnlyCollection<uint>> GetActiveTopicIdsAsync(
@@ -301,5 +424,63 @@ public sealed class KnnProfileRepository : IKnnProfileRepository
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    public async Task<int?> ReplaceOnboardingTopicPreferencesAsync(
+        uint userId,
+        IReadOnlyCollection<uint> topicIds,
+        DateTime now,
+        CancellationToken cancellationToken = default)
+    {
+        var requestedTopicIds = topicIds.Distinct().ToArray();
+        if (requestedTopicIds.Length > 0)
+        {
+            var existingTopicCount = await _dbContext.Topics
+                .CountAsync(topic => requestedTopicIds.Contains(topic.TopicId), cancellationToken);
+            if (existingTopicCount != requestedTopicIds.Length)
+            {
+                return null;
+            }
+        }
+
+        var currentPreferences = await _dbContext.UserTopicPreferences
+            .Where(preference => preference.UserId == userId)
+            .ToListAsync(cancellationToken);
+        var currentByTopicId = currentPreferences.ToDictionary(preference => preference.TopicId);
+
+        foreach (var topicId in requestedTopicIds)
+        {
+            if (currentByTopicId.TryGetValue(topicId, out var preference))
+            {
+                preference.Source = TopicPreferenceSource.Onboarding;
+                preference.Status = UserStatus.Active;
+            }
+            else
+            {
+                _dbContext.UserTopicPreferences.Add(new UserTopicPreference
+                {
+                    UserId = userId,
+                    TopicId = topicId,
+                    Source = TopicPreferenceSource.Onboarding,
+                    Status = UserStatus.Active,
+                    CreatedAt = now,
+                });
+            }
+        }
+
+        // Deselecting during onboarding must not wipe topics the user accepted from a KNN
+        // suggestion or added by hand later, so only previous onboarding rows are retired.
+        var requestedTopicIdSet = requestedTopicIds.ToHashSet();
+        foreach (var preference in currentPreferences)
+        {
+            if (preference.Source == TopicPreferenceSource.Onboarding
+                && !requestedTopicIdSet.Contains(preference.TopicId))
+            {
+                preference.Status = UserStatus.Deleted;
+            }
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return requestedTopicIds.Length;
     }
 }

@@ -17,14 +17,17 @@ public sealed class GeminiAiGradingProvider : IAiGradingProvider
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private readonly IGeminiClient _geminiClient;
+    private readonly IAiGradingConfigService? _configService;
     private readonly ILogger<GeminiAiGradingProvider> _logger;
 
     public GeminiAiGradingProvider(
         IGeminiClient geminiClient,
-        ILogger<GeminiAiGradingProvider> logger)
+        ILogger<GeminiAiGradingProvider> logger,
+        IAiGradingConfigService? configService = null)
     {
         _geminiClient = geminiClient;
         _logger = logger;
+        _configService = configService;
     }
 
     public async Task<AiGradingResult> GradeAsync(
@@ -46,8 +49,10 @@ public sealed class GeminiAiGradingProvider : IAiGradingProvider
                 return CreateFallback(userAnswer, expectedAnswer);
             }
 
+            var passThreshold = await GetPassThresholdAsync(timeoutCts.Token);
+
             return new AiGradingResult(
-                parsed.Score >= AppSettings.AiPassThreshold,
+                parsed.Score >= passThreshold,
                 parsed.Score,
                 parsed.Explanation,
                 parsed.Suggestion);
@@ -64,6 +69,21 @@ public sealed class GeminiAiGradingProvider : IAiGradingProvider
             _logger.LogWarning(exception, "Gemini AI grading failed; using fallback grading.");
             return CreateFallback(userAnswer, expectedAnswer);
         }
+    }
+
+    /// <summary>
+    /// The pass mark is admin-tunable; <see cref="AppSettings.AiPassThreshold"/> stays the
+    /// baseline used when no configuration service is wired in.
+    /// </summary>
+    private async Task<double> GetPassThresholdAsync(CancellationToken cancellationToken)
+    {
+        if (_configService is null)
+        {
+            return AppSettings.AiPassThreshold;
+        }
+
+        var settings = await _configService.GetEffectiveSettingsAsync(cancellationToken);
+        return settings.PassThreshold;
     }
 
     private static string BuildPrompt(

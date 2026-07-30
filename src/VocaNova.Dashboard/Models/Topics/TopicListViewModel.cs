@@ -37,6 +37,17 @@ public sealed class TopicEditViewModel
     public List<string> Keywords { get; set; } = new();
 
     public List<uint> WordIds { get; set; } = new();
+
+    /// <summary>
+    /// Chi tiết từ (loại từ, CEFR, phiên âm, trạng thái) để render bảng giống Word Management.
+    /// Rỗng khi form post lại sau lỗi validation — lúc đó bảng dựng lại từ Keywords/WordIds.
+    /// </summary>
+    public IReadOnlyList<WordListItem> Words { get; set; } = Array.Empty<WordListItem>();
+
+    /// <summary>Cột đang sort của bảng từ vựng (word | type | cefr | phonetic | status).</summary>
+    public string? SortBy { get; set; }
+
+    public string? SortDirection { get; set; }
 }
 
 public sealed class TopicListViewModel
@@ -55,6 +66,11 @@ public sealed class TopicListViewModel
     public int PageSize { get; init; } = 10;
     public bool HasPrevious => Page > 1;
     public bool HasNext => Page < TotalPages;
+
+    /// <summary>Cột đang sort (id | name | words | status).</summary>
+    public string? SortBy { get; init; }
+
+    public string? SortDirection { get; init; }
 }
 
 public sealed class TopicDetailViewModel
@@ -72,4 +88,9 @@ public sealed class TopicDetailViewModel
     public int TotalPages { get; init; }
     public bool HasPrevious => Page > 1;
     public bool HasNext => Page < TotalPages;
+
+    /// <summary>Cột đang sort (word | type | cefr | phonetic | status).</summary>
+    public string? SortBy { get; init; }
+
+    public string? SortDirection { get; init; }
 }

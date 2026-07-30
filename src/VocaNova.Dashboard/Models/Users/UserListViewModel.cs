@@ -22,6 +22,11 @@ public sealed class UserListViewModel
 
     public int TotalPages { get; init; }
 
+    /// <summary>Cột đang sort (id | name | email | status | phone).</summary>
+    public string? SortBy { get; init; }
+
+    public string? SortDirection { get; init; }
+
     public bool HasPrevious => Page > 1;
 
     public bool HasNext => Page < TotalPages;

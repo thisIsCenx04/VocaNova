@@ -6,7 +6,15 @@ import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
 import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
 import 'package:vocanova_mobile/features/auth/domain/onboarding_catalog.dart';
 import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
+import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 
+/// Collects the intent half of the KNN profile vector.
+///
+/// The demographic half (age range, region, occupation, education level) is now gathered on
+/// the sign-up form, so onboarding only asks what the learner wants — their purpose and the
+/// topics they care about. Anything skipped here simply leaves that block of the vector at
+/// zero; it never blocks the user from reaching the app.
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -15,30 +23,55 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  static const _stepCount = 5;
+  static const _stepCount = 2;
 
   int _step = 0;
-  int? _ageRangeId;
-  int? _regionId;
-  int? _occupationId;
-  int? _educationLevelId;
+  bool _isLoadingCatalog = true;
+  bool _isSaving = false;
+  String? _catalogError;
+
+  List<OnboardingOption> _learningPurposes = const [];
+  List<TopicSummary> _topics = const [];
   int? _learningPurposeId;
+  final Set<int> _selectedTopicIds = <int>{};
 
   @override
   void initState() {
     super.initState();
     final profile = ref.read(authProvider).user?.learningProfile;
-    _ageRangeId = profile?.ageRangeId;
-    _regionId = profile?.regionId;
-    _occupationId = profile?.occupationId;
-    _educationLevelId = profile?.educationLevelId;
     _learningPurposeId = profile?.learningPurposeId;
+    _loadCatalog();
+  }
+
+  Future<void> _loadCatalog() async {
+    setState(() {
+      _isLoadingCatalog = true;
+      _catalogError = null;
+    });
+    try {
+      final options = await ref
+          .read(authRepositoryProvider)
+          .getLearningProfileOptions();
+      final topics = await ref.read(wordSearchRepositoryProvider).getTopics();
+      if (!mounted) return;
+      setState(() {
+        _learningPurposes = options.learningPurposes;
+        _topics = topics;
+        _isLoadingCatalog = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingCatalog = false;
+        _catalogError = 'Không tải được danh mục. Vui lòng thử lại.';
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(authProvider).status == AuthStatus.loading;
-    final data = _steps[_step];
+    final isLoading =
+        _isSaving || ref.watch(authProvider).status == AuthStatus.loading;
 
     return Scaffold(
       appBar: AppBar(
@@ -74,35 +107,24 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ),
               const SizedBox(height: 28),
               Text(
-                data.title,
+                _step == 0
+                    ? 'Mục tiêu học từ vựng của bạn?'
+                    : 'Bạn quan tâm chủ đề nào?',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 8),
-              Text(data.subtitle, style: Theme.of(context).textTheme.bodyLarge),
-              const SizedBox(height: 24),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      for (final option in data.options)
-                        ChoiceChip(
-                          key: Key('onboarding-$_step-${option.id}'),
-                          label: Text(option.label),
-                          selected: data.selectedId == option.id,
-                          onSelected: isLoading
-                              ? null
-                              : (_) => setState(() => data.select(option.id)),
-                        ),
-                    ],
-                  ),
-                ),
+              Text(
+                _step == 0
+                    ? 'VocaNova sẽ ưu tiên nội dung theo mục tiêu này.'
+                    : 'Chọn ít nhất một chủ đề để nhận gợi ý từ vựng phù hợp.',
+                style: Theme.of(context).textTheme.bodyLarge,
               ),
+              const SizedBox(height: 24),
+              Expanded(child: _stepBody(isLoading)),
               const SizedBox(height: 20),
               ElevatedButton(
                 key: const Key('onboarding-next'),
-                onPressed: isLoading ? null : _next,
+                onPressed: isLoading || _isLoadingCatalog ? null : _next,
                 child: isLoading
                     ? const SizedBox.square(
                         dimension: 22,
@@ -117,43 +139,60 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  List<_OnboardingStep> get _steps => [
-    _OnboardingStep(
-      title: 'Độ tuổi của bạn?',
-      subtitle: 'Giúp VocaNova lựa chọn nội dung phù hợp.',
-      options: OnboardingCatalog.ageRanges,
-      selectedId: _ageRangeId,
-      select: (id) => _ageRangeId = id,
-    ),
-    _OnboardingStep(
-      title: 'Bạn đang sống ở khu vực nào?',
-      subtitle: 'Khu vực giúp cá nhân hóa gợi ý học tập.',
-      options: OnboardingCatalog.regions,
-      selectedId: _regionId,
-      select: (id) => _regionId = id,
-    ),
-    _OnboardingStep(
-      title: 'Công việc hiện tại của bạn?',
-      subtitle: 'Chọn lựa chọn gần nhất với bạn.',
-      options: OnboardingCatalog.occupations,
-      selectedId: _occupationId,
-      select: (id) => _occupationId = id,
-    ),
-    _OnboardingStep(
-      title: 'Trình độ học vấn của bạn?',
-      subtitle: 'Thông tin này hoàn toàn có thể cập nhật sau.',
-      options: OnboardingCatalog.educationLevels,
-      selectedId: _educationLevelId,
-      select: (id) => _educationLevelId = id,
-    ),
-    _OnboardingStep(
-      title: 'Mục tiêu học từ vựng của bạn?',
-      subtitle: 'VocaNova sẽ ưu tiên nội dung theo mục tiêu này.',
-      options: OnboardingCatalog.learningPurposes,
-      selectedId: _learningPurposeId,
-      select: (id) => _learningPurposeId = id,
-    ),
-  ];
+  Widget _stepBody(bool isLoading) {
+    if (_isLoadingCatalog) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final catalogError = _catalogError;
+    if (catalogError != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(catalogError, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            TextButton(onPressed: _loadCatalog, child: const Text('Thử lại')),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: _step == 0
+            ? [
+                for (final option in _learningPurposes)
+                  ChoiceChip(
+                    key: Key('onboarding-purpose-${option.id}'),
+                    label: Text(option.label),
+                    selected: _learningPurposeId == option.id,
+                    onSelected: isLoading
+                        ? null
+                        : (_) => setState(() => _learningPurposeId = option.id),
+                  ),
+              ]
+            : [
+                for (final topic in _topics)
+                  FilterChip(
+                    key: Key('onboarding-topic-${topic.topicId}'),
+                    label: Text(topic.displayName),
+                    selected: _selectedTopicIds.contains(topic.topicId),
+                    onSelected: isLoading
+                        ? null
+                        : (selected) => setState(() {
+                            if (selected) {
+                              _selectedTopicIds.add(topic.topicId);
+                            } else {
+                              _selectedTopicIds.remove(topic.topicId);
+                            }
+                          }),
+                  ),
+              ],
+      ),
+    );
+  }
 
   void _previous() {
     setState(() => _step--);
@@ -165,43 +204,49 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       return;
     }
 
-    final success = await ref
-        .read(authProvider.notifier)
-        .updateLearningProfile(
-          LearningProfile(
-            ageRangeId: _ageRangeId,
-            regionId: _regionId,
-            occupationId: _occupationId,
-            educationLevelId: _educationLevelId,
-            learningPurposeId: _learningPurposeId,
-          ),
+    setState(() => _isSaving = true);
+    try {
+      // The learning-profile endpoint replaces the whole row, so the demographic answers
+      // captured at sign-up must be sent back untouched alongside the new purpose.
+      final current = ref.read(authProvider).user?.learningProfile;
+      final savedPurpose = await ref
+          .read(authProvider.notifier)
+          .updateLearningProfile(
+            LearningProfile(
+              ageRangeId: current?.ageRangeId,
+              regionId: current?.regionId,
+              occupationId: current?.occupationId,
+              educationLevelId: current?.educationLevelId,
+              learningPurposeId: _learningPurposeId,
+            ),
+          );
+      if (!savedPurpose) {
+        throw Exception(
+          ref.read(authProvider).errorMessage ??
+              'Không thể lưu thiết lập học tập.',
         );
-    if (!mounted) return;
-    if (success) {
+      }
+
+      await ref
+          .read(authRepositoryProvider)
+          .selectOnboardingTopics(_selectedTopicIds.toList(growable: false));
+
+      if (!mounted) return;
       context.go(AppRoutes.home);
-      return;
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            ref.read(authProvider).errorMessage ??
+                'Không thể lưu thiết lập học tập. Vui lòng thử lại.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
-    final message =
-        ref.read(authProvider).errorMessage ??
-        'Không thể lưu thiết lập học tập. Vui lòng thử lại.';
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
   }
-}
-
-class _OnboardingStep {
-  const _OnboardingStep({
-    required this.title,
-    required this.subtitle,
-    required this.options,
-    required this.selectedId,
-    required this.select,
-  });
-
-  final String title;
-  final String subtitle;
-  final List<OnboardingOption> options;
-  final int? selectedId;
-  final ValueChanged<int> select;
 }

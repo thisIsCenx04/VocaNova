@@ -2,6 +2,8 @@
     ViewData["Title"] = "Setting";
     var theme = (ViewData["Theme"] as string) ?? "light";
     var language = (ViewData["Language"] as string) ?? "vi";
+    var ai = ViewData["AiGrading"] as VocaNova.Dashboard.Models.Api.Settings.AiGradingConfig;
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
 }
 
 <div class="page-header">
@@ -82,6 +84,131 @@
         <button type="submit" class="btn-primary">@T["Save Changes"]</button>
     </div>
 </form>
+
+@if (TempData["AiGradingSaved"] is string aiSaved)
+{
+    <div class="alert alert-success">@aiSaved</div>
+}
+@if (TempData["AiGradingError"] is string aiError)
+{
+    <div class="alert alert-danger">@aiError</div>
+}
+
+<section class="settings-panel">
+    <header class="settings-panel-head">
+        <h2 class="settings-panel-title">@T["AI grading"]</h2>
+        <p class="settings-panel-sub">@T["Provider, model and credentials used to grade free-text quiz answers."]</p>
+    </header>
+
+    @if (ai is null)
+    {
+        <p class="text-muted">@T["AI grading configuration is unavailable."]</p>
+    }
+    else
+    {
+        <form method="post" action="/settings/ai-grading" class="settings-form">
+            @Html.AntiForgeryToken()
+            <div class="ai-grading-grid">
+                <label class="form-field">
+                    <span>@T["Provider"]</span>
+                    <select name="provider" class="form-control">
+                        @foreach (var provider in ai.SupportedProviders)
+                        {
+                            <option value="@provider" selected="@(provider == ai.Provider)">@provider</option>
+                        }
+                    </select>
+                    <small>@T["Only providers with a working client can be selected."]</small>
+                </label>
+
+                <label class="form-field">
+                    <span>@T["Model"]</span>
+                    <input type="text" name="model" value="@ai.Model" class="form-control" maxlength="100" />
+                    <small>@T["Primary model used for grading."]</small>
+                </label>
+
+                <label class="form-field span-2">
+                    <span>@T["Endpoint"]</span>
+                    <input type="url" name="endpoint" value="@ai.Endpoint" class="form-control" />
+                </label>
+
+                <label class="form-field span-2">
+                    <span>@T["Fallback models"]</span>
+                    <input type="text" name="fallback_models" value="@string.Join(", ", ai.FallbackModels)"
+                           class="form-control" placeholder="model-a, model-b" />
+                    <small>@T["Comma separated. Tried in order when the primary model is unavailable."]</small>
+                </label>
+
+                <label class="form-field span-2">
+                    <span>@T["API key"]</span>
+                    <input type="password" name="api_key" class="form-control" autocomplete="new-password"
+                           placeholder="@(ai.HasApiKey ? ai.ApiKeyHint : T["No API key configured"])" />
+                    <small>
+                        @if (ai.HasApiKey)
+                        {
+                            @T["A key is configured. Leave blank to keep it; type a new one to replace it."]
+                        }
+                        else
+                        {
+                            @T["No key is configured — grading falls back to exact matching until one is set."]
+                        }
+                    </small>
+                </label>
+
+                <label class="form-field">
+                    <span>@T["Pass threshold"]</span>
+                    <input type="number" name="pass_threshold" value="@ai.PassThreshold.ToString(inv)"
+                           step="0.05" min="0" max="1" class="form-control" />
+                    <small>@T["Score at or above which an answer counts as correct."]</small>
+                </label>
+
+                <label class="form-field">
+                    <span>@T["Max attempts"]</span>
+                    <input type="number" name="max_attempts" value="@ai.MaxAttempts"
+                           step="1" min="1" max="4" class="form-control" />
+                </label>
+
+                <label class="form-field">
+                    <span>@T["Retry base delay (ms)"]</span>
+                    <input type="number" name="retry_base_delay_ms" value="@ai.RetryBaseDelayMs"
+                           step="50" min="0" max="5000" class="form-control" />
+                </label>
+
+                <label class="form-field">
+                    <span>@T["Attempt timeout (s)"]</span>
+                    <input type="number" name="attempt_timeout_seconds" value="@ai.AttemptTimeoutSeconds"
+                           step="1" min="1" max="15" class="form-control" />
+                </label>
+            </div>
+
+            <div class="settings-actions">
+                <button type="submit" class="btn-primary">@T["Save AI settings"]</button>
+            </div>
+        </form>
+
+        <div class="settings-actions" style="justify-content:flex-start; gap:10px;">
+            <form method="post" action="/settings/ai-grading/test" class="inline-form">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-secondary btn-sm">@T["Test connection"]</button>
+            </form>
+            <form method="post" action="/settings/ai-grading/reset" class="inline-form js-confirm"
+                  data-confirm="@T["Reset AI grading settings to the built-in defaults? The API key is kept."]">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-secondary btn-sm">@T["Reset to defaults"]</button>
+            </form>
+        </div>
+
+        <p class="settings-panel-sub" style="margin-top:10px;">
+            @if (ai.IsStoredInEnvFile)
+            {
+                @T["Saved to the .env file and reloaded automatically."]
+            }
+            else
+            {
+                <strong>@T[".env is not writable — settings are held in the shared cache and will be lost if it is cleared."]</strong>
+            }
+        </p>
+    }
+</section>
 
 @section Scripts {
     <script src="~/js/settings.js" asp-append-version="true"></script>

@@ -11,30 +11,47 @@ public sealed class GeminiClient : IGeminiClient
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private readonly HttpClient _httpClient;
-    private readonly AiGradingSettings _settings;
+    private readonly AiGradingSettings _configuredSettings;
+    private readonly IAiGradingConfigService? _configService;
     private readonly ILogger<GeminiClient> _logger;
 
     public GeminiClient(
         HttpClient httpClient,
         IOptions<AiGradingSettings> settings,
-        ILogger<GeminiClient> logger)
+        ILogger<GeminiClient> logger,
+        IAiGradingConfigService? configService = null)
     {
         _httpClient = httpClient;
-        _settings = settings.Value;
+        _configuredSettings = settings.Value;
         _logger = logger;
+        _configService = configService;
     }
 
     public async Task<string> GenerateContentAsync(
         string prompt,
         CancellationToken cancellationToken = default)
     {
-        var models = GetModelCandidates();
-        if (string.IsNullOrWhiteSpace(_settings.ApiKey) || models.Count == 0)
+        // Resolved per call, not captured at construction: an admin can change the model,
+        // endpoint or key from the dashboard and the next grading request must honour it.
+        var settings = _configService is null
+            ? _configuredSettings
+            : await _configService.GetEffectiveSettingsAsync(cancellationToken);
+
+        return await GenerateContentAsync(prompt, settings, cancellationToken);
+    }
+
+    public async Task<string> GenerateContentAsync(
+        string prompt,
+        AiGradingSettings settings,
+        CancellationToken cancellationToken = default)
+    {
+        var models = GetModelCandidates(settings);
+        if (string.IsNullOrWhiteSpace(settings.ApiKey) || models.Count == 0)
         {
             throw new InvalidOperationException("Gemini configuration is missing.");
         }
 
-        var maxAttempts = Math.Clamp(_settings.MaxAttempts, 1, 4);
+        var maxAttempts = Math.Clamp(settings.MaxAttempts, 1, 4);
         var unavailableModels = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         Exception? lastException = null;
 
@@ -42,7 +59,7 @@ public sealed class GeminiClient : IGeminiClient
         {
             if (attempt > 1)
             {
-                await DelayBeforeRetryAsync(attempt, cancellationToken);
+                await DelayBeforeRetryAsync(settings, attempt, cancellationToken);
             }
 
             foreach (var model in models)
@@ -57,6 +74,7 @@ public sealed class GeminiClient : IGeminiClient
                     return await GenerateWithModelAsync(
                         model,
                         prompt,
+                        settings,
                         cancellationToken);
                 }
                 catch (HttpRequestException exception) when (IsModelUnavailable(exception))
@@ -106,15 +124,16 @@ public sealed class GeminiClient : IGeminiClient
     private async Task<string> GenerateWithModelAsync(
         string model,
         string prompt,
+        AiGradingSettings settings,
         CancellationToken cancellationToken)
     {
         using var attemptCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         attemptCts.CancelAfter(TimeSpan.FromSeconds(
-            Math.Clamp(_settings.AttemptTimeoutSeconds, 1, 15)));
+            Math.Clamp(settings.AttemptTimeoutSeconds, 1, 15)));
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            $"{NormalizeModelName(model)}:generateContent");
-        request.Headers.Add("x-goog-api-key", _settings.ApiKey);
+            BuildRequestUri(model, settings));
+        request.Headers.Add("x-goog-api-key", settings.ApiKey);
         request.Content = JsonContent.Create(CreateRequestBody(prompt), options: JsonOptions);
 
         using var response = await _httpClient.SendAsync(request, attemptCts.Token);
@@ -128,10 +147,23 @@ public sealed class GeminiClient : IGeminiClient
         return ExtractText(json.RootElement);
     }
 
-    private IReadOnlyList<string> GetModelCandidates()
+    /// <summary>
+    /// The endpoint is admin-editable, so the URI is built per request instead of relying on
+    /// the <see cref="HttpClient"/> base address captured at startup.
+    /// </summary>
+    private static Uri BuildRequestUri(string model, AiGradingSettings settings)
     {
-        return new[] { _settings.Model }
-            .Concat(_settings.FallbackModels ?? [])
+        var endpoint = string.IsNullOrWhiteSpace(settings.Endpoint)
+            ? new AiGradingSettings().Endpoint
+            : settings.Endpoint.Trim().TrimEnd('/');
+
+        return new Uri($"{endpoint}/{NormalizeModelName(model)}:generateContent");
+    }
+
+    private static IReadOnlyList<string> GetModelCandidates(AiGradingSettings settings)
+    {
+        return new[] { settings.Model }
+            .Concat(settings.FallbackModels ?? [])
             .Where(model => !string.IsNullOrWhiteSpace(model))
             .Select(model => model.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -139,10 +171,11 @@ public sealed class GeminiClient : IGeminiClient
     }
 
     private async Task DelayBeforeRetryAsync(
+        AiGradingSettings settings,
         int attempt,
         CancellationToken cancellationToken)
     {
-        var baseDelayMs = Math.Clamp(_settings.RetryBaseDelayMs, 0, 5_000);
+        var baseDelayMs = Math.Clamp(settings.RetryBaseDelayMs, 0, 5_000);
         if (baseDelayMs == 0)
         {
             return;

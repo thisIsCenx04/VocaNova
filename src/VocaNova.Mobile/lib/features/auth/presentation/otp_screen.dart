@@ -158,6 +158,10 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           password: payload.password,
           displayName: payload.displayName,
           otpCode: code,
+          dateOfBirth: payload.dateOfBirth,
+          regionId: payload.regionId,
+          occupationId: payload.occupationId,
+          educationLevelId: payload.educationLevelId,
         );
   }
 
@@ -210,8 +214,22 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 }
 
 class RegisterOtpPayload {
-  const RegisterOtpPayload({required this.displayName, required this.password});
+  const RegisterOtpPayload({
+    required this.displayName,
+    required this.password,
+    this.dateOfBirth,
+    this.regionId,
+    this.occupationId,
+    this.educationLevelId,
+  });
 
   final String displayName;
   final String password;
+
+  /// Optional learning-profile answers collected on the sign-up form; they are carried
+  /// through OTP verification so the profile can be created together with the account.
+  final DateTime? dateOfBirth;
+  final int? regionId;
+  final int? occupationId;
+  final int? educationLevelId;
 }

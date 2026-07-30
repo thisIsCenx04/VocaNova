@@ -96,7 +96,20 @@ public sealed record UpdateLearningPurposeRequest(
 
 public sealed record KnnConfigDto(
     [property: JsonPropertyName("onboarding")] KnnOnboardingConfigDto Onboarding,
-    [property: JsonPropertyName("learning")] KnnLearningConfigDto Learning);
+    [property: JsonPropertyName("learning")] KnnLearningConfigDto Learning,
+    [property: JsonPropertyName("vector")] VocaNova.API.Features.Knn.DTOs.KnnVectorConfigDto Vector);
+
+/// <summary>
+/// Admin-tunable weights of the hybrid profile vector. Every value is required so a partial
+/// form submit cannot silently zero out a block.
+/// </summary>
+public sealed record UpdateKnnVectorWeightsRequest(
+    [property: JsonPropertyName("age_range_weight")] double? AgeRangeWeight,
+    [property: JsonPropertyName("region_weight")] double? RegionWeight,
+    [property: JsonPropertyName("occupation_weight")] double? OccupationWeight,
+    [property: JsonPropertyName("education_level_weight")] double? EducationLevelWeight,
+    [property: JsonPropertyName("learning_purpose_weight")] double? LearningPurposeWeight,
+    [property: JsonPropertyName("interest_topics_weight")] double? InterestTopicsWeight);
 
 public sealed record KnnOnboardingConfigDto(
     [property: JsonPropertyName("k_value")] int KValue,

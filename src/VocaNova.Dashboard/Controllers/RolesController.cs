@@ -13,11 +13,14 @@ public sealed class RolesController : Controller
 
     [HttpGet("/roles")]
     public async Task<IActionResult> Index(
-        string? search, string? type, CancellationToken cancellationToken)
+        string? search, string? type, string? sortBy, string? sortDirection,
+        CancellationToken cancellationToken)
     {
         search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
         type = string.IsNullOrWhiteSpace(type) ? null : type.Trim().ToLowerInvariant();
-        var roles = await _apiClient.GetRolesAsync(search, type, cancellationToken);
+        sortBy = string.IsNullOrWhiteSpace(sortBy) ? null : sortBy.Trim();
+        sortDirection = string.IsNullOrWhiteSpace(sortDirection) ? null : sortDirection.Trim();
+        var roles = await _apiClient.GetRolesAsync(search, type, sortBy, sortDirection, cancellationToken);
         return View(new RoleManagementViewModel
         {
             Roles = roles.Items,
@@ -25,6 +28,8 @@ public sealed class RolesController : Controller
             Search = search,
             Type = type,
             TotalRoles = roles.TotalItems,
+            SortBy = sortBy,
+            SortDirection = sortDirection,
         });
     }
 

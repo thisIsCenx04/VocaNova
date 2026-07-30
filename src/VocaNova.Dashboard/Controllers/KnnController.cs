@@ -64,6 +64,37 @@ public sealed class KnnController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // Trọng số vector KNN: sửa trực tiếp trên dashboard, có hiệu lực ngay cho lần tính tiếp theo.
+    [HttpPost("/knn/vector-weights")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveVectorWeights(
+        IFormCollection form,
+        CancellationToken cancellationToken)
+    {
+        var weights = new KnnVectorWeights(
+            Dbl(form, "age_range_weight"),
+            Dbl(form, "region_weight"),
+            Dbl(form, "occupation_weight"),
+            Dbl(form, "education_level_weight"),
+            Dbl(form, "learning_purpose_weight"),
+            Dbl(form, "interest_topics_weight"));
+
+        var result = await _apiClient.UpdateKnnVectorWeightsAsync(weights, cancellationToken);
+        SetFeedback(result, "Vector weights saved. New weights apply to the next recommendation computed.");
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost("/knn/vector-weights/reset")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetVectorWeights(CancellationToken cancellationToken)
+    {
+        var result = await _apiClient.ResetKnnVectorWeightsAsync(cancellationToken);
+        SetFeedback(result, "Vector weights reset to the built-in defaults.");
+
+        return RedirectToAction(nameof(Index));
+    }
+
     [HttpGet("/knn/{slug}")]
     public async Task<IActionResult> Lookup(
         string slug,
@@ -72,6 +103,8 @@ public sealed class KnnController : Controller
         bool includeDeleted = false,
         int page = 1,
         int limit = DefaultPageSize,
+        string? sortBy = null,
+        string? sortDirection = null,
         CancellationToken cancellationToken = default)
     {
         if (!IsValidSlug(slug))
@@ -94,7 +127,10 @@ public sealed class KnnController : Controller
             string.IsNullOrWhiteSpace(status) ? null : status,
             includeDeleted,
             page,
-            limit);
+            limit,
+            // Danh sách phân trang phía server nên sort do API xử lý.
+            string.IsNullOrWhiteSpace(sortBy) ? null : sortBy,
+            string.IsNullOrWhiteSpace(sortDirection) ? null : sortDirection);
 
         IReadOnlyList<KnnLookupRow> rows;
         int totalItems;
@@ -158,6 +194,8 @@ public sealed class KnnController : Controller
             PageSize = limit,
             TotalItems = totalItems,
             TotalPages = totalPages,
+            SortBy = filter.SortBy,
+            SortDirection = filter.SortDirection,
         };
 
         return View(model);
@@ -307,12 +345,35 @@ public sealed class KnnController : Controller
     private static string TitleFor(string slug) =>
         Lookups.FirstOrDefault(l => l.Slug == slug)?.Title ?? slug;
 
-    private static IReadOnlyList<string> ColumnsFor(string slug) => slug switch
+    // Khoá sort phải khớp SortFields của KnnLookupQueryValidator bên API; cột không có khoá
+    // (ví dụ Parent) sẽ render như tiêu đề tĩnh.
+    private static IReadOnlyList<KnnColumn> ColumnsFor(string slug) => slug switch
     {
-        "age-ranges" => new[] { "Name", "Min age", "Max age", "Order" },
-        "regions" => new[] { "Name", "Code", "Parent" },
-        "education-levels" => new[] { "Name", "Description", "Order" },
-        _ => new[] { "Name", "Description" }, // occupations, learning-purposes
+        "age-ranges" =>
+        [
+            new("Name", "name"),
+            new("Min age", "min_age"),
+            new("Max age", "max_age"),
+            new("Order", "display_order"),
+        ],
+        "regions" =>
+        [
+            new("Name", "name"),
+            new("Code", "code"),
+            new("Parent", "parent"),
+        ],
+        "education-levels" =>
+        [
+            new("Name", "name"),
+            new("Description", "description"),
+            new("Order", "display_order"),
+        ],
+        // occupations, learning-purposes
+        _ =>
+        [
+            new("Name", "name"),
+            new("Description", "description"),
+        ],
     };
 
     private static IReadOnlyList<KnnFieldDef> FieldTemplate(string slug) => slug switch
@@ -359,6 +420,9 @@ public sealed class KnnController : Controller
 
     private static uint? UIntN(IFormCollection form, string key) =>
         uint.TryParse(form[key], NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : null;
+
+    private static double Dbl(IFormCollection form, string key) =>
+        double.TryParse(form[key], NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : 0;
 
     private void SetFeedback(ApiActionResult result, string successMessage)
     {

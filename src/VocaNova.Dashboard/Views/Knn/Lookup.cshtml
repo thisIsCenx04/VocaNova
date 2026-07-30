@@ -8,16 +8,39 @@
 
     string StatusBadge(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
 
-    string PageUrl(int page)
+    // Bộ lọc dùng chung cho link phân trang và link sort.
+    List<string> BaseQuery()
     {
         var qs = new List<string>();
         if (!string.IsNullOrWhiteSpace(Model.Q)) qs.Add($"q={Uri.EscapeDataString(Model.Q)}");
         if (!string.IsNullOrWhiteSpace(Model.Status)) qs.Add($"status={Model.Status}");
         if (Model.IncludeDeleted) qs.Add("includeDeleted=true");
         qs.Add($"limit={Model.PageSize}");
+        return qs;
+    }
+
+    string PageUrl(int page)
+    {
+        var qs = BaseQuery();
+        if (!string.IsNullOrWhiteSpace(Model.SortBy)) qs.Add($"sortBy={Model.SortBy}");
+        if (!string.IsNullOrWhiteSpace(Model.SortDirection)) qs.Add($"sortDirection={Model.SortDirection}");
         qs.Add($"page={page}");
         return $"/knn/{Model.Slug}?" + string.Join("&", qs);
     }
+
+    string SortUrl(string column)
+    {
+        var direction = Model.SortBy == column && Model.SortDirection == "asc" ? "desc" : "asc";
+        var qs = BaseQuery();
+        qs.Add("page=1");
+        qs.Add($"sortBy={column}");
+        qs.Add($"sortDirection={direction}");
+        return $"/knn/{Model.Slug}?" + string.Join("&", qs);
+    }
+
+    string SortIcon(string column) => Model.SortBy != column
+        ? "bi bi-arrow-down-up th-sort-idle"
+        : (Model.SortDirection == "desc" ? "bi bi-caret-down-fill" : "bi bi-caret-up-fill");
 }
 
 @functions {
@@ -65,12 +88,31 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th style="width:80px;">@T["Item ID"]</th>
+                <th style="width:80px;">
+                    <a class="th-sort @(Model.SortBy == "id" ? "active" : "")" href="@SortUrl("id")">
+                        @T["Item ID"] <i class="@SortIcon("id")" aria-hidden="true"></i>
+                    </a>
+                </th>
                 @foreach (var column in Model.Columns)
                 {
-                    <th>@column</th>
+                    <th>
+                        @if (column.SortKey is null)
+                        {
+                            @T[column.Label]
+                        }
+                        else
+                        {
+                            <a class="th-sort @(Model.SortBy == column.SortKey ? "active" : "")" href="@SortUrl(column.SortKey)">
+                                @T[column.Label] <i class="@SortIcon(column.SortKey)" aria-hidden="true"></i>
+                            </a>
+                        }
+                    </th>
                 }
-                <th style="width:110px;">@T["Status"]</th>
+                <th style="width:110px;">
+                    <a class="th-sort @(Model.SortBy == "status" ? "active" : "")" href="@SortUrl("status")">
+                        @T["Status"] <i class="@SortIcon("status")" aria-hidden="true"></i>
+                    </a>
+                </th>
                 <th style="width:110px;" class="col-actions">@T["Action"]</th>
             </tr>
         </thead>
@@ -130,6 +172,8 @@
         @if (!string.IsNullOrWhiteSpace(Model.Q)) { <input type="hidden" name="q" value="@Model.Q" /> }
         @if (!string.IsNullOrWhiteSpace(Model.Status)) { <input type="hidden" name="status" value="@Model.Status" /> }
         @if (Model.IncludeDeleted) { <input type="hidden" name="includeDeleted" value="true" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.SortBy)) { <input type="hidden" name="sortBy" value="@Model.SortBy" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.SortDirection)) { <input type="hidden" name="sortDirection" value="@Model.SortDirection" /> }
         <label class="page-size-control">
             <span>@T["Items per page"]</span>
             <select name="limit" class="form-control" data-page-size-select aria-label="@T["Items per page"]">

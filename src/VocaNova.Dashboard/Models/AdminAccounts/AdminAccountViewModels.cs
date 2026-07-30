@@ -16,6 +16,12 @@ public sealed class AdminAccountListViewModel
     public int TotalPages { get; init; }
     public bool HasPrevious => Page > 1;
     public bool HasNext => Page < TotalPages;
+
+    /// <summary>Cột đang sort (id | name | email | phone | status | created).</summary>
+    public string? SortBy { get; init; }
+
+    public string? SortDirection { get; init; }
+
     public static readonly IReadOnlyList<string> Statuses = ["active", "locked", "deleted"];
 }
 

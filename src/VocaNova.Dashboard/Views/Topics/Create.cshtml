@@ -26,11 +26,10 @@
     <div class="panel topic-create-panel">
         <div class="panel-head"><h2 class="panel-title">@T["Topic information"]</h2></div>
         <div class="topic-create-grid">
-            <label class="form-field topic-icon-field">
-                <span>@T["Icon"]</span>
-                <input type="text" name="Icon" value="@Model.Icon" class="form-control" maxlength="20" placeholder="🎨" />
-                <small>@T["Enter an emoji or a short icon code."]</small>
-            </label>
+            <div class="form-field topic-icon-field">
+                <span id="topic-icon-label">@T["Icon"]</span>
+                <partial name="_TopicIconPicker" model="Model.Icon" />
+            </div>
             <label class="form-field">
                 <span>@T["Topic name (EN)"] <strong aria-hidden="true">*</strong></span>
                 <input type="text" name="TopicName" value="@Model.TopicName" class="form-control" maxlength="50" required />
@@ -56,25 +55,49 @@
         </div>
         <p id="topic-keyword-error" class="field-validation-error topic-keyword-error" role="alert" aria-live="polite"></p>
         <span asp-validation-for="Keywords" class="field-validation-error"></span>
-        <div id="topic-keyword-list" class="topic-keyword-list" aria-live="polite">
-            @for (var index = 0; index < Model.Keywords.Count; index++)
-            {
-                <span class="topic-keyword-chip">
-                    <span>@Model.Keywords[index]</span>
-                    <input type="hidden" name="Keywords" value="@Model.Keywords[index]" />
-                    <input type="hidden" name="WordIds" value="@(index < Model.WordIds.Count ? Model.WordIds[index] : 0)" />
-                    <button type="button" class="topic-keyword-remove" aria-label="@T["Remove keyword"]">&times;</button>
-                </span>
-            }
+
+        @* Cùng cấu trúc bảng với Word Management và trang Edit topic. *@
+        <div class="table-panel topic-word-table-panel">
+            <table class="data-table" id="topic-keyword-table">
+                <thead>
+                    <tr>
+                        <th>@T["Vocabulary"]</th>
+                        <th style="width:130px;">@T["Word Type"]</th>
+                        <th style="width:80px;">@T["Level"]</th>
+                        <th style="width:150px;">@T["Phonetics"]</th>
+                        <th style="width:110px;">@T["Status"]</th>
+                        <th style="width:80px;" class="col-actions">@T["Action"]</th>
+                    </tr>
+                </thead>
+                <tbody id="topic-keyword-list">
+                    @for (var index = 0; index < Model.Keywords.Count; index++)
+                    {
+                        <tr class="topic-keyword-row">
+                            <td>
+                                <span class="vocab-word">@Model.Keywords[index]</span>
+                                <input type="hidden" name="Keywords" value="@Model.Keywords[index]" />
+                                <input type="hidden" name="WordIds" value="@(index < Model.WordIds.Count ? Model.WordIds[index] : 0)" />
+                            </td>
+                            <td>—</td>
+                            <td>—</td>
+                            <td>—</td>
+                            <td>—</td>
+                            <td class="col-actions">
+                                <div class="action-icons">
+                                    <button type="button" class="icon-link topic-keyword-remove danger"
+                                            title="@T["Remove keyword"]" aria-label="@T["Remove keyword"]">
+                                        <svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Z"/></svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    <tr id="topic-keyword-empty" class="@(Model.Keywords.Count > 0 ? "is-hidden" : "")">
+                        <td colspan="6" class="empty-row">@T["No keywords added yet."]</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-        @if (Model.Keywords.Count > 0)
-        {
-            <p id="topic-keyword-empty" class="text-muted topic-keyword-empty" hidden>@T["No keywords added yet."]</p>
-        }
-        else
-        {
-            <p id="topic-keyword-empty" class="text-muted topic-keyword-empty">@T["No keywords added yet."]</p>
-        }
     </div>
 
     <div class="topic-create-actions">

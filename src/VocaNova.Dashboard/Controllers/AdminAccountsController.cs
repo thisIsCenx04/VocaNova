@@ -78,6 +78,8 @@ public sealed class AdminAccountsController : Controller
     public async Task<IActionResult> Index(
         string? search,
         string? status,
+        string? sortBy = null,
+        string? sortDirection = null,
         bool includeDeleted = false,
         int page = 1,
         CancellationToken cancellationToken = default)
@@ -85,8 +87,11 @@ public sealed class AdminAccountsController : Controller
         page = Math.Max(1, page);
         search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
         status = string.IsNullOrWhiteSpace(status) ? null : status.Trim().ToLowerInvariant();
+        sortBy = string.IsNullOrWhiteSpace(sortBy) ? null : sortBy.Trim();
+        sortDirection = string.IsNullOrWhiteSpace(sortDirection) ? null : sortDirection.Trim();
         var accounts = await _apiClient.GetAdminAccountsAsync(
-            new AdminAccountFilter(status, search, includeDeleted, page, PageSize),
+            // Danh sách phân trang phía server nên sort do API xử lý.
+            new AdminAccountFilter(status, search, includeDeleted, page, PageSize, sortBy, sortDirection),
             cancellationToken);
 
         return View(new AdminAccountListViewModel
@@ -99,6 +104,8 @@ public sealed class AdminAccountsController : Controller
             Limit = accounts.Limit,
             TotalItems = accounts.TotalItems,
             TotalPages = accounts.TotalPages,
+            SortBy = sortBy,
+            SortDirection = sortDirection,
         });
     }
 

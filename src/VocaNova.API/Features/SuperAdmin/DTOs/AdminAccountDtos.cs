@@ -7,7 +7,9 @@ public sealed record AdminAccountQuery(
     [property: JsonPropertyName("limit")] int Limit = 20,
     [property: JsonPropertyName("status")] string? Status = null,
     [property: JsonPropertyName("search")] string? Search = null,
-    [property: JsonPropertyName("include_deleted")] bool IncludeDeleted = false);
+    [property: JsonPropertyName("include_deleted")] bool IncludeDeleted = false,
+    [property: JsonPropertyName("sort_by")] string? SortBy = null,
+    [property: JsonPropertyName("sort_direction")] string? SortDirection = null);
 
 public sealed record CreateAdminAccountRequest(
     [property: JsonPropertyName("full_name")] string? FullName,
