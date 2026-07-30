@@ -32,6 +32,91 @@ void main() {
     expect(tokens.refreshToken, 'refresh');
   });
 
+  test('register omits learning-profile fields that were left blank', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      final data = options.data as Map<String, dynamic>;
+      expect(data.containsKey('date_of_birth'), isFalse);
+      expect(data.containsKey('region_id'), isFalse);
+      expect(data['occupation_id'], 3);
+      expect(data.containsKey('education_level_id'), isFalse);
+      return tokenResponse();
+    });
+
+    await AuthRepository(dio: dio).register(
+      phone: '0901234567',
+      password: 'Password1',
+      displayName: 'Nhut',
+      otpCode: '123456',
+      occupationId: 3,
+    );
+  });
+
+  test('register sends date of birth as an ISO date', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      expect((options.data as Map<String, dynamic>)['date_of_birth'],
+          '2001-03-09');
+      return tokenResponse();
+    });
+
+    await AuthRepository(dio: dio).register(
+      phone: '0901234567',
+      password: 'Password1',
+      displayName: 'Nhut',
+      otpCode: '123456',
+      dateOfBirth: DateTime(2001, 3, 9),
+    );
+  });
+
+  test('parses the public learning-profile options catalog', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      expect(options.path, ApiEndpoints.learningProfileOptions);
+      return jsonResponse({
+        'data': {
+          'age_ranges': [
+            {'id': 1, 'name': 'Dưới 18 tuổi'},
+          ],
+          'regions': [
+            {'id': 2, 'name': 'Miền Bắc'},
+          ],
+          'occupations': <Map<String, dynamic>>[],
+          'education_levels': <Map<String, dynamic>>[],
+          'learning_purposes': [
+            {'id': 3, 'name': 'Công việc'},
+          ],
+        },
+      });
+    });
+
+    final options = await AuthRepository(dio: dio).getLearningProfileOptions();
+
+    expect(options.ageRanges.single.label, 'Dưới 18 tuổi');
+    expect(options.regions.single.id, 2);
+    expect(options.occupations, isEmpty);
+    expect(options.learningPurposes.single.label, 'Công việc');
+  });
+
+  test('selectOnboardingTopics sends the topic id list', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      expect(options.path, ApiEndpoints.onboardingTopicSelection);
+      expect(options.method, 'PUT');
+      expect(options.data, {
+        'topic_ids': [11, 12],
+      });
+      return jsonResponse({'data': 2});
+    });
+
+    final stored = await AuthRepository(dio: dio).selectOnboardingTopics([
+      11,
+      12,
+    ]);
+
+    expect(stored, 2);
+  });
+
   test('login sends backend contract and parses wrapped tokens', () async {
     final dio = Dio();
     dio.httpClientAdapter = CallbackAdapter((options) {

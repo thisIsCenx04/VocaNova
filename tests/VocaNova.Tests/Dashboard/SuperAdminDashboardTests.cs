@@ -119,7 +119,12 @@ public sealed class SuperAdminDashboardTests
             });
         var controller = NewAdminAccountsController(apiClient.Object);
 
-        var result = await controller.Index(" root ", "ACTIVE", false, 2, CancellationToken.None);
+        var result = await controller.Index(
+            " root ",
+            "ACTIVE",
+            includeDeleted: false,
+            page: 2,
+            cancellationToken: CancellationToken.None);
 
         var view = result.Should().BeOfType<ViewResult>().Subject;
         var model = view.Model.Should().BeOfType<AdminAccountListViewModel>().Subject;

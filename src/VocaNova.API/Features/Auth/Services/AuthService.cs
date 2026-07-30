@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using VocaNova.API.Common.Constants;
+using VocaNova.API.Common.Extensions;
 using VocaNova.API.Common.Results;
 using VocaNova.API.Common.Security;
 using VocaNova.API.Features.Auth.DTOs;
@@ -94,6 +95,12 @@ public sealed class AuthService : IAuthService
             return Result<TokenResponse>.Fail("Default user role is not configured.");
         }
 
+        var invalidReference = await GetInvalidRegistrationProfileReferenceAsync(request, cancellationToken);
+        if (invalidReference is not null)
+        {
+            return Result<TokenResponse>.Fail($"{invalidReference} is invalid.");
+        }
+
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         var now = DateTime.UtcNow;
@@ -119,7 +126,8 @@ public sealed class AuthService : IAuthService
                 FullName = displayName,
                 UpdatedAt = now,
             },
-            cancellationToken: cancellationToken);
+            await BuildRegistrationLearningProfileAsync(request, now, cancellationToken),
+            cancellationToken);
 
         otpResult.Value!.UserId = user.UserId;
         otpResult.Value.IsUsed = true;
@@ -788,6 +796,68 @@ public sealed class AuthService : IAuthService
         return !string.IsNullOrWhiteSpace(googleUser.Name)
             ? googleUser.Name
             : googleUser.Email ?? "Google User";
+    }
+
+    private async Task<string?> GetInvalidRegistrationProfileReferenceAsync(
+        RegisterRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (request.RegionId.HasValue
+            && !await _authRepository.ActiveRegionExistsAsync(request.RegionId.Value, cancellationToken))
+        {
+            return nameof(RegisterRequest.RegionId);
+        }
+
+        if (request.OccupationId.HasValue
+            && !await _authRepository.ActiveOccupationExistsAsync(request.OccupationId.Value, cancellationToken))
+        {
+            return nameof(RegisterRequest.OccupationId);
+        }
+
+        if (request.EducationLevelId.HasValue
+            && !await _authRepository.ActiveEducationLevelExistsAsync(request.EducationLevelId.Value, cancellationToken))
+        {
+            return nameof(RegisterRequest.EducationLevelId);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Seeds the KNN profile vector at sign-up. The schema has no column for the raw date of
+    /// birth, so only the derived age range is persisted; the user can correct it later from
+    /// the profile screen. Returns <c>null</c> when the caller supplied nothing, so registration
+    /// without optional fields keeps its previous behaviour.
+    /// </summary>
+    private async Task<UserLearningProfile?> BuildRegistrationLearningProfileAsync(
+        RegisterRequest request,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        uint? ageRangeId = null;
+        if (request.DateOfBirth.HasValue)
+        {
+            var age = AgeHelper.CalculateAge(request.DateOfBirth.Value, DateOnly.FromDateTime(now));
+            ageRangeId = await _authRepository.ResolveAgeRangeIdByAgeAsync(age, cancellationToken);
+        }
+
+        if (ageRangeId is null
+            && request.RegionId is null
+            && request.OccupationId is null
+            && request.EducationLevelId is null)
+        {
+            return null;
+        }
+
+        return new UserLearningProfile
+        {
+            AgeRangeId = ageRangeId,
+            RegionId = request.RegionId,
+            OccupationId = request.OccupationId,
+            EducationLevelId = request.EducationLevelId,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
     }
 
     private async Task<string?> GetInvalidLearningProfileReferenceAsync(

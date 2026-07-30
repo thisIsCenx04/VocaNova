@@ -95,6 +95,34 @@ public sealed class KnnLearningRepository : IKnnLearningRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<KnnNeighborWordDto>> GetNeighborStudiedWordsAsync(
+        IReadOnlyCollection<uint> userIds,
+        IReadOnlyCollection<uint> topicIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (userIds.Count == 0)
+        {
+            return Array.Empty<KnnNeighborWordDto>();
+        }
+
+        var query = _dbContext.UserListWords
+            .AsNoTracking()
+            .Where(listWord => userIds.Contains(listWord.UserId)
+                && listWord.Status == UserStatus.Active);
+
+        if (topicIds.Count > 0)
+        {
+            var topicIdValues = topicIds.ToArray();
+            query = query.Where(listWord => listWord.Word.WordTopics
+                .Any(wordTopic => topicIdValues.Contains(wordTopic.TopicId)));
+        }
+
+        return await query
+            .Select(listWord => new KnnNeighborWordDto(listWord.UserId, listWord.WordId))
+            .Distinct()
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyCollection<uint>> GetActiveListWordIdsAsync(
         uint userId,
         CancellationToken cancellationToken = default)

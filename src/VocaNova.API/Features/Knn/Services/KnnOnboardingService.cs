@@ -11,15 +11,18 @@ public sealed class KnnOnboardingService : IKnnOnboardingService
 {
     private readonly IKnnProfileRepository _knnProfileRepository;
     private readonly IKnnTopicRecommendationCache? _recommendationCache;
+    private readonly IKnnRuntimeConfigService? _runtimeConfig;
     private readonly KnnOptions _options;
 
     public KnnOnboardingService(
         IKnnProfileRepository knnProfileRepository,
         IOptions<KnnOptions> options,
-        IKnnTopicRecommendationCache? recommendationCache = null)
+        IKnnTopicRecommendationCache? recommendationCache = null,
+        IKnnRuntimeConfigService? runtimeConfig = null)
     {
         _knnProfileRepository = knnProfileRepository;
         _recommendationCache = recommendationCache;
+        _runtimeConfig = runtimeConfig;
         _options = options.Value;
     }
 
@@ -34,12 +37,54 @@ public sealed class KnnOnboardingService : IKnnOnboardingService
         }
 
         var dimensions = await _knnProfileRepository.GetActiveLookupDimensionsAsync(cancellationToken);
-        return BuildProfileVector(profile, dimensions);
+        var weights = await GetVectorWeightsAsync(cancellationToken);
+        return BuildProfileVector(profile, dimensions, weights);
     }
 
     public double CosineSimilarity(double[] a, double[] b)
     {
         return KnnMathHelper.CosineSimilarity(a, b);
+    }
+
+    public async Task<Result<LearningProfileOptionsDto>> GetLearningProfileOptionsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var options = await _knnProfileRepository.GetActiveLookupOptionsAsync(cancellationToken);
+        return Result<LearningProfileOptionsDto>.Ok(options);
+    }
+
+    public async Task<Result<int>> SelectTopicsAsync(
+        uint userId,
+        IReadOnlyCollection<uint> topicIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (userId == 0)
+        {
+            return Result<int>.Unauthorized("Unauthorized.");
+        }
+
+        if (topicIds.Count > AppSettings.MaxPageLimit)
+        {
+            return Result<int>.Fail($"At most {AppSettings.MaxPageLimit} topics can be selected.");
+        }
+
+        var storedCount = await _knnProfileRepository.ReplaceOnboardingTopicPreferencesAsync(
+            userId,
+            topicIds,
+            DateTime.UtcNow,
+            cancellationToken);
+        if (storedCount is null)
+        {
+            return Result<int>.NotFound("One or more topics were not found.");
+        }
+
+        // The picks are part of the profile vector, so any cached recommendation is now stale.
+        if (_recommendationCache is not null)
+        {
+            await _recommendationCache.RemoveAsync(userId, cancellationToken);
+        }
+
+        return Result<int>.Ok(storedCount.Value);
     }
 
     public async Task<Result<IReadOnlyCollection<TopicRecommendationDto>>> RecommendTopicsAsync(
@@ -69,16 +114,24 @@ public sealed class KnnOnboardingService : IKnnOnboardingService
         }
 
         var profile = await _knnProfileRepository.GetProfileVectorSourceAsync(userId, cancellationToken);
+        var excludedTopicIds = await _knnProfileRepository.GetActiveTopicIdsAsync(userId, cancellationToken);
+
+        // A user who answered nothing at all still deserves the popular-topic fallback rather
+        // than an empty list.
         if (profile is null)
         {
-            return Result<IReadOnlyCollection<TopicRecommendationDto>>.Ok(Array.Empty<TopicRecommendationDto>());
+            var fallback = await _knnProfileRepository.GetFallbackTopicRecommendationsAsync(
+                excludedTopicIds,
+                normalizedLimit.Value,
+                cancellationToken);
+            return Result<IReadOnlyCollection<TopicRecommendationDto>>.Ok(fallback);
         }
 
         var dimensions = await _knnProfileRepository.GetActiveLookupDimensionsAsync(cancellationToken);
-        var userVector = BuildProfileVector(profile, dimensions);
-        var excludedTopicIds = await _knnProfileRepository.GetActiveTopicIdsAsync(userId, cancellationToken);
+        var weights = await GetVectorWeightsAsync(cancellationToken);
+        var userVector = BuildProfileVector(profile, dimensions, weights);
 
-        var recommendations = IsZeroVector(userVector)
+        var recommendations = KnnProfileVectorBuilder.IsZeroVector(userVector)
             ? await _knnProfileRepository.GetFallbackTopicRecommendationsAsync(
                 excludedTopicIds,
                 AppSettings.MaxPageLimit,
@@ -87,6 +140,7 @@ public sealed class KnnOnboardingService : IKnnOnboardingService
                 userId,
                 userVector,
                 dimensions,
+                weights,
                 excludedTopicIds,
                 cancellationToken);
 
@@ -143,6 +197,7 @@ public sealed class KnnOnboardingService : IKnnOnboardingService
         uint userId,
         double[] userVector,
         KnnLookupDimensionsDto dimensions,
+        KnnVectorOptions weights,
         IReadOnlyCollection<uint> excludedTopicIds,
         CancellationToken cancellationToken)
     {
@@ -153,7 +208,9 @@ public sealed class KnnOnboardingService : IKnnOnboardingService
             .Select(profile => new
             {
                 profile.UserId,
-                Similarity = KnnMathHelper.CosineSimilarity(userVector, BuildProfileVector(profile, dimensions)),
+                Similarity = KnnMathHelper.CosineSimilarity(
+                    userVector,
+                    BuildProfileVector(profile, dimensions, weights)),
             })
             .Where(neighbor => neighbor.Similarity >= _options.Onboarding.MinSimilarity)
             .OrderByDescending(neighbor => neighbor.Similarity)
@@ -205,36 +262,24 @@ public sealed class KnnOnboardingService : IKnnOnboardingService
             : normalized;
     }
 
+    /// <summary>
+    /// Weights an admin tuned from the dashboard win over the deployment configuration.
+    /// </summary>
+    private async Task<KnnVectorOptions> GetVectorWeightsAsync(CancellationToken cancellationToken)
+    {
+        if (_runtimeConfig is null)
+        {
+            return _options.Vector;
+        }
+
+        return await _runtimeConfig.GetVectorOptionsAsync(cancellationToken);
+    }
+
     private static double[] BuildProfileVector(
         KnnProfileVectorSourceDto profile,
-        KnnLookupDimensionsDto dimensions)
+        KnnLookupDimensionsDto dimensions,
+        KnnVectorOptions weights)
     {
-        var values = new List<double>(
-            dimensions.AgeRangeIds.Count
-            + dimensions.RegionIds.Count
-            + dimensions.OccupationIds.Count
-            + dimensions.EducationLevelIds.Count
-            + dimensions.LearningPurposeIds.Count);
-
-        AppendOneHot(values, dimensions.AgeRangeIds, profile.AgeRangeId);
-        AppendOneHot(values, dimensions.RegionIds, profile.RegionId);
-        AppendOneHot(values, dimensions.OccupationIds, profile.OccupationId);
-        AppendOneHot(values, dimensions.EducationLevelIds, profile.EducationLevelId);
-        AppendOneHot(values, dimensions.LearningPurposeIds, profile.LearningPurposeId);
-
-        return values.ToArray();
-    }
-
-    private static void AppendOneHot(List<double> values, IReadOnlyList<uint> activeIds, uint? selectedId)
-    {
-        foreach (var activeId in activeIds)
-        {
-            values.Add(selectedId == activeId ? 1.0 : 0.0);
-        }
-    }
-
-    private static bool IsZeroVector(double[] vector)
-    {
-        return vector.All(value => value == 0.0);
+        return KnnProfileVectorBuilder.Build(profile, dimensions, weights);
     }
 }

@@ -28,6 +28,8 @@ public sealed class UsersController : Controller
         bool includeDeleted = false,
         int page = 1,
         int limit = DefaultPageSize,
+        string? sortBy = null,
+        string? sortDirection = null,
         CancellationToken cancellationToken = default)
     {
         if (page < 1)
@@ -46,7 +48,10 @@ public sealed class UsersController : Controller
             IncludeDeleted: includeDeleted,
             Page: page,
             Limit: limit,
-            Role: string.IsNullOrWhiteSpace(role) ? null : role);
+            Role: string.IsNullOrWhiteSpace(role) ? null : role,
+            // Danh sách phân trang phía server nên sort phải do API làm, không sort tại chỗ.
+            SortBy: string.IsNullOrWhiteSpace(sortBy) ? null : sortBy,
+            SortDirection: string.IsNullOrWhiteSpace(sortDirection) ? null : sortDirection);
 
         var users = await _apiClient.GetUsersAsync(filter, cancellationToken);
 
@@ -61,6 +66,8 @@ public sealed class UsersController : Controller
             Limit = users.Limit,
             TotalItems = users.TotalItems,
             TotalPages = users.TotalPages,
+            SortBy = filter.SortBy,
+            SortDirection = filter.SortDirection,
         };
 
         return View(model);

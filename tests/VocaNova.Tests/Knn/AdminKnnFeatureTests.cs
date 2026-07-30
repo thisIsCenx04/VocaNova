@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Claims;
 using FluentAssertions;
 using FluentValidation.TestHelper;
@@ -23,6 +24,7 @@ using VocaNova.API.Features.Knn.Services;
 using VocaNova.API.Infrastructure.Caching;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
+using VocaNova.Tests.Support;
 using VocaNova.API.Infrastructure.RateLimiting;
 
 namespace VocaNova.Tests.Knn;
@@ -154,9 +156,137 @@ public class AdminKnnFeatureTests
     }
 
     [Fact]
-    public void GetConfig_Should_Return_Current_KnnOptions()
+    public async Task GetConfig_Should_Return_Current_KnnOptions()
     {
-        var controller = CreateController(options: new KnnOptions
+        var controller = CreateController(options: CreateTunedOptions());
+
+        var actionResult = await controller.GetConfig(CancellationToken.None);
+
+        var ok = actionResult.Should().BeOfType<OkObjectResult>().Subject;
+        var response = ok.Value.Should().BeOfType<ApiResponse<KnnConfigDto>>().Subject;
+        response.Data!.Onboarding.KValue.Should().Be(7);
+        response.Data.Learning.RebuildIntervalHours.Should().Be(6);
+        response.Data.Learning.CacheTtlMinutes.Should().Be(90);
+        response.Data.Vector.IsOverridden.Should().BeFalse();
+        response.Data.Vector.Weights.Should().Be(response.Data.Vector.Defaults);
+        response.Data.Vector.Storage.Should().Be("env_file");
+    }
+
+    [Fact]
+    public async Task UpdateVectorWeights_Should_Write_Invariant_Env_Keys()
+    {
+        var store = new InMemoryRuntimeSettingsStore();
+        var writer = new FakeRuntimeConfigWriter(store);
+        var monitor = new MutableOptionsMonitor<KnnOptions>(CreateTunedOptions());
+        var runtimeConfig = new KnnRuntimeConfigService(store, writer, monitor);
+        var controller = CreateController(runtimeConfigService: runtimeConfig);
+        SetAdminUser(controller, 10);
+
+        var updated = await controller.UpdateVectorWeights(
+            new UpdateKnnVectorWeightsRequest(2.5, 0.0, 1.0, 0.5, 3.0, 4.0),
+            CancellationToken.None);
+
+        var config = updated.Should().BeOfType<OkObjectResult>().Subject
+            .Value.Should().BeOfType<ApiResponse<KnnConfigDto>>().Subject.Data!;
+        config.Vector.Storage.Should().Be("env_file");
+
+        // Written with '.' regardless of the machine's culture, otherwise the binder could not
+        // read the value back.
+        writer.WrittenValues["Knn__Vector__AgeRangeWeight"].Should().Be("2.5");
+        writer.WrittenValues["Knn__Vector__RegionWeight"].Should().Be("0");
+        writer.WrittenValues["Knn__Vector__InterestTopicsWeight"].Should().Be("4");
+
+        // The file watcher has not fired yet, so the pipeline still sees the old configuration.
+        (await runtimeConfig.GetVectorOptionsAsync()).AgeRangeWeight.Should().Be(1.0);
+
+        // Once configuration reloads from the rewritten file, the new weights take effect.
+        monitor.Set(new KnnOptions { Vector = new KnnVectorOptions { AgeRangeWeight = 2.5 } });
+        (await runtimeConfig.GetVectorOptionsAsync()).AgeRangeWeight.Should().Be(2.5);
+    }
+
+    [Fact]
+    public async Task UpdateVectorWeights_Should_Fall_Back_When_Env_File_Is_Not_Writable()
+    {
+        var store = new InMemoryRuntimeSettingsStore();
+        var writer = new FakeRuntimeConfigWriter(store, canWriteEnvFile: false);
+        var monitor = new MutableOptionsMonitor<KnnOptions>(CreateTunedOptions());
+        var runtimeConfig = new KnnRuntimeConfigService(store, writer, monitor);
+        var controller = CreateController(runtimeConfigService: runtimeConfig);
+        SetAdminUser(controller, 10);
+
+        var updated = await controller.UpdateVectorWeights(
+            new UpdateKnnVectorWeightsRequest(2.5, 0.0, 1.0, 0.5, 3.0, 4.0),
+            CancellationToken.None);
+
+        var config = updated.Should().BeOfType<OkObjectResult>().Subject
+            .Value.Should().BeOfType<ApiResponse<KnnConfigDto>>().Subject.Data!;
+        config.Vector.Storage.Should().Be("fallback");
+        config.Vector.CanWriteEnvFile.Should().BeFalse();
+
+        // Nothing was written to the file, so the fallback store is what the pipeline reads —
+        // and it takes effect immediately, with no watcher involved.
+        writer.WrittenValues.Should().BeEmpty();
+        (await runtimeConfig.GetVectorOptionsAsync()).AgeRangeWeight.Should().Be(2.5);
+    }
+
+    [Fact]
+    public async Task ResetVectorWeights_Should_Write_Built_In_Defaults()
+    {
+        var store = new InMemoryRuntimeSettingsStore();
+        var writer = new FakeRuntimeConfigWriter(store);
+        var runtimeConfig = new KnnRuntimeConfigService(
+            store,
+            writer,
+            new MutableOptionsMonitor<KnnOptions>(CreateTunedOptions()));
+        var controller = CreateController(runtimeConfigService: runtimeConfig);
+        SetAdminUser(controller, 10);
+
+        await controller.UpdateVectorWeights(
+            new UpdateKnnVectorWeightsRequest(2.5, 0.0, 1.0, 0.5, 3.0, 4.0),
+            CancellationToken.None);
+        var reset = await controller.ResetVectorWeights(CancellationToken.None);
+
+        var config = reset.Should().BeOfType<OkObjectResult>().Subject
+            .Value.Should().BeOfType<ApiResponse<KnnConfigDto>>().Subject.Data!;
+        config.Vector.Weights.Should().Be(KnnRuntimeConfigService.ToDto(new KnnVectorOptions()));
+
+        // Defaults are written out explicitly rather than left absent, so .env stays readable.
+        var defaults = new KnnVectorOptions();
+        writer.WrittenValues["Knn__Vector__AgeRangeWeight"]
+            .Should().Be(defaults.AgeRangeWeight.ToString(CultureInfo.InvariantCulture));
+        writer.WrittenValues["Knn__Vector__InterestTopicsWeight"]
+            .Should().Be(defaults.InterestTopicsWeight.ToString(CultureInfo.InvariantCulture));
+    }
+
+    [Fact]
+    public void UpdateKnnVectorWeightsRequestValidator_Should_Reject_Missing_Negative_And_AllZero()
+    {
+        var validator = new UpdateKnnVectorWeightsRequestValidator();
+
+        var missing = validator.TestValidate(
+            new UpdateKnnVectorWeightsRequest(1, 1, 1, 1, 1, null));
+        missing.ShouldHaveValidationErrorFor(request => request.InterestTopicsWeight);
+
+        var negative = validator.TestValidate(
+            new UpdateKnnVectorWeightsRequest(-1, 1, 1, 1, 1, 1));
+        negative.ShouldHaveValidationErrorFor(request => request.AgeRangeWeight);
+
+        var tooLarge = validator.TestValidate(
+            new UpdateKnnVectorWeightsRequest(1, 1, 1, 1, 1, 11));
+        tooLarge.ShouldHaveValidationErrorFor(request => request.InterestTopicsWeight);
+
+        // All-zero weights would zero every vector and kill similarity entirely.
+        var allZero = validator.TestValidate(
+            new UpdateKnnVectorWeightsRequest(0, 0, 0, 0, 0, 0));
+        allZero.IsValid.Should().BeFalse();
+
+        validator.TestValidate(new UpdateKnnVectorWeightsRequest(1, 0.6, 1, 0.8, 1.5, 2))
+            .IsValid.Should().BeTrue();
+    }
+
+    private static KnnOptions CreateTunedOptions()
+    {
+        return new KnnOptions
         {
             Onboarding = new KnnOnboardingOptions
             {
@@ -174,15 +304,7 @@ public class AdminKnnFeatureTests
                 RebuildIntervalHours = 6,
                 CacheTtlMinutes = 90,
             },
-        });
-
-        var actionResult = controller.GetConfig();
-
-        var ok = actionResult.Should().BeOfType<OkObjectResult>().Subject;
-        var response = ok.Value.Should().BeOfType<ApiResponse<KnnConfigDto>>().Subject;
-        response.Data!.Onboarding.KValue.Should().Be(7);
-        response.Data.Learning.RebuildIntervalHours.Should().Be(6);
-        response.Data.Learning.CacheTtlMinutes.Should().Be(90);
+        };
     }
 
     [Fact]
@@ -251,13 +373,28 @@ public class AdminKnnFeatureTests
         IAdminKnnLookupService? lookupService = null,
         IKnnRebuildService? rebuildService = null,
         IAdminKnnTriggerRateLimiter? triggerRateLimiter = null,
-        KnnOptions? options = null)
+        KnnOptions? options = null,
+        IKnnRuntimeConfigService? runtimeConfigService = null)
     {
+        var effectiveOptions = options ?? new KnnOptions();
+
         return new AdminKnnController(
             lookupService ?? Mock.Of<IAdminKnnLookupService>(),
             rebuildService ?? Mock.Of<IKnnRebuildService>(),
+            runtimeConfigService ?? CreateRuntimeConfigService(effectiveOptions),
             triggerRateLimiter ?? new InMemoryAdminKnnTriggerRateLimiter(),
-            Options.Create(options ?? new KnnOptions()));
+            Options.Create(effectiveOptions));
+    }
+
+    private static KnnRuntimeConfigService CreateRuntimeConfigService(
+        KnnOptions options,
+        bool canWriteEnvFile = true)
+    {
+        var store = new InMemoryRuntimeSettingsStore();
+        return new KnnRuntimeConfigService(
+            store,
+            new FakeRuntimeConfigWriter(store, canWriteEnvFile),
+            new MutableOptionsMonitor<KnnOptions>(options));
     }
 
     private static void SetAdminUser(ControllerBase controller, uint userId)

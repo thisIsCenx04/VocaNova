@@ -56,6 +56,10 @@ class AuthNotifier extends _$AuthNotifier {
     required String password,
     required String displayName,
     required String otpCode,
+    DateTime? dateOfBirth,
+    int? regionId,
+    int? occupationId,
+    int? educationLevelId,
   }) async {
     return _authenticate(
       () => ref
@@ -65,6 +69,10 @@ class AuthNotifier extends _$AuthNotifier {
             password: password,
             displayName: displayName,
             otpCode: otpCode,
+            dateOfBirth: dateOfBirth,
+            regionId: regionId,
+            occupationId: occupationId,
+            educationLevelId: educationLevelId,
           ),
     );
   }

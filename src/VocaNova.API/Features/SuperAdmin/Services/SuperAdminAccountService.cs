@@ -11,6 +11,10 @@ namespace VocaNova.API.Features.SuperAdmin.Services;
 
 public sealed class SuperAdminAccountService : ISuperAdminAccountService
 {
+    private static readonly IReadOnlySet<string> SortColumns =
+        new HashSet<string>(StringComparer.Ordinal)
+        { "id", "name", "email", "phone", "status", "created", "last_login" };
+
     private readonly VocaNovaDbContext _dbContext;
     private readonly IUserProfileCache? _userProfileCache;
 
@@ -54,15 +58,63 @@ public sealed class SuperAdminAccountService : ISuperAdminAccountService
                 || (user.UserAuth.Phone != null && user.UserAuth.Phone.Contains(search)));
         }
 
+        var sortBy = Normalize(query.SortBy)?.ToLowerInvariant();
+        if (sortBy is not null && !SortColumns.Contains(sortBy))
+        {
+            return Result<PagedResult<AdminAccountDto>>.Fail("Sort column is invalid.");
+        }
+
+        var sortDirection = Normalize(query.SortDirection)?.ToLowerInvariant();
+        if (sortDirection is not null && sortDirection is not ("asc" or "desc"))
+        {
+            return Result<PagedResult<AdminAccountDto>>.Fail("Sort direction must be 'asc' or 'desc'.");
+        }
+
         var totalItems = await source.CountAsync(cancellationToken);
-        var users = await source
-            .OrderByDescending(user => user.CreatedAt)
+        var users = await ApplySort(source, sortBy, sortDirection == "desc")
             .Skip((query.Page - 1) * query.Limit)
             .Take(query.Limit)
             .ToListAsync(cancellationToken);
 
         return Result<PagedResult<AdminAccountDto>>.Ok(new PagedResult<AdminAccountDto>(
             users.Select(Map).ToArray(), query.Page, query.Limit, totalItems));
+    }
+
+    /// <summary>
+    /// Sắp xếp trước khi phân trang, nếu không thì mỗi trang chỉ được sắp xếp cục bộ.
+    /// Mặc định giữ nguyên thứ tự cũ (mới tạo lên trước).
+    /// </summary>
+    private static IQueryable<User> ApplySort(IQueryable<User> source, string? sortBy, bool descending)
+    {
+        return sortBy switch
+        {
+            "id" => descending
+                ? source.OrderByDescending(user => user.UserId)
+                : source.OrderBy(user => user.UserId),
+            "name" => descending
+                ? source.OrderByDescending(user => user.UserProfile!.FullName)
+                : source.OrderBy(user => user.UserProfile!.FullName),
+            "email" => descending
+                ? source.OrderByDescending(user => user.UserAuth!.GoogleEmail)
+                : source.OrderBy(user => user.UserAuth!.GoogleEmail),
+            "phone" => descending
+                ? source.OrderByDescending(user => user.UserAuth!.Phone)
+                : source.OrderBy(user => user.UserAuth!.Phone),
+            "status" => descending
+                ? source.OrderByDescending(user => user.Status)
+                : source.OrderBy(user => user.Status),
+            "created" => descending
+                ? source.OrderByDescending(user => user.CreatedAt)
+                : source.OrderBy(user => user.CreatedAt),
+            // LastLoginAt là nullable: tài khoản chưa đăng nhập lần nào luôn xuống cuối để
+            // phần đầu danh sách vẫn là dữ liệu có nghĩa ở cả hai chiều sắp xếp.
+            "last_login" => descending
+                ? source.OrderBy(user => user.LastLoginAt == null)
+                    .ThenByDescending(user => user.LastLoginAt)
+                : source.OrderBy(user => user.LastLoginAt == null)
+                    .ThenBy(user => user.LastLoginAt),
+            _ => source.OrderByDescending(user => user.CreatedAt),
+        };
     }
 
     public async Task<Result<AdminAccountDto>> GetAccountAsync(

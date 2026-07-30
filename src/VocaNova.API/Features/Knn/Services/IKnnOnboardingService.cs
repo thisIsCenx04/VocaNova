@@ -11,6 +11,9 @@ public interface IKnnOnboardingService
 
     double CosineSimilarity(double[] a, double[] b);
 
+    Task<Result<LearningProfileOptionsDto>> GetLearningProfileOptionsAsync(
+        CancellationToken cancellationToken = default);
+
     Task<Result<IReadOnlyCollection<TopicRecommendationDto>>> RecommendTopicsAsync(
         uint userId,
         int? limit,
@@ -19,5 +22,10 @@ public interface IKnnOnboardingService
     Task<Result<bool>> AcceptTopicAsync(
         uint userId,
         uint topicId,
+        CancellationToken cancellationToken = default);
+
+    Task<Result<int>> SelectTopicsAsync(
+        uint userId,
+        IReadOnlyCollection<uint> topicIds,
         CancellationToken cancellationToken = default);
 }

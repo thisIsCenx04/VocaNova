@@ -131,6 +131,100 @@ public class RegisterFeatureTests
         result.Errors.Should().Contain(error => error.PropertyName == nameof(RegisterRequest.Password));
     }
 
+    [Fact]
+    public async Task RegisterAsync_Should_Seed_Learning_Profile_And_Derive_AgeRange_From_DateOfBirth()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserRoleAsync(dbContext);
+        await SeedLearningProfileLookupsAsync(dbContext);
+        await SeedOtpAsync(dbContext, "0912345678", "123456", DateTime.UtcNow.AddMinutes(5));
+        var service = CreateAuthService(dbContext);
+        var dateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-20);
+
+        var result = await service.RegisterAsync(new RegisterRequest(
+            "0912345678",
+            "Password1",
+            "Nguyen Van A",
+            "123456",
+            DateOfBirth: dateOfBirth,
+            RegionId: 1,
+            OccupationId: 1,
+            EducationLevelId: 1));
+
+        result.IsSuccess.Should().BeTrue();
+        var profile = await dbContext.UserLearningProfiles.SingleAsync();
+        // The schema has no date-of-birth column, so only the bucket the age falls into is kept.
+        profile.AgeRangeId.Should().Be(2);
+        profile.RegionId.Should().Be(1);
+        profile.OccupationId.Should().Be(1);
+        profile.EducationLevelId.Should().Be(1);
+        profile.LearningPurposeId.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task RegisterAsync_Should_Skip_Learning_Profile_When_No_Optional_Fields_Are_Supplied()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserRoleAsync(dbContext);
+        await SeedOtpAsync(dbContext, "0912345678", "123456", DateTime.UtcNow.AddMinutes(5));
+        var service = CreateAuthService(dbContext);
+
+        var result = await service.RegisterAsync(
+            new RegisterRequest("0912345678", "Password1", "Nguyen Van A", "123456"));
+
+        result.IsSuccess.Should().BeTrue();
+        (await dbContext.UserLearningProfiles.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task RegisterAsync_Should_Reject_Unknown_Lookup_Reference()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserRoleAsync(dbContext);
+        await SeedLearningProfileLookupsAsync(dbContext);
+        await SeedOtpAsync(dbContext, "0912345678", "123456", DateTime.UtcNow.AddMinutes(5));
+        var service = CreateAuthService(dbContext);
+
+        var result = await service.RegisterAsync(new RegisterRequest(
+            "0912345678",
+            "Password1",
+            "Nguyen Van A",
+            "123456",
+            RegionId: 999));
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be($"{nameof(RegisterRequest.RegionId)} is invalid.");
+        (await dbContext.Users.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public void RegisterRequestValidator_Should_Reject_Implausible_DateOfBirth()
+    {
+        var validator = new RegisterRequestValidator();
+
+        var result = validator.Validate(new RegisterRequest(
+            "0912345678",
+            "Password1",
+            "Nguyen Van A",
+            "123456",
+            DateOfBirth: DateOnly.FromDateTime(DateTime.UtcNow).AddYears(1)));
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(error =>
+            error.PropertyName.Contains(nameof(RegisterRequest.DateOfBirth)));
+    }
+
+    [Fact]
+    public void RegisterRequestValidator_Should_Accept_Request_Without_Optional_Profile_Fields()
+    {
+        var validator = new RegisterRequestValidator();
+
+        var result = validator.Validate(
+            new RegisterRequest("0912345678", "Password1", "Nguyen Van A", "123456"));
+
+        result.IsValid.Should().BeTrue();
+    }
+
     private static VocaNovaDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<VocaNovaDbContext>()
@@ -174,6 +268,60 @@ public class RegisterFeatureTests
         {
             RoleId = 1,
             RoleName = UserRole.User,
+        });
+
+        await dbContext.SaveChangesAsync();
+    }
+
+    private static async Task SeedLearningProfileLookupsAsync(VocaNovaDbContext dbContext)
+    {
+        dbContext.AgeRanges.AddRange(
+            new AgeRange
+            {
+                AgeRangeId = 1,
+                Name = "Under 18",
+                MinAge = null,
+                MaxAge = 17,
+                DisplayOrder = 1,
+                Status = UserStatus.Active,
+            },
+            new AgeRange
+            {
+                AgeRangeId = 2,
+                Name = "18-24",
+                MinAge = 18,
+                MaxAge = 24,
+                DisplayOrder = 2,
+                Status = UserStatus.Active,
+            },
+            new AgeRange
+            {
+                AgeRangeId = 3,
+                Name = "25+",
+                MinAge = 25,
+                MaxAge = null,
+                DisplayOrder = 3,
+                Status = UserStatus.Active,
+            });
+        dbContext.Regions.Add(new Region
+        {
+            RegionId = 1,
+            Name = "Mien Bac",
+            Code = "MB",
+            Status = UserStatus.Active,
+        });
+        dbContext.Occupations.Add(new Occupation
+        {
+            OccupationId = 1,
+            Name = "Student",
+            Status = UserStatus.Active,
+        });
+        dbContext.EducationLevels.Add(new EducationLevel
+        {
+            EducationLevelId = 1,
+            Name = "University",
+            DisplayOrder = 1,
+            Status = UserStatus.Active,
         });
 
         await dbContext.SaveChangesAsync();

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:vocanova_mobile/core/network/api_endpoints.dart';
+import 'package:vocanova_mobile/features/auth/domain/onboarding_catalog.dart';
 import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
 
 class AuthRepository {
@@ -9,12 +10,21 @@ class AuthRepository {
 
   final Dio _dio;
 
+  /// The learning-profile fields are optional. When supplied they seed the KNN profile
+  /// vector at sign-up, so a brand-new account already has something to match neighbours on.
   Future<AuthTokens> register({
     required String phone,
     required String password,
     required String displayName,
     required String otpCode,
+    DateTime? dateOfBirth,
+    int? regionId,
+    int? occupationId,
+    int? educationLevelId,
   }) async {
+    final formattedDateOfBirth = dateOfBirth == null
+        ? null
+        : _formatDate(dateOfBirth);
     final response = await _dio.post<Map<String, dynamic>>(
       ApiEndpoints.register,
       data: {
@@ -22,9 +32,38 @@ class AuthRepository {
         'password': password,
         'display_name': displayName,
         'otp_code': otpCode,
+        'date_of_birth': ?formattedDateOfBirth,
+        'region_id': ?regionId,
+        'occupation_id': ?occupationId,
+        'education_level_id': ?educationLevelId,
       },
     );
     return AuthTokens.fromJson(_responseData(response));
+  }
+
+  Future<LearningProfileOptions> getLearningProfileOptions() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiEndpoints.learningProfileOptions,
+    );
+    return LearningProfileOptions.fromJson(_responseData(response));
+  }
+
+  Future<int> selectOnboardingTopics(List<int> topicIds) async {
+    final response = await _dio.put<Map<String, dynamic>>(
+      ApiEndpoints.onboardingTopicSelection,
+      data: {'topic_ids': topicIds},
+    );
+    final data = response.data?['data'];
+    if (data is! int) {
+      throw const FormatException('API response data is invalid.');
+    }
+    return data;
+  }
+
+  static String _formatDate(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
   }
 
   Future<AuthTokens> login({

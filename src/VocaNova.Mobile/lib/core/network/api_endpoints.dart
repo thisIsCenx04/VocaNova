@@ -17,6 +17,14 @@ abstract final class ApiEndpoints {
   static const changePassword = '/api/auth/me/password';
   static const updateLearningProfile = '/api/auth/me/learning-profile';
 
+  static const recommendations = '/api/recommendations';
+  // Anonymous: the sign-up form needs the lookup catalog before an account exists.
+  static const learningProfileOptions =
+      '$recommendations/learning-profile-options';
+  static const onboardingTopicSelection = '$recommendations/topics/selection';
+  static const recommendedTopics = '$recommendations/topics';
+  static const recommendedWords = '$recommendations/words';
+
   static const words = '/api/words';
   static const topics = '/api/topics';
   static const personalTopics = '/api/personal-topics';

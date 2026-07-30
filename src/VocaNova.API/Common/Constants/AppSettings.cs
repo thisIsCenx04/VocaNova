@@ -15,4 +15,7 @@ public static class AppSettings
 
     public const int AccessTokenMinutes = 15;
     public const int RefreshTokenDays = 30;
+
+    public const int MinRegistrationAge = 5;
+    public const int MaxRegistrationAge = 120;
 }

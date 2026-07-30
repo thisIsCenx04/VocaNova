@@ -33,9 +33,20 @@ using VocaNova.API.Infrastructure.Sms;
 using VocaNova.API.Infrastructure.Storage;
 using VocaNova.API.Middleware;
 
+// Publishes .env as process environment variables — DatabaseConnection reads its connection
+// string straight from the environment rather than from IConfiguration.
 EnvironmentFile.LoadFromRepositoryRoot();
 
 var builder = WebApplication.CreateBuilder(args);
+
+// The environment-variable provider above is a one-time snapshot with no file watcher. Layering
+// the same file in as a watched source is what lets the admin settings screens change .env and
+// have the running app pick it up.
+var envFilePath = EnvironmentFile.FindPath();
+if (envFilePath is not null)
+{
+    builder.Configuration.AddEnvFile(envFilePath);
+}
 
 builder.Services.AddDbContext<VocaNovaDbContext>(options =>
 {
@@ -121,6 +132,10 @@ builder.Services.AddSingleton<IKnnTopicRecommendationCache, RedisKnnTopicRecomme
 builder.Services.AddSingleton<IKnnWordRecommendationCache, RedisKnnWordRecommendationCache>();
 builder.Services.AddSingleton<IKnnRebuildStateCache, RedisKnnRebuildStateCache>();
 builder.Services.AddSingleton<IKnnRebuildService, KnnRebuildService>();
+builder.Services.AddSingleton<IRuntimeSettingsStore, RedisRuntimeSettingsStore>();
+builder.Services.AddSingleton<IRuntimeConfigWriter, EnvFileRuntimeConfigWriter>();
+builder.Services.AddSingleton<IKnnRuntimeConfigService, KnnRuntimeConfigService>();
+builder.Services.AddSingleton<IAiGradingConfigService, AiGradingConfigService>();
 builder.Services.Configure<RateLimitSettings>(builder.Configuration.GetSection(RateLimitSettings.SectionName));
 builder.Services.AddSingleton<IAuthRateLimiter, InMemoryAuthRateLimiter>();
 builder.Services.AddSingleton<IAdminKnnTriggerRateLimiter, InMemoryAdminKnnTriggerRateLimiter>();

@@ -10,6 +10,11 @@ public sealed class RoleManagementViewModel
     public string? Search { get; init; }
     public string? Type { get; init; }
     public int TotalRoles { get; init; }
+
+    /// <summary>Cột đang sort (id | name | type).</summary>
+    public string? SortBy { get; init; }
+
+    public string? SortDirection { get; init; }
 }
 
 public sealed class AdminUserAssignmentViewModel

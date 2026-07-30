@@ -98,6 +98,13 @@ public interface IVocaNovaApiClient
 
     Task<PagedData<Models.Api.SuperAdmin.ManagedRole>> GetRolesAsync(CancellationToken cancellationToken = default);
     Task<PagedData<Models.Api.SuperAdmin.ManagedRole>> GetRolesAsync(string? search, string? type, CancellationToken cancellationToken = default);
+
+    Task<PagedData<Models.Api.SuperAdmin.ManagedRole>> GetRolesAsync(
+        string? search,
+        string? type,
+        string? sortBy,
+        string? sortDirection,
+        CancellationToken cancellationToken = default);
     Task<ApiActionResult> CreateRoleAsync(string roleName, CancellationToken cancellationToken = default);
     Task<ApiActionResult> UpdateRoleAsync(uint roleId, string roleName, CancellationToken cancellationToken = default);
     Task<ApiActionResult> DeleteRoleAsync(uint roleId, CancellationToken cancellationToken = default);
@@ -135,6 +142,25 @@ public interface IVocaNovaApiClient
 
     Task<ApiActionResult> RestoreKnnLookupAsync(string lookup, uint id, CancellationToken cancellationToken = default);
 
+    // Trọng số vector KNN — admin chỉnh runtime, không cần redeploy.
+    Task<ApiActionResult> UpdateKnnVectorWeightsAsync(
+        Models.Api.Knn.KnnVectorWeights weights,
+        CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> ResetKnnVectorWeightsAsync(CancellationToken cancellationToken = default);
+
+    // Cấu hình AI dùng cho chấm bài (provider, endpoint, model, API key...).
+    Task<Models.Api.Settings.AiGradingConfig?> GetAiGradingConfigAsync(CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> UpdateAiGradingConfigAsync(
+        Models.Api.Settings.AiGradingConfigInput input,
+        CancellationToken cancellationToken = default);
+
+    Task<ApiActionResult> ResetAiGradingConfigAsync(CancellationToken cancellationToken = default);
+
+    Task<Models.Api.Settings.AiGradingConnectionTest?> TestAiGradingConnectionAsync(
+        CancellationToken cancellationToken = default);
+
     // F063A — Admin profile (hồ sơ của chính người đăng nhập).
     Task<Models.Api.Auth.MeProfile?> GetMyProfileAsync(CancellationToken cancellationToken = default);
 
@@ -146,7 +172,14 @@ public interface IVocaNovaApiClient
 }
 
 /// <summary>Bộ lọc danh sách lookup KNN (F063). API dùng query key snake_case <c>include_deleted</c>.</summary>
-public sealed record KnnLookupFilter(string? Q, string? Status, bool IncludeDeleted, int Page, int Limit);
+public sealed record KnnLookupFilter(
+    string? Q,
+    string? Status,
+    bool IncludeDeleted,
+    int Page,
+    int Limit,
+    string? SortBy = null,
+    string? SortDirection = null);
 
 /// <summary>Payload tạo/cập nhật topic (khớp CreateTopicRequest/UpdateTopicRequest của API).</summary>
 public sealed record TopicInput(
@@ -156,9 +189,24 @@ public sealed record TopicInput(
     IReadOnlyCollection<uint>? WordIds = null);
 
 /// <summary>Bộ lọc danh sách user (F060).</summary>
-public sealed record UserListFilter(string? Status, string? Search, bool IncludeDeleted, int Page, int Limit, string? Role = null);
+public sealed record UserListFilter(
+    string? Status,
+    string? Search,
+    bool IncludeDeleted,
+    int Page,
+    int Limit,
+    string? Role = null,
+    string? SortBy = null,
+    string? SortDirection = null);
 
-public sealed record AdminAccountFilter(string? Status, string? Search, bool IncludeDeleted, int Page, int Limit);
+public sealed record AdminAccountFilter(
+    string? Status,
+    string? Search,
+    bool IncludeDeleted,
+    int Page,
+    int Limit,
+    string? SortBy = null,
+    string? SortDirection = null);
 
 public sealed record AdminAccountInput(
     string? FullName,

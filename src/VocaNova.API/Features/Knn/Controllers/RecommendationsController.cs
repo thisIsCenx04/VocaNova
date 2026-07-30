@@ -61,6 +61,45 @@ public sealed class RecommendationsController : ControllerBase
         return this.OkResult(result.Value!, "Word recommendations loaded successfully.");
     }
 
+    /// <summary>
+    /// Lookup catalog for the sign-up form and the onboarding questions. Anonymous because the
+    /// sign-up form has to render it before an account exists.
+    /// </summary>
+    [AllowAnonymous]
+    [HttpGet("learning-profile-options")]
+    public async Task<IActionResult> GetLearningProfileOptions(CancellationToken cancellationToken)
+    {
+        var result = await _knnOnboardingService.GetLearningProfileOptionsAsync(cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value!, "Learning profile options loaded successfully.");
+    }
+
+    [HttpPut("topics/selection")]
+    public async Task<IActionResult> SelectTopics(
+        [FromBody] SelectOnboardingTopicsRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return this.ErrorResult(Result<int>.Unauthorized("Unauthorized."));
+        }
+
+        var result = await _knnOnboardingService.SelectTopicsAsync(
+            userId,
+            request.TopicIds ?? Array.Empty<uint>(),
+            cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value, "Onboarding topics saved successfully.");
+    }
+
     [HttpPost("topics/{topicId:uint}/accept")]
     public async Task<IActionResult> AcceptTopic(
         [FromRoute] uint topicId,

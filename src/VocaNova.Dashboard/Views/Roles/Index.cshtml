@@ -1,6 +1,21 @@
 @model VocaNova.Dashboard.Models.Roles.RoleManagementViewModel
 @{
     ViewData["Title"] = T["Role Management"];
+
+    string SortUrl(string column)
+    {
+        var direction = Model.SortBy == column && Model.SortDirection == "asc" ? "desc" : "asc";
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(Model.Search)) qs.Add($"search={Uri.EscapeDataString(Model.Search)}");
+        if (!string.IsNullOrWhiteSpace(Model.Type)) qs.Add($"type={Model.Type}");
+        qs.Add($"sortBy={column}");
+        qs.Add($"sortDirection={direction}");
+        return "/roles?" + string.Join("&", qs);
+    }
+
+    string SortIcon(string column) => Model.SortBy != column
+        ? "bi bi-arrow-down-up th-sort-idle"
+        : (Model.SortDirection == "desc" ? "bi bi-caret-down-fill" : "bi bi-caret-up-fill");
 }
 
 <div class="page-header admin-accounts-header">
@@ -37,8 +52,16 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th>@T["ID"]</th>
-                <th>@T["Role"]</th>
+                <th>
+                    <a class="th-sort @(Model.SortBy == "id" ? "active" : "")" href="@SortUrl("id")">
+                        @T["ID"] <i class="@SortIcon("id")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th>
+                    <a class="th-sort @(Model.SortBy == "name" ? "active" : "")" href="@SortUrl("name")">
+                        @T["Role"] <i class="@SortIcon("name")" aria-hidden="true"></i>
+                    </a>
+                </th>
                 <th class="col-actions">@T["Actions"]</th>
             </tr>
         </thead>

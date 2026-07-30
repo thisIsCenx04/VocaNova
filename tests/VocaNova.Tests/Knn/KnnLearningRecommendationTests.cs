@@ -70,7 +70,7 @@ public class KnnLearningRecommendationTests
     }
 
     [Fact]
-    public async Task GetWordRecommendationsAsync_Should_Return_Empty_When_RedisMiss()
+    public async Task GetWordRecommendationsAsync_Should_Return_Empty_When_RedisMiss_And_No_Profile()
     {
         await using var dbContext = CreateDbContext();
         var service = CreateService(dbContext, new FakeKnnWordRecommendationCache());
@@ -79,6 +79,54 @@ public class KnnLearningRecommendationTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GenerateWordRecommendationsAsync_Should_Use_Profile_Neighbors_When_Sessions_Are_Insufficient()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedColdStartDataAsync(dbContext);
+        var cache = new FakeKnnWordRecommendationCache();
+        var service = CreateService(dbContext, cache, withProfileRepository: true);
+
+        var result = await service.GenerateWordRecommendationsAsync(1);
+
+        result.IsSuccess.Should().BeTrue();
+        // Word 401 comes from the profile-similar neighbour and sits in a topic the new user
+        // picked. Word 402 belongs to a topic they did not pick, and 403 belongs to a user with
+        // a different profile, so neither is recommended.
+        result.Value!.Select(word => word.WordId).Should().Equal(401u);
+        cache.SetCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GenerateWordRecommendationsAsync_Should_Fail_Cold_Start_When_Profile_Is_Empty()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.Users.Add(CreateUser(1));
+        await dbContext.SaveChangesAsync();
+        var service = CreateService(dbContext, withProfileRepository: true);
+
+        var result = await service.GenerateWordRecommendationsAsync(1);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be("No learning profile available for cold-start recommendation.");
+    }
+
+    [Fact]
+    public async Task GetWordRecommendationsAsync_Should_Generate_On_Cache_Miss_For_New_User()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedColdStartDataAsync(dbContext);
+        var service = CreateService(
+            dbContext,
+            new FakeKnnWordRecommendationCache(),
+            withProfileRepository: true);
+
+        var result = await service.GetWordRecommendationsAsync(1, 10);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Select(word => word.WordId).Should().Equal(401u);
     }
 
     [Fact]
@@ -127,12 +175,15 @@ public class KnnLearningRecommendationTests
 
     private static KnnLearningService CreateService(
         VocaNovaDbContext dbContext,
-        IKnnWordRecommendationCache? cache = null)
+        IKnnWordRecommendationCache? cache = null,
+        bool withProfileRepository = false)
     {
         return new KnnLearningService(
             new KnnLearningRepository(dbContext),
             Options.Create(CreateOptions()),
-            cache);
+            cache,
+            logger: null,
+            knnProfileRepository: withProfileRepository ? new KnnProfileRepository(dbContext) : null);
     }
 
     private static KnnOptions CreateOptions()
@@ -148,6 +199,7 @@ public class KnnLearningRecommendationTests
                 RebuildIntervalHours = 24,
                 CacheTtlMinutes = 60,
             },
+            Vector = new KnnVectorOptions(),
         };
     }
 
@@ -239,6 +291,84 @@ public class KnnLearningRecommendationTests
         });
 
         await dbContext.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// User 1 is brand new (no sessions) but shares a profile with user 2 and picked topic 100.
+    /// User 3 has a completely different profile.
+    /// </summary>
+    private static async Task SeedColdStartDataAsync(VocaNovaDbContext dbContext)
+    {
+        dbContext.AgeRanges.AddRange(
+            new AgeRange { AgeRangeId = 1, Name = "18-24", DisplayOrder = 1, Status = UserStatus.Active },
+            new AgeRange { AgeRangeId = 2, Name = "25-34", DisplayOrder = 2, Status = UserStatus.Active });
+        dbContext.Occupations.AddRange(
+            new Occupation { OccupationId = 1, Name = "Student", Status = UserStatus.Active },
+            new Occupation { OccupationId = 2, Name = "Engineer", Status = UserStatus.Active });
+        dbContext.Topics.AddRange(CreateTopic(100, "Travel"), CreateTopic(101, "Business"));
+        dbContext.Users.AddRange(CreateUser(1), CreateUser(2), CreateUser(3));
+        dbContext.UserLearningProfiles.AddRange(
+            CreateLearningProfile(1, 1, 1),
+            CreateLearningProfile(2, 1, 1),
+            CreateLearningProfile(3, 2, 2));
+        dbContext.UserTopicPreferences.AddRange(
+            CreateTopicPreference(1, 100),
+            CreateTopicPreference(2, 100),
+            CreateTopicPreference(3, 101));
+        dbContext.Words.AddRange(
+            CreateWord(401, "neighbor-travel-word", "A2", "/neighbor/", null),
+            CreateWord(402, "neighbor-business-word", "B1", "/business/", null),
+            CreateWord(403, "stranger-travel-word", "B2", "/stranger/", null));
+        dbContext.WordTopics.AddRange(
+            new WordTopic { WordId = 401, TopicId = 100 },
+            new WordTopic { WordId = 402, TopicId = 101 },
+            new WordTopic { WordId = 403, TopicId = 100 });
+        dbContext.UserListWords.AddRange(
+            CreateListWord(2, 401),
+            CreateListWord(2, 402),
+            CreateListWord(3, 403));
+
+        await dbContext.SaveChangesAsync();
+    }
+
+    private static UserLearningProfile CreateLearningProfile(
+        uint userId,
+        uint ageRangeId,
+        uint occupationId)
+    {
+        return new UserLearningProfile
+        {
+            UserId = userId,
+            AgeRangeId = ageRangeId,
+            OccupationId = occupationId,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        };
+    }
+
+    private static UserTopicPreference CreateTopicPreference(uint userId, uint topicId)
+    {
+        return new UserTopicPreference
+        {
+            UserId = userId,
+            TopicId = topicId,
+            Source = TopicPreferenceSource.Onboarding,
+            Status = UserStatus.Active,
+            CreatedAt = DateTime.UtcNow,
+        };
+    }
+
+    private static UserListWord CreateListWord(uint userId, uint wordId)
+    {
+        return new UserListWord
+        {
+            UserId = userId,
+            ListId = userId,
+            WordId = wordId,
+            AddMethod = AddMethod.Manual,
+            Status = UserStatus.Active,
+            AddedAt = DateTime.UtcNow,
+        };
     }
 
     private static User CreateUser(uint userId)

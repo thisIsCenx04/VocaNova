@@ -48,6 +48,9 @@ void main() {
       find.byKey(const Key('register-confirm-password')),
       'Password2',
     );
+    // The optional learning-profile block pushes the submit button below the fold.
+    await tester.ensureVisible(find.byKey(const Key('register-submit')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('register-submit')));
     await tester.pump();
 

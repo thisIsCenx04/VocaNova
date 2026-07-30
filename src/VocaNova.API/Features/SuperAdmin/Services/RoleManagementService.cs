@@ -41,6 +41,16 @@ public sealed partial class RoleManagementService : IRoleManagementService
         else if (type == "custom") source = source.Where(role => !UserRole.All.Contains(role.RoleName));
         else if (type is not null and not "") return Result<PagedResult<RoleDto>>.Fail("Role type is invalid.");
 
+        var sortBy = query.SortBy?.Trim().ToLowerInvariant();
+        if (sortBy is not null and not "" && sortBy is not ("id" or "name" or "type"))
+            return Result<PagedResult<RoleDto>>.Fail("Sort column is invalid.");
+
+        var sortDirection = query.SortDirection?.Trim().ToLowerInvariant();
+        if (sortDirection is not null and not "" && sortDirection is not ("asc" or "desc"))
+            return Result<PagedResult<RoleDto>>.Fail("Sort direction must be 'asc' or 'desc'.");
+
+        source = SortRoles(source, sortBy, sortDirection == "desc");
+
         var filtered = source.ToArray();
         var total = filtered.Length;
         var roles = filtered
@@ -48,6 +58,41 @@ public sealed partial class RoleManagementService : IRoleManagementService
             .Take(query.Limit)
             .ToArray();
         return Result<PagedResult<RoleDto>>.Ok(new PagedResult<RoleDto>(roles, query.Page, query.Limit, total));
+    }
+
+    /// <summary>
+    /// Sắp xếp trước khi phân trang, nếu không thì mỗi trang chỉ được sắp xếp cục bộ.
+    /// </summary>
+    private static IEnumerable<RoleDto> SortRoles(
+        IEnumerable<RoleDto> source,
+        string? sortBy,
+        bool descending)
+    {
+        if (string.IsNullOrEmpty(sortBy))
+        {
+            return source;
+        }
+
+        if (sortBy == "id")
+        {
+            return descending
+                ? source.OrderByDescending(role => role.RoleId)
+                : source.OrderBy(role => role.RoleId);
+        }
+
+        // "type" = system/custom; sắp theo nhóm rồi tới tên để thứ tự ổn định.
+        if (sortBy == "type")
+        {
+            return descending
+                ? source.OrderByDescending(role => UserRole.All.Contains(role.RoleName))
+                    .ThenBy(role => role.RoleName, StringComparer.OrdinalIgnoreCase)
+                : source.OrderBy(role => UserRole.All.Contains(role.RoleName))
+                    .ThenBy(role => role.RoleName, StringComparer.OrdinalIgnoreCase);
+        }
+
+        return descending
+            ? source.OrderByDescending(role => role.RoleName, StringComparer.OrdinalIgnoreCase)
+            : source.OrderBy(role => role.RoleName, StringComparer.OrdinalIgnoreCase);
     }
 
     public async Task<Result<RoleDto>> CreateAsync(SaveRoleRequest request, CancellationToken cancellationToken = default)

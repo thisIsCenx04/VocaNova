@@ -11,6 +11,7 @@ using VocaNova.API.Features.Knn.DTOs;
 using VocaNova.API.Features.Knn.Services;
 using VocaNova.API.Infrastructure.Authentication;
 using VocaNova.API.Infrastructure.Auditing;
+using VocaNova.API.Infrastructure.Configuration;
 using VocaNova.API.Infrastructure.RateLimiting;
 
 namespace VocaNova.API.Features.Admin.Controllers;
@@ -22,27 +23,70 @@ public sealed class AdminKnnController : ControllerBase
 {
     private readonly IAdminKnnLookupService _lookupService;
     private readonly IKnnRebuildService _rebuildService;
+    private readonly IKnnRuntimeConfigService _runtimeConfigService;
     private readonly IAdminKnnTriggerRateLimiter _triggerRateLimiter;
     private readonly KnnOptions _options;
 
     public AdminKnnController(
         IAdminKnnLookupService lookupService,
         IKnnRebuildService rebuildService,
+        IKnnRuntimeConfigService runtimeConfigService,
         IAdminKnnTriggerRateLimiter triggerRateLimiter,
         IOptions<KnnOptions> options)
     {
         _lookupService = lookupService;
         _rebuildService = rebuildService;
+        _runtimeConfigService = runtimeConfigService;
         _triggerRateLimiter = triggerRateLimiter;
         _options = options.Value;
     }
 
     [HttpGet("config")]
-    public IActionResult GetConfig()
+    public async Task<IActionResult> GetConfig(CancellationToken cancellationToken)
     {
         return this.OkResult(
-            MapConfig(_options),
+            await MapConfigAsync(cancellationToken),
             "KNN configuration loaded successfully.");
+    }
+
+    /// <summary>
+    /// Retunes the profile-vector weights without a redeploy. New weights apply to the next
+    /// recommendation that is computed; per-user recommendations already cached keep serving
+    /// until their TTL expires (see <see cref="KnnOnboardingOptions.CacheTtlMinutes"/>), so a
+    /// change is not visible to every user instantly.
+    /// </summary>
+    [HttpPut("config/vector-weights")]
+    public async Task<IActionResult> UpdateVectorWeights(
+        [FromBody] UpdateKnnVectorWeightsRequest request,
+        CancellationToken cancellationToken)
+    {
+        await _runtimeConfigService.UpdateVectorWeightsAsync(
+            new KnnVectorWeightsDto(
+                request.AgeRangeWeight!.Value,
+                request.RegionWeight!.Value,
+                request.OccupationWeight!.Value,
+                request.EducationLevelWeight!.Value,
+                request.LearningPurposeWeight!.Value,
+                request.InterestTopicsWeight!.Value),
+            cancellationToken);
+
+        HttpContext.Items[AuditLogHttpContextKeys.EntityType] = "knn_vector_weights";
+
+        return this.OkResult(
+            await MapConfigAsync(cancellationToken),
+            "KNN vector weights updated successfully.");
+    }
+
+    [HttpPost("config/vector-weights/reset")]
+    public async Task<IActionResult> ResetVectorWeights(CancellationToken cancellationToken)
+    {
+        await _runtimeConfigService.ResetVectorWeightsAsync(cancellationToken);
+
+        HttpContext.Items[AuditLogHttpContextKeys.EntityType] = "knn_vector_weights";
+
+        return this.OkResult(
+            await MapConfigAsync(cancellationToken),
+            "KNN vector weights reset to deployment configuration.");
     }
 
     [HttpGet("rebuild-status")]
@@ -516,20 +560,30 @@ public sealed class AdminKnnController : ControllerBase
         HttpContext.Items[AuditLogHttpContextKeys.EntityId] = entityId;
     }
 
-    private static KnnConfigDto MapConfig(KnnOptions options)
+    private async Task<KnnConfigDto> MapConfigAsync(CancellationToken cancellationToken)
     {
+        var effectiveWeights = await _runtimeConfigService.GetVectorOptionsAsync(cancellationToken);
+        var isOverridden = await _runtimeConfigService.HasVectorOverrideAsync(cancellationToken);
+        var storage = await _runtimeConfigService.GetStorageTargetAsync(cancellationToken);
+
         return new KnnConfigDto(
             new KnnOnboardingConfigDto(
-                options.Onboarding.KValue,
-                options.Onboarding.DefaultTopicLimit,
-                options.Onboarding.MinSimilarity,
-                options.Onboarding.CacheTtlMinutes),
+                _options.Onboarding.KValue,
+                _options.Onboarding.DefaultTopicLimit,
+                _options.Onboarding.MinSimilarity,
+                _options.Onboarding.CacheTtlMinutes),
             new KnnLearningConfigDto(
-                options.Learning.KValue,
-                options.Learning.MinSessions,
-                options.Learning.MinSimilarity,
-                options.Learning.RecommendationCount,
-                options.Learning.RebuildIntervalHours,
-                options.Learning.CacheTtlMinutes));
+                _options.Learning.KValue,
+                _options.Learning.MinSessions,
+                _options.Learning.MinSimilarity,
+                _options.Learning.RecommendationCount,
+                _options.Learning.RebuildIntervalHours,
+                _options.Learning.CacheTtlMinutes),
+            new KnnVectorConfigDto(
+                KnnRuntimeConfigService.ToDto(effectiveWeights),
+                KnnRuntimeConfigService.ToDto(new KnnVectorOptions()),
+                isOverridden,
+                storage == RuntimeConfigTarget.EnvFile ? "env_file" : "fallback",
+                _runtimeConfigService.CanWriteEnvFile));
     }
 }
