@@ -5,6 +5,7 @@ import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_state.dart';
 import 'package:vocanova_mobile/features/progress/domain/progress_summary.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class ProgressOverviewScreen extends ConsumerStatefulWidget {
   const ProgressOverviewScreen({super.key});
@@ -24,14 +25,15 @@ class _ProgressOverviewScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(progressOverviewProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tiến độ học tập'),
+        title: Text(l10n.progressOverviewTitle),
         actions: [
           IconButton(
             key: const Key('open-progress-charts'),
-            tooltip: 'Biểu đồ chi tiết',
+            tooltip: l10n.progressChartsTooltip,
             onPressed: () => context.push(AppRoutes.progressCharts),
             icon: const Icon(Icons.show_chart),
           ),
@@ -40,19 +42,20 @@ class _ProgressOverviewScreenState
       body: Column(
         children: [
           if (state.isOffline) const _OfflineBanner(),
-          Expanded(child: _content(state)),
+          Expanded(child: _content(context, state)),
         ],
       ),
     );
   }
 
-  Widget _content(ProgressOverviewState state) {
+  Widget _content(BuildContext context, ProgressOverviewState state) {
     if (state.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
     if (state.summary == null) {
+      final l10n = AppLocalizations.of(context)!;
       return _ErrorState(
-        message: state.errorMessage ?? 'Chưa có dữ liệu tiến độ.',
+        message: state.errorMessage ?? l10n.progressNoDataMessage,
         onRetry: ref.read(progressOverviewProvider.notifier).load,
       );
     }
@@ -70,6 +73,7 @@ class _OverviewContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return ListView(
       key: const Key('progress-overview-list'),
       physics: const AlwaysScrollableScrollPhysics(),
@@ -92,12 +96,14 @@ class _OverviewContent extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${summary.currentStreakDays} ngày liên tiếp',
+                        l10n.progressStreakDaysLabel(summary.currentStreakDays),
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(fontWeight: FontWeight.w900),
                       ),
                       Text(
-                        'Kỷ lục: ${summary.longestStreakDays} ngày',
+                        l10n.progressLongestStreakLabel(
+                          summary.longestStreakDays,
+                        ),
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                     ],
@@ -143,13 +149,16 @@ class _OverviewContent extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Độ chính xác 7 ngày',
+                        l10n.progressAccuracy7DaysLabel,
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        '${summary.correct7Days}/${summary.totalAnswers7Days} câu đúng',
+                        l10n.progressCorrectAnswersLabel(
+                          summary.correct7Days,
+                          summary.totalAnswers7Days,
+                        ),
                       ),
                     ],
                   ),
@@ -171,19 +180,19 @@ class _OverviewContent extends StatelessWidget {
               key: const Key('words-in-progress-card'),
               icon: Icons.menu_book,
               value: '${summary.totalWordsInProgress}',
-              label: 'Từ đang học',
+              label: l10n.progressWordsInProgressLabel,
             ),
             _MetricCard(
               key: const Key('mastered-words-card'),
               icon: Icons.workspace_premium,
               value: '${summary.masteredWords}',
-              label: 'Từ đã thành thạo',
+              label: l10n.progressMasteredWordsLabel,
             ),
             _MetricCard(
               key: const Key('sessions-month-card'),
               icon: Icons.quiz,
               value: '${summary.sessionsThisMonth}',
-              label: 'Bài kiểm tra tháng này',
+              label: l10n.progressSessionsThisMonthLabel,
             ),
           ],
         ),
@@ -238,8 +247,8 @@ class _OfflineBanner extends StatelessWidget {
       width: double.infinity,
       color: Colors.amber.withValues(alpha: 0.24),
       padding: const EdgeInsets.all(10),
-      child: const Text(
-        'Bạn đang ngoại tuyến. Đang hiển thị dữ liệu tiến độ đã lưu.',
+      child: Text(
+        AppLocalizations.of(context)!.progressOfflineBanner,
         textAlign: TextAlign.center,
       ),
     );
@@ -260,7 +269,10 @@ class _ErrorState extends StatelessWidget {
         children: [
           Text(message),
           const SizedBox(height: 12),
-          FilledButton(onPressed: onRetry, child: const Text('Thử lại')),
+          FilledButton(
+            onPressed: onRetry,
+            child: Text(AppLocalizations.of(context)!.progressRetry),
+          ),
         ],
       ),
     );

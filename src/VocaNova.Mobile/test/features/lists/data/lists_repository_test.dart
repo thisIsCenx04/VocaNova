@@ -26,7 +26,7 @@ void main() {
 
     expect((await repository.getLists()).single.listName, 'Favorites');
     expect(
-      (await repository.getPersonalTopics()).single.displayName,
+      (await repository.getPersonalTopics()).single.nameVi,
       'Du lịch',
     );
     expect((await repository.create('Travel')).listName, 'Travel');

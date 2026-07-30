@@ -1,6 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_charts_state.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'progress_charts_notifier.g.dart';
 
@@ -23,9 +25,12 @@ class ProgressChartsNotifier extends _$ProgressChartsNotifier {
         isLoading: false,
       );
     } catch (_) {
+      final l10n = lookupAppLocalizations(
+        AppSettingsNotifier.instance.state.locale,
+      );
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Không thể tải biểu đồ tiến độ.',
+        errorMessage: l10n.progressLoadChartsError,
       );
     }
   }
@@ -41,9 +46,12 @@ class ProgressChartsNotifier extends _$ProgressChartsNotifier {
       final chart = await ref.read(progressRepositoryProvider).getChart(value);
       state = state.copyWith(chart: chart, isLoadingChart: false);
     } catch (_) {
+      final l10n = lookupAppLocalizations(
+        AppSettingsNotifier.instance.state.locale,
+      );
       state = state.copyWith(
         isLoadingChart: false,
-        errorMessage: 'Không thể đổi khoảng thời gian biểu đồ.',
+        errorMessage: l10n.progressChangeGranularityError,
       );
     }
   }

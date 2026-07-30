@@ -6,6 +6,7 @@ import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/features/notifications/application/notifications_notifier.dart';
 import 'package:vocanova_mobile/features/notifications/application/notifications_state.dart';
 import 'package:vocanova_mobile/features/notifications/domain/app_notification.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -54,6 +55,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(notificationsProvider);
     final notifier = ref.read(notificationsProvider.notifier);
     final dark = Theme.of(context).brightness == Brightness.dark;
@@ -62,12 +64,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
-        title: const Text('Thông báo'),
+        title: Text(l10n.notifTitle),
         actions: [
           if (state.unreadCount > 0)
             TextButton(
               onPressed: notifier.markAllRead,
-              child: const Text('Đọc tất cả'),
+              child: Text(l10n.notifMarkAllRead),
             ),
         ],
       ),
@@ -84,8 +86,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     }
 
     if (state.items.isEmpty) {
+      final l10n = AppLocalizations.of(context)!;
       return _EmptyOrError(
-        message: state.errorMessage ?? 'Chưa có thông báo nào.',
+        message: state.errorMessage ?? l10n.notifEmptyMessage,
         isError: state.errorMessage != null,
         onRetry: () => ref.read(notificationsProvider.notifier).load(),
       );
@@ -129,6 +132,7 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final text = dark ? AppColors.onSurface : Colors.black;
     final secondary = dark ? const Color(0xFFB8B3C3) : const Color(0xFF888888);
     final unreadTint = AppColors.primary.withValues(alpha: dark ? 0.10 : 0.08);
@@ -181,7 +185,7 @@ class _NotificationTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      _relativeTime(notification.createdAt),
+                      _relativeTime(l10n, notification.createdAt),
                       style: TextStyle(
                         color: secondary.withValues(alpha: 0.8),
                         fontSize: 11,
@@ -207,19 +211,19 @@ class _NotificationTile extends StatelessWidget {
     );
   }
 
-  static String _relativeTime(DateTime dateTime) {
+  static String _relativeTime(AppLocalizations l10n, DateTime dateTime) {
     final diff = DateTime.now().difference(dateTime.toLocal());
     if (diff.isNegative || diff.inMinutes < 1) {
-      return 'Vừa xong';
+      return l10n.notifJustNow;
     }
     if (diff.inMinutes < 60) {
-      return '${diff.inMinutes} phút trước';
+      return l10n.notifMinutesAgo(diff.inMinutes);
     }
     if (diff.inHours < 24) {
-      return '${diff.inHours} giờ trước';
+      return l10n.notifHoursAgo(diff.inHours);
     }
     if (diff.inDays < 30) {
-      return '${diff.inDays} ngày trước';
+      return l10n.notifDaysAgo(diff.inDays);
     }
     final d = dateTime.toLocal();
     return '${d.day}/${d.month}/${d.year}';
@@ -259,7 +263,10 @@ class _EmptyOrError extends StatelessWidget {
         if (isError) ...[
           const SizedBox(height: 12),
           Center(
-            child: TextButton(onPressed: onRetry, child: const Text('Thử lại')),
+            child: TextButton(
+              onPressed: onRetry,
+              child: Text(AppLocalizations.of(context)!.notifRetry),
+            ),
           ),
         ],
       ],

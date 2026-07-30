@@ -8,6 +8,7 @@ import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.d
 import 'package:vocanova_mobile/features/quiz/data/quiz_repository.dart';
 import 'package:vocanova_mobile/features/quiz/domain/quiz_result.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/quiz_result_screen.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   Future<GoRouter> pumpResult(WidgetTester tester) async {
@@ -37,7 +38,11 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [quizRepositoryProvider.overrideWithValue(repository)],
-        child: MaterialApp.router(routerConfig: router),
+        child: MaterialApp.router(
+          routerConfig: router,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+        ),
       ),
     );
     await tester.pump();
@@ -52,13 +57,13 @@ void main() {
 
     expect(find.byKey(const Key('score-animation')), findsOneWidget);
     expect(find.text('50%'), findsWidgets);
-    expect(find.text('Làm tốt lắm!'), findsOneWidget);
-    expect(find.textContaining('1/2 câu đúng'), findsOneWidget);
+    expect(find.text('Well done!'), findsOneWidget);
+    expect(find.textContaining('1/2 correct'), findsOneWidget);
     expect(find.textContaining('1m 15s'), findsOneWidget);
-    expect(find.text('Chuỗi tốt nhất'), findsOneWidget);
-    expect(find.text('KẾT QUẢ'), findsOneWidget);
-    expect(find.textContaining('Bạn trả lời: orange'), findsOneWidget);
-    expect(find.textContaining('Đáp án: apple'), findsOneWidget);
+    expect(find.text('Best streak'), findsOneWidget);
+    expect(find.text('RESULTS'), findsOneWidget);
+    expect(find.textContaining('You answered: orange'), findsOneWidget);
+    expect(find.textContaining('Answer: apple'), findsOneWidget);
   });
 
   testWidgets('review, retry, and done buttons navigate correctly', (

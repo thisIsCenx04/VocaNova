@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/core/network/dio_client.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
@@ -8,6 +9,7 @@ import 'package:vocanova_mobile/core/storage/storage_keys.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_detail_state.dart';
 import 'package:vocanova_mobile/features/dictionary/data/word_detail_repository.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_detail.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'word_detail_notifier.g.dart';
 
@@ -43,13 +45,18 @@ class WordDetailNotifier extends _$WordDetailNotifier {
 
     final staleCache = await storage.get<String>(key);
     final online = await ref.read(connectivityServiceProvider).isOnline;
+    final l10n = lookupAppLocalizations(
+      AppSettingsNotifier.instance.state.locale,
+    );
     if (!online) {
       state = WordDetailState(
         word: _tryDecode(staleCache),
         isLoading: false,
         isOffline: true,
         isSaved: saved != null,
-        errorMessage: staleCache == null ? 'Không có dữ liệu từ đã lưu.' : null,
+        errorMessage: staleCache == null
+            ? l10n.dictNoSavedWordDataError
+            : null,
       );
       return;
     }
@@ -68,7 +75,9 @@ class WordDetailNotifier extends _$WordDetailNotifier {
         isLoading: false,
         isOffline: staleCache != null,
         isSaved: saved != null,
-        errorMessage: staleCache == null ? 'Không thể tải chi tiết từ.' : null,
+        errorMessage: staleCache == null
+            ? l10n.dictWordDetailLoadError
+            : null,
       );
     }
   }

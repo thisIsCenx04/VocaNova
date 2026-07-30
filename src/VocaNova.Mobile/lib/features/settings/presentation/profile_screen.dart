@@ -15,6 +15,7 @@ import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_validators.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
 import 'package:vocanova_mobile/features/progress/domain/progress_summary.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -71,6 +72,7 @@ class _ProfileContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     return ListView(
       padding: EdgeInsets.zero,
       children: [
@@ -81,44 +83,44 @@ class _ProfileContent extends ConsumerWidget {
               ? null
               : () => _showEditProfileSheet(context, ref, user),
         ),
-        const _SectionLabel('LEARNING'),
+        _SectionLabel(l10n.profileSectionLearning),
         _ProfileMenuGroup(
           children: [
             _ProfileMenuRow(
               icon: Icons.menu_book_outlined,
-              title: 'My vocabulary',
-              subtitle: '248 words collected',
+              title: l10n.profileMyVocabulary,
+              subtitle: l10n.profileMyVocabularySubtitle,
               onTap: () => context.go(AppRoutes.lists),
             ),
             _ProfileMenuRow(
               icon: Icons.query_stats_outlined,
-              title: 'Statistics',
-              subtitle: 'Progress & analytics',
+              title: l10n.profileStatistics,
+              subtitle: l10n.profileStatisticsSubtitle,
               onTap: () => context.push(AppRoutes.progressCharts),
             ),
             _ProfileMenuRow(
               icon: Icons.history,
-              title: 'Test history',
-              subtitle: 'Past practice sessions',
+              title: l10n.profileTestHistory,
+              subtitle: l10n.profileTestHistorySubtitle,
               onTap: () => context.push(AppRoutes.progressCharts),
             ),
             _ProfileMenuRow(
               key: const Key('edit-learning-profile'),
               icon: Icons.flag_outlined,
-              title: 'Learning goals',
-              subtitle: 'B2 \u2192 C1 target',
+              title: l10n.profileLearningGoals,
+              subtitle: l10n.profileLearningGoalsSubtitle,
               onTap: () => context.push(AppRoutes.onboarding),
             ),
           ],
         ),
-        const _SectionLabel('ACCOUNT'),
+        _SectionLabel(l10n.profileSectionAccount),
         _ProfileMenuGroup(
           children: [
             _ProfileMenuRow(
               key: const Key('edit-profile-button'),
               icon: Icons.person_outline,
-              title: 'Personal information',
-              subtitle: 'Name, avatar, phone',
+              title: l10n.profilePersonalInformation,
+              subtitle: l10n.profilePersonalInformationSubtitle,
               onTap: isLoading
                   ? null
                   : () => _showEditProfileSheet(context, ref, user),
@@ -137,35 +139,33 @@ class _ProfileContent extends ConsumerWidget {
             ),
           ],
         ),
-        const _SectionLabel('APP', muted: true),
+        _SectionLabel(l10n.profileSectionApp, muted: true),
         _ProfileMenuGroup(
           children: [
             _ProfileMenuRow(
               icon: Icons.settings_outlined,
-              title: 'Settings',
-              subtitle: 'Audio, storage, sync',
+              title: l10n.profileSettingsMenuTitle,
+              subtitle: l10n.profileSettingsMenuSubtitle,
               onTap: () => context.push(AppRoutes.settings),
             ),
             _ProfileMenuRow(
               icon: Icons.shield_outlined,
-              title: 'Privacy & data',
-              subtitle: 'Manage your data',
+              title: l10n.profilePrivacyData,
+              subtitle: l10n.profilePrivacyDataSubtitle,
               onTap: () => _showInformationSheet(
                 context,
-                title: 'Privacy & data',
-                body:
-                    'VocaNova stores your profile and learning progress so your vocabulary can stay synchronized across sessions.',
+                title: l10n.profilePrivacyData,
+                body: l10n.profilePrivacyDataBody,
               ),
             ),
             _ProfileMenuRow(
               icon: Icons.help_outline,
-              title: 'Help & feedback',
-              subtitle: 'FAQs and support',
+              title: l10n.profileHelpFeedback,
+              subtitle: l10n.profileHelpFeedbackSubtitle,
               onTap: () => _showInformationSheet(
                 context,
-                title: 'Help & feedback',
-                body:
-                    'Need a hand? Share the issue, the screen you were using, and the steps that caused it with the VocaNova support team.',
+                title: l10n.profileHelpFeedback,
+                body: l10n.profileHelpFeedbackBody,
               ),
             ),
           ],
@@ -184,7 +184,7 @@ class _ProfileContent extends ConsumerWidget {
             ),
             icon: const Icon(Icons.logout, size: 17),
             label: Text(
-              'Sign out',
+              l10n.profileSignOut,
               style: AppTextStyles.label.copyWith(
                 color: const Color(0xFFDC2626),
                 fontSize: 14,
@@ -195,7 +195,7 @@ class _ProfileContent extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 26),
           child: Text(
-            'VocaNova v1.0.0 \u00b7 SEP490_19',
+            l10n.profileVersionLabel,
             style: AppTextStyles.caption.copyWith(
               color: const Color(0xFF9C99B5),
               fontSize: 12,
@@ -230,6 +230,7 @@ class _ProfileContent extends ConsumerWidget {
       ),
     );
     if (!context.mounted) return;
+    final l10n = AppLocalizations.of(context)!;
     if (changePasswordRequested) {
       await _showChangePasswordSheet(context, ref);
       return;
@@ -248,7 +249,7 @@ class _ProfileContent extends ConsumerWidget {
       if (!uploaded) {
         _showMessage(
           context,
-          ref.read(authProvider).errorMessage ?? 'Unable to upload avatar.',
+          ref.read(authProvider).errorMessage ?? l10n.profileUploadAvatarFailed,
         );
         return;
       }
@@ -260,11 +261,11 @@ class _ProfileContent extends ConsumerWidget {
         .updateProfile(displayName: result.displayName, avatarUrl: avatarUrl);
     if (!context.mounted) return;
     if (success) {
-      _showMessage(context, 'Profile updated successfully.');
+      _showMessage(context, l10n.profileUpdateSuccess);
     } else {
       _showMessage(
         context,
-        ref.read(authProvider).errorMessage ?? 'Unable to update profile.',
+        ref.read(authProvider).errorMessage ?? l10n.profileUpdateFailed,
       );
     }
   }
@@ -284,6 +285,7 @@ class _ProfileContent extends ConsumerWidget {
       builder: (_) => const _ChangePasswordSheet(),
     );
     if (result == null || !context.mounted) return;
+    final l10n = AppLocalizations.of(context)!;
 
     final success = await ref
         .read(authProvider.notifier)
@@ -293,11 +295,11 @@ class _ProfileContent extends ConsumerWidget {
         );
     if (!context.mounted) return;
     if (success) {
-      _showMessage(context, 'Password changed successfully.');
+      _showMessage(context, l10n.profilePasswordChangeSuccess);
     } else {
       _showMessage(
         context,
-        ref.read(authProvider).errorMessage ?? 'Unable to change password.',
+        ref.read(authProvider).errorMessage ?? l10n.profilePasswordChangeFailed,
       );
     }
   }
@@ -322,7 +324,7 @@ class _ProfileContent extends ConsumerWidget {
             const SizedBox(height: 22),
             FilledButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Done'),
+              child: Text(AppLocalizations.of(context)!.profileDone),
             ),
           ],
         ),
@@ -331,20 +333,21 @@ class _ProfileContent extends ConsumerWidget {
   );
 
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Sign out?'),
-        content: const Text('You will need to sign in again to keep learning.'),
+        title: Text(l10n.profileSignOutConfirmTitle),
+        content: Text(l10n.profileSignOutConfirmBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.profileCancel),
           ),
           FilledButton(
             key: const Key('confirm-logout'),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Sign out'),
+            child: Text(l10n.profileSignOut),
           ),
         ],
       ),
@@ -399,6 +402,7 @@ class _ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = _ProfilePalette.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 21),
       decoration: BoxDecoration(
@@ -429,7 +433,7 @@ class _ProfileHeader extends StatelessWidget {
                       ),
                       Text(
                         user.phone == null
-                            ? 'Phone not linked'
+                            ? l10n.profilePhoneNotLinked
                             : maskPhone(user.phone),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -448,15 +452,16 @@ class _ProfileHeader extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const _ProfileChip(
-                                label: 'B2 level',
-                                background: Color(0xFFF1EEFF),
+                              _ProfileChip(
+                                label: l10n.profileLevelB2,
+                                background: const Color(0xFFF1EEFF),
                                 foreground: AppColors.primary,
                               ),
                               const SizedBox(width: 8),
                               _ProfileChip(
-                                label:
-                                    '${summary?.currentStreakDays ?? 0}-day streak',
+                                label: l10n.profileStreakLabel(
+                                  summary?.currentStreakDays ?? 0,
+                                ),
                                 icon: Icons.local_fire_department,
                                 background: const Color(0xFFFFF1D9),
                                 foreground: const Color(0xFFC2410C),
@@ -477,7 +482,7 @@ class _ProfileHeader extends StatelessWidget {
                     minimumSize: const Size(28, 36),
                   ),
                   child: Text(
-                    'Edit',
+                    l10n.profileEditAction,
                     style: AppTextStyles.label.copyWith(
                       color: palette.muted,
                       fontSize: 12,
@@ -500,19 +505,19 @@ class _ProfileHeader extends StatelessWidget {
               children: [
                 _ProfileStat(
                   value: summary?.totalWordsInProgress.toString() ?? '—',
-                  label: 'Words',
+                  label: l10n.profileStatWords,
                 ),
                 _ProfileStat(
                   value: summary == null
                       ? '—'
                       : '${summary!.accuracy7Days.round()}%',
-                  label: 'Accuracy',
+                  label: l10n.profileStatAccuracy,
                 ),
                 _ProfileStat(
                   value: summary?.currentStreakDays.toString() ?? '—',
-                  label: 'Streak',
+                  label: l10n.profileStatStreak,
                 ),
-                const _ProfileStat(value: '—', label: 'Badges', last: true),
+                _ProfileStat(value: '—', label: l10n.profileStatBadges, last: true),
               ],
             ),
           ),
@@ -875,31 +880,32 @@ class _ProfilePreferenceRow extends StatelessWidget {
       listenable: AppSettingsNotifier.instance,
       builder: (context, _) {
         final settings = AppSettingsNotifier.instance.state;
+        final l10n = AppLocalizations.of(context)!;
         return switch (type) {
           _ProfilePreference.notifications => _ProfileMenuRow(
             icon: Icons.notifications_none,
-            title: 'Notifications',
+            title: l10n.profileNotifications,
             subtitle: settings.dailyReminder
-                ? 'Daily reminders on'
-                : 'Daily reminders off',
+                ? l10n.profileDailyRemindersOn
+                : l10n.profileDailyRemindersOff,
             trailing: _StatusBadge(enabled: settings.dailyReminder),
             onTap: onTap,
           ),
           _ProfilePreference.language => _ProfileMenuRow(
             icon: Icons.language,
-            title: 'Language',
+            title: l10n.profileLanguage,
             subtitle: settings.locale.languageCode == 'en'
-                ? 'English'
-                : 'Vietnamese',
+                ? l10n.profileLanguageEnglish
+                : l10n.profileLanguageVietnamese,
             onTap: onTap,
           ),
           _ProfilePreference.theme => _ProfileMenuRow(
             icon: Icons.dark_mode_outlined,
-            title: 'Theme',
+            title: l10n.profileTheme,
             subtitle: switch (settings.themeMode) {
-              ThemeMode.dark => 'Dark mode',
-              ThemeMode.light => 'Light mode',
-              ThemeMode.system => 'System default',
+              ThemeMode.dark => l10n.profileThemeDark,
+              ThemeMode.light => l10n.profileThemeLight,
+              ThemeMode.system => l10n.profileThemeSystem,
             },
             onTap: onTap,
           ),
@@ -951,16 +957,17 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return _ProfileFormSheet(
-      title: 'Personal information',
-      subtitle: 'Update your profile details.',
+      title: l10n.profilePersonalInformation,
+      subtitle: l10n.profileEditSubtitle,
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _SheetFieldLabel(
-              label: 'Profile picture',
+              label: l10n.profileFieldPicture,
               child: _AvatarPicker(
                 user: widget.user,
                 bytes: _avatarBytes,
@@ -970,7 +977,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             ),
             const SizedBox(height: 18),
             Text(
-              'Choose an avatar',
+              l10n.profileChooseAvatar,
               style: AppTextStyles.label.copyWith(
                 color: const Color(0xFF444444),
                 fontSize: 13,
@@ -990,20 +997,20 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             ),
             const SizedBox(height: 22),
             _SheetFieldLabel(
-              label: 'Full name',
+              label: l10n.profileFieldFullName,
               child: TextFormField(
                 key: const Key('display-name-field'),
                 controller: _nameController,
                 maxLength: 150,
                 textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  hintText: 'Nguyen Van An',
+                decoration: InputDecoration(
+                  hintText: l10n.profileNameHint,
                   counterText: '',
                 ),
                 validator: (value) {
                   final length = value?.trim().length ?? 0;
                   if (length < 2) {
-                    return 'Name must contain at least 2 characters';
+                    return l10n.profileNameTooShort;
                   }
                   return null;
                 },
@@ -1011,9 +1018,9 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             ),
             const SizedBox(height: 16),
             _SheetFieldLabel(
-              label: 'Phone number',
+              label: l10n.profileFieldPhoneNumber,
               child: TextFormField(
-                initialValue: widget.user.phone ?? 'Not linked',
+                initialValue: widget.user.phone ?? l10n.profilePhoneNotLinkedShort,
                 enabled: false,
                 decoration: const InputDecoration(),
               ),
@@ -1024,14 +1031,14 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 key: const Key('change-password-button'),
                 onPressed: widget.onChangePassword,
                 icon: const Icon(Icons.lock_outline, size: 18),
-                label: const Text('Change password'),
+                label: Text(l10n.profileChangePassword),
               ),
             ),
             const SizedBox(height: 24),
             FilledButton(
               key: const Key('save-display-name'),
               onPressed: _submit,
-              child: const Text('Save changes'),
+              child: Text(l10n.profileSaveChanges),
             ),
           ],
         ),
@@ -1066,7 +1073,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       final bytes = await file.readAsBytes();
       if (!mounted) return;
       if (bytes.length > _maxAvatarBytes) {
-        _showMessage(context, 'Avatar must be 5MB or smaller.');
+        _showMessage(context, AppLocalizations.of(context)!.profileAvatarTooLarge);
         return;
       }
       setState(() {
@@ -1076,7 +1083,10 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       });
     } catch (_) {
       if (mounted) {
-        _showMessage(context, 'Unable to open the photo library.');
+        _showMessage(
+          context,
+          AppLocalizations.of(context)!.profilePhotoLibraryError,
+        );
       }
     } finally {
       if (mounted) setState(() => _isPicking = false);
@@ -1190,11 +1200,15 @@ class _AvatarPicker extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.photo_library_outlined, size: 18),
-                label: Text(isPicking ? 'Opening...' : 'Choose from device'),
+                label: Text(
+                  isPicking
+                      ? AppLocalizations.of(context)!.profileAvatarOpening
+                      : AppLocalizations.of(context)!.profileChooseFromDevice,
+                ),
               ),
               const SizedBox(height: 5),
               Text(
-                'JPG, PNG or WebP · Max 5MB',
+                AppLocalizations.of(context)!.profileAvatarHint,
                 style: AppTextStyles.caption.copyWith(
                   color: const Color(0xFF8A8A8A),
                   fontSize: 11,
@@ -1269,23 +1283,24 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return _ProfileFormSheet(
-      title: 'Change password',
-      subtitle: 'Use at least 8 characters with upper, lower and a number.',
+      title: l10n.profileChangePassword,
+      subtitle: l10n.profileChangePasswordSubtitle,
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _SheetFieldLabel(
-              label: 'Current password',
+              label: l10n.profileFieldCurrentPassword,
               child: TextFormField(
                 key: const Key('current-password-field'),
                 controller: _currentController,
                 obscureText: !_showCurrent,
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
-                  hintText: 'Enter current password',
+                  hintText: l10n.profileCurrentPasswordHint,
                   suffixIcon: _PasswordVisibilityButton(
                     visible: _showCurrent,
                     onPressed: () =>
@@ -1297,14 +1312,14 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
             ),
             const SizedBox(height: 16),
             _SheetFieldLabel(
-              label: 'New password',
+              label: l10n.profileFieldNewPassword,
               child: TextFormField(
                 key: const Key('new-password-field'),
                 controller: _newController,
                 obscureText: !_showNew,
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
-                  hintText: 'At least 8 characters',
+                  hintText: l10n.profileNewPasswordHint,
                   suffixIcon: _PasswordVisibilityButton(
                     visible: _showNew,
                     onPressed: () => setState(() => _showNew = !_showNew),
@@ -1320,14 +1335,14 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
             ),
             const SizedBox(height: 16),
             _SheetFieldLabel(
-              label: 'Confirm new password',
+              label: l10n.profileFieldConfirmPassword,
               child: TextFormField(
                 key: const Key('confirm-new-password-field'),
                 controller: _confirmController,
                 obscureText: !_showConfirm,
                 textInputAction: TextInputAction.done,
                 decoration: InputDecoration(
-                  hintText: 'Repeat your password',
+                  hintText: l10n.profileConfirmPasswordHint,
                   suffixIcon: _PasswordVisibilityButton(
                     visible: _showConfirm,
                     onPressed: () =>
@@ -1343,7 +1358,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
             FilledButton(
               key: const Key('save-password-button'),
               onPressed: _submit,
-              child: const Text('Update password'),
+              child: Text(l10n.profileUpdatePassword),
             ),
           ],
         ),
@@ -1426,7 +1441,7 @@ class _ProfileFormSheet extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Close',
+                  tooltip: AppLocalizations.of(context)!.profileClose,
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close, size: 20),
                 ),
@@ -1477,8 +1492,9 @@ class _PasswordVisibilityButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return IconButton(
-      tooltip: visible ? 'Hide password' : 'Show password',
+      tooltip: visible ? l10n.profileHidePassword : l10n.profileShowPassword,
       onPressed: onPressed,
       icon: Icon(
         visible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
@@ -1554,7 +1570,10 @@ class _ProfileError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: FilledButton(onPressed: onRetry, child: const Text('Try again')),
+      child: FilledButton(
+        onPressed: onRetry,
+        child: Text(AppLocalizations.of(context)!.profileTryAgain),
+      ),
     );
   }
 }

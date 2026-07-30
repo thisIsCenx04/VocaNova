@@ -7,6 +7,7 @@ import 'package:vocanova_mobile/features/progress/application/progress_overview_
 import 'package:vocanova_mobile/features/progress/data/progress_repository.dart';
 import 'package:vocanova_mobile/features/progress/domain/progress_analytics.dart';
 import 'package:vocanova_mobile/features/progress/presentation/progress_charts_screen.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   testWidgets('renders line chart, horizontal mastery, and weakest words', (
@@ -27,7 +28,11 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [progressRepositoryProvider.overrideWithValue(repository)],
-        child: const MaterialApp(home: ProgressChartsScreen()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const ProgressChartsScreen(),
+        ),
       ),
     );
     await tester.pump();
@@ -41,7 +46,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('chart-granularity')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Theo tuần').last);
+    await tester.tap(find.text('Weekly').last);
     await tester.pumpAndSettle();
 
     verify(() => repository.getChart('weekly')).called(1);

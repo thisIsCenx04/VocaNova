@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_router.dart';
 import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/app/theme/app_theme.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class VocaNovaApp extends StatelessWidget {
   VocaNovaApp({super.key, GoRouter? router})
@@ -24,8 +25,11 @@ class VocaNovaApp extends StatelessWidget {
           darkTheme: AppTheme.dark(),
           themeMode: settings.themeMode,
           locale: settings.locale,
-          supportedLocales: const [Locale('vi'), Locale('en')],
-          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
+          ],
           routerConfig: router,
         );
       },

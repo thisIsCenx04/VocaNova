@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vocanova_mobile/app/router/app_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
+import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/core/connectivity/cache_warming_service.dart';
 import 'package:vocanova_mobile/core/network/app_exception.dart';
 import 'package:vocanova_mobile/core/network/dio_client.dart';
@@ -17,6 +18,7 @@ import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
 import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
 import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
 import 'package:vocanova_mobile/features/progress/data/progress_repository.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'auth_notifier.g.dart';
 
@@ -311,6 +313,7 @@ class AuthNotifier extends _$AuthNotifier {
     if (error is FormatException) {
       return error.message;
     }
-    return 'Đã xảy ra lỗi. Vui lòng thử lại.';
+    final l10n = lookupAppLocalizations(AppSettingsNotifier.instance.state.locale);
+    return l10n.authGenericError;
   }
 }

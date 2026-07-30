@@ -61,7 +61,8 @@ void main() {
 
     final topics = await WordSearchRepository(dio: dio).getTopics();
 
-    expect(topics.single.displayName, 'Du lịch');
+    expect(topics.single.name, 'Travel');
+    expect(topics.single.nameVi, 'Du lịch');
     expect(topics.single.wordCount, 12);
   });
 

@@ -4,16 +4,27 @@ import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 
 class WordSummaryCard extends StatelessWidget {
-  const WordSummaryCard({required this.word, required this.onTap, super.key});
+  const WordSummaryCard({
+    required this.word,
+    required this.onTap,
+    this.alternate = false,
+    super.key,
+  });
 
   final WordSummary word;
   final VoidCallback onTap;
 
+  /// Dòng lẻ đổi nền nhạt hơn để hai dòng liền nhau dễ phân biệt khi lướt.
+  final bool alternate;
+
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final surface = dark ? AppColors.surface : Colors.white;
+    final baseSurface = dark ? AppColors.surface : Colors.white;
     final text = dark ? AppColors.onSurface : AppColors.lightOnSurface;
+    final surface = alternate
+        ? Color.alphaBlend(text.withValues(alpha: 0.07), baseSurface)
+        : baseSurface;
     final secondary = dark ? const Color(0xFFAAA6B3) : AppColors.lightLabel;
     final border = dark ? const Color(0xFF3A3A3A) : AppColors.lightBorder;
     return Material(

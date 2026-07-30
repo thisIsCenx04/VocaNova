@@ -10,6 +10,7 @@ import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/notifications/application/notifications_notifier.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/wrong_words_notifier.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 import '../../../support/home_test_overrides.dart';
 
@@ -34,7 +35,12 @@ void main() {
           listsProvider.overrideWith(FakeListsNotifier.new),
           wrongWordsProvider.overrideWith(FakeWrongWordsNotifier.new),
         ],
-        child: MaterialApp(theme: AppTheme.dark(), home: const HomeScreen()),
+        child: MaterialApp(
+          theme: AppTheme.dark(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const HomeScreen(),
+        ),
       ),
     );
     await tester.pumpAndSettle();

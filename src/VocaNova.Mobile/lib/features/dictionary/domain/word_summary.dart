@@ -100,8 +100,6 @@ class TopicSummary {
   final String? icon;
   final int wordCount;
 
-  String get displayName => nameVi?.trim().isNotEmpty == true ? nameVi! : name;
-
   factory TopicSummary.fromJson(Map<String, dynamic> json) {
     return TopicSummary(
       topicId: json['topic_id'] as int,

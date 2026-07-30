@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 import 'package:vocanova_mobile/features/lists/application/list_detail_notifier.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class AddWordSheet extends ConsumerStatefulWidget {
   const AddWordSheet({required this.listId, super.key});
@@ -29,6 +30,7 @@ class _AddWordSheetState extends ConsumerState<AddWordSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(
@@ -43,7 +45,7 @@ class _AddWordSheetState extends ConsumerState<AddWordSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Thêm từ',
+                l10n.listsAddWordAction,
                 style: Theme.of(
                   context,
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -52,9 +54,9 @@ class _AddWordSheetState extends ConsumerState<AddWordSheet> {
               TextField(
                 key: const Key('add-word-search-field'),
                 autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Tìm từ tiếng Anh',
-                  prefixIcon: Icon(Icons.search),
+                decoration: InputDecoration(
+                  hintText: l10n.listsSearchWordHint,
+                  prefixIcon: const Icon(Icons.search),
                 ),
                 onChanged: _search,
               ),
@@ -64,23 +66,32 @@ class _AddWordSheetState extends ConsumerState<AddWordSheet> {
                     ? const Center(child: CircularProgressIndicator())
                     : ListView.builder(
                         itemCount: _results.length,
-                        itemBuilder: (_, index) {
+                        itemBuilder: (context, index) {
                           final word = _results[index];
-                          return ListTile(
-                            key: Key('add-search-word-${word.wordId}'),
-                            title: Text(word.word),
-                            subtitle: Text(word.primaryMeaning ?? ''),
-                            trailing: _addingWordId == word.wordId
-                                ? const SizedBox.square(
-                                    dimension: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
+                          final scheme = Theme.of(context).colorScheme;
+                          return Material(
+                            color: index.isOdd
+                                ? Color.alphaBlend(
+                                    scheme.onSurface.withValues(alpha: 0.07),
+                                    scheme.surface,
                                   )
-                                : const Icon(Icons.add),
-                            onTap: _addingWordId == null
-                                ? () => _add(word)
-                                : null,
+                                : scheme.surface,
+                            child: ListTile(
+                              key: Key('add-search-word-${word.wordId}'),
+                              title: Text(word.word),
+                              subtitle: Text(word.primaryMeaning ?? ''),
+                              trailing: _addingWordId == word.wordId
+                                  ? const SizedBox.square(
+                                      dimension: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.add),
+                              onTap: _addingWordId == null
+                                  ? () => _add(word)
+                                  : null,
+                            ),
                           );
                         },
                       ),

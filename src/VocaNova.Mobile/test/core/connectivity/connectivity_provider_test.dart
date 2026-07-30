@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
 import 'package:vocanova_mobile/core/widgets/offline_banner.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   testWidgets('stream provider shows shared offline banner', (tester) async {
@@ -15,13 +16,17 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [connectivityServiceProvider.overrideWithValue(service)],
-        child: const MaterialApp(home: ConnectivityProbe()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const ConnectivityProbe(),
+        ),
       ),
     );
     await tester.pump();
 
     expect(find.byKey(const Key('global-offline-banner')), findsOneWidget);
-    expect(find.text('Bạn đang ngoại tuyến'), findsOneWidget);
+    expect(find.text("You're offline"), findsOneWidget);
   });
 }
 

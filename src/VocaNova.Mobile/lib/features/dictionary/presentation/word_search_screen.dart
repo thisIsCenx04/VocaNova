@@ -9,6 +9,7 @@ import 'package:vocanova_mobile/features/dictionary/application/word_search_noti
 import 'package:vocanova_mobile/features/dictionary/application/word_search_state.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/word_summary_card.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class WordSearchScreen extends ConsumerStatefulWidget {
   const WordSearchScreen({super.key});
@@ -96,6 +97,7 @@ class _WordSearchScreenState extends ConsumerState<WordSearchScreen> {
         final word = state.results[index];
         return WordSummaryCard(
           word: word,
+          alternate: index.isOdd,
           onTap: () {
             ref.read(wordSearchProvider.notifier).recordHistory(word.word);
             context.push(AppRoutes.wordDetail(word.wordId.toString()));
@@ -159,7 +161,7 @@ class _SearchHeader extends StatelessWidget {
         children: [
           IconButton(
             key: const Key('search-back-button'),
-            tooltip: 'Back',
+            tooltip: AppLocalizations.of(context)!.dictBackTooltip,
             onPressed: onBack,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints.tightFor(width: 28, height: 40),
@@ -180,7 +182,7 @@ class _SearchHeader extends StatelessWidget {
                   height: 22.5 / 15,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Search for a word...',
+                  hintText: AppLocalizations.of(context)!.dictSearchHint,
                   isDense: true,
                   filled: true,
                   fillColor: palette.input,
@@ -197,7 +199,9 @@ class _SearchHeader extends StatelessWidget {
                   suffixIcon: hasQuery
                       ? IconButton(
                           key: const Key('clear-word-search'),
-                          tooltip: 'Clear search',
+                          tooltip: AppLocalizations.of(
+                            context,
+                          )!.dictClearSearchTooltip,
                           onPressed: onClear,
                           icon: Icon(
                             Icons.close,
@@ -250,7 +254,7 @@ class _Filters extends ConsumerWidget {
               _filterChip(
                 context,
                 key: const Key('cefr-all'),
-                label: 'All levels',
+                label: AppLocalizations.of(context)!.dictAllLevelsLabel,
                 selected: state.selectedCefr == null,
                 onSelected: () =>
                     ref.read(wordSearchProvider.notifier).selectCefr(null),
@@ -272,7 +276,7 @@ class _Filters extends ConsumerWidget {
                 _filterChip(
                   context,
                   key: const Key('topic-all'),
-                  label: 'All topics',
+                  label: AppLocalizations.of(context)!.dictAllTopicsLabel,
                   selected: state.selectedTopicId == null,
                   onSelected: () =>
                       ref.read(wordSearchProvider.notifier).selectTopic(null),
@@ -353,7 +357,7 @@ class _OfflineBanner extends StatelessWidget {
       color: const Color(0xFFFFF1C2),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
       child: Text(
-        'Offline — searching cached words and recent history only.',
+        AppLocalizations.of(context)!.dictSearchOfflineBanner,
         textAlign: TextAlign.center,
         style: AppTextStyles.caption.copyWith(
           color: const Color(0xFF5E4700),
@@ -395,9 +399,12 @@ class _DiscoveryView extends StatelessWidget {
             child: Column(
               children: [
                 _SectionHeading(
-                  title: 'Recent',
-                  action: history.isEmpty ? null : 'Clear',
+                  title: AppLocalizations.of(context)!.dictRecentSectionTitle,
+                  action: history.isEmpty
+                      ? null
+                      : AppLocalizations.of(context)!.dictClearAction,
                   onAction: history.isEmpty ? null : onClearHistory,
+                  isClearAction: true,
                 ),
                 if (history.isEmpty)
                   _EmptyHistory(color: palette.secondaryText)
@@ -422,8 +429,10 @@ class _DiscoveryView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _SectionHeading(
-                    title: 'Browse by topic',
-                    action: 'See all',
+                    title: AppLocalizations.of(
+                      context,
+                    )!.dictBrowseByTopicTitle,
+                    action: AppLocalizations.of(context)!.dictSeeAllAction,
                     onAction: () => context.push(AppRoutes.topics),
                   ),
                   const SizedBox(height: 12),
@@ -460,11 +469,21 @@ class _DiscoveryView extends StatelessWidget {
 }
 
 class _SectionHeading extends StatelessWidget {
-  const _SectionHeading({required this.title, this.action, this.onAction});
+  const _SectionHeading({
+    required this.title,
+    this.action,
+    this.onAction,
+    this.isClearAction = false,
+  });
 
   final String title;
   final String? action;
   final VoidCallback? onAction;
+
+  /// True when [action] is the "clear history" action, used only to pick
+  /// the stable widget test [Key] independently of the localized [action]
+  /// text.
+  final bool isClearAction;
 
   @override
   Widget build(BuildContext context) {
@@ -486,9 +505,7 @@ class _SectionHeading extends StatelessWidget {
           if (action != null)
             TextButton(
               key: Key(
-                action == 'Clear'
-                    ? 'clear-search-history'
-                    : 'browse-all-topics',
+                isClearAction ? 'clear-search-history' : 'browse-all-topics',
               ),
               onPressed: onAction,
               style: TextButton.styleFrom(
@@ -524,7 +541,7 @@ class _EmptyHistory extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerLeft,
         child: Text(
-          'Your recent searches will appear here.',
+          AppLocalizations.of(context)!.dictRecentSearchesEmpty,
           style: AppTextStyles.caption.copyWith(color: color, fontSize: 13),
         ),
       ),
@@ -628,7 +645,9 @@ class _TopicCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${topic.wordCount} words',
+                      AppLocalizations.of(
+                        context,
+                      )!.dictWordCountLabel(topic.wordCount),
                       maxLines: 1,
                       style: AppTextStyles.caption.copyWith(
                         color: palette.secondaryText,
@@ -684,16 +703,16 @@ class _EmptyResults extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               isOffline
-                  ? 'No matching cached words'
-                  : 'No matching words found',
+                  ? AppLocalizations.of(context)!.dictNoMatchingCachedWords
+                  : AppLocalizations.of(context)!.dictNoMatchingWords,
               textAlign: TextAlign.center,
               style: AppTextStyles.button.copyWith(color: palette.text),
             ),
             const SizedBox(height: 4),
             Text(
               isOffline
-                  ? 'Reconnect to search the full dictionary.'
-                  : 'Try another spelling or adjust the filters.',
+                  ? AppLocalizations.of(context)!.dictReconnectHint
+                  : AppLocalizations.of(context)!.dictAdjustFiltersHint,
               textAlign: TextAlign.center,
               style: AppTextStyles.caption.copyWith(
                 color: palette.secondaryText,

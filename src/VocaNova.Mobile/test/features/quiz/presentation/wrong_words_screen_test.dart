@@ -8,6 +8,7 @@ import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.d
 import 'package:vocanova_mobile/features/quiz/data/quiz_repository.dart';
 import 'package:vocanova_mobile/features/quiz/domain/quiz_result.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/wrong_words_screen.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   testWidgets('renders wrong words, swipes remove, and retries via config', (
@@ -38,14 +39,18 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [quizRepositoryProvider.overrideWithValue(repository)],
-        child: MaterialApp.router(routerConfig: router),
+        child: MaterialApp.router(
+          routerConfig: router,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+        ),
       ),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('apple'), findsOneWidget);
-    expect(find.textContaining('Sai: 3'), findsOneWidget);
+    expect(find.textContaining('Wrong: 3'), findsOneWidget);
     await tester.tap(find.byKey(const Key('retry-wrong-words-button')));
     await tester.pumpAndSettle();
     expect(router.state.uri.path, AppRoutes.quizConfig);

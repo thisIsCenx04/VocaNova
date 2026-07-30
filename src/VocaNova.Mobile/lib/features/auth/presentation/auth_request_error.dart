@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/core/network/app_exception.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 String authRequestError(Object error) {
   if (error is AppException) {
@@ -11,5 +13,6 @@ String authRequestError(Object error) {
   if (error is FormatException) {
     return error.message;
   }
-  return 'Đã xảy ra lỗi. Vui lòng thử lại.';
+  final l10n = lookupAppLocalizations(AppSettingsNotifier.instance.state.locale);
+  return l10n.authGenericError;
 }

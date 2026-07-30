@@ -5,11 +5,13 @@ import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
 import 'package:vocanova_mobile/features/lists/application/list_detail_notifier.dart';
 import 'package:vocanova_mobile/features/lists/application/list_detail_state.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/lists/domain/list_word.dart';
 import 'package:vocanova_mobile/features/lists/presentation/add_word_sheet.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class ListDetailScreen extends ConsumerStatefulWidget {
   const ListDetailScreen({required this.listId, super.key});
@@ -43,6 +45,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(listDetailProvider(widget.listId));
+    final l10n = AppLocalizations.of(context)!;
     ref.listen(
       listDetailProvider(widget.listId).select((value) => value.errorMessage),
       (previous, next) {
@@ -60,7 +63,9 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
         .map((list) => list.listName)
         .firstOrNull;
     return Scaffold(
-      appBar: AppBar(title: Text(listName ?? 'Chi tiết danh sách')),
+      appBar: AppBar(
+        title: Text(listName ?? l10n.listsDetailTitleFallback),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         key: const Key('add-word-fab'),
         onPressed: state.isOffline
@@ -71,7 +76,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
                 builder: (_) => AddWordSheet(listId: widget.listId),
               ),
         icon: const Icon(Icons.add),
-        label: const Text('Thêm từ'),
+        label: Text(l10n.listsAddWordAction),
       ),
       body: Column(
         children: [
@@ -88,11 +93,12 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   }
 
   Widget _content(ListDetailState state) {
+    final l10n = AppLocalizations.of(context)!;
     if (state.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
     if (state.words.isEmpty) {
-      return const Center(child: Text('Danh sách chưa có từ nào.'));
+      return Center(child: Text(l10n.listsDetailEmpty));
     }
     return RefreshIndicator(
       onRefresh: ref.read(listDetailProvider(widget.listId).notifier).load,
@@ -149,20 +155,21 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   }
 
   Future<bool> _confirmRemove(ListWord word) async {
+    final l10n = AppLocalizations.of(context)!;
     return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Xóa từ?'),
-            content: Text('Xóa "${word.word}" khỏi danh sách?'),
+            title: Text(l10n.listsRemoveWordConfirmTitle),
+            content: Text(l10n.listsRemoveWordConfirmBody(word.word)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Hủy'),
+                child: Text(l10n.listsCancel),
               ),
               FilledButton(
                 key: const Key('confirm-remove-word'),
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('Xóa'),
+                child: Text(l10n.listsDeleteAction),
               ),
             ],
           ),
@@ -171,14 +178,15 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   }
 
   Future<void> _showRandomDialog() async {
+    final l10n = AppLocalizations.of(context)!;
     List<TopicSummary> topics;
     try {
       topics = await ref.read(wordSearchRepositoryProvider).getTopics();
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Không thể tải chủ đề.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.listsLoadTopicsError)),
+        );
       }
       return;
     }
@@ -190,25 +198,25 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Thêm từ ngẫu nhiên'),
+          title: Text(l10n.listsAddRandomDialogTitle),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
                 key: const Key('random-method'),
                 initialValue: method,
-                items: const [
+                items: [
                   DropdownMenuItem(
                     value: 'random_topic',
-                    child: Text('Theo chủ đề'),
+                    child: Text(l10n.listsByTopicOption),
                   ),
                   DropdownMenuItem(
                     value: 'random_synonym',
-                    child: Text('Từ đồng nghĩa'),
+                    child: Text(l10n.listsSynonymOption),
                   ),
                   DropdownMenuItem(
                     value: 'random_antonym',
-                    child: Text('Từ trái nghĩa'),
+                    child: Text(l10n.listsAntonymOption),
                   ),
                 ],
                 onChanged: (value) =>
@@ -223,7 +231,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
                     for (final topic in topics)
                       DropdownMenuItem(
                         value: topic.topicId,
-                        child: Text(topic.displayName),
+                        child: Text(topic.localizedName(context)),
                       ),
                   ],
                   onChanged: (value) => setDialogState(() => topicId = value),
@@ -233,7 +241,9 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
                 key: const Key('random-count'),
                 initialValue: count.toString(),
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Số lượng (1-50)'),
+                decoration: InputDecoration(
+                  labelText: l10n.listsCountFieldLabel,
+                ),
                 onChanged: (value) => count = int.tryParse(value) ?? 0,
               ),
             ],
@@ -241,7 +251,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Hủy'),
+              child: Text(l10n.listsCancel),
             ),
             FilledButton(
               key: const Key('submit-random-words'),
@@ -259,7 +269,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
                   );
                 }
               },
-              child: const Text('Thêm'),
+              child: Text(l10n.listsAddAction),
             ),
           ],
         ),
@@ -290,6 +300,7 @@ class _Actions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
       child: Row(
@@ -299,7 +310,7 @@ class _Actions extends StatelessWidget {
               key: const Key('add-random-words'),
               onPressed: isOffline ? null : onRandom,
               icon: const Icon(Icons.shuffle),
-              label: const Text('Thêm ngẫu nhiên'),
+              label: Text(l10n.listsAddRandomAction),
             ),
           ),
           const SizedBox(width: 10),
@@ -312,7 +323,7 @@ class _Actions extends StatelessWidget {
                       AppRoutes.quizConfigForList(listId.toString()),
                     ),
               icon: const Icon(Icons.quiz_outlined),
-              label: const Text('Bắt đầu kiểm tra'),
+              label: Text(l10n.listsStartQuizAction),
             ),
           ),
         ],
@@ -337,6 +348,7 @@ class _ListWordCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       // Nền trắng/xám so le để hai dòng liền nhau tách bạch khi lướt. Dòng lẻ
       // đậm màu chữ 7% lên nền để luôn thấy rõ dù ở light hay dark theme.
@@ -367,13 +379,13 @@ class _ListWordCard extends StatelessWidget {
               Wrap(
                 spacing: 12,
                 children: [
-                  Text('Đúng: ${word.correctCount}'),
-                  Text('Sai: ${word.wrongCount}'),
+                  Text(l10n.listsCorrectCount(word.correctCount)),
+                  Text(l10n.listsWrongCount(word.wrongCount)),
                 ],
               ),
               if (word.note?.trim().isNotEmpty == true) ...[
                 const SizedBox(height: 8),
-                Text('Ghi chú: ${word.note}'),
+                Text(l10n.listsNoteLabel(word.note!)),
               ],
             ],
           ),
@@ -388,15 +400,13 @@ class _OfflineBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       key: const Key('list-detail-offline-banner'),
       width: double.infinity,
       color: AppColors.error.withValues(alpha: 0.18),
       padding: const EdgeInsets.all(8),
-      child: const Text(
-        'Bạn đang offline. Đang hiển thị các từ đã lưu.',
-        textAlign: TextAlign.center,
-      ),
+      child: Text(l10n.listsDetailOfflineBanner, textAlign: TextAlign.center),
     );
   }
 }

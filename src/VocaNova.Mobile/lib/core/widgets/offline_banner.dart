@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class OfflineBanner extends StatelessWidget {
   const OfflineBanner({super.key});
@@ -10,10 +11,10 @@ class OfflineBanner extends StatelessWidget {
       width: double.infinity,
       color: Colors.amber.shade700,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: const Text(
-        'Bạn đang ngoại tuyến',
+      child: Text(
+        AppLocalizations.of(context)!.commonOfflineBanner,
         textAlign: TextAlign.center,
-        style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700),
+        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700),
       ),
     );
   }

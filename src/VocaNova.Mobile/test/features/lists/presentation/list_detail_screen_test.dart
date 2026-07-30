@@ -12,6 +12,7 @@ import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
 import 'package:vocanova_mobile/features/lists/domain/list_word.dart';
 import 'package:vocanova_mobile/features/lists/presentation/list_detail_screen.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   late MockListsRepository repository;
@@ -66,9 +67,9 @@ void main() {
 
     expect(find.text('hello'), findsOneWidget);
     expect(find.text('xin chào'), findsOneWidget);
-    expect(find.text('Đúng: 3'), findsOneWidget);
-    expect(find.text('Sai: 1'), findsOneWidget);
-    expect(find.text('Ghi chú: greeting'), findsOneWidget);
+    expect(find.text('Correct: 3'), findsOneWidget);
+    expect(find.text('Wrong: 1'), findsOneWidget);
+    expect(find.text('Note: greeting'), findsOneWidget);
     expect(find.byKey(const Key('add-word-fab')), findsOneWidget);
     expect(find.byKey(const Key('add-random-words')), findsOneWidget);
     expect(find.byKey(const Key('start-list-quiz')), findsOneWidget);
@@ -139,7 +140,11 @@ Future<void> pumpDetail(
         connectivityServiceProvider.overrideWithValue(connectivity),
         wordSearchRepositoryProvider.overrideWithValue(searchRepository),
       ],
-      child: const MaterialApp(home: ListDetailScreen(listId: 3)),
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const ListDetailScreen(listId: 3),
+      ),
     ),
   );
   await tester.pump();

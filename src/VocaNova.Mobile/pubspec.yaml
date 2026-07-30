@@ -42,6 +42,7 @@ dev_dependencies:
   riverpod_generator: 3.0.3
 
 flutter:
+  generate: true
   uses-material-design: true
   assets:
     - assets/avatars/

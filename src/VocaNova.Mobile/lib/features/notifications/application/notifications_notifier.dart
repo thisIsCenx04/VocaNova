@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/core/network/dio_client.dart';
 import 'package:vocanova_mobile/features/notifications/application/notifications_state.dart';
 import 'package:vocanova_mobile/features/notifications/data/notifications_repository.dart';
 import 'package:vocanova_mobile/features/notifications/domain/app_notification.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'notifications_notifier.g.dart';
 
@@ -43,9 +45,12 @@ class NotificationsNotifier extends _$NotificationsNotifier {
         isLoading: false,
       );
     } catch (_) {
+      final l10n = lookupAppLocalizations(
+        AppSettingsNotifier.instance.state.locale,
+      );
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Không thể tải thông báo.',
+        errorMessage: l10n.notifLoadError,
       );
     }
   }

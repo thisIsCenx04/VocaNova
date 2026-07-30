@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/core/network/app_exception.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_session_state.dart';
 import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'quiz_session_notifier.g.dart';
 
@@ -64,11 +66,14 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
         isSubmitting: false,
         errorMessage: _errorMessage(
           error,
-          'Không thể gửi câu trả lời. Vui lòng thử lại.',
+          _l10n.quizSessionSubmitError,
         ),
       );
     }
   }
+
+  AppLocalizations get _l10n =>
+      lookupAppLocalizations(AppSettingsNotifier.instance.state.locale);
 
   /// Ưu tiên hiển thị thông báo lỗi thật từ máy chủ để dễ chẩn đoán, thay vì
   /// một câu chung chung che mất nguyên nhân.
@@ -109,7 +114,7 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
         isFinishing: false,
         errorMessage: _errorMessage(
           error,
-          'Không thể kết thúc bài kiểm tra. Vui lòng thử lại.',
+          _l10n.quizSessionFinishError,
         ),
       );
       return false;

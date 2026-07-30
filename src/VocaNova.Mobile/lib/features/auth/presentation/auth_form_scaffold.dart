@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class AuthFormScaffold extends StatelessWidget {
   const AuthFormScaffold({
@@ -45,7 +46,7 @@ class AuthFormScaffold extends StatelessWidget {
                         alignment: Alignment.centerLeft,
                       ),
                       icon: const Icon(Icons.chevron_left, size: 18),
-                      label: const Text('Back'),
+                      label: Text(AppLocalizations.of(context)!.authBackButton),
                     ),
                     const SizedBox(height: 20),
                   ],
@@ -97,7 +98,7 @@ class AuthDivider extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
-            'or',
+            AppLocalizations.of(context)!.authOrDivider,
             style: AppTextStyles.caption.copyWith(
               color: const Color(0xFFC0C0C0),
             ),
@@ -112,14 +113,10 @@ class AuthDivider extends StatelessWidget {
 }
 
 class GoogleAuthButton extends StatelessWidget {
-  const GoogleAuthButton({
-    required this.onPressed,
-    this.label = 'Continue with Google',
-    super.key,
-  });
+  const GoogleAuthButton({required this.onPressed, this.label, super.key});
 
   final VoidCallback? onPressed;
-  final String label;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +131,7 @@ class GoogleAuthButton extends StatelessWidget {
           fontWeight: FontWeight.w700,
         ),
       ),
-      label: Text(label),
+      label: Text(label ?? AppLocalizations.of(context)!.authContinueWithGoogle),
     );
   }
 }

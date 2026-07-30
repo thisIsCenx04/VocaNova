@@ -1,4 +1,6 @@
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class GoogleAuthService {
   GoogleAuthService({
@@ -19,7 +21,10 @@ class GoogleAuthService {
     final account = await _googleSignIn.authenticate();
     final idToken = account.authentication.idToken;
     if (idToken == null || idToken.isEmpty) {
-      throw const FormatException('Google không trả về mã đăng nhập hợp lệ.');
+      final l10n = lookupAppLocalizations(
+        AppSettingsNotifier.instance.state.locale,
+      );
+      throw FormatException(l10n.authGoogleTokenMissing);
     }
     return idToken;
   }

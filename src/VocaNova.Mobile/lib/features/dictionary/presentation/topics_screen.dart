@@ -5,6 +5,8 @@ import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class TopicsScreen extends ConsumerStatefulWidget {
   const TopicsScreen({super.key});
@@ -60,7 +62,9 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Topics')),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.dictTopicsTitle),
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
           setState(_reload);
@@ -90,9 +94,9 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
                 child: TextField(
                   key: const Key('topics-search'),
                   onChanged: (value) => setState(() => _query = value.trim()),
-                  decoration: const InputDecoration(
-                    hintText: 'Search topics...',
-                    prefixIcon: Icon(Icons.search),
+                  decoration: InputDecoration(
+                    hintText: AppLocalizations.of(context)!.dictSearchTopicsHint,
+                    prefixIcon: const Icon(Icons.search),
                   ),
                 ),
               ),
@@ -109,7 +113,7 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
                     final category = _categories[index];
                     return FilterChip(
                       key: Key('topic-category-${category.toLowerCase()}'),
-                      label: Text(category),
+                      label: Text(_categoryLabel(context, category)),
                       selected: _category == category,
                       onSelected: (_) => setState(() => _category = category),
                     );
@@ -138,8 +142,10 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
                     child: Center(
                       child: Text(
                         _showPersonal
-                            ? 'No personal topics match your search.'
-                            : 'No system topics found.',
+                            ? AppLocalizations.of(
+                                context,
+                              )!.dictNoPersonalTopicsMatch
+                            : AppLocalizations.of(context)!.dictNoSystemTopics,
                       ),
                     ),
                   );
@@ -201,6 +207,25 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
     };
     return aliases[category]!.any(source.contains);
   }
+
+  /// [category] is one of the internal English identifiers in [_categories]
+  /// (also used for widget keys and [_matches] alias lookups); this only
+  /// maps it to the localized label shown on the filter chip.
+  String _categoryLabel(BuildContext context, String category) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (category) {
+      case 'Education':
+        return l10n.dictCategoryEducation;
+      case 'Work':
+        return l10n.dictCategoryWork;
+      case 'Travel':
+        return l10n.dictCategoryTravel;
+      case 'Daily life':
+        return l10n.dictCategoryDailyLife;
+      default:
+        return l10n.dictCategoryAll;
+    }
+  }
 }
 
 class _TopicModeSwitch extends StatelessWidget {
@@ -225,7 +250,7 @@ class _TopicModeSwitch extends StatelessWidget {
               key: const Key('topics-mode-system'),
               selected: !showPersonal,
               icon: Icons.public,
-              label: 'System library',
+              label: AppLocalizations.of(context)!.dictSystemLibraryLabel,
               onTap: () => onChanged(false),
             ),
           ),
@@ -234,7 +259,7 @@ class _TopicModeSwitch extends StatelessWidget {
               key: const Key('topics-mode-personal'),
               selected: showPersonal,
               icon: Icons.auto_stories,
-              label: 'My topics',
+              label: AppLocalizations.of(context)!.dictMyTopicsLabel,
               onTap: () => onChanged(true),
             ),
           ),
@@ -315,8 +340,8 @@ class _ModeNote extends StatelessWidget {
         Expanded(
           child: Text(
             personal
-                ? 'Only words you saved appear here, ready for practice.'
-                : 'Browse all words organized by the VocaNova team.',
+                ? AppLocalizations.of(context)!.dictPersonalModeNote
+                : AppLocalizations.of(context)!.dictSystemModeNote,
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: const Color(0xFF6F6876)),
@@ -372,7 +397,7 @@ class _TopicGridCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                topic.displayName,
+                topic.localizedName(context),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleMedium,
@@ -380,8 +405,12 @@ class _TopicGridCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 personal
-                    ? '${topic.wordCount} personal words'
-                    : '${topic.wordCount} system words',
+                    ? AppLocalizations.of(
+                        context,
+                      )!.dictPersonalWordCount(topic.wordCount)
+                    : AppLocalizations.of(
+                        context,
+                      )!.dictSystemWordCount(topic.wordCount),
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(color: AppColors.primary),
@@ -403,8 +432,11 @@ class _TopicsError extends StatelessWidget {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text('Unable to load topics.'),
-        TextButton(onPressed: onRetry, child: const Text('Try again')),
+        Text(AppLocalizations.of(context)!.dictUnableToLoadTopics),
+        TextButton(
+          onPressed: onRetry,
+          child: Text(AppLocalizations.of(context)!.dictTryAgain),
+        ),
       ],
     ),
   );

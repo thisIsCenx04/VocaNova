@@ -8,6 +8,7 @@ import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
 import 'package:vocanova_mobile/features/auth/data/auth_repository.dart';
 import 'package:vocanova_mobile/features/auth/presentation/forgot_password_screen.dart';
 import 'package:vocanova_mobile/features/auth/presentation/otp_screen.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   late MockAuthRepository repository;
@@ -48,7 +49,9 @@ void main() {
     }
 
     expect(
-      find.text('Bạn đã nhập sai OTP quá 5 lần. Vui lòng gửi lại mã.'),
+      find.text(
+        "You've entered the wrong OTP more than 5 times. Please resend the code.",
+      ),
       findsWidgets,
     );
     final firstDigit = tester.widget<TextField>(
@@ -75,11 +78,11 @@ void main() {
     await tester.enterText(find.byKey(const Key('forgot-phone')), '0901234567');
     await tester.tap(find.byKey(const Key('forgot-send-otp')));
     await tester.pumpAndSettle();
-    expect(find.text('Bước 2/3'), findsOneWidget);
+    expect(find.text('Step 2/3'), findsOneWidget);
 
     await enterOtp(tester, '123456');
     await tester.pumpAndSettle();
-    expect(find.text('Bước 3/3'), findsOneWidget);
+    expect(find.text('Step 3/3'), findsOneWidget);
 
     await tester.enterText(
       find.byKey(const Key('forgot-new-password')),
@@ -141,7 +144,11 @@ Future<void> pumpScreen(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [authRepositoryProvider.overrideWithValue(repository)],
-      child: MaterialApp(home: screen),
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: screen,
+      ),
     ),
   );
   await tester.pump();
@@ -167,7 +174,11 @@ Future<void> pumpForgotRouter(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [authRepositoryProvider.overrideWithValue(repository)],
-      child: MaterialApp.router(routerConfig: router),
+      child: MaterialApp.router(
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+      ),
     ),
   );
   await tester.pumpAndSettle();

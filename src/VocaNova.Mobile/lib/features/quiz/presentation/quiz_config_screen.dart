@@ -6,23 +6,44 @@ import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/core/widgets/offline_banner.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_state.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 const _questionLimitOptions = [10, 20, 30, 50, null];
 
-const _modeLabels = {
-  'standard': 'Standard',
-  'timed': 'Timed',
-  'challenge': 'Challenge',
-  'elimination': 'Elimination',
-};
+const _answerMethodKeys = ['multiple_choice', 'exact_typing', 'ai_typing'];
 
-const _answerLabels = {
-  'multiple_choice': 'Multiple choice',
-  'exact_typing': 'Typing',
-  'ai_typing': 'AI typing',
-};
+String _modeLabel(BuildContext context, String mode) {
+  final l10n = AppLocalizations.of(context)!;
+  switch (mode) {
+    case 'standard':
+      return l10n.quizModeStandard;
+    case 'timed':
+      return l10n.quizModeTimed;
+    case 'challenge':
+      return l10n.quizModeChallenge;
+    case 'elimination':
+      return l10n.quizModeElimination;
+    default:
+      return mode;
+  }
+}
+
+String _answerLabel(BuildContext context, String method) {
+  final l10n = AppLocalizations.of(context)!;
+  switch (method) {
+    case 'multiple_choice':
+      return l10n.quizAnswerMultipleChoice;
+    case 'exact_typing':
+      return l10n.quizAnswerTyping;
+    case 'ai_typing':
+      return l10n.quizAnswerAiTyping;
+    default:
+      return method;
+  }
+}
 
 class QuizConfigScreen extends ConsumerStatefulWidget {
   const QuizConfigScreen({this.initialListId, super.key});
@@ -58,6 +79,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(quizConfigProvider);
     final isOnline = ref.watch(connectivityProvider).value ?? true;
     ref.listen(quizConfigProvider.select((value) => value.errorMessage), (
@@ -71,13 +93,13 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
       }
     });
     return Scaffold(
-      appBar: AppBar(title: const Text('Cấu hình kiểm tra')),
+      appBar: AppBar(title: Text(l10n.quizConfigTitle)),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 16),
         children: [
           if (!isOnline) const OfflineBanner(),
           _Section(
-            title: 'Phạm vi từ',
+            title: l10n.quizConfigScopeSection,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -87,31 +109,31 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
                   children: [
                     _choice(
                       key: const Key('scope-all'),
-                      label: 'Tất cả',
+                      label: l10n.quizConfigScopeAll,
                       selected: state.scopeType == 'all',
                       onSelected: () => _notifier.setScope('all'),
                     ),
                     _choice(
                       key: const Key('scope-start-date'),
-                      label: 'Từ ngày',
+                      label: l10n.quizConfigScopeFromDate,
                       selected: state.scopeType == 'start_date',
                       onSelected: () => _notifier.setScope('start_date'),
                     ),
                     _choice(
                       key: const Key('scope-end-date'),
-                      label: 'Đến ngày',
+                      label: l10n.quizConfigScopeToDate,
                       selected: state.scopeType == 'end_date',
                       onSelected: () => _notifier.setScope('end_date'),
                     ),
                     _choice(
                       key: const Key('scope-date-range'),
-                      label: 'Khoảng ngày',
+                      label: l10n.quizConfigScopeDateRange,
                       selected: state.scopeType == 'date_range',
                       onSelected: () => _notifier.setScope('date_range'),
                     ),
                     _choice(
                       key: const Key('scope-wrong-words'),
-                      label: 'Từ sai gần đây',
+                      label: l10n.quizConfigScopeWrongWords,
                       selected: state.scopeType == 'wrong_words',
                       onSelected: () => _notifier.setScope('wrong_words'),
                     ),
@@ -122,7 +144,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
                   const SizedBox(height: 10),
                   _DateButton(
                     key: const Key('date-from'),
-                    label: 'Ngày bắt đầu',
+                    label: l10n.quizConfigDateFrom,
                     date: state.dateFrom,
                     onTap: () => _pickDate(true),
                   ),
@@ -132,7 +154,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
                   const SizedBox(height: 10),
                   _DateButton(
                     key: const Key('date-to'),
-                    label: 'Ngày kết thúc',
+                    label: l10n.quizConfigDateTo,
                     date: state.dateTo,
                     onTap: () => _pickDate(false),
                   ),
@@ -141,18 +163,30 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
             ),
           ),
           _Section(
-            title: 'Nguồn kiểm tra',
+            title: l10n.quizConfigSourceSection,
             child: _QuizSourcePicker(
               state: state,
               onTypeChanged: _notifier.setSourceType,
               onSourceSelected: _notifier.selectSource,
             ),
           ),
-          _Section(title: 'Chế độ', child: _buildMode(state)),
-          _Section(title: 'Loại câu hỏi', child: _buildQuestionType(state)),
-          _Section(title: 'Cách trả lời', child: _buildAnswerMethod(state)),
-          _Section(title: 'Thứ tự', child: _buildWordOrder(state)),
-          _Section(title: 'Số câu hỏi', child: _buildQuestionLimit(state)),
+          _Section(title: l10n.quizConfigModeSection, child: _buildMode(state)),
+          _Section(
+            title: l10n.quizConfigQuestionTypeSection,
+            child: _buildQuestionType(state),
+          ),
+          _Section(
+            title: l10n.quizConfigAnswerMethodSection,
+            child: _buildAnswerMethod(state),
+          ),
+          _Section(
+            title: l10n.quizConfigWordOrderSection,
+            child: _buildWordOrder(state),
+          ),
+          _Section(
+            title: l10n.quizConfigQuestionLimitSection,
+            child: _buildQuestionLimit(state),
+          ),
           _SummaryBar(
             state: state,
             effectiveLimit: _notifier.effectiveWordLimit(),
@@ -162,7 +196,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
         child: Tooltip(
-          message: isOnline ? '' : 'Cần kết nối mạng',
+          message: isOnline ? '' : l10n.quizConfigNeedConnection,
           child: FilledButton.icon(
             key: const Key('start-quiz-button'),
             onPressed: state.isCreating || !isOnline ? null : _startQuiz,
@@ -172,7 +206,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.play_arrow),
-            label: const Text('Bắt đầu'),
+            label: Text(l10n.quizConfigStartButton),
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(52),
             ),
@@ -185,22 +219,23 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
   QuizConfigNotifier get _notifier => ref.read(quizConfigProvider.notifier);
 
   Widget _buildQuestionType(QuizConfigState state) {
+    final l10n = AppLocalizations.of(context)!;
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
         _choice(
-          label: 'Word → meaning',
+          label: l10n.quizConfigQuestionTypeWordToMeaning,
           selected: state.questionType == 1,
           onSelected: () => _notifier.setQuestionType(1),
         ),
         _choice(
-          label: 'Meaning → word',
+          label: l10n.quizConfigQuestionTypeMeaningToWord,
           selected: state.questionType == 2,
           onSelected: () => _notifier.setQuestionType(2),
         ),
         _choice(
-          label: 'Mô tả → từ',
+          label: l10n.quizConfigQuestionTypeDescToWord,
           selected: state.questionType == 3,
           onSelected: () => _notifier.setQuestionType(3),
         ),
@@ -213,42 +248,43 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
       spacing: 8,
       runSpacing: 8,
       children: [
-        for (final entry in _answerLabels.entries)
+        for (final key in _answerMethodKeys)
           _choice(
-            label: entry.value,
-            selected: state.answerMethod == entry.key,
-            onSelected: () => _notifier.setAnswerMethod(entry.key),
+            label: _answerLabel(context, key),
+            selected: state.answerMethod == key,
+            onSelected: () => _notifier.setAnswerMethod(key),
           ),
       ],
     );
   }
 
   Widget _buildWordOrder(QuizConfigState state) {
+    final l10n = AppLocalizations.of(context)!;
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
         _choice(
           key: const Key('order-random'),
-          label: 'Ngẫu nhiên',
+          label: l10n.quizConfigOrderRandom,
           selected: state.wordOrder == 'random',
           onSelected: () => _notifier.setWordOrder('random'),
         ),
         _choice(
           key: const Key('order-newest'),
-          label: 'Mới nhất',
+          label: l10n.quizConfigOrderNewest,
           selected: state.wordOrder == 'newest',
           onSelected: () => _notifier.setWordOrder('newest'),
         ),
         _choice(
           key: const Key('order-oldest'),
-          label: 'Cũ nhất',
+          label: l10n.quizConfigOrderOldest,
           selected: state.wordOrder == 'oldest',
           onSelected: () => _notifier.setWordOrder('oldest'),
         ),
         _choice(
           key: const Key('order-by-difficulty'),
-          label: 'Theo độ khó',
+          label: l10n.quizConfigOrderByDifficulty,
           selected: state.wordOrder == 'by_difficulty',
           onSelected: () => _notifier.setWordOrder('by_difficulty'),
         ),
@@ -257,6 +293,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
   }
 
   Widget _buildMode(QuizConfigState state) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         IntrinsicHeight(
@@ -266,8 +303,8 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
               Expanded(
                 child: _ModeCard(
                   value: 'standard',
-                  title: 'Standard',
-                  subtitle: 'Theo nhịp độ của bạn',
+                  title: l10n.quizModeStandard,
+                  subtitle: l10n.quizConfigModeStandardSubtitle,
                   selected: state.mode == 'standard',
                   onTap: _notifier.setMode,
                 ),
@@ -276,8 +313,8 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
               Expanded(
                 child: _ModeCard(
                   value: 'timed',
-                  title: 'Timed',
-                  subtitle: 'Chạy đua thời gian',
+                  title: l10n.quizModeTimed,
+                  subtitle: l10n.quizConfigModeTimedSubtitle,
                   selected: state.mode == 'timed',
                   onTap: _notifier.setMode,
                 ),
@@ -293,8 +330,8 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
               Expanded(
                 child: _ModeCard(
                   value: 'challenge',
-                  title: 'Challenge',
-                  subtitle: 'Mạng và chuỗi đúng',
+                  title: l10n.quizModeChallenge,
+                  subtitle: l10n.quizConfigModeChallengeSubtitle,
                   selected: state.mode == 'challenge',
                   onTap: _notifier.setMode,
                 ),
@@ -303,8 +340,8 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
               Expanded(
                 child: _ModeCard(
                   value: 'elimination',
-                  title: 'Elimination',
-                  subtitle: 'Sai là kết thúc',
+                  title: l10n.quizModeElimination,
+                  subtitle: l10n.quizConfigModeEliminationSubtitle,
                   selected: state.mode == 'elimination',
                   onTap: _notifier.setMode,
                 ),
@@ -318,7 +355,9 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
             child: TextField(
               key: const Key('time-limit-input'),
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Thời gian (giây)'),
+              decoration: InputDecoration(
+                labelText: l10n.quizConfigTimeLimitLabel,
+              ),
               onChanged: (value) => _notifier.setTimeLimit(int.tryParse(value)),
             ),
           ),
@@ -328,7 +367,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
             child: TextField(
               key: const Key('lives-input'),
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Số mạng'),
+              decoration: InputDecoration(labelText: l10n.quizConfigLivesLabel),
               onChanged: (value) => _notifier.setLives(int.tryParse(value)),
             ),
           ),
@@ -338,6 +377,7 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
 
   Widget _buildQuestionLimit(QuizConfigState state) {
     final wordCount = _notifier.selectedSourceWordCount();
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -348,13 +388,13 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
             for (final option in _questionLimitOptions)
               _choice(
                 key: Key('question-limit-${option ?? 'all'}'),
-                label: option?.toString() ?? 'Tất cả',
+                label: option?.toString() ?? l10n.quizConfigLimitAll,
                 selected: !state.useCustomLimit && state.questionLimit == option,
                 onSelected: () => _notifier.setQuestionLimit(option),
               ),
             _choice(
               key: const Key('question-limit-custom'),
-              label: 'Tùy chỉnh',
+              label: l10n.quizConfigLimitCustom,
               selected: state.useCustomLimit,
               onSelected: _notifier.useCustomQuestionLimit,
             ),
@@ -367,11 +407,10 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
               key: const Key('custom-question-input'),
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: 'Số câu hỏi mong muốn',
+                labelText: l10n.quizConfigCustomLimitLabel,
                 helperText: wordCount != null
-                    ? 'Nguồn hiện có $wordCount từ · nhập lớn hơn sẽ lấy tối đa '
-                          '$wordCount'
-                    : 'Nhập số câu hỏi mong muốn',
+                    ? l10n.quizConfigCustomLimitHelper(wordCount)
+                    : l10n.quizConfigCustomLimitHelperEmpty,
               ),
               onChanged: (value) =>
                   _notifier.setCustomQuestionLimit(int.tryParse(value)),
@@ -454,7 +493,7 @@ class _QuizSourcePicker extends StatelessWidget {
               .map(
                 (topic) => _SourceItem(
                   id: topic.listId,
-                  name: topic.displayName,
+                  name: topic.localizedName(context),
                   wordCount: topic.wordCount,
                   icon: Icons.auto_stories_outlined,
                   emoji: topic.icon,
@@ -462,6 +501,7 @@ class _QuizSourcePicker extends StatelessWidget {
               )
               .toList(growable: false);
 
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -477,7 +517,7 @@ class _QuizSourcePicker extends StatelessWidget {
               Expanded(
                 child: _SourceTypeButton(
                   key: const Key('quiz-source-my-list'),
-                  label: 'Danh sách của tôi',
+                  label: l10n.quizConfigSourceMyList,
                   icon: Icons.bookmark_outline,
                   selected: showingLists,
                   onTap: () => onTypeChanged(QuizSourceType.myList),
@@ -486,7 +526,7 @@ class _QuizSourcePicker extends StatelessWidget {
               Expanded(
                 child: _SourceTypeButton(
                   key: const Key('quiz-source-personal-topic'),
-                  label: 'Chủ đề cá nhân',
+                  label: l10n.quizConfigSourcePersonalTopic,
                   icon: Icons.auto_stories_outlined,
                   selected: !showingLists,
                   onTap: () => onTypeChanged(QuizSourceType.personalTopic),
@@ -498,8 +538,8 @@ class _QuizSourcePicker extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           showingLists
-              ? 'Chọn một danh sách từ của bạn.'
-              : 'Chọn một chủ đề chứa các từ bạn đã lưu.',
+              ? l10n.quizConfigSourceHintList
+              : l10n.quizConfigSourceHintTopic,
           style: Theme.of(
             context,
           ).textTheme.bodySmall?.copyWith(color: const Color(0xFF706A76)),
@@ -661,8 +701,10 @@ class _SourceCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       item.wordCount == 0
-                          ? 'Chưa có từ để kiểm tra'
-                          : '${item.wordCount} từ',
+                          ? AppLocalizations.of(context)!.quizConfigSourceNoWords
+                          : AppLocalizations.of(
+                              context,
+                            )!.quizConfigSourceWordCount(item.wordCount),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: disabled
                             ? const Color(0xFFA19AA5)
@@ -704,8 +746,8 @@ class _SourceEmptyState extends StatelessWidget {
       ),
       child: Text(
         personalTopic
-            ? 'Hãy lưu từ vào một chủ đề cá nhân trước khi kiểm tra.'
-            : 'Hãy tạo danh sách và thêm từ trước khi kiểm tra.',
+            ? AppLocalizations.of(context)!.quizConfigEmptyTopicHint
+            : AppLocalizations.of(context)!.quizConfigEmptyListHint,
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.bodySmall,
       ),
@@ -812,6 +854,7 @@ class _SummaryBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
       child: Wrap(
@@ -819,18 +862,20 @@ class _SummaryBar extends StatelessWidget {
         runSpacing: 8,
         children: [
           _SummaryChip(
-            label: 'Chế độ',
-            value: _modeLabels[state.mode] ?? state.mode,
+            label: l10n.quizConfigSummaryMode,
+            value: _modeLabel(context, state.mode),
           ),
           _SummaryChip(
-            label: 'Trả lời',
-            value: _answerLabels[state.answerMethod] ?? state.answerMethod,
+            label: l10n.quizConfigSummaryAnswer,
+            value: _answerLabel(context, state.answerMethod),
           ),
           _SummaryChip(
-            label: 'Số câu',
+            label: l10n.quizConfigSummaryCount,
             // Hiển thị đúng số sẽ kiểm tra sau khi giới hạn theo tổng số từ.
             value: state.questionLimit == null
-                ? (state.useCustomLimit ? 'Tùy chỉnh' : 'Tất cả')
+                ? (state.useCustomLimit
+                      ? l10n.quizConfigLimitCustom
+                      : l10n.quizConfigLimitAll)
                 : (effectiveLimit?.toString() ?? state.questionLimit.toString()),
           ),
         ],

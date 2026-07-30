@@ -5,6 +5,7 @@ import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_result_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/domain/quiz_result.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 const _correctColor = Color(0xFF16A34A);
 const _wrongColor = Color(0xFFDC2626);
@@ -66,20 +67,24 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         Center(child: _AccuracyRing(accuracy: result.accuracy)),
         const SizedBox(height: 18),
         Text(
-          _headline(result.accuracy),
+          _headline(l10n, result.accuracy),
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
           ),
         ),
         const SizedBox(height: 6),
         Text(
-          '${result.correctCount}/${result.questionCount} câu đúng · '
-          '${_duration(result.durationSec)}',
+          l10n.quizResultSummary(
+            result.correctCount,
+            result.questionCount,
+            _duration(result.durationSec),
+          ),
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -88,10 +93,10 @@ class _Header extends StatelessWidget {
     );
   }
 
-  static String _headline(double accuracy) {
-    if (accuracy >= 80) return 'Tuyệt vời!';
-    if (accuracy >= 50) return 'Làm tốt lắm!';
-    return 'Cố gắng thêm nhé!';
+  static String _headline(AppLocalizations l10n, double accuracy) {
+    if (accuracy >= 80) return l10n.quizResultHeadlineGreat;
+    if (accuracy >= 50) return l10n.quizResultHeadlineGood;
+    return l10n.quizResultHeadlineTryAgain;
   }
 }
 
@@ -132,7 +137,7 @@ class _AccuracyRing extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'chính xác',
+                    AppLocalizations.of(context)!.quizResultAccuracyLabel,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -154,12 +159,13 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
           child: _StatTile(
             value: '${result.correctCount}',
-            label: 'Đúng',
+            label: l10n.quizResultCorrectLabel,
             color: _correctColor,
           ),
         ),
@@ -167,7 +173,7 @@ class _StatsRow extends StatelessWidget {
         Expanded(
           child: _StatTile(
             value: '${result.wrongCount}',
-            label: 'Sai',
+            label: l10n.quizResultWrongLabel,
             color: _wrongColor,
           ),
         ),
@@ -175,7 +181,7 @@ class _StatsRow extends StatelessWidget {
         Expanded(
           child: _StatTile(
             value: '${result.maxStreak}',
-            label: 'Chuỗi tốt nhất',
+            label: l10n.quizResultBestStreakLabel,
             color: AppColors.primary,
           ),
         ),
@@ -241,7 +247,7 @@ class _ResultsList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'KẾT QUẢ',
+          AppLocalizations.of(context)!.quizResultListTitle,
           style: theme.textTheme.labelMedium?.copyWith(
             fontWeight: FontWeight.w800,
             letterSpacing: 0.8,
@@ -283,6 +289,7 @@ class _AnswerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final correct = answer.isCorrect == true;
     final color = correct ? _correctColor : _wrongColor;
     return Padding(
@@ -308,15 +315,15 @@ class _AnswerRow extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: _AnswerLine(
-                      label: 'Bạn trả lời',
-                      value: answer.userAnswer ?? 'Chưa trả lời',
+                      label: l10n.quizResultYourAnswerLabel,
+                      value: answer.userAnswer ?? l10n.quizResultNoAnswer,
                       valueColor: _wrongColor,
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: _AnswerLine(
-                      label: 'Đáp án',
+                      label: l10n.quizResultAnswerLabel,
                       value: answer.expectedAnswer,
                       valueColor: _correctColor,
                     ),
@@ -384,7 +391,9 @@ class _ResultBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        correct ? 'Đúng' : 'Sai',
+        correct
+            ? AppLocalizations.of(context)!.quizResultCorrectLabel
+            : AppLocalizations.of(context)!.quizResultWrongLabel,
         style: TextStyle(
           color: color,
           fontWeight: FontWeight.w700,
@@ -402,6 +411,7 @@ class _ActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
       decoration: BoxDecoration(
@@ -424,7 +434,7 @@ class _ActionBar extends StatelessWidget {
                       ? () => context.push(AppRoutes.wrongWords)
                       : null,
                   icon: const Icon(Icons.menu_book_outlined, size: 18),
-                  label: const Text('Xem lại từ sai'),
+                  label: Text(l10n.quizResultReviewWrongButton),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                   ),
@@ -436,7 +446,7 @@ class _ActionBar extends StatelessWidget {
                   key: const Key('retry-quiz-button'),
                   onPressed: () => context.go(AppRoutes.quizConfig),
                   icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('Làm lại'),
+                  label: Text(l10n.quizResultRetryButton),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                   ),
@@ -451,7 +461,7 @@ class _ActionBar extends StatelessWidget {
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(52),
             ),
-            child: const Text('Hoàn tất'),
+            child: Text(l10n.quizResultDoneButton),
           ),
         ],
       ),
@@ -466,13 +476,17 @@ class _ResultError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Không thể tải kết quả kiểm tra.'),
+          Text(l10n.quizResultLoadError),
           const SizedBox(height: 12),
-          FilledButton(onPressed: onRetry, child: const Text('Thử lại')),
+          FilledButton(
+            onPressed: onRetry,
+            child: Text(l10n.quizResultRetryLoadButton),
+          ),
         ],
       ),
     );
@@ -484,8 +498,10 @@ class QuizResultUnavailableScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Mã bài kiểm tra không hợp lệ.')),
+    return Scaffold(
+      body: Center(
+        child: Text(AppLocalizations.of(context)!.quizResultInvalidSession),
+      ),
     );
   }
 }
