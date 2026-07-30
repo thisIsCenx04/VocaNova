@@ -8,6 +8,7 @@ import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_form_scaffold.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_request_error.dart';
 import 'package:vocanova_mobile/features/auth/presentation/otp_code_fields.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
   const OtpScreen({
@@ -50,9 +51,10 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     final attemptsLeft = maxAttempts - _failedAttempts;
+    final l10n = AppLocalizations.of(context)!;
     return AuthFormScaffold(
-      title: 'Verify your email',
-      subtitle: 'Enter the 6-digit code sent to\n${widget.phone}',
+      title: l10n.authVerifyEmailTitle,
+      subtitle: l10n.authOtpSubtitle(widget.phone),
       showBackButton: true,
       onBack: () {
         if (context.canPop()) {
@@ -79,21 +81,23 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                       _verify(code);
                     }
                   },
-            child: _isLoading ? authLoadingIndicator() : const Text('Verify'),
+            child: _isLoading
+                ? authLoadingIndicator()
+                : Text(l10n.authVerifyButton),
           ),
           const SizedBox(height: 28),
           AuthHelperText(
             attemptsLeft > 0
-                ? 'You have $attemptsLeft attempts remaining.'
-                : 'Bạn đã nhập sai OTP quá 5 lần. Vui lòng gửi lại mã.',
+                ? l10n.authAttemptsRemaining(attemptsLeft)
+                : l10n.authOtpMaxAttemptsReached,
             widgetKey: const Key('otp-attempt-message'),
           ),
           const SizedBox(height: 12),
           AuthInlineLink(
-            text: "Didn't receive it? ",
+            text: l10n.authDidntReceiveCodePrefix,
             actionText: _secondsRemaining == 0
-                ? 'Resend code'
-                : 'Resend in ${_secondsRemaining}s',
+                ? l10n.authResendCode
+                : l10n.authResendInSeconds(_secondsRemaining),
             onPressed: !_isLoading && _secondsRemaining == 0 ? _resend : null,
           ),
         ],
@@ -117,7 +121,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       }
       if (verified) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('OTP verified successfully.')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.authOtpVerifiedSuccessMessage,
+            ),
+          ),
         );
         if (widget.purpose == 'register') {
           context.go(AppRoutes.onboarding);
@@ -135,7 +143,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       _otpKey.currentState?.clear();
       _showError(
         _failedAttempts >= maxAttempts
-            ? 'Bạn đã nhập sai OTP quá 5 lần. Vui lòng gửi lại mã.'
+            ? AppLocalizations.of(context)!.authOtpMaxAttemptsReached
             : authRequestError(error),
       );
     } finally {
@@ -148,7 +156,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
   Future<bool> _completeRegister(String code) async {
     final payload = widget.registerPayload;
     if (payload == null) {
-      throw const FormatException('Missing registration data.');
+      throw FormatException(
+        AppLocalizations.of(context)!.authRegistrationDataMissing,
+      );
     }
 
     return ref
@@ -177,9 +187,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       setState(() => _failedAttempts = 0);
       _otpKey.currentState?.clear();
       _startCountdown();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('OTP code resent.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.authOtpResentMessage)),
+      );
     } catch (error) {
       if (mounted) {
         _showError(authRequestError(error));

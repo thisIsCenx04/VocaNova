@@ -13,6 +13,7 @@ import 'package:vocanova_mobile/features/auth/presentation/onboarding_screen.dar
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/data/word_search_repository.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -80,7 +81,7 @@ void main() {
           .selected,
       isTrue,
     );
-    expect(find.text('Bước 1/2'), findsOneWidget);
+    expect(find.text('Step 1/2'), findsOneWidget);
   });
 
   testWidgets('topic step is multi-select', (tester) async {
@@ -99,7 +100,7 @@ void main() {
     await tester.tap(find.byKey(const Key('onboarding-topic-12')));
     await tester.pump();
 
-    expect(find.text('Bước 2/2'), findsOneWidget);
+    expect(find.text('Step 2/2'), findsOneWidget);
     expect(
       tester
           .widget<FilterChip>(find.byKey(const Key('onboarding-topic-11')))
@@ -197,7 +198,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Thiết lập học tập không hợp lệ.'), findsOneWidget);
-    expect(find.text('Bước 2/2'), findsOneWidget);
+    expect(find.text('Step 2/2'), findsOneWidget);
   });
 
   testWidgets('catalog failure offers a retry instead of blocking', (
@@ -213,8 +214,11 @@ void main() {
       localStorage,
     );
 
-    expect(find.text('Không tải được danh mục. Vui lòng thử lại.'), findsOne);
-    expect(find.text('Thử lại'), findsOneWidget);
+    expect(
+      find.text("Couldn't load the catalog. Please try again."),
+      findsOne,
+    );
+    expect(find.text('Retry'), findsOneWidget);
   });
 }
 
@@ -241,7 +245,11 @@ Future<void> pumpOnboarding(
         wordSearchRepositoryProvider.overrideWithValue(wordSearchRepository),
         localStorageProvider.overrideWithValue(localStorage),
       ],
-      child: MaterialApp.router(routerConfig: router),
+      child: MaterialApp.router(
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+      ),
     ),
   );
   await tester.pumpAndSettle();

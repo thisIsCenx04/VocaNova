@@ -11,6 +11,7 @@ import 'package:vocanova_mobile/features/dictionary/data/word_detail_repository.
 import 'package:vocanova_mobile/features/dictionary/domain/word_detail.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/word_detail_screen.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   late MockWordDetailRepository repository;
@@ -92,7 +93,7 @@ void main() {
     expect(find.text('/həˈləʊ/'), findsOneWidget);
     expect(find.text('/həˈloʊ/'), findsOneWidget);
     expect(find.text('DEFINITION'), findsOneWidget);
-    expect(find.text('TIẾNG VIỆT'), findsOneWidget);
+    expect(find.text('VIETNAMESE'), findsOneWidget);
     expect(find.text('EXAMPLE'), findsOneWidget);
     expect(find.text('xin chào'), findsOneWidget);
 
@@ -188,7 +189,11 @@ Future<void> pumpDetail(
         connectivityServiceProvider.overrideWithValue(connectivity),
         audioPlaybackServiceProvider.overrideWithValue(audio),
       ],
-      child: const MaterialApp(home: WordDetailScreen(wordId: 7)),
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const WordDetailScreen(wordId: 7),
+      ),
     ),
   );
   await tester.pump();

@@ -8,6 +8,8 @@ import 'package:vocanova_mobile/features/auth/domain/onboarding_catalog.dart';
 import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 /// Collects the intent half of the KNN profile vector.
 ///
@@ -28,7 +30,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _step = 0;
   bool _isLoadingCatalog = true;
   bool _isSaving = false;
-  String? _catalogError;
+  bool _hasCatalogError = false;
 
   List<OnboardingOption> _learningPurposes = const [];
   List<TopicSummary> _topics = const [];
@@ -46,7 +48,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _loadCatalog() async {
     setState(() {
       _isLoadingCatalog = true;
-      _catalogError = null;
+      _hasCatalogError = false;
     });
     try {
       final options = await ref
@@ -63,7 +65,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       if (!mounted) return;
       setState(() {
         _isLoadingCatalog = false;
-        _catalogError = 'Không tải được danh mục. Vui lòng thử lại.';
+        _hasCatalogError = true;
       });
     }
   }
@@ -72,22 +74,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget build(BuildContext context) {
     final isLoading =
         _isSaving || ref.watch(authProvider).status == AuthStatus.loading;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
         leading: _step == 0
             ? null
             : IconButton(
-                tooltip: 'Quay lại',
+                tooltip: l10n.authBackButton,
                 onPressed: isLoading ? null : _previous,
                 icon: const Icon(Icons.arrow_back),
               ),
-        title: const Text('Thiết lập học tập'),
+        title: Text(l10n.authOnboardingTitle),
         actions: [
           TextButton(
             key: const Key('onboarding-skip'),
             onPressed: isLoading ? null : () => context.go(AppRoutes.home),
-            child: const Text('Bỏ qua'),
+            child: Text(l10n.authSkipAction),
           ),
         ],
       ),
@@ -100,7 +103,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               LinearProgressIndicator(value: (_step + 1) / _stepCount),
               const SizedBox(height: 10),
               Text(
-                'Bước ${_step + 1}/$_stepCount',
+                l10n.authStepProgress(_step + 1, _stepCount),
                 key: const Key('onboarding-progress'),
                 textAlign: TextAlign.right,
                 style: Theme.of(context).textTheme.bodySmall,
@@ -108,15 +111,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               const SizedBox(height: 28),
               Text(
                 _step == 0
-                    ? 'Mục tiêu học từ vựng của bạn?'
-                    : 'Bạn quan tâm chủ đề nào?',
+                    ? l10n.authOnboardingGoalHeadline
+                    : l10n.authOnboardingTopicsHeadline,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 8),
               Text(
                 _step == 0
-                    ? 'VocaNova sẽ ưu tiên nội dung theo mục tiêu này.'
-                    : 'Chọn ít nhất một chủ đề để nhận gợi ý từ vựng phù hợp.',
+                    ? l10n.authOnboardingGoalSubtitle
+                    : l10n.authOnboardingTopicsSubtitle,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               const SizedBox(height: 24),
@@ -130,7 +133,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         dimension: 22,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(_step == _stepCount - 1 ? 'Hoàn tất' : 'Tiếp tục'),
+                    : Text(
+                        _step == _stepCount - 1
+                            ? l10n.authOnboardingFinishButton
+                            : l10n.authOnboardingContinueButton,
+                      ),
               ),
             ],
           ),
@@ -143,15 +150,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (_isLoadingCatalog) {
       return const Center(child: CircularProgressIndicator());
     }
-    final catalogError = _catalogError;
-    if (catalogError != null) {
+    if (_hasCatalogError) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(catalogError, textAlign: TextAlign.center),
+            Text(
+              AppLocalizations.of(context)!.authCatalogLoadError,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 12),
-            TextButton(onPressed: _loadCatalog, child: const Text('Thử lại')),
+            TextButton(
+              onPressed: _loadCatalog,
+              child: Text(AppLocalizations.of(context)!.authRetryButton),
+            ),
           ],
         ),
       );
@@ -177,7 +189,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 for (final topic in _topics)
                   FilterChip(
                     key: Key('onboarding-topic-${topic.topicId}'),
-                    label: Text(topic.displayName),
+                    label: Text(topic.localizedName(context)),
                     selected: _selectedTopicIds.contains(topic.topicId),
                     onSelected: isLoading
                         ? null
@@ -204,6 +216,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       return;
     }
 
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _isSaving = true);
     try {
       // The learning-profile endpoint replaces the whole row, so the demographic answers
@@ -223,7 +236,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       if (!savedPurpose) {
         throw Exception(
           ref.read(authProvider).errorMessage ??
-              'Không thể lưu thiết lập học tập.',
+              l10n.authLearningProfileSaveFailed,
         );
       }
 
@@ -239,7 +252,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         SnackBar(
           content: Text(
             ref.read(authProvider).errorMessage ??
-                'Không thể lưu thiết lập học tập. Vui lòng thử lại.',
+                l10n.authLearningProfileSaveFailedRetry,
           ),
         ),
       );

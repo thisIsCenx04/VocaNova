@@ -7,6 +7,7 @@ import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
 import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
 import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
 import 'package:vocanova_mobile/features/settings/presentation/profile_screen.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   test('maskPhone hides the middle digits', () {
@@ -25,6 +26,8 @@ void main() {
         overrides: [authProvider.overrideWith(() => notifier)],
         child: MaterialApp(
           theme: ThemeData.dark(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: const ProfileScreen(),
         ),
       ),

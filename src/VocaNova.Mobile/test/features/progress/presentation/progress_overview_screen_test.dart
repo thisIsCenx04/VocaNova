@@ -13,6 +13,7 @@ import 'package:vocanova_mobile/features/progress/application/progress_overview_
 import 'package:vocanova_mobile/features/progress/data/progress_repository.dart';
 import 'package:vocanova_mobile/features/progress/domain/progress_summary.dart';
 import 'package:vocanova_mobile/features/progress/presentation/progress_overview_screen.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -30,11 +31,11 @@ void main() {
     await pumpOverview(tester, repository, connectivity, storage);
 
     expect(find.byKey(const Key('streak-card')), findsOneWidget);
-    expect(find.text('4 ngày liên tiếp'), findsOneWidget);
-    expect(find.text('Kỷ lục: 9 ngày'), findsOneWidget);
+    expect(find.text('4 days in a row'), findsOneWidget);
+    expect(find.text('Record: 9 days'), findsOneWidget);
     expect(find.byKey(const Key('accuracy-gauge')), findsOneWidget);
     expect(find.text('75%'), findsOneWidget);
-    expect(find.text('15/20 câu đúng'), findsOneWidget);
+    expect(find.text('15/20 correct'), findsOneWidget);
     expect(find.text('42'), findsOneWidget);
     expect(find.text('12'), findsOneWidget);
     expect(find.text('8'), findsOneWidget);
@@ -59,7 +60,7 @@ void main() {
     await pumpOverview(tester, repository, connectivity, storage);
 
     expect(find.byKey(const Key('progress-offline-banner')), findsOneWidget);
-    expect(find.text('4 ngày liên tiếp'), findsOneWidget);
+    expect(find.text('4 days in a row'), findsOneWidget);
   });
 }
 
@@ -80,7 +81,11 @@ Future<void> pumpOverview(
         progressLocalStorageProvider.overrideWithValue(storage),
         connectivityServiceProvider.overrideWithValue(connectivity),
       ],
-      child: const MaterialApp(home: ProgressOverviewScreen()),
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const ProgressOverviewScreen(),
+      ),
     ),
   );
   await tester.pump();

@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/core/network/app_exception.dart';
 import 'package:vocanova_mobile/core/network/dio_client.dart';
@@ -11,6 +12,7 @@ import 'package:vocanova_mobile/core/storage/storage_keys.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_state.dart';
 import 'package:vocanova_mobile/features/dictionary/data/word_search_repository.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'word_search_notifier.g.dart';
 
@@ -265,6 +267,8 @@ class WordSearchNotifier extends _$WordSearchNotifier {
     if (error is DioException && error.error is AppException) {
       return (error.error! as AppException).message;
     }
-    return 'Không thể tải dữ liệu mới. Đang hiển thị từ đã lưu.';
+    return lookupAppLocalizations(
+      AppSettingsNotifier.instance.state.locale,
+    ).dictSearchRefreshError;
   }
 }

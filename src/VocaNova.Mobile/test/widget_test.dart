@@ -36,8 +36,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('VocaNova'), findsOneWidget);
-    expect(find.text('Hi, An'), findsOneWidget);
-    expect(find.text('DAILY GOAL'), findsOneWidget);
+    // The app defaults to the Vietnamese locale until settings load from
+    // storage change it.
+    expect(find.text('Chào, An'), findsOneWidget);
+    expect(find.text('MỤC TIÊU HÀNG NGÀY'), findsOneWidget);
   });
 }
 

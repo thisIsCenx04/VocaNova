@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/data/word_search_repository.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
@@ -13,6 +14,9 @@ import 'package:vocanova_mobile/features/quiz/data/quiz_repository.dart';
 import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences.setMockInitialValues({});
+
   late MockQuizRepository repository;
   late MockWordSearchRepository searchRepository;
   late MockListsRepository listsRepository;

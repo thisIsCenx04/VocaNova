@@ -6,6 +6,7 @@ import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
 import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_form_scaffold.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_validators.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -31,10 +32,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     ref.listen(authProvider, _handleAuthState);
     final isLoading = ref.watch(authProvider).status == AuthStatus.loading;
+    final l10n = AppLocalizations.of(context)!;
 
     return AuthFormScaffold(
-      title: 'Sign in',
-      subtitle: 'Welcome back to VocaNova',
+      title: l10n.authSignInTitle,
+      subtitle: l10n.authWelcomeBackSubtitle,
       form: Form(
         key: _formKey,
         child: Column(
@@ -47,7 +49,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.next,
               decoration: authInputDecoration(
-                label: 'Phone number',
+                label: l10n.authPhoneNumberLabel,
                 hint: '0901234567',
               ),
               validator: AuthValidators.phone,
@@ -60,9 +62,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               obscureText: _obscurePassword,
               textInputAction: TextInputAction.done,
               decoration: authInputDecoration(
-                label: 'Password',
+                label: l10n.authPasswordLabel,
                 suffixIcon: IconButton(
-                  tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                  tooltip: _obscurePassword
+                      ? l10n.authShowPassword
+                      : l10n.authHidePassword,
                   onPressed: () {
                     setState(() => _obscurePassword = !_obscurePassword);
                   },
@@ -82,13 +86,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 onPressed: isLoading
                     ? null
                     : () => context.push(AppRoutes.forgotPassword),
-                child: const Text('Forgot password?'),
+                child: Text(l10n.authForgotPasswordLink),
               ),
             ),
             AuthPrimaryButton(
               buttonKey: const Key('login-submit'),
               onPressed: isLoading ? null : _submit,
-              child: isLoading ? authLoadingIndicator() : const Text('Sign in'),
+              child: isLoading
+                  ? authLoadingIndicator()
+                  : Text(l10n.authSignInTitle),
             ),
             const SizedBox(height: 16),
             const AuthDivider(),
@@ -100,8 +106,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
             const SizedBox(height: 12),
             AuthInlineLink(
-              text: 'New here? ',
-              actionText: 'Create account',
+              text: l10n.authNewHerePrefix,
+              actionText: l10n.authCreateAccountTitle,
               onPressed: isLoading
                   ? null
                   : () => context.go(AppRoutes.register),

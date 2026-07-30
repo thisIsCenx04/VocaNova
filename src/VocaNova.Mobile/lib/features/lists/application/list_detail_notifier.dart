@@ -1,11 +1,13 @@
 import 'dart:convert';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
 import 'package:vocanova_mobile/features/lists/application/list_detail_state.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/lists/domain/list_word.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'list_detail_notifier.g.dart';
 
@@ -48,9 +50,7 @@ class ListDetailNotifier extends _$ListDetailNotifier {
         totalPages: 1,
         isLoading: false,
         isOffline: cached.isNotEmpty,
-        errorMessage: cached.isEmpty
-            ? 'Không thể tải từ trong danh sách.'
-            : null,
+        errorMessage: cached.isEmpty ? _l10n.listsLoadWordsError : null,
       );
     }
   }
@@ -73,7 +73,7 @@ class ListDetailNotifier extends _$ListDetailNotifier {
     } catch (_) {
       state = state.copyWith(
         isLoadingMore: false,
-        errorMessage: 'Không thể tải thêm từ.',
+        errorMessage: _l10n.listsLoadMoreWordsError,
       );
     }
   }
@@ -92,7 +92,7 @@ class ListDetailNotifier extends _$ListDetailNotifier {
       await _cache(words);
       return true;
     } catch (_) {
-      state = state.copyWith(errorMessage: 'Không thể thêm từ vào danh sách.');
+      state = state.copyWith(errorMessage: _l10n.listsAddWordError);
       return false;
     }
   }
@@ -121,7 +121,7 @@ class ListDetailNotifier extends _$ListDetailNotifier {
       await _cache(words);
       return true;
     } catch (_) {
-      state = state.copyWith(errorMessage: 'Không thể thêm từ ngẫu nhiên.');
+      state = state.copyWith(errorMessage: _l10n.listsAddRandomError);
       return false;
     }
   }
@@ -143,7 +143,7 @@ class ListDetailNotifier extends _$ListDetailNotifier {
       final rollback = [...state.words]..insert(index, removed);
       state = state.copyWith(
         words: rollback,
-        errorMessage: 'Không thể xóa từ khỏi danh sách.',
+        errorMessage: _l10n.listsRemoveWordError,
       );
       return false;
     }
@@ -160,10 +160,13 @@ class ListDetailNotifier extends _$ListDetailNotifier {
     if (!state.isOffline) return true;
     state = state.copyWith(
       isOffline: true,
-      errorMessage: 'Cần kết nối mạng để thay đổi danh sách.',
+      errorMessage: _l10n.listsOfflineMutateError,
     );
     return false;
   }
+
+  AppLocalizations get _l10n =>
+      lookupAppLocalizations(AppSettingsNotifier.instance.state.locale);
 
   List<ListWord> _decode(String? source) {
     try {

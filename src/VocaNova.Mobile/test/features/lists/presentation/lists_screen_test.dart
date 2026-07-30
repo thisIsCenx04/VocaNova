@@ -10,6 +10,7 @@ import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
 import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
 import 'package:vocanova_mobile/features/lists/presentation/lists_screen.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   late MockListsRepository repository;
@@ -41,23 +42,25 @@ void main() {
 
     expect(find.byKey(const Key('lists-grid')), findsOneWidget);
     expect(find.text('Favorites'), findsOneWidget);
-    expect(find.text('2 từ'), findsOneWidget);
-    expect(find.text('Tạo ngày 15/06/2026'), findsOneWidget);
+    expect(find.text('2 words'), findsOneWidget);
+    expect(find.text('Created on 15/06/2026'), findsOneWidget);
     expect(find.byKey(const Key('personal-topics-section')), findsOneWidget);
     expect(find.byKey(const Key('personal-topic-card-8')), findsOneWidget);
-    expect(find.text('Du lịch'), findsOneWidget);
-    expect(find.text('4 từ'), findsOneWidget);
+    expect(find.text('Travel'), findsOneWidget);
+    expect(find.text('4 words'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('create-list-fab')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('submit-list-name')));
     await tester.pump();
-    expect(find.text('Vui lòng nhập tên danh sách.'), findsOneWidget);
+    expect(find.text('Please enter a list name.'), findsOneWidget);
 
     await tester.enterText(find.byKey(const Key('list-name-field')), 'Travel');
     await tester.tap(find.byKey(const Key('submit-list-name')));
     await tester.pumpAndSettle();
-    expect(find.text('Travel'), findsOneWidget);
+    // The personal topic card also localizes to "Travel" now, so there are
+    // two: the new list plus the existing personal topic.
+    expect(find.text('Travel'), findsNWidgets(2));
     verify(() => repository.create('Travel')).called(1);
   });
 
@@ -100,7 +103,11 @@ Future<void> pumpLists(
         listsLocalStorageProvider.overrideWithValue(storage),
         connectivityServiceProvider.overrideWithValue(connectivity),
       ],
-      child: const MaterialApp(home: ListsScreen()),
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const ListsScreen(),
+      ),
     ),
   );
   await tester.pump();

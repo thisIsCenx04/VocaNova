@@ -5,6 +5,7 @@ import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_session_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_session_state.dart';
 import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'typing_answer.dart';
 
@@ -15,6 +16,7 @@ class QuizSessionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final provider = quizSessionProvider(session);
     final state = ref.watch(provider);
     final notifier = ref.read(provider.notifier);
@@ -41,11 +43,11 @@ class QuizSessionScreen extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          title: const Text('Bài kiểm tra'),
+          title: Text(l10n.quizSessionTitle),
           actions: [
             IconButton(
               key: const Key('abandon-quiz-button'),
-              tooltip: 'Bỏ bài',
+              tooltip: l10n.quizSessionAbandonTooltip,
               onPressed: state.isFinishing
                   ? null
                   : () => _confirmAbandon(context, notifier),
@@ -62,7 +64,7 @@ class QuizSessionScreen extends ConsumerWidget {
                 _SessionHeader(state: state),
                 const SizedBox(height: 28),
                 Text(
-                  'Câu ${state.questionNumber}',
+                  l10n.quizSessionQuestionNumber(state.questionNumber),
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w800,
@@ -127,10 +129,10 @@ class QuizSessionScreen extends ConsumerWidget {
                           },
                     child: Text(
                       state.isFinishing
-                          ? 'Đang kết thúc...'
+                          ? l10n.quizSessionFinishing
                           : state.isFinished
-                          ? 'Xem kết quả'
-                          : 'Tiếp theo',
+                          ? l10n.quizSessionViewResult
+                          : l10n.quizSessionNext,
                     ),
                   ),
               ],
@@ -171,20 +173,23 @@ class QuizSessionScreen extends ConsumerWidget {
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Bỏ bài kiểm tra?'),
-        content: const Text('Tiến độ hiện tại sẽ được kết thúc và lưu lại.'),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(false),
-            child: const Text('Tiếp tục làm'),
-          ),
-          FilledButton(
-            onPressed: () => context.pop(true),
-            child: const Text('Bỏ bài'),
-          ),
-        ],
-      ),
+      builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
+        return AlertDialog(
+          title: Text(l10n.quizSessionAbandonDialogTitle),
+          content: Text(l10n.quizSessionAbandonDialogContent),
+          actions: [
+            TextButton(
+              onPressed: () => context.pop(false),
+              child: Text(l10n.quizSessionAbandonCancel),
+            ),
+            FilledButton(
+              onPressed: () => context.pop(true),
+              child: Text(l10n.quizSessionAbandonConfirm),
+            ),
+          ],
+        );
+      },
     );
     if (confirmed != true) return;
     final finished = await notifier.finish();
@@ -209,7 +214,10 @@ class _SessionHeader extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                'Câu ${state.questionNumber}/${state.questionCount}',
+                AppLocalizations.of(context)!.quizSessionProgressLabel(
+                  state.questionNumber,
+                  state.questionCount,
+                ),
                 key: const Key('quiz-progress-label'),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
@@ -310,23 +318,23 @@ class QuizSessionUnavailableScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Bài kiểm tra')),
+      appBar: AppBar(title: Text(l10n.quizSessionTitle)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Không thể khôi phục bài kiểm tra đang chạy. '
-                'Vui lòng tạo một bài kiểm tra mới.',
+              Text(
+                l10n.quizSessionUnavailableMessage,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () => context.go(AppRoutes.quizConfig),
-                child: const Text('Tạo bài kiểm tra'),
+                child: Text(l10n.quizSessionCreateNew),
               ),
             ],
           ),

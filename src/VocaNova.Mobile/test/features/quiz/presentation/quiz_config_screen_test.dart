@@ -15,6 +15,7 @@ import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.d
 import 'package:vocanova_mobile/features/quiz/data/quiz_repository.dart';
 import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/quiz_config_screen.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   late MockQuizRepository repository;
@@ -41,18 +42,18 @@ void main() {
   ) async {
     await pumpConfig(tester, repository, searchRepository, listsRepository);
 
-    expect(find.text('Phạm vi từ'), findsOneWidget);
-    expect(find.text('Nguồn kiểm tra'), findsOneWidget);
-    expect(find.text('Danh sách của tôi'), findsOneWidget);
-    expect(find.text('Chủ đề cá nhân'), findsOneWidget);
+    expect(find.text('Word scope'), findsOneWidget);
+    expect(find.text('Quiz source'), findsOneWidget);
+    expect(find.text('My lists'), findsOneWidget);
+    expect(find.text('Personal topics'), findsOneWidget);
     expect(find.text('Favorites'), findsOneWidget);
-    expect(find.text('Chế độ'), findsOneWidget);
-    expect(find.text('Loại câu hỏi'), findsOneWidget);
-    expect(find.text('Cách trả lời'), findsOneWidget);
+    expect(find.text('Mode'), findsOneWidget);
+    expect(find.text('Question type'), findsOneWidget);
+    expect(find.text('Answer method'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('quiz-source-personal-topic')));
     await tester.pump();
-    expect(find.text('Du lịch'), findsOneWidget);
+    expect(find.text('Travel'), findsOneWidget);
     expect(find.text('Giáo dục'), findsNothing);
     expect(find.text('Favorites'), findsNothing);
 
@@ -182,8 +183,8 @@ void main() {
       find.byKey(const Key('start-quiz-button')),
     );
     expect(button.onPressed, isNull);
-    expect(find.text('Bạn đang ngoại tuyến'), findsOneWidget);
-    expect(find.byTooltip('Cần kết nối mạng'), findsOneWidget);
+    expect(find.text("You're offline"), findsOneWidget);
+    expect(find.byTooltip('Internet connection required'), findsOneWidget);
     verifyNever(() => repository.createSession(any()));
   });
 }
@@ -224,7 +225,11 @@ Future<GoRouter> pumpConfig(
         listsRepositoryProvider.overrideWithValue(listsRepository),
         connectivityProvider.overrideWith((ref) => Stream.value(isOnline)),
       ],
-      child: MaterialApp.router(routerConfig: router),
+      child: MaterialApp.router(
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+      ),
     ),
   );
   await tester.pump();

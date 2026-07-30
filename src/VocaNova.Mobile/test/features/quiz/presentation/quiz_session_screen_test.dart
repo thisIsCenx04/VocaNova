@@ -10,6 +10,7 @@ import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.d
 import 'package:vocanova_mobile/features/quiz/data/quiz_repository.dart';
 import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/quiz_session_screen.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   late MockQuizRepository repository;
@@ -30,7 +31,7 @@ void main() {
     ).thenAnswer((_) async => wrongAnswerWithNext);
     await pumpSession(tester, repository, timedSession);
 
-    expect(find.text('Câu 1/2'), findsOneWidget);
+    expect(find.text('Question 1/2'), findsOneWidget);
     expect(find.byKey(const Key('quiz-progress-bar')), findsOneWidget);
     expect(find.byKey(const Key('quiz-timer')), findsOneWidget);
     expect(find.text('apple'), findsWidgets);
@@ -40,7 +41,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Tiếp theo'), findsOneWidget);
+    expect(find.text('Next'), findsOneWidget);
     final wrongButton = tester.widget<OutlinedButton>(
       find.descendant(
         of: find.byKey(const Key('quiz-answer-1')),
@@ -58,7 +59,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('next-question-button')));
     await tester.pump();
-    expect(find.text('Câu 2/2'), findsOneWidget);
+    expect(find.text('Question 2/2'), findsOneWidget);
     expect(find.text('pear'), findsWidgets);
   });
 
@@ -71,8 +72,8 @@ void main() {
 
     await tester.tap(find.byKey(const Key('abandon-quiz-button')));
     await tester.pumpAndSettle();
-    expect(find.text('Bỏ bài kiểm tra?'), findsOneWidget);
-    await tester.tap(find.widgetWithText(FilledButton, 'Bỏ bài'));
+    expect(find.text('Quit the quiz?'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Quit'));
     await tester.pumpAndSettle();
 
     verify(() => repository.finishSession(9)).called(1);
@@ -120,7 +121,10 @@ void main() {
       find.byKey(const Key('typing-answer-input')),
     );
     expect(field.autofocus, isTrue);
-    expect(find.textContaining('Không phân biệt hoa thường'), findsOneWidget);
+    expect(
+      find.textContaining("Case and trailing punctuation don't matter."),
+      findsOneWidget,
+    );
 
     await tester.enterText(
       find.byKey(const Key('typing-answer-input')),
@@ -133,8 +137,8 @@ void main() {
       () =>
           repository.submitAnswer(sessionId: 9, wordId: 7, answer: 'APPLE!!!'),
     ).called(1);
-    expect(find.text('Chính xác'), findsOneWidget);
-    expect(find.text('Đáp án: apple'), findsOneWidget);
+    expect(find.text('Correct'), findsOneWidget);
+    expect(find.text('Answer: apple'), findsOneWidget);
   });
 
   testWidgets('AI typing shows loading, score, explanation, and suggestion', (
@@ -157,15 +161,15 @@ void main() {
     await tester.tap(find.byKey(const Key('submit-typing-answer-button')));
     await tester.pump();
 
-    expect(find.text('AI đang đánh giá...'), findsOneWidget);
+    expect(find.text('AI is grading...'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsWidgets);
 
     response.complete(aiAnswerResult);
     await tester.pumpAndSettle();
 
-    expect(find.text('Điểm AI: 75%'), findsOneWidget);
+    expect(find.text('AI score: 75%'), findsOneWidget);
     expect(find.text('Ý đúng nhưng chưa đủ.'), findsOneWidget);
-    expect(find.text('Gợi ý: Bổ sung màu sắc.'), findsOneWidget);
+    expect(find.text('Suggestion: Bổ sung màu sắc.'), findsOneWidget);
   });
 }
 
@@ -192,7 +196,11 @@ Future<GoRouter> pumpSession(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [quizRepositoryProvider.overrideWithValue(repository)],
-      child: MaterialApp.router(routerConfig: router),
+      child: MaterialApp.router(
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+      ),
     ),
   );
   router.go(

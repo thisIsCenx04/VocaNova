@@ -5,8 +5,10 @@ import 'package:intl/intl.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class ListsScreen extends ConsumerStatefulWidget {
   const ListsScreen({super.key});
@@ -25,6 +27,7 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(listsProvider);
+    final l10n = AppLocalizations.of(context)!;
     ref.listen(listsProvider.select((value) => value.errorMessage), (
       previous,
       next,
@@ -36,10 +39,10 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
       }
     });
     return Scaffold(
-      appBar: AppBar(title: const Text('Danh sách từ')),
+      appBar: AppBar(title: Text(l10n.listsTitle)),
       floatingActionButton: FloatingActionButton(
         key: const Key('create-list-fab'),
-        tooltip: 'Tạo danh sách',
+        tooltip: l10n.listsCreateDialogTitle,
         onPressed: state.isMutating || state.isOffline
             ? null
             : () => _showNameDialog(),
@@ -65,12 +68,12 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
                       physics: const AlwaysScrollableScrollPhysics(),
                       slivers: [
                         if (state.lists.isNotEmpty) ...[
-                          const SliverPadding(
-                            padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+                          SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                             sliver: SliverToBoxAdapter(
                               child: _ListSectionTitle(
-                                key: Key('user-lists-section'),
-                                title: 'Danh sách của tôi',
+                                key: const Key('user-lists-section'),
+                                title: l10n.listsMyListsSection,
                               ),
                             ),
                           ),
@@ -97,12 +100,12 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
                           ),
                         ],
                         if (state.personalTopics.isNotEmpty) ...[
-                          const SliverPadding(
-                            padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+                          SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
                             sliver: SliverToBoxAdapter(
                               child: _ListSectionTitle(
-                                key: Key('personal-topics-section'),
-                                title: 'Chủ đề cá nhân',
+                                key: const Key('personal-topics-section'),
+                                title: l10n.listsPersonalTopicsSection,
                               ),
                             ),
                           ),
@@ -149,10 +152,15 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
   Future<void> _showNameDialog({UserList? list}) async {
     final controller = TextEditingController(text: list?.listName);
     final formKey = GlobalKey<FormState>();
+    final l10n = AppLocalizations.of(context)!;
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(list == null ? 'Tạo danh sách' : 'Đổi tên danh sách'),
+        title: Text(
+          list == null
+              ? l10n.listsCreateDialogTitle
+              : l10n.listsRenameDialogTitle,
+        ),
         content: Form(
           key: formKey,
           child: TextFormField(
@@ -160,7 +168,7 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
             controller: controller,
             autofocus: true,
             maxLength: 100,
-            decoration: const InputDecoration(hintText: 'Tên danh sách'),
+            decoration: InputDecoration(hintText: l10n.listsNameFieldHint),
             validator: _validateName,
             onFieldSubmitted: (_) {
               if (formKey.currentState!.validate()) {
@@ -172,7 +180,7 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
+            child: Text(l10n.listsCancel),
           ),
           FilledButton(
             key: const Key('submit-list-name'),
@@ -181,7 +189,9 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
                 Navigator.pop(context, controller.text.trim());
               }
             },
-            child: Text(list == null ? 'Tạo' : 'Lưu'),
+            child: Text(
+              list == null ? l10n.listsCreateAction : l10n.listsSaveAction,
+            ),
           ),
         ],
       ),
@@ -197,6 +207,7 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
   }
 
   Future<void> _showActions(UserList list) async {
+    final l10n = AppLocalizations.of(context)!;
     final action = await showModalBottomSheet<_ListAction>(
       context: context,
       builder: (context) => SafeArea(
@@ -205,13 +216,13 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
             ListTile(
               key: const Key('rename-list-action'),
               leading: const Icon(Icons.edit_outlined),
-              title: const Text('Đổi tên'),
+              title: Text(l10n.listsRenameAction),
               onTap: () => Navigator.pop(context, _ListAction.rename),
             ),
             ListTile(
               key: const Key('delete-list-action'),
               leading: Icon(Icons.delete_outline, color: AppColors.error),
-              title: const Text('Xóa'),
+              title: Text(l10n.listsDeleteAction),
               onTap: () => Navigator.pop(context, _ListAction.delete),
             ),
           ],
@@ -227,20 +238,21 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
   }
 
   Future<void> _confirmDelete(UserList list) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Xóa danh sách?'),
-        content: Text('Danh sách "${list.listName}" sẽ bị xóa.'),
+        title: Text(l10n.listsDeleteConfirmTitle),
+        content: Text(l10n.listsDeleteConfirmBody(list.listName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Hủy'),
+            child: Text(l10n.listsCancel),
           ),
           FilledButton(
             key: const Key('confirm-delete-list'),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Xóa'),
+            child: Text(l10n.listsDeleteAction),
           ),
         ],
       ),
@@ -251,9 +263,10 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
   }
 
   String? _validateName(String? value) {
+    final l10n = AppLocalizations.of(context)!;
     final name = value?.trim() ?? '';
-    if (name.isEmpty) return 'Vui lòng nhập tên danh sách.';
-    if (name.length > 100) return 'Tên danh sách tối đa 100 ký tự.';
+    if (name.isEmpty) return l10n.listsNameRequiredError;
+    if (name.length > 100) return l10n.listsNameMaxLengthError;
     return null;
   }
 }
@@ -273,6 +286,7 @@ class _ListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: InkWell(
         key: Key('list-card-${list.listId}'),
@@ -299,9 +313,11 @@ class _ListCard extends StatelessWidget {
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 6),
-              Text('${list.wordCount} từ'),
+              Text(l10n.listsWordCount(list.wordCount)),
               Text(
-                'Tạo ngày ${DateFormat('dd/MM/yyyy').format(list.createdAt)}',
+                l10n.listsCreatedOnLabel(
+                  DateFormat('dd/MM/yyyy').format(list.createdAt),
+                ),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -320,6 +336,7 @@ class _PersonalTopicCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final icon = topic.icon?.trim();
     return Card(
       child: InkWell(
@@ -341,7 +358,7 @@ class _PersonalTopicCard extends StatelessWidget {
                 ),
               const Spacer(),
               Text(
-                topic.displayName,
+                topic.localizedName(context),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(
@@ -349,9 +366,9 @@ class _PersonalTopicCard extends StatelessWidget {
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 6),
-              Text('${topic.wordCount} từ'),
+              Text(l10n.listsWordCount(topic.wordCount)),
               Text(
-                'Chủ đề cá nhân',
+                l10n.listsPersonalTopicsSection,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -381,15 +398,13 @@ class _OfflineBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       key: const Key('lists-offline-banner'),
       width: double.infinity,
       color: AppColors.error.withValues(alpha: 0.18),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: const Text(
-        'Bạn đang offline. Đang hiển thị danh sách đã lưu.',
-        textAlign: TextAlign.center,
-      ),
+      child: Text(l10n.listsOfflineBanner, textAlign: TextAlign.center),
     );
   }
 }
@@ -399,13 +414,11 @@ class _EmptyLists extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final l10n = AppLocalizations.of(context)!;
+    return Center(
       child: Padding(
-        padding: EdgeInsets.all(24),
-        child: Text(
-          'Bạn chưa có danh sách từ nào.\nNhấn + để tạo danh sách đầu tiên.',
-          textAlign: TextAlign.center,
-        ),
+        padding: const EdgeInsets.all(24),
+        child: Text(l10n.listsEmptyState, textAlign: TextAlign.center),
       ),
     );
   }

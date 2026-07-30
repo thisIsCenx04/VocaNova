@@ -6,6 +6,8 @@ import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/add_to_list_sheet.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class TopicDetailScreen extends ConsumerStatefulWidget {
   const TopicDetailScreen({
@@ -43,12 +45,16 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final topic = widget.initialTopic;
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(
           widget.isPersonal
-              ? 'My ${topic?.displayName ?? 'topic'}'
-              : topic?.displayName ?? 'Topic detail',
+              ? l10n.dictMyTopicTitle(
+                  topic?.localizedName(context) ?? l10n.dictTopicFallbackName,
+                )
+              : topic?.localizedName(context) ??
+                    l10n.dictTopicDetailFallbackTitle,
         ),
       ),
       body: FutureBuilder<List<WordSummary>>(
@@ -61,7 +67,9 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
             return Center(
               child: TextButton(
                 onPressed: () => setState(_load),
-                child: const Text('Unable to load words. Try again'),
+                child: Text(
+                  AppLocalizations.of(context)!.dictUnableToLoadWordsRetry,
+                ),
               ),
             );
           }
@@ -95,7 +103,9 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                         AppRoutes.quizConfigForList('${topic.listId}'),
                       ),
                       icon: const Icon(Icons.quiz_outlined),
-                      label: const Text('Practice my saved words'),
+                      label: Text(
+                        AppLocalizations.of(context)!.dictPracticeSavedWords,
+                      ),
                     ),
                   ),
                 ],
@@ -109,7 +119,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                       for (final tab in _tabs) ...[
                         ChoiceChip(
                           key: Key('topic-filter-${tab.toLowerCase()}'),
-                          label: Text(tab),
+                          label: Text(_tabLabel(context, tab)),
                           selected: _filter == tab,
                           onSelected: (_) => setState(() => _filter = tab),
                         ),
@@ -120,14 +130,19 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
                 ),
                 const SizedBox(height: 12),
                 if (visible.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 48),
-                    child: Center(child: Text('No words in this category.')),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 48),
+                    child: Center(
+                      child: Text(
+                        AppLocalizations.of(context)!.dictNoWordsInCategory,
+                      ),
+                    ),
                   )
                 else
-                  for (final word in visible)
+                  for (final (index, word) in visible.indexed)
                     _TopicWordTile(
                       word: word,
+                      alternate: index.isOdd,
                       onOpen: () =>
                           context.push(AppRoutes.wordDetail('${word.wordId}')),
                       onAdd: () => showModalBottomSheet<void>(
@@ -155,14 +170,38 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
           .removePersonalTopicWord(topicId: widget.topicId, wordId: wordId);
       if (!mounted) return;
       setState(_load);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Removed from your topic.')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.dictRemovedFromTopic),
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to remove this word.')),
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.dictUnableToRemoveWord,
+          ),
+        ),
       );
+    }
+  }
+
+  /// [tab] is one of the internal English identifiers in [_tabs] (also used
+  /// for widget keys and matched against [WordSummary.learningStatus]); this
+  /// only maps it to the localized label shown on the chip.
+  String _tabLabel(BuildContext context, String tab) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (tab) {
+      case 'New':
+        return l10n.dictStatNew;
+      case 'Learning':
+        return l10n.dictStatLearning;
+      case 'Mastered':
+        return l10n.dictStatMastered;
+      default:
+        return l10n.dictCategoryAll;
     }
   }
 }
@@ -184,10 +223,14 @@ class _TopicHero extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              topic.displayName,
+              topic.localizedName(context),
               style: Theme.of(context).textTheme.headlineSmall,
             ),
-            Text('${topic.wordCount} words'),
+            Text(
+              AppLocalizations.of(context)!.dictWordCountLabel(
+                topic.wordCount,
+              ),
+            ),
           ],
         ),
       ),
@@ -207,11 +250,12 @@ class _Stats extends StatelessWidget {
         ? 0.0
         : words.fold<double>(0, (sum, word) => sum + word.masteryScore) /
               words.length;
+    final l10n = AppLocalizations.of(context)!;
     final values = [
-      ('Mastered', '${count('mastered')}'),
-      ('Learning', '${count('learning')}'),
-      ('New', '${count('new')}'),
-      ('Avg mastery', '${average.toStringAsFixed(0)}%'),
+      (l10n.dictStatMastered, '${count('mastered')}'),
+      (l10n.dictStatLearning, '${count('learning')}'),
+      (l10n.dictStatNew, '${count('new')}'),
+      (l10n.dictStatAvgMastery, '${average.toStringAsFixed(0)}%'),
     ];
     return Row(
       key: const Key('topic-stats'),
@@ -246,32 +290,49 @@ class _TopicWordTile extends StatelessWidget {
     required this.onOpen,
     required this.onAdd,
     this.onRemove,
+    this.alternate = false,
   });
   final WordSummary word;
   final VoidCallback onOpen;
   final VoidCallback onAdd;
   final VoidCallback? onRemove;
 
+  /// Dòng lẻ đổi nền nhạt hơn để hai dòng liền nhau dễ phân biệt khi lướt.
+  final bool alternate;
+
   @override
-  Widget build(BuildContext context) => Card(
-    margin: const EdgeInsets.only(bottom: 10),
-    child: ListTile(
-      key: Key('topic-word-${word.wordId}'),
-      onTap: onOpen,
-      title: Text(word.word),
-      subtitle: Text(word.primaryMeaning ?? word.phonetic ?? ''),
-      trailing: IconButton(
-        key: Key(
-          onRemove == null
-              ? 'add-topic-word-${word.wordId}'
-              : 'remove-personal-topic-word-${word.wordId}',
-        ),
-        tooltip: onRemove == null ? 'Add to list' : 'Remove from my topic',
-        onPressed: onRemove ?? onAdd,
-        icon: Icon(
-          onRemove == null ? Icons.playlist_add : Icons.remove_circle_outline,
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      color: alternate
+          ? Color.alphaBlend(
+              scheme.onSurface.withValues(alpha: 0.07),
+              scheme.surface,
+            )
+          : scheme.surface,
+      child: ListTile(
+        key: Key('topic-word-${word.wordId}'),
+        onTap: onOpen,
+        title: Text(word.word),
+        subtitle: Text(word.primaryMeaning ?? word.phonetic ?? ''),
+        trailing: IconButton(
+          key: Key(
+            onRemove == null
+                ? 'add-topic-word-${word.wordId}'
+                : 'remove-personal-topic-word-${word.wordId}',
+          ),
+          tooltip: onRemove == null
+              ? AppLocalizations.of(context)!.dictAddToListTooltip
+              : AppLocalizations.of(context)!.dictRemoveFromTopicTooltip,
+          onPressed: onRemove ?? onAdd,
+          icon: Icon(
+            onRemove == null
+                ? Icons.playlist_add
+                : Icons.remove_circle_outline,
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

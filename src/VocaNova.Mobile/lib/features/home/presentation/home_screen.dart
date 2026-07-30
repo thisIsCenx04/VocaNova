@@ -8,12 +8,14 @@ import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
 import 'package:vocanova_mobile/features/home/application/home_topics_provider.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
 import 'package:vocanova_mobile/features/notifications/application/notifications_notifier.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/wrong_words_notifier.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class _HomePalette {
   const _HomePalette({
@@ -90,6 +92,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final palette = _HomePalette.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final displayName = ref.watch(
       authProvider.select((state) => state.user?.displayName),
     );
@@ -112,7 +115,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      _greeting(),
+                      _greeting(l10n),
                       style: AppTextStyles.caption.copyWith(
                         color: palette.secondaryText,
                         fontSize: 13,
@@ -120,7 +123,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                     Text(
-                      displayName == null ? 'Welcome back' : 'Hi, $displayName',
+                      displayName == null
+                          ? l10n.homeWelcomeBack
+                          : l10n.homeGreetingName(displayName),
                       style: AppTextStyles.heading.copyWith(
                         color: palette.text,
                         fontSize: 28,
@@ -153,11 +158,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  static String _greeting() {
+  static String _greeting(AppLocalizations l10n) {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return l10n.homeGreetingMorning;
+    if (hour < 18) return l10n.homeGreetingAfternoon;
+    return l10n.homeGreetingEvening;
   }
 }
 
@@ -199,7 +204,7 @@ class _SectionHeader extends StatelessWidget {
                     vertical: 6,
                   ),
                   child: Text(
-                    'See all',
+                    AppLocalizations.of(context)!.homeSeeAll,
                     style: AppTextStyles.caption.copyWith(
                       color: palette.text,
                       fontSize: 12,
@@ -400,7 +405,7 @@ class _SearchPill extends StatelessWidget {
               Icon(Icons.search, size: 16, color: palette.secondaryText),
               const SizedBox(width: 12),
               Text(
-                'Search a word...',
+                AppLocalizations.of(context)!.homeSearchHint,
                 style: AppTextStyles.caption.copyWith(
                   color: palette.secondaryText,
                   fontSize: 14,
@@ -440,6 +445,7 @@ class _DailyGoalCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = _HomePalette.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final foreground = palette.isDark ? AppColors.onSurface : Colors.black;
     final summary = ref.watch(
       progressOverviewProvider.select((state) => state.summary),
@@ -448,10 +454,12 @@ class _DailyGoalCard extends ConsumerWidget {
     final mastered = summary?.masteredWords ?? 0;
     final streak = summary?.currentStreakDays ?? 0;
     final progress = total == 0 ? 0.0 : (mastered / total).clamp(0.0, 1.0);
-    final goalText = summary == null ? '— / —' : '$mastered / $total words';
+    final goalText = summary == null
+        ? '— / —'
+        : l10n.homeGoalProgress(mastered, total);
     final streakText = streak > 0
-        ? 'Keep your $streak-day streak'
-        : 'Start a streak today';
+        ? l10n.homeStreakActive(streak)
+        : l10n.homeStreakInactive;
     return Container(
       constraints: const BoxConstraints(minHeight: 142),
       padding: const EdgeInsets.fromLTRB(19, 17, 19, 13),
@@ -467,7 +475,7 @@ class _DailyGoalCard extends ConsumerWidget {
               Icon(Icons.track_changes, size: 12, color: foreground),
               const SizedBox(width: 6),
               Text(
-                'DAILY GOAL',
+                l10n.homeDailyGoalLabel,
                 style: AppTextStyles.caption.copyWith(
                   color: foreground,
                   fontSize: 10,
@@ -499,7 +507,7 @@ class _DailyGoalCard extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      'mastered so far',
+                      l10n.homeMasteredSoFar,
                       style: AppTextStyles.caption.copyWith(
                         color: palette.isDark
                             ? palette.secondaryText
@@ -643,10 +651,18 @@ class _StreakDots extends StatelessWidget {
   final Color foreground;
   final int filled;
 
-  static const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final days = [
+      l10n.homeWeekdayMonShort,
+      l10n.homeWeekdayTueShort,
+      l10n.homeWeekdayWedShort,
+      l10n.homeWeekdayThuShort,
+      l10n.homeWeekdayFriShort,
+      l10n.homeWeekdaySatShort,
+      l10n.homeWeekdaySunShort,
+    ];
     return Row(
       children: [
         for (var i = 0; i < days.length; i++) ...[
@@ -693,6 +709,7 @@ class _WordOfTheDayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = _HomePalette.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final foreground = palette.isDark ? AppColors.onSurface : Colors.black;
     return Container(
       constraints: const BoxConstraints(minHeight: 225),
@@ -708,7 +725,7 @@ class _WordOfTheDayCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'WORD OF THE DAY',
+                l10n.homeWordOfTheDayLabel,
                 style: AppTextStyles.caption.copyWith(
                   color: foreground,
                   fontSize: 10,
@@ -786,14 +803,14 @@ class _WordOfTheDayCard extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              child: const FittedBox(
+              child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Learn this word'),
-                    SizedBox(width: 6),
-                    Icon(Icons.chevron_right, size: 14),
+                    Text(l10n.homeLearnThisWord),
+                    const SizedBox(width: 6),
+                    const Icon(Icons.chevron_right, size: 14),
                   ],
                 ),
               ),
@@ -810,6 +827,7 @@ class _StatsRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final summary = ref.watch(
       progressOverviewProvider.select((state) => state.summary),
     );
@@ -831,7 +849,7 @@ class _StatsRow extends ConsumerWidget {
             icon: Icons.menu_book_outlined,
             iconColor: AppColors.primary,
             value: loading && summary == null ? '—' : words,
-            label: 'Words',
+            label: l10n.homeStatWords,
           ),
         ),
         const SizedBox(width: 10),
@@ -840,7 +858,7 @@ class _StatsRow extends ConsumerWidget {
             icon: Icons.trending_up,
             iconColor: const Color(0xFF20C7A3),
             value: loading && summary == null ? '—' : accuracy,
-            label: 'Accuracy',
+            label: l10n.homeStatAccuracy,
           ),
         ),
         const SizedBox(width: 10),
@@ -849,7 +867,7 @@ class _StatsRow extends ConsumerWidget {
             icon: Icons.emoji_events_outlined,
             iconColor: const Color(0xFFFFA425),
             value: loading && summary == null ? '—' : mastered,
-            label: 'Mastered',
+            label: l10n.homeStatMastered,
           ),
         ),
       ],
@@ -923,6 +941,7 @@ class _ContinueCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(listsProvider);
     if (state.isLoading && state.lists.isEmpty) {
       return const _ContinueSkeleton();
@@ -966,7 +985,7 @@ class _ContinueCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'CONTINUE',
+                        l10n.homeContinueLabel,
                         style: AppTextStyles.caption.copyWith(
                           color: Colors.white.withValues(alpha: 0.55),
                           fontSize: 10,
@@ -989,8 +1008,7 @@ class _ContinueCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${list.wordCount} '
-                        '${list.wordCount == 1 ? "word" : "words"}',
+                        l10n.homeWordCount(list.wordCount),
                         style: AppTextStyles.caption.copyWith(
                           color: Colors.white.withValues(alpha: 0.6),
                           fontSize: 12,
@@ -1046,6 +1064,7 @@ class _QuickActionsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = _HomePalette.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
       decoration: BoxDecoration(
@@ -1057,7 +1076,7 @@ class _QuickActionsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Quick actions',
+            l10n.homeQuickActionsTitle,
             style: AppTextStyles.heading.copyWith(
               color: palette.text,
               fontSize: 16,
@@ -1072,7 +1091,7 @@ class _QuickActionsCard extends StatelessWidget {
                 child: _QuickAction(
                   icon: Icons.bolt,
                   iconColor: AppColors.primary,
-                  label: 'Quiz',
+                  label: l10n.homeActionQuiz,
                   onTap: () => context.go(AppRoutes.quizConfig),
                 ),
               ),
@@ -1080,7 +1099,7 @@ class _QuickActionsCard extends StatelessWidget {
                 child: _QuickAction(
                   icon: Icons.replay,
                   iconColor: const Color(0xFFFF6B6B),
-                  label: 'Review',
+                  label: l10n.homeActionReview,
                   onTap: () => context.push(AppRoutes.wrongWords),
                 ),
               ),
@@ -1088,7 +1107,7 @@ class _QuickActionsCard extends StatelessWidget {
                 child: _QuickAction(
                   icon: Icons.menu_book_outlined,
                   iconColor: const Color(0xFF20C7A3),
-                  label: 'Topics',
+                  label: l10n.homeActionTopics,
                   onTap: () => context.push(AppRoutes.topics),
                 ),
               ),
@@ -1207,7 +1226,10 @@ class _TopicsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionHeader(title: 'Topics for you', onSeeAll: onSeeAll),
+          _SectionHeader(
+            title: AppLocalizations.of(context)!.homeTopicsForYouTitle,
+            onSeeAll: onSeeAll,
+          ),
           child,
         ],
       ),
@@ -1249,7 +1271,7 @@ class _TopicCard extends StatelessWidget {
                 Text(emoji, style: const TextStyle(fontSize: 26)),
                 const Spacer(),
                 Text(
-                  topic.displayName,
+                  topic.localizedName(context),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.button.copyWith(
@@ -1261,7 +1283,9 @@ class _TopicCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${topic.wordCount} words',
+                  AppLocalizations.of(context)!.homeTopicWordCount(
+                    topic.wordCount,
+                  ),
                   style: AppTextStyles.caption.copyWith(
                     color: palette.secondaryText,
                     fontSize: 11,
@@ -1308,6 +1332,7 @@ class _OverdueBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(wrongWordsProvider);
     if (state.isLoading && state.words.isEmpty) return const SizedBox.shrink();
     final count = state.words.length;
@@ -1347,7 +1372,7 @@ class _OverdueBanner extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '$countLabel words to review',
+                        l10n.homeWordsToReviewLabel(countLabel),
                         style: AppTextStyles.button.copyWith(
                           color: palette.isDark ? Colors.white : Colors.black,
                           fontSize: 16,
@@ -1356,7 +1381,7 @@ class _OverdueBanner extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        'Tap to review your mistakes',
+                        l10n.homeTapToReviewMistakes,
                         style: AppTextStyles.caption.copyWith(
                           color: palette.isDark
                               ? Colors.white70
@@ -1387,6 +1412,7 @@ class _MyListsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(listsProvider);
     final palette = _HomePalette.of(context);
     if (state.isLoading && state.lists.isEmpty) {
@@ -1394,7 +1420,7 @@ class _MyListsCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _SectionHeader(title: 'My lists'),
+            _SectionHeader(title: l10n.homeMyListsTitle),
             const Center(
               child: Padding(
                 padding: EdgeInsets.all(8),
@@ -1415,14 +1441,14 @@ class _MyListsCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _SectionHeader(title: 'My lists'),
+            _SectionHeader(title: l10n.homeMyListsTitle),
             Row(
               children: [
                 Icon(Icons.add_circle_outline, color: AppColors.primary),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Create your first list to start learning',
+                    l10n.homeCreateFirstList,
                     style: AppTextStyles.caption.copyWith(
                       color: palette.secondaryText,
                       fontSize: 13,
@@ -1442,7 +1468,7 @@ class _MyListsCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionHeader(
-            title: 'My lists',
+            title: l10n.homeMyListsTitle,
             onSeeAll: () => context.go(AppRoutes.lists),
           ),
           for (var i = 0; i < lists.length; i++) ...[
@@ -1507,7 +1533,9 @@ class _MyListRow extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${list.wordCount} ${list.wordCount == 1 ? "word" : "words"}',
+                      AppLocalizations.of(context)!.homeWordCount(
+                        list.wordCount,
+                      ),
                       style: AppTextStyles.caption.copyWith(
                         color: palette.secondaryText,
                         fontSize: 12,

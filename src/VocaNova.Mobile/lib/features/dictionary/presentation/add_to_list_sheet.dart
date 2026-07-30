@@ -7,6 +7,8 @@ import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_detail_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_detail.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 enum _SaveDestination { lists, topics }
 
@@ -73,7 +75,7 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
             ),
             const SizedBox(height: 18),
             Text(
-              'Add to list',
+              AppLocalizations.of(context)!.dictAddToListTooltip,
               style: AppTextStyles.button.copyWith(
                 color: const Color(0xFF111111),
                 fontSize: 18,
@@ -83,7 +85,7 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Choose a personal list or build a quiz-ready topic.',
+              AppLocalizations.of(context)!.dictAddToListSheetSubtitle,
               style: AppTextStyles.caption.copyWith(
                 color: const Color(0xFF77727F),
                 fontSize: 13,
@@ -93,16 +95,16 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
             SizedBox(
               width: double.infinity,
               child: SegmentedButton<_SaveDestination>(
-                segments: const [
+                segments: [
                   ButtonSegment(
                     value: _SaveDestination.lists,
-                    icon: Icon(Icons.bookmark_outline, size: 18),
-                    label: Text('My lists'),
+                    icon: const Icon(Icons.bookmark_outline, size: 18),
+                    label: Text(AppLocalizations.of(context)!.dictMyListsLabel),
                   ),
                   ButtonSegment(
                     value: _SaveDestination.topics,
-                    icon: Icon(Icons.auto_stories_outlined, size: 18),
-                    label: Text('My topics'),
+                    icon: const Icon(Icons.auto_stories_outlined, size: 18),
+                    label: Text(AppLocalizations.of(context)!.dictMyTopicsLabel),
                   ),
                 ],
                 selected: {_destination},
@@ -138,11 +140,11 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 icon: const Icon(Icons.add, size: 16),
-                label: const Text('New list'),
+                label: Text(AppLocalizations.of(context)!.dictNewListLabel),
               ),
             const SizedBox(height: 8),
             Text(
-              'Note (optional)',
+              AppLocalizations.of(context)!.dictNoteOptionalLabel,
               style: AppTextStyles.caption.copyWith(
                 color: const Color(0xFF9E9E9E),
                 fontSize: 13,
@@ -162,9 +164,9 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
                       required isFocused,
                       maxLength,
                     }) => null,
-                decoration: const InputDecoration(
-                  hintText: 'Add a note...',
-                  contentPadding: EdgeInsets.symmetric(
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)!.dictAddNoteHint,
+                  contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 10,
                   ),
@@ -197,8 +199,10 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
                       )
                     : Text(
                         _destination == _SaveDestination.lists
-                            ? 'Save to list'
-                            : 'Add to topic',
+                            ? AppLocalizations.of(context)!.dictSaveToListLabel
+                            : AppLocalizations.of(
+                                context,
+                              )!.dictAddToTopicLabel,
                       ),
               ),
             ),
@@ -230,12 +234,13 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
 
   Widget _listContent() {
     if (_lists.isEmpty) {
-      return const Center(child: Text('Create a list to save this word.'));
+      return Center(
+        child: Text(AppLocalizations.of(context)!.dictCreateListPrompt),
+      );
     }
-    return ListView.separated(
+    return ListView.builder(
       padding: EdgeInsets.zero,
       itemCount: _lists.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final list = _lists[index];
         final selected = list.listId == _selectedListId;
@@ -243,8 +248,11 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
           key: Key('add-to-list-${list.listId}'),
           icon: selected ? Icons.bookmark : Icons.bookmark_border,
           title: list.listName,
-          subtitle: '${list.wordCount} words',
+          subtitle: AppLocalizations.of(
+            context,
+          )!.dictWordCountLabel(list.wordCount),
           selected: selected,
+          alternate: index.isOdd,
           onTap: _isSaving
               ? null
               : () => setState(() => _selectedListId = list.listId),
@@ -255,14 +263,15 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
 
   Widget _topicContent() {
     if (_topics.isEmpty) {
-      return const Center(
-        child: Text('This word has no system topic assignment.'),
+      return Center(
+        child: Text(
+          AppLocalizations.of(context)!.dictNoSystemTopicAssignment,
+        ),
       );
     }
-    return ListView.separated(
+    return ListView.builder(
       padding: EdgeInsets.zero,
       itemCount: _topics.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final topic = _topics[index];
         final selected = topic.topicId == _selectedTopicId;
@@ -272,12 +281,15 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
               ? Icons.check_circle
               : Icons.auto_stories_outlined,
           emoji: topic.icon,
-          title: topic.displayName,
+          title: topic.localizedName(context),
           subtitle: topic.containsWord
-              ? 'Already in your topic'
-              : '${topic.wordCount} personal words',
+              ? AppLocalizations.of(context)!.dictAlreadyInTopic
+              : AppLocalizations.of(
+                  context,
+                )!.dictPersonalWordCount(topic.wordCount),
           selected: selected,
           disabled: topic.containsWord,
+          alternate: index.isOdd,
           onTap: _isSaving || topic.containsWord
               ? null
               : () => setState(() => _selectedTopicId = topic.topicId),
@@ -316,7 +328,7 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'Unable to load your save destinations.';
+        _error = AppLocalizations.of(context)!.dictUnableToLoadDestinations;
         _isLoading = false;
       });
     }
@@ -327,18 +339,20 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
     final name = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('New list'),
+        title: Text(AppLocalizations.of(context)!.dictNewListLabel),
         content: TextField(
           key: const Key('new-list-name'),
           autofocus: true,
           maxLength: 100,
           onChanged: (value) => pendingName = value,
-          decoration: const InputDecoration(hintText: 'List name'),
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(context)!.dictListNameHint,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.dictCancelLabel),
           ),
           FilledButton(
             key: const Key('create-list-from-word'),
@@ -346,7 +360,7 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
               final value = pendingName.trim();
               if (value.isNotEmpty) Navigator.pop(dialogContext, value);
             },
-            child: const Text('Create'),
+            child: Text(AppLocalizations.of(context)!.dictCreateLabel),
           ),
         ],
       ),
@@ -367,7 +381,7 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _isSaving = false);
-      _showError('Unable to create the list.');
+      _showError(AppLocalizations.of(context)!.dictUnableToCreateList);
     }
   }
 
@@ -376,7 +390,7 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
     final repository = ref.read(wordDetailRepositoryProvider);
     final note = _noteController.text.trim();
     try {
-      final String destinationName;
+      final String Function() destinationNameOf;
       if (_destination == _SaveDestination.lists) {
         final listId = _selectedListId!;
         await repository.addWordToList(
@@ -384,9 +398,8 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
           wordId: widget.wordId,
           note: note,
         );
-        destinationName = _lists
-            .firstWhere((item) => item.listId == listId)
-            .listName;
+        destinationNameOf = () =>
+            _lists.firstWhere((item) => item.listId == listId).listName;
       } else {
         final topicId = _selectedTopicId!;
         await repository.addWordToPersonalTopic(
@@ -394,19 +407,21 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
           wordId: widget.wordId,
           note: note,
         );
-        destinationName = _topics
+        destinationNameOf = () => _topics
             .firstWhere((item) => item.topicId == topicId)
-            .displayName;
+            .localizedName(context);
       }
       if (!mounted) return;
+      final destinationName = destinationNameOf();
+      final l10n = AppLocalizations.of(context)!;
       Navigator.pop(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Added to $destinationName.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.dictAddedToDestination(destinationName))),
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _isSaving = false);
-      _showError('Unable to save this word.');
+      _showError(AppLocalizations.of(context)!.dictUnableToSaveWord);
     }
   }
 
@@ -426,6 +441,7 @@ class _DestinationRow extends StatelessWidget {
     required this.onTap,
     this.emoji,
     this.disabled = false,
+    this.alternate = false,
     super.key,
   });
 
@@ -437,12 +453,17 @@ class _DestinationRow extends StatelessWidget {
   final bool disabled;
   final VoidCallback? onTap;
 
+  /// Dòng lẻ đổi nền nhạt hơn để hai dòng liền nhau dễ phân biệt khi lướt.
+  final bool alternate;
+
   @override
   Widget build(BuildContext context) {
     return Material(
       color: selected
           ? AppColors.primary.withValues(alpha: 0.05)
-          : Colors.transparent,
+          : alternate
+          ? Color.alphaBlend(Colors.black.withValues(alpha: 0.05), Colors.white)
+          : Colors.white,
       child: InkWell(
         onTap: onTap,
         child: SizedBox(

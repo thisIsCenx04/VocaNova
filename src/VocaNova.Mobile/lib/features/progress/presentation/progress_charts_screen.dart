@@ -8,6 +8,7 @@ import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_charts_notifier.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_charts_state.dart';
 import 'package:vocanova_mobile/features/progress/domain/progress_analytics.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class ProgressChartsScreen extends ConsumerStatefulWidget {
   const ProgressChartsScreen({super.key});
@@ -37,8 +38,9 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen> {
         ).showSnackBar(SnackBar(content: Text(next)));
       }
     });
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Biểu đồ tiến độ')),
+      appBar: AppBar(title: Text(l10n.progressChartsTitle)),
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())
           : state.chart == null
@@ -58,6 +60,7 @@ class _ChartsContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     return ListView(
       key: const Key('progress-charts-list'),
       physics: const AlwaysScrollableScrollPhysics(),
@@ -67,7 +70,7 @@ class _ChartsContent extends ConsumerWidget {
           children: [
             Expanded(
               child: Text(
-                'Số buổi học',
+                l10n.progressSessionsCountLabel,
                 style: Theme.of(
                   context,
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -79,10 +82,19 @@ class _ChartsContent extends ConsumerWidget {
                 key: const Key('chart-granularity'),
                 initialValue: state.granularity,
                 isExpanded: true,
-                items: const [
-                  DropdownMenuItem(value: 'daily', child: Text('Theo ngày')),
-                  DropdownMenuItem(value: 'weekly', child: Text('Theo tuần')),
-                  DropdownMenuItem(value: 'monthly', child: Text('Theo tháng')),
+                items: [
+                  DropdownMenuItem(
+                    value: 'daily',
+                    child: Text(l10n.progressGranularityDaily),
+                  ),
+                  DropdownMenuItem(
+                    value: 'weekly',
+                    child: Text(l10n.progressGranularityWeekly),
+                  ),
+                  DropdownMenuItem(
+                    value: 'monthly',
+                    child: Text(l10n.progressGranularityMonthly),
+                  ),
                 ],
                 onChanged: state.isLoadingChart
                     ? null
@@ -112,7 +124,7 @@ class _ChartsContent extends ConsumerWidget {
         ),
         const SizedBox(height: 22),
         Text(
-          'Mức độ thành thạo',
+          l10n.progressMasteryLevelLabel,
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -130,17 +142,17 @@ class _ChartsContent extends ConsumerWidget {
         ),
         const SizedBox(height: 22),
         Text(
-          '10 từ yếu nhất',
+          l10n.progressTop10WeakestWordsLabel,
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 12),
         if (state.weakestWords.isEmpty)
-          const Card(
+          Card(
             child: Padding(
-              padding: EdgeInsets.all(18),
-              child: Text('Chưa có từ yếu cần ôn tập.'),
+              padding: const EdgeInsets.all(18),
+              child: Text(l10n.progressNoWeakestWords),
             ),
           )
         else
@@ -236,6 +248,7 @@ class _MasteryBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final maxCount = items.fold<int>(
       1,
       (current, item) => math.max(current, item.wordCount),
@@ -247,7 +260,10 @@ class _MasteryBarChart extends StatelessWidget {
           Row(
             key: Key('mastery-level-${item.masteryLevel}'),
             children: [
-              SizedBox(width: 42, child: Text('Lv.${item.masteryLevel}')),
+              SizedBox(
+                width: 42,
+                child: Text(l10n.progressMasteryLevelShort(item.masteryLevel)),
+              ),
               Expanded(
                 child: LinearProgressIndicator(
                   minHeight: 16,
@@ -274,6 +290,7 @@ class _WeakestWordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       key: Key('weakest-word-${word.wordId}'),
       margin: const EdgeInsets.only(bottom: 10),
@@ -303,7 +320,9 @@ class _WeakestWordCard extends StatelessWidget {
                 value: word.accuracyRate.clamp(0, 100) / 100,
               ),
               const SizedBox(height: 6),
-              Text('Đúng ${word.correctCount} · Sai ${word.wrongCount}'),
+              Text(
+                l10n.progressWordStatsLabel(word.correctCount, word.wrongCount),
+              ),
             ],
           ),
         ),
@@ -320,7 +339,10 @@ class _ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: FilledButton(onPressed: onRetry, child: const Text('Thử lại')),
+      child: FilledButton(
+        onPressed: onRetry,
+        child: Text(AppLocalizations.of(context)!.progressRetry),
+      ),
     );
   }
 }

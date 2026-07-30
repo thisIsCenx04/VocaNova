@@ -1,9 +1,14 @@
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/core/network/api_endpoints.dart';
 import 'package:vocanova_mobile/features/auth/domain/onboarding_catalog.dart';
 import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
+
+AppLocalizations get _l10n =>
+    lookupAppLocalizations(AppSettingsNotifier.instance.state.locale);
 
 class AuthRepository {
   const AuthRepository({required Dio dio}) : _dio = dio;
@@ -55,7 +60,7 @@ class AuthRepository {
     );
     final data = response.data?['data'];
     if (data is! int) {
-      throw const FormatException('API response data is invalid.');
+      throw FormatException(_l10n.authApiResponseInvalid);
     }
     return data;
   }
@@ -126,7 +131,7 @@ class AuthRepository {
     );
     final data = response.data?['data'];
     if (data is! bool) {
-      throw const FormatException('API response data is invalid.');
+      throw FormatException(_l10n.authApiResponseInvalid);
     }
     return data;
   }
@@ -180,7 +185,7 @@ class AuthRepository {
     );
     final data = response.data?['data'];
     if (data is! bool) {
-      throw const FormatException('API response data is invalid.');
+      throw FormatException(_l10n.authApiResponseInvalid);
     }
     return data;
   }
@@ -199,7 +204,7 @@ class AuthRepository {
   Map<String, dynamic> _responseData(Response<Map<String, dynamic>> response) {
     final data = response.data?['data'];
     if (data is! Map<String, dynamic>) {
-      throw const FormatException('API response data is invalid.');
+      throw FormatException(_l10n.authApiResponseInvalid);
     }
     return data;
   }

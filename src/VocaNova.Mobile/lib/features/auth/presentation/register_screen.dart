@@ -8,6 +8,7 @@ import 'package:vocanova_mobile/features/auth/presentation/auth_form_scaffold.da
 import 'package:vocanova_mobile/features/auth/presentation/auth_request_error.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_validators.dart';
 import 'package:vocanova_mobile/features/auth/presentation/otp_screen.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -67,9 +68,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AuthFormScaffold(
-      title: 'Create account',
-      subtitle: 'Start learning today',
+      title: l10n.authCreateAccountTitle,
+      subtitle: l10n.authStartLearningSubtitle,
       showBackButton: true,
       onBack: () => context.go(AppRoutes.login),
       form: Form(
@@ -83,7 +85,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               enabled: !_isLoading,
               textInputAction: TextInputAction.next,
               decoration: authInputDecoration(
-                label: 'Full name',
+                label: l10n.authFullNameLabel,
                 hint: 'Nguyen Van An',
               ),
               validator: AuthValidators.displayName,
@@ -96,7 +98,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.next,
               decoration: authInputDecoration(
-                label: 'Phone number',
+                label: l10n.authPhoneNumberLabel,
                 hint: '+84 90 000 0000',
               ),
               validator: AuthValidators.phone,
@@ -109,8 +111,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               obscureText: _obscurePassword,
               textInputAction: TextInputAction.next,
               decoration: authInputDecoration(
-                label: 'Password',
-                hint: 'At least 8 characters',
+                label: l10n.authPasswordLabel,
+                hint: l10n.authPasswordHintMinChars,
                 suffixIcon: _visibilityButton(
                   obscure: _obscurePassword,
                   onPressed: () {
@@ -133,8 +135,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               obscureText: _obscureConfirmation,
               textInputAction: TextInputAction.done,
               decoration: authInputDecoration(
-                label: 'Confirm password',
-                hint: 'Repeat your password',
+                label: l10n.authConfirmPasswordLabel,
+                hint: l10n.authRepeatPasswordHint,
                 suffixIcon: _visibilityButton(
                   obscure: _obscureConfirmation,
                   onPressed: () {
@@ -157,7 +159,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               onPressed: _isLoading ? null : _submit,
               child: _isLoading
                   ? authLoadingIndicator()
-                  : const Text('Create account'),
+                  : Text(l10n.authCreateAccountTitle),
             ),
             const SizedBox(height: 16),
             const AuthDivider(),
@@ -169,8 +171,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ),
             const SizedBox(height: 12),
             AuthInlineLink(
-              text: 'Already have an account? ',
-              actionText: 'Sign in',
+              text: l10n.authAlreadyHaveAccountPrefix,
+              actionText: l10n.authSignInTitle,
               onPressed: _isLoading ? null : () => context.go(AppRoutes.login),
             ),
           ],
@@ -186,17 +188,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         _options.regions.isNotEmpty ||
         _options.occupations.isNotEmpty ||
         _options.educationLevels.isNotEmpty;
+    final l10n = AppLocalizations.of(context)!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Cá nhân hóa gợi ý học (không bắt buộc)',
+          l10n.authLearningProfileSectionTitle,
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 4),
         Text(
-          'Giúp VocaNova gợi ý chủ đề và từ vựng phù hợp ngay từ đầu.',
+          l10n.authLearningProfileSectionSubtitle,
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 16),
@@ -205,7 +208,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           const SizedBox(height: 16),
           _lookupDropdown(
             fieldKey: const Key('register-region'),
-            label: 'Khu vực',
+            label: l10n.authRegionLabel,
             options: _options.regions,
             value: _regionId,
             onChanged: (id) => setState(() => _regionId = id),
@@ -215,7 +218,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           const SizedBox(height: 16),
           _lookupDropdown(
             fieldKey: const Key('register-occupation'),
-            label: 'Nghề nghiệp',
+            label: l10n.authOccupationLabel,
             options: _options.occupations,
             value: _occupationId,
             onChanged: (id) => setState(() => _occupationId = id),
@@ -225,7 +228,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           const SizedBox(height: 16),
           _lookupDropdown(
             fieldKey: const Key('register-education-level'),
-            label: 'Trình độ học vấn',
+            label: l10n.authEducationLevelLabel,
             options: _options.educationLevels,
             value: _educationLevelId,
             onChanged: (id) => setState(() => _educationLevelId = id),
@@ -238,17 +241,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Widget _dateOfBirthField() {
     final dateOfBirth = _dateOfBirth;
+    final l10n = AppLocalizations.of(context)!;
     return InkWell(
       key: const Key('register-date-of-birth'),
       onTap: _isLoading ? null : _pickDateOfBirth,
       child: InputDecorator(
         decoration: authInputDecoration(
-          label: 'Ngày sinh',
+          label: l10n.authDateOfBirthLabel,
           hint: 'dd/mm/yyyy',
           suffixIcon: const Icon(Icons.calendar_today_outlined),
         ),
         child: Text(
-          dateOfBirth == null ? 'Chọn ngày sinh' : _formatDate(dateOfBirth),
+          dateOfBirth == null
+              ? l10n.authSelectDateOfBirth
+              : _formatDate(dateOfBirth),
           style: dateOfBirth == null
               ? Theme.of(context).inputDecorationTheme.hintStyle
               : null,
@@ -284,7 +290,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       initialDate: _dateOfBirth ?? DateTime(today.year - 18, today.month, today.day),
       firstDate: DateTime(today.year - _maxAge, today.month, today.day),
       lastDate: DateTime(today.year - _minAge, today.month, today.day),
-      helpText: 'Chọn ngày sinh',
+      helpText: AppLocalizations.of(context)!.authSelectDateOfBirth,
     );
     if (selected != null && mounted) {
       setState(() => _dateOfBirth = selected);
@@ -301,8 +307,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     required bool obscure,
     required VoidCallback onPressed,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     return IconButton(
-      tooltip: obscure ? 'Show password' : 'Hide password',
+      tooltip: obscure ? l10n.authShowPassword : l10n.authHidePassword,
       onPressed: onPressed,
       icon: Icon(
         obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,

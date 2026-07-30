@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/core/network/dio_client.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
@@ -7,6 +8,7 @@ import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_state.dart';
 import 'package:vocanova_mobile/features/quiz/data/quiz_repository.dart';
 import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'quiz_config_notifier.g.dart';
 
@@ -48,10 +50,13 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
     } catch (_) {
       state = state.copyWith(
         isLoadingSources: false,
-        errorMessage: 'Không thể tải nguồn kiểm tra.',
+        errorMessage: _l10n.quizConfigLoadSourcesError,
       );
     }
   }
+
+  AppLocalizations get _l10n =>
+      lookupAppLocalizations(AppSettingsNotifier.instance.state.locale);
 
   void setListId(int? value) => state = state.copyWith(
     listId: value,
@@ -161,32 +166,32 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
 
   String? validate() {
     if (state.listId == null) {
-      return 'Vui lòng chọn danh sách hoặc chủ đề cá nhân để kiểm tra.';
+      return _l10n.quizConfigValidateNoSource;
     }
     if (state.useCustomLimit && state.questionLimit == null) {
-      return 'Vui lòng nhập số câu hỏi.';
+      return _l10n.quizConfigValidateNoQuestionCount;
     }
     final requested = state.questionLimit;
     if (requested != null && requested <= 0) {
-      return 'Số câu hỏi phải lớn hơn 0.';
+      return _l10n.quizConfigValidateQuestionCountPositive;
     }
     if ((state.scopeType == 'start_date' || state.scopeType == 'date_range') &&
         state.dateFrom == null) {
-      return 'Vui lòng chọn ngày bắt đầu.';
+      return _l10n.quizConfigValidateDateFromRequired;
     }
     if (state.scopeType == 'date_range' && state.dateTo == null) {
-      return 'Vui lòng chọn ngày kết thúc.';
+      return _l10n.quizConfigValidateDateToRequired;
     }
     if (state.dateFrom != null &&
         state.dateTo != null &&
         state.dateFrom!.isAfter(state.dateTo!)) {
-      return 'Ngày bắt đầu phải trước hoặc bằng ngày kết thúc.';
+      return _l10n.quizConfigValidateDateOrder;
     }
     if (state.mode == 'timed' && (state.timeLimitSec ?? 0) <= 0) {
-      return 'Chế độ tính giờ cần thời gian lớn hơn 0.';
+      return _l10n.quizConfigValidateTimedPositive;
     }
     if (state.mode == 'elimination' && (state.lives ?? 0) <= 0) {
-      return 'Chế độ loại trực tiếp cần số mạng lớn hơn 0.';
+      return _l10n.quizConfigValidateEliminationPositive;
     }
     return null;
   }
@@ -236,7 +241,7 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
     } catch (_) {
       state = state.copyWith(
         isCreating: false,
-        errorMessage: 'Không thể tạo bài kiểm tra. Hãy kiểm tra số lượng từ.',
+        errorMessage: _l10n.quizConfigCreateSessionError,
       );
       return null;
     }

@@ -6,6 +6,7 @@ import 'package:vocanova_mobile/features/dictionary/application/word_search_noti
 import 'package:vocanova_mobile/features/dictionary/data/word_search_repository.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topics_screen.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   testWidgets('switches between global and personal topic counts', (
@@ -33,7 +34,11 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [wordSearchRepositoryProvider.overrideWithValue(repository)],
-        child: const MaterialApp(home: TopicsScreen()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const TopicsScreen(),
+        ),
       ),
     );
     await tester.pumpAndSettle();

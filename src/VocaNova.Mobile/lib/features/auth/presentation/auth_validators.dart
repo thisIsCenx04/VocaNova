@@ -1,3 +1,9 @@
+import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
+
+AppLocalizations get _l10n =>
+    lookupAppLocalizations(AppSettingsNotifier.instance.state.locale);
+
 abstract final class AuthValidators {
   static final _phonePattern = RegExp(r'^0[3-9]\d{8}$');
   static final _uppercasePattern = RegExp('[A-Z]');
@@ -7,17 +13,17 @@ abstract final class AuthValidators {
   static String? phone(String? value) {
     final phone = value?.trim() ?? '';
     if (phone.isEmpty) {
-      return 'Vui lòng nhập số điện thoại.';
+      return _l10n.authPhoneRequired;
     }
     if (!_phonePattern.hasMatch(phone)) {
-      return 'Số điện thoại Việt Nam không hợp lệ.';
+      return _l10n.authPhoneInvalid;
     }
     return null;
   }
 
   static String? loginPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Vui lòng nhập mật khẩu.';
+      return _l10n.authPasswordRequired;
     }
     return null;
   }
@@ -25,15 +31,15 @@ abstract final class AuthValidators {
   static String? strongPassword(String? value) {
     final password = value ?? '';
     if (password.isEmpty) {
-      return 'Vui lòng nhập mật khẩu.';
+      return _l10n.authPasswordRequired;
     }
     if (password.length < 8) {
-      return 'Mật khẩu phải có ít nhất 8 ký tự.';
+      return _l10n.authPasswordTooShort;
     }
     if (!_uppercasePattern.hasMatch(password) ||
         !_lowercasePattern.hasMatch(password) ||
         !_digitPattern.hasMatch(password)) {
-      return 'Mật khẩu cần có chữ hoa, chữ thường và chữ số.';
+      return _l10n.authPasswordComplexity;
     }
     return null;
   }
@@ -41,23 +47,23 @@ abstract final class AuthValidators {
   static String? displayName(String? value) {
     final name = value?.trim() ?? '';
     if (name.isEmpty) {
-      return 'Vui lòng nhập tên hiển thị.';
+      return _l10n.authDisplayNameRequired;
     }
     if (name.length < 2) {
-      return 'Tên hiển thị phải có ít nhất 2 ký tự.';
+      return _l10n.authDisplayNameTooShort;
     }
     if (name.length > 150) {
-      return 'Tên hiển thị không được vượt quá 150 ký tự.';
+      return _l10n.authDisplayNameTooLong;
     }
     return null;
   }
 
   static String? confirmPassword(String? value, String password) {
     if (value == null || value.isEmpty) {
-      return 'Vui lòng xác nhận mật khẩu.';
+      return _l10n.authConfirmPasswordRequired;
     }
     if (value != password) {
-      return 'Mật khẩu xác nhận không khớp.';
+      return _l10n.authConfirmPasswordMismatch;
     }
     return null;
   }

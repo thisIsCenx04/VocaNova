@@ -6,6 +6,7 @@ import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
 import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 const appVersion = '1.0.0';
 
@@ -22,6 +23,7 @@ class SettingsScreen extends ConsumerWidget {
         final notifier = AppSettingsNotifier.instance;
         final settings = notifier.state;
         final palette = _SettingsPalette.of(context);
+        final l10n = AppLocalizations.of(context)!;
 
         return Scaffold(
           backgroundColor: palette.background,
@@ -35,11 +37,14 @@ class SettingsScreen extends ConsumerWidget {
                     key: const Key('settings-list'),
                     padding: EdgeInsets.zero,
                     children: [
-                      _SectionLabel(label: 'APPEARANCE', palette: palette),
+                      _SectionLabel(
+                        label: l10n.settingsSectionAppearance,
+                        palette: palette,
+                      ),
                       _SettingsRow(
                         icon: Icons.dark_mode_outlined,
-                        title: 'Dark mode',
-                        subtitle: 'Switch to dark theme',
+                        title: l10n.settingsDarkMode,
+                        subtitle: l10n.settingsDarkModeSubtitle,
                         palette: palette,
                         showDivider: true,
                         trailing: _VocaSwitch(
@@ -52,7 +57,7 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       _SettingsRow(
                         icon: Icons.light_mode_outlined,
-                        title: 'Follow system theme',
+                        title: l10n.settingsFollowSystemTheme,
                         palette: palette,
                         trailing: _VocaSwitch(
                           key: const Key('system-theme-switch'),
@@ -63,10 +68,13 @@ class SettingsScreen extends ConsumerWidget {
                         ),
                       ),
                       _SectionGap(palette: palette),
-                      _SectionLabel(label: 'LANGUAGE', palette: palette),
+                      _SectionLabel(
+                        label: l10n.settingsSectionLanguage,
+                        palette: palette,
+                      ),
                       _SettingsRow(
                         icon: Icons.language,
-                        title: 'App language',
+                        title: l10n.settingsAppLanguage,
                         palette: palette,
                         trailing: _LanguageSelector(
                           key: const Key('language-dropdown'),
@@ -75,11 +83,14 @@ class SettingsScreen extends ConsumerWidget {
                         ),
                       ),
                       _SectionGap(palette: palette),
-                      _SectionLabel(label: 'NOTIFICATIONS', palette: palette),
+                      _SectionLabel(
+                        label: l10n.settingsSectionNotifications,
+                        palette: palette,
+                      ),
                       _SettingsRow(
                         icon: Icons.notifications_none,
-                        title: 'Daily reminder',
-                        subtitle: 'Remind me to study each day',
+                        title: l10n.settingsDailyReminder,
+                        subtitle: l10n.settingsDailyReminderSubtitle,
                         palette: palette,
                         showDivider: true,
                         trailing: _VocaSwitch(
@@ -90,8 +101,8 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       _SettingsRow(
                         icon: Icons.notifications_none,
-                        title: 'Streak alert',
-                        subtitle: 'Warn before streak breaks',
+                        title: l10n.settingsStreakAlert,
+                        subtitle: l10n.settingsStreakAlertSubtitle,
                         palette: palette,
                         showDivider: true,
                         trailing: _VocaSwitch(
@@ -102,8 +113,8 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       _SettingsRow(
                         icon: Icons.notifications_none,
-                        title: 'Review due',
-                        subtitle: 'Words ready for spaced review',
+                        title: l10n.settingsReviewDue,
+                        subtitle: l10n.settingsReviewDueSubtitle,
                         palette: palette,
                         trailing: _VocaSwitch(
                           key: const Key('review-due-switch'),
@@ -112,11 +123,14 @@ class SettingsScreen extends ConsumerWidget {
                         ),
                       ),
                       _SectionGap(palette: palette),
-                      _SectionLabel(label: 'AUDIO', palette: palette),
+                      _SectionLabel(
+                        label: l10n.settingsSectionAudio,
+                        palette: palette,
+                      ),
                       _SettingsRow(
                         icon: Icons.volume_up_outlined,
-                        title: 'Auto-play pronunciation',
-                        subtitle: 'Play when viewing a word',
+                        title: l10n.settingsAutoPlayPronunciation,
+                        subtitle: l10n.settingsAutoPlayPronunciationSubtitle,
                         palette: palette,
                         showDivider: true,
                         trailing: _VocaSwitch(
@@ -127,8 +141,8 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       _SettingsRow(
                         icon: Icons.volume_up_outlined,
-                        title: 'Sound effects',
-                        subtitle: 'Quiz sounds and feedback',
+                        title: l10n.settingsSoundEffects,
+                        subtitle: l10n.settingsSoundEffectsSubtitle,
                         palette: palette,
                         trailing: _VocaSwitch(
                           key: const Key('sound-effects-switch'),
@@ -138,13 +152,13 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       _SectionGap(palette: palette),
                       _SectionLabel(
-                        label: 'ACCOUNT',
+                        label: l10n.settingsSectionAccount,
                         palette: palette,
                         muted: true,
                       ),
                       _SettingsRow(
                         icon: Icons.shield_outlined,
-                        title: 'Privacy policy',
+                        title: l10n.settingsPrivacyPolicy,
                         palette: palette,
                         showDivider: true,
                         showChevron: true,
@@ -153,7 +167,7 @@ class SettingsScreen extends ConsumerWidget {
                       _SettingsRow(
                         key: const Key('delete-account-button'),
                         icon: Icons.shield_outlined,
-                        title: 'Delete account',
+                        title: l10n.settingsDeleteAccount,
                         palette: palette,
                         destructive: true,
                         showChevron: true,
@@ -176,7 +190,7 @@ class SettingsScreen extends ConsumerWidget {
                         padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
                         alignment: Alignment.topLeft,
                         child: Text(
-                          'VocaNova v$appVersion',
+                          l10n.settingsVersionLabel(appVersion),
                           style: AppTextStyles.caption.copyWith(
                             color: palette.muted,
                             fontSize: 12,
@@ -195,39 +209,38 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _showPrivacyPolicy(
-    BuildContext context,
-  ) => showModalBottomSheet<void>(
-    context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
-    builder: (context) => const _InformationSheet(
-      icon: Icons.shield_outlined,
-      title: 'Privacy policy',
-      body:
-          'VocaNova stores only the account and learning data needed to provide vocabulary practice, progress tracking, and synchronization. Your credentials are protected and are never displayed in the app.',
-    ),
-  );
+  Future<void> _showPrivacyPolicy(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => _InformationSheet(
+        icon: Icons.shield_outlined,
+        title: l10n.settingsPrivacyPolicy,
+        body: l10n.settingsPrivacyPolicyBody,
+      ),
+    );
+  }
 
   Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete account?'),
-        content: const Text(
-          'This action permanently removes your profile and learning data. It cannot be undone.',
-        ),
+        title: Text(l10n.settingsDeleteAccountDialogTitle),
+        content: Text(l10n.settingsDeleteAccountDialogBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.settingsCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFEF4444),
             ),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Continue'),
+            child: Text(l10n.settingsContinue),
           ),
         ],
       ),
@@ -239,7 +252,7 @@ class SettingsScreen extends ConsumerWidget {
         SnackBar(
           content: Text(
             ref.read(authProvider).errorMessage ??
-                'Unable to delete the account. Please try again.',
+                l10n.settingsDeleteAccountFailed,
           ),
         ),
       );
@@ -276,7 +289,7 @@ class _SettingsHeader extends StatelessWidget {
                 Icon(Icons.arrow_back, size: 16, color: palette.muted),
                 const SizedBox(width: 4),
                 Text(
-                  'Profile',
+                  AppLocalizations.of(context)!.settingsBackToProfile,
                   style: AppTextStyles.caption.copyWith(
                     color: palette.muted,
                     fontSize: 14,
@@ -289,7 +302,7 @@ class _SettingsHeader extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Settings',
+            AppLocalizations.of(context)!.settingsTitle,
             style: AppTextStyles.heading.copyWith(
               color: palette.text,
               fontSize: 22,
@@ -601,7 +614,7 @@ class _InformationSheet extends StatelessWidget {
             const SizedBox(height: 22),
             FilledButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Done'),
+              child: Text(AppLocalizations.of(context)!.settingsDone),
             ),
           ],
         ),

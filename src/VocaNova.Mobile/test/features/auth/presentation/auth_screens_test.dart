@@ -9,6 +9,7 @@ import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
 import 'package:vocanova_mobile/features/auth/data/auth_repository.dart';
 import 'package:vocanova_mobile/features/auth/presentation/login_screen.dart';
 import 'package:vocanova_mobile/features/auth/presentation/register_screen.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   late MockAuthRepository repository;
@@ -116,7 +117,11 @@ Future<void> pumpAuthScreen(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [authRepositoryProvider.overrideWithValue(repository)],
-      child: MaterialApp(home: screen),
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: screen,
+      ),
     ),
   );
   await tester.pump();

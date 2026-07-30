@@ -1,6 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/wrong_words_state.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'wrong_words_notifier.g.dart';
 
@@ -21,12 +23,15 @@ class WrongWordsNotifier extends _$WrongWordsNotifier {
         isLoading: false,
       );
     } catch (_) {
-      state = const WrongWordsState(
+      state = WrongWordsState(
         isLoading: false,
-        errorMessage: 'Không thể tải danh sách từ sai.',
+        errorMessage: _l10n.quizWrongWordsLoadError,
       );
     }
   }
+
+  AppLocalizations get _l10n =>
+      lookupAppLocalizations(AppSettingsNotifier.instance.state.locale);
 
   Future<void> loadMore() async {
     if (!state.hasMore || state.isLoadingMore) return;
@@ -44,7 +49,7 @@ class WrongWordsNotifier extends _$WrongWordsNotifier {
     } catch (_) {
       state = state.copyWith(
         isLoadingMore: false,
-        errorMessage: 'Không thể tải thêm từ sai.',
+        errorMessage: _l10n.quizWrongWordsLoadMoreError,
       );
     }
   }
@@ -63,7 +68,7 @@ class WrongWordsNotifier extends _$WrongWordsNotifier {
     } catch (_) {
       state = state.copyWith(
         words: [...state.words]..insert(index, removed),
-        errorMessage: 'Không thể bỏ từ khỏi danh sách sai.',
+        errorMessage: _l10n.quizWrongWordsRemoveError,
       );
       return false;
     }

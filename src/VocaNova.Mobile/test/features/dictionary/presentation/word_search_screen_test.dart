@@ -13,6 +13,7 @@ import 'package:vocanova_mobile/features/dictionary/application/word_search_noti
 import 'package:vocanova_mobile/features/dictionary/data/word_search_repository.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/word_search_screen.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   late MockWordSearchRepository repository;
@@ -172,7 +173,11 @@ Future<void> pumpSearch(
         connectivityServiceProvider.overrideWithValue(connectivity),
         searchLocalStorageProvider.overrideWithValue(storage),
       ],
-      child: const MaterialApp(home: WordSearchScreen()),
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const WordSearchScreen(),
+      ),
     ),
   );
   await tester.pump();

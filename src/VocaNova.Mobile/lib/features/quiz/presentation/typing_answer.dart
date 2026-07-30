@@ -29,6 +29,7 @@ class _TypingAnswerState extends State<_TypingAnswer> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final locked = widget.state.hasAnswered || widget.state.isSubmitting;
     final isAi = widget.answerMethod == 'ai_typing';
     return ListView(
@@ -43,10 +44,10 @@ class _TypingAnswerState extends State<_TypingAnswer> {
           minLines: isAi ? 3 : 1,
           maxLines: isAi ? 5 : 1,
           decoration: InputDecoration(
-            labelText: isAi ? 'Nhập câu trả lời của bạn' : 'Nhập đáp án',
+            labelText: isAi ? l10n.quizTypingLabelAi : l10n.quizTypingLabelDefault,
             helperText: isAi
-                ? 'AI sẽ đánh giá mức độ chính xác về ý nghĩa.'
-                : 'Không phân biệt hoa thường và dấu câu cuối.',
+                ? l10n.quizTypingHelperAi
+                : l10n.quizTypingHelperDefault,
             border: const OutlineInputBorder(),
           ),
           onSubmitted: (_) => _submit(),
@@ -63,8 +64,8 @@ class _TypingAnswerState extends State<_TypingAnswer> {
               : const Icon(Icons.send),
           label: Text(
             widget.state.isSubmitting && isAi
-                ? 'AI đang đánh giá...'
-                : 'Gửi câu trả lời',
+                ? l10n.quizTypingAiEvaluating
+                : l10n.quizTypingSubmit,
           ),
         ),
       ],
@@ -75,7 +76,9 @@ class _TypingAnswerState extends State<_TypingAnswer> {
     final answer = _controller.text.trim();
     if (answer.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập câu trả lời.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.quizTypingEmptyAnswer),
+        ),
       );
       _focusNode.requestFocus();
       return;
@@ -93,6 +96,7 @@ class _TypingFeedback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isAi = answerMethod == 'ai_typing';
     final color = result.isCorrect ? Colors.green : Colors.red;
     return Card(
@@ -104,18 +108,18 @@ class _TypingFeedback extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              result.isCorrect ? 'Chính xác' : 'Chưa chính xác',
+              result.isCorrect ? l10n.quizTypingCorrect : l10n.quizTypingIncorrect,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: color.shade800,
                 fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 6),
-            Text('Đáp án: ${result.expectedAnswer}'),
+            Text(l10n.quizTypingExpectedAnswer(result.expectedAnswer)),
             if (isAi && result.aiScore != null) ...[
               const SizedBox(height: 8),
               Text(
-                'Điểm AI: ${(result.aiScore! * 100).round()}%',
+                l10n.quizTypingAiScore((result.aiScore! * 100).round()),
                 key: const Key('ai-score'),
               ),
             ],
@@ -126,7 +130,7 @@ class _TypingFeedback extends StatelessWidget {
             if (isAi && result.aiSuggestion != null) ...[
               const SizedBox(height: 6),
               Text(
-                'Gợi ý: ${result.aiSuggestion}',
+                l10n.quizTypingAiSuggestion(result.aiSuggestion!),
                 key: const Key('ai-suggestion'),
               ),
             ],

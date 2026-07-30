@@ -12,6 +12,7 @@ import 'package:vocanova_mobile/features/dictionary/application/word_detail_noti
 import 'package:vocanova_mobile/features/dictionary/application/word_detail_state.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_detail.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/add_to_list_sheet.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class WordDetailScreen extends ConsumerStatefulWidget {
   const WordDetailScreen({required this.wordId, super.key});
@@ -47,7 +48,9 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
             child: CircularProgressIndicator(),
           ),
           null => _LoadError(
-            message: state.errorMessage ?? 'Word not found.',
+            message:
+                state.errorMessage ??
+                AppLocalizations.of(context)!.dictWordNotFound,
             onBack: _goBack,
           ),
           final word => _detail(state, word),
@@ -82,7 +85,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
               if (word.imageUrl != null) _WordImage(url: word.imageUrl!),
               for (final sense in word.senses) ...[
                 _TextSection(
-                  label: 'Definition',
+                  label: AppLocalizations.of(context)!.dictDefinitionLabel,
                   child: Text(
                     sense.englishDefinition,
                     style: _bodyStyle(context),
@@ -90,7 +93,9 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
                 ),
                 if (sense.vietnameseMeaning?.trim().isNotEmpty == true)
                   _TextSection(
-                    label: 'Tiếng Việt',
+                    label: AppLocalizations.of(
+                      context,
+                    )!.dictVietnameseMeaningLabel,
                     child: Text(
                       sense.vietnameseMeaning!,
                       style: _bodyStyle(
@@ -153,9 +158,11 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
       await ref.read(audioPlaybackServiceProvider).play(url);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Unable to play audio.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.dictUnableToPlayAudio),
+        ),
+      );
     }
   }
 
@@ -165,9 +172,11 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
         : '\n${word.senses.first.englishDefinition}';
     await Clipboard.setData(ClipboardData(text: '${word.word}$definition'));
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Word copied to clipboard.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!.dictWordCopied),
+      ),
+    );
   }
 
   void _goBack() {
@@ -234,21 +243,23 @@ class _DetailHeader extends StatelessWidget {
               children: [
                 _PlainIconButton(
                   key: const Key('word-detail-back'),
-                  tooltip: 'Back',
+                  tooltip: AppLocalizations.of(context)!.dictBackTooltip,
                   icon: Icons.arrow_back,
                   onPressed: onBack,
                 ),
                 const Spacer(),
                 _RoundIconButton(
                   key: const Key('share-word'),
-                  tooltip: 'Share',
+                  tooltip: AppLocalizations.of(context)!.dictShareTooltip,
                   icon: Icons.share_outlined,
                   onPressed: onShare,
                 ),
                 const SizedBox(width: 8),
                 _RoundIconButton(
                   key: const Key('save-word-book'),
-                  tooltip: isSaved ? 'Saved' : 'Save word',
+                  tooltip: isSaved
+                      ? AppLocalizations.of(context)!.dictSavedTooltip
+                      : AppLocalizations.of(context)!.dictSaveWordTooltip,
                   icon: isSaved ? Icons.bookmark : Icons.bookmark_border,
                   onPressed: onSave,
                 ),
@@ -542,7 +553,7 @@ class _ExamplesSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionLabel('Example'),
+          _SectionLabel(AppLocalizations.of(context)!.dictExampleLabel),
           const SizedBox(height: 10),
           for (var index = 0; index < examples.length; index++) ...[
             _ExampleBlock(example: examples[index]),
@@ -621,7 +632,7 @@ class _RelationsSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (synonyms.isNotEmpty) ...[
-            const _SectionLabel('Synonyms'),
+            _SectionLabel(AppLocalizations.of(context)!.dictSynonymsLabel),
             const SizedBox(height: 8),
             _RelationChips(
               relations: synonyms,
@@ -632,7 +643,10 @@ class _RelationsSection extends StatelessWidget {
           if (synonyms.isNotEmpty && antonyms.isNotEmpty)
             const SizedBox(height: 16),
           if (antonyms.isNotEmpty) ...[
-            const _SectionLabel('Antonyms', muted: true),
+            _SectionLabel(
+              AppLocalizations.of(context)!.dictAntonymsLabel,
+              muted: true,
+            ),
             const SizedBox(height: 8),
             _RelationChips(
               relations: antonyms,
@@ -713,7 +727,7 @@ class _TopicsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionLabel('Topics'),
+          _SectionLabel(AppLocalizations.of(context)!.dictTopicsTitle),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -802,7 +816,7 @@ class _DetailActions extends StatelessWidget {
                   ),
                 ),
                 icon: const Icon(Icons.add, size: 16),
-                label: const Text('Add to list'),
+                label: Text(AppLocalizations.of(context)!.dictAddToListTooltip),
               ),
             ),
           ),
@@ -820,7 +834,7 @@ class _DetailActions extends StatelessWidget {
                   ),
                 ),
                 icon: const Icon(Icons.play_arrow_outlined, size: 16),
-                label: const Text('Practice'),
+                label: Text(AppLocalizations.of(context)!.dictPracticeLabel),
               ),
             ),
           ),
@@ -840,8 +854,8 @@ class _OfflineBanner extends StatelessWidget {
       width: double.infinity,
       color: const Color(0xFFFFF1C2),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
-      child: const Text(
-        'Offline — showing saved word details.',
+      child: Text(
+        AppLocalizations.of(context)!.dictWordDetailOfflineBanner,
         textAlign: TextAlign.center,
       ),
     );
@@ -865,7 +879,7 @@ class _LoadError extends StatelessWidget {
             child: _PlainIconButton(
               icon: Icons.arrow_back,
               onPressed: onBack,
-              tooltip: 'Back',
+              tooltip: AppLocalizations.of(context)!.dictBackTooltip,
             ),
           ),
         ),

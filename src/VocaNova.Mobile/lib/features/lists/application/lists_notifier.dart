@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/core/network/dio_client.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
@@ -9,6 +10,7 @@ import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_state.dart';
 import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
 import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'lists_notifier.g.dart';
 
@@ -69,7 +71,7 @@ class ListsNotifier extends _$ListsNotifier {
         isLoading: false,
         isOffline: cached.isNotEmpty || cachedPersonalTopics.isNotEmpty,
         errorMessage: cached.isEmpty && cachedPersonalTopics.isEmpty
-            ? 'Không thể tải danh sách từ.'
+            ? _l10n.listsLoadListsError
             : null,
       );
     }
@@ -89,7 +91,7 @@ class ListsNotifier extends _$ListsNotifier {
     } catch (_) {
       state = state.copyWith(
         isMutating: false,
-        errorMessage: 'Không thể tạo danh sách. Tên có thể đã tồn tại.',
+        errorMessage: _l10n.listsCreateError,
       );
       return false;
     }
@@ -112,7 +114,7 @@ class ListsNotifier extends _$ListsNotifier {
     } catch (_) {
       state = state.copyWith(
         isMutating: false,
-        errorMessage: 'Không thể đổi tên danh sách.',
+        errorMessage: _l10n.listsRenameError,
       );
       return false;
     }
@@ -133,7 +135,7 @@ class ListsNotifier extends _$ListsNotifier {
       final rollback = [...state.lists]..insert(index, removed);
       state = state.copyWith(
         lists: rollback,
-        errorMessage: 'Không thể xóa danh sách.',
+        errorMessage: _l10n.listsDeleteError,
       );
       return false;
     }
@@ -157,10 +159,13 @@ class ListsNotifier extends _$ListsNotifier {
     if (!state.isOffline) return true;
     state = state.copyWith(
       isOffline: true,
-      errorMessage: 'Cần kết nối mạng để thay đổi danh sách.',
+      errorMessage: _l10n.listsOfflineMutateError,
     );
     return false;
   }
+
+  AppLocalizations get _l10n =>
+      lookupAppLocalizations(AppSettingsNotifier.instance.state.locale);
 
   List<UserList> _decode(String? source) {
     try {
