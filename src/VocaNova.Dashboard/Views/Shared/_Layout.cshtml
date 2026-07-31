@@ -39,10 +39,10 @@
             <input class="sidebar-toggle" type="checkbox" id="sidebar-toggle" aria-label="@T["Toggle navigation"]" />
             <label class="sidebar-scrim" for="sidebar-toggle" aria-hidden="true"></label>
             <aside class="sidebar" aria-label="@T["Primary navigation"]">
-                <div class="sidebar-brand">
+                <a class="sidebar-brand" asp-controller="Dashboard" asp-action="Index" aria-label="@T["Dashboard"]">
                     <img class="brand-logo" src="~/img/logo.png" alt="" />
                     <span class="brand-word">VocaNova</span>
-                </div>
+                </a>
 
                 <nav class="sidebar-nav">
                     <a class="@NavActive("/")" asp-controller="Dashboard" asp-action="Index">

@@ -458,6 +458,11 @@ public static class TranslationTable
         // ===== Login =====
         ("Admin Dashboard", "Bảng điều khiển quản trị"),
         ("Sign in with your administrator account.", "Đăng nhập bằng tài khoản quản trị viên của bạn."),
+        ("Welcome back", "Chào mừng trở lại"),
+        ("Manage learning, inspire progress.", "Quản lý học tập, khơi nguồn tiến bộ."),
+        ("Everything you need to manage the VocaNova learning experience in one place.", "Mọi công cụ quản lý trải nghiệm học tập VocaNova đều có tại một nơi."),
+        ("Show password", "Hiện mật khẩu"),
+        ("Hide password", "Ẩn mật khẩu"),
         ("Password", "Mật khẩu"),
         ("Sign in", "Đăng nhập"),
 

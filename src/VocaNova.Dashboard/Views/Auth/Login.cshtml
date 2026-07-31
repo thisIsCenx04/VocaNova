@@ -4,35 +4,78 @@
 }
 
 <div class="auth-card">
-    <div class="auth-brand">
-        <span class="brand-mark">VN</span>
-        <span>VocaNova</span>
-    </div>
-    <h1 class="auth-title">@T["Admin Dashboard"]</h1>
-    <p class="auth-subtitle">@T["Sign in with your administrator account."]</p>
+    <aside class="auth-welcome" aria-hidden="true">
+        <div class="auth-welcome-content">
+            <h2>@T["Manage learning, inspire progress."]</h2>
+            <p>@T["Everything you need to manage the VocaNova learning experience in one place."]</p>
+        </div>
+        <div class="auth-welcome-art">
+            <span class="auth-art-card auth-art-card-main"><i class="bi bi-bar-chart-line-fill"></i></span>
+            <span class="auth-art-card auth-art-card-small"><i class="bi bi-book-fill"></i></span>
+            <span class="auth-art-dot auth-art-dot-one"></span>
+            <span class="auth-art-dot auth-art-dot-two"></span>
+        </div>
+    </aside>
 
-    <form asp-controller="Auth" asp-action="Login" method="post" novalidate>
-        @Html.AntiForgeryToken()
-        <input type="hidden" asp-for="ReturnUrl" />
+    <section class="auth-form-panel">
+        <img class="auth-logo" src="~/img/logo.png" alt="VocaNova" />
 
-        <div asp-validation-summary="ModelOnly" class="auth-error" role="alert"></div>
-
-        <div class="form-group">
-            <label asp-for="Phone">@T["Phone"]</label>
-            <input asp-for="Phone" class="form-control" autocomplete="username" inputmode="tel" placeholder="0xxxxxxxxx" />
-            <span asp-validation-for="Phone" class="field-error"></span>
+        <div class="auth-heading">
+            <h1 class="auth-title">@T["Welcome back"]</h1>
+            <p class="auth-subtitle">@T["Sign in with your administrator account."]</p>
         </div>
 
-        <div class="form-group">
-            <label asp-for="Password">@T["Password"]</label>
-            <input asp-for="Password" class="form-control" autocomplete="current-password" type="password" />
-            <span asp-validation-for="Password" class="field-error"></span>
-        </div>
+        <form asp-controller="Auth" asp-action="Login" method="post" novalidate>
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ReturnUrl" />
 
-        <button type="submit" class="btn-primary btn-block">@T["Sign in"]</button>
-    </form>
+            <div asp-validation-summary="ModelOnly" class="auth-error" role="alert"></div>
+
+            <div class="form-group auth-form-group">
+                <label asp-for="Phone">@T["Phone"]</label>
+                <div class="auth-input-wrap">
+                    <i class="bi bi-telephone auth-input-icon" aria-hidden="true"></i>
+                    <input asp-for="Phone" class="form-control auth-input" autocomplete="username" inputmode="tel" autofocus />
+                </div>
+                <span asp-validation-for="Phone" class="field-error"></span>
+            </div>
+
+            <div class="form-group auth-form-group">
+                <label asp-for="Password">@T["Password"]</label>
+                <div class="auth-input-wrap">
+                    <i class="bi bi-lock auth-input-icon" aria-hidden="true"></i>
+                    <input asp-for="Password" class="form-control auth-input auth-password-input" autocomplete="current-password" type="password" />
+                    <button class="auth-password-toggle" type="button" aria-label="@T["Show password"]" aria-pressed="false">
+                        <i class="bi bi-eye" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <span asp-validation-for="Password" class="field-error"></span>
+            </div>
+
+            <button type="submit" class="btn-primary btn-block auth-submit">
+                <span>@T["Sign in"]</span>
+            </button>
+        </form>
+    </section>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const toggle = document.querySelector('.auth-password-toggle');
+            const input = document.querySelector('.auth-password-input');
+            if (!toggle || !input) return;
+
+            toggle.addEventListener('click', () => {
+                const showPassword = input.type === 'password';
+                input.type = showPassword ? 'text' : 'password';
+                toggle.setAttribute('aria-pressed', showPassword.toString());
+                toggle.setAttribute('aria-label', showPassword ? '@T["Hide password"]' : '@T["Show password"]');
+                toggle.querySelector('i')?.classList.toggle('bi-eye', !showPassword);
+                toggle.querySelector('i')?.classList.toggle('bi-eye-slash', showPassword);
+                input.focus();
+            });
+        })();
+    </script>
 }
