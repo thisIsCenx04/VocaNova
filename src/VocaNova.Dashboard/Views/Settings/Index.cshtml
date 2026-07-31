@@ -8,7 +8,6 @@
 
 <div class="page-header">
     <h1 class="page-title">@T["Setting"]</h1>
-    <p class="page-subtitle">@T["Manage your administrative preferences and localization settings."]</p>
 </div>
 
 @if (TempData["SettingsSaved"] is string saved)
@@ -79,12 +78,6 @@
         </div>
     </section>
 
-    <div class="settings-actions">
-        <a href="/settings" class="btn-secondary">@T["Cancel"]</a>
-        <button type="submit" class="btn-primary">@T["Save Changes"]</button>
-    </div>
-</form>
-
 @if (TempData["AiGradingSaved"] is string aiSaved)
 {
     <div class="alert alert-success">@aiSaved</div>
@@ -94,7 +87,7 @@
     <div class="alert alert-danger">@aiError</div>
 }
 
-<section class="settings-panel">
+<section class="settings-panel ai-settings-panel">
     <header class="settings-panel-head">
         <h2 class="settings-panel-title">@T["AI grading"]</h2>
         <p class="settings-panel-sub">@T["Provider, model and credentials used to grade free-text quiz answers."]</p>
@@ -106,9 +99,8 @@
     }
     else
     {
-        <form method="post" action="/settings/ai-grading" class="settings-form">
-            @Html.AntiForgeryToken()
-            <div class="ai-grading-grid">
+        <input type="hidden" name="save_ai" value="true" />
+        <div class="ai-grading-grid">
                 <label class="form-field">
                     <span>@T["Provider"]</span>
                     <select name="provider" class="form-control">
@@ -126,19 +118,19 @@
                     <small>@T["Primary model used for grading."]</small>
                 </label>
 
-                <label class="form-field span-2">
+                <label class="form-field">
                     <span>@T["Endpoint"]</span>
                     <input type="url" name="endpoint" value="@ai.Endpoint" class="form-control" />
                 </label>
 
-                <label class="form-field span-2">
+                <label class="form-field">
                     <span>@T["Fallback models"]</span>
                     <input type="text" name="fallback_models" value="@string.Join(", ", ai.FallbackModels)"
                            class="form-control" placeholder="model-a, model-b" />
                     <small>@T["Comma separated. Tried in order when the primary model is unavailable."]</small>
                 </label>
 
-                <label class="form-field span-2">
+                <label class="form-field">
                     <span>@T["API key"]</span>
                     <input type="password" name="api_key" class="form-control" autocomplete="new-password"
                            placeholder="@(ai.HasApiKey ? ai.ApiKeyHint : T["No API key configured"])" />
@@ -178,37 +170,26 @@
                     <input type="number" name="attempt_timeout_seconds" value="@ai.AttemptTimeoutSeconds"
                            step="1" min="1" max="15" class="form-control" />
                 </label>
-            </div>
-
-            <div class="settings-actions">
-                <button type="submit" class="btn-primary">@T["Save AI settings"]</button>
-            </div>
-        </form>
-
-        <div class="settings-actions" style="justify-content:flex-start; gap:10px;">
-            <form method="post" action="/settings/ai-grading/test" class="inline-form">
-                @Html.AntiForgeryToken()
-                <button type="submit" class="btn-secondary btn-sm">@T["Test connection"]</button>
-            </form>
-            <form method="post" action="/settings/ai-grading/reset" class="inline-form js-confirm"
-                  data-confirm="@T["Reset AI grading settings to the built-in defaults? The API key is kept."]">
-                @Html.AntiForgeryToken()
-                <button type="submit" class="btn-secondary btn-sm">@T["Reset to defaults"]</button>
-            </form>
         </div>
 
-        <p class="settings-panel-sub" style="margin-top:10px;">
-            @if (ai.IsStoredInEnvFile)
-            {
-                @T["Saved to the .env file and reloaded automatically."]
-            }
-            else
-            {
-                <strong>@T[".env is not writable — settings are held in the shared cache and will be lost if it is cleared."]</strong>
-            }
-        </p>
+        <div class="settings-actions ai-settings-actions">
+            <button type="submit" formaction="/settings/ai-grading/test" formmethod="post" formnovalidate
+                    class="btn-sm ai-action-btn ai-action-test">@T["Test connection"]</button>
+            <button type="submit" formaction="/settings/ai-grading/reset" formmethod="post" formnovalidate
+                    class="btn-sm ai-action-btn ai-action-reset"
+                    onclick="return confirm('@T["Reset AI grading settings to the built-in defaults? The API key is kept."]');">
+                @T["Reset to defaults"]
+            </button>
+        </div>
+
     }
 </section>
+
+<div class="settings-actions settings-page-actions">
+    <a href="/settings" class="btn-secondary">@T["Cancel"]</a>
+    <button type="submit" class="btn-primary">@T["Save Changes"]</button>
+</div>
+</form>
 
 @section Scripts {
     <script src="~/js/settings.js" asp-append-version="true"></script>

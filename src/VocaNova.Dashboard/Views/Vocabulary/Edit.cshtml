@@ -11,11 +11,10 @@
 
 }
 
-<div class="page-header page-header-row">
+<div class="page-header page-header-row vocabulary-edit-header">
     <div>
-        <a class="back-link" href="/vocabulary"><i class="bi bi-arrow-left" aria-hidden="true"></i>@T["Back to vocabulary"]</a>
+        <a class="btn-primary page-back-button" href="/vocabulary">@T["Back"]</a>
         <h1 class="page-title">@T["Edit vocabulary"]</h1>
-        <p class="page-subtitle">@T["Update vocabulary metadata, meanings and status."]</p>
     </div>
 </div>
 
@@ -38,12 +37,13 @@
             </header>
             <div class="edit-panel-body">
                 <div class="status-toggle-row">
-                    <span class="status-label" id="status-label" data-active="@T["Active"]" data-inactive="@T["Inactive"]">@(isActive ? T["Active"] : T["Inactive"])</span>
+                    <span class="status-label @(isActive ? "is-active" : "is-inactive")" id="status-label"
+                          data-active="@T["Active"]" data-inactive="@T["Inactive"]">@(isActive ? T["Active"] : T["Inactive"])</span>
                     <label class="switch">
                         <input type="checkbox" name="isActive" value="true" id="isActive" @(isActive ? "checked" : "") />
-                        <input type="hidden" name="isActive" value="false" />
                         <span class="switch-track"><span class="switch-thumb"></span></span>
                     </label>
+                    <input type="hidden" name="isActive" value="false" />
                 </div>
             </div>
         </section>

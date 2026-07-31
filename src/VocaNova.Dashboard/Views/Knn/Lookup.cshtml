@@ -49,9 +49,8 @@
 
 <div class="page-header page-header-row">
     <div>
-        <a class="back-link" href="/knn"><i class="bi bi-arrow-left" aria-hidden="true"></i>@T["Back to KNN Management"]</a>
+        <a class="btn-primary page-back-button" href="/knn">@T["Back"]</a>
         <h1 class="page-title">@Model.Title @T["Management"]</h1>
-        <p class="page-subtitle">@T["Manage onboarding lookup values used by recommendations."]</p>
     </div>
     <button type="button" class="btn-primary" data-open-knn-modal="knn-create-modal"
             aria-haspopup="dialog" aria-controls="knn-create-modal">
@@ -141,7 +140,7 @@
                                             title="@T["Edit"]" aria-label="@T["Edit"]">
                                         <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></svg>
                                     </button>
-                                    <button type="button" class="icon-link warn js-knn-delete" data-id="@row.Id"
+                                    <button type="button" class="icon-link danger js-knn-delete" data-id="@row.Id"
                                             data-name="@(row.Cells.FirstOrDefault() ?? $"item #{row.Id}")"
                                             title="@T["Delete"]" aria-label="@T["Delete"]">
                                         <svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Z"/></svg>

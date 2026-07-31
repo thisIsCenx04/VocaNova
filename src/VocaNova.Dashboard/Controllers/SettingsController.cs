@@ -32,13 +32,38 @@ public sealed class SettingsController : Controller
     // Lưu cả Appearance + Language trong một lần (nút "Lưu thay đổi / Save Changes").
     [HttpPost("/settings")]
     [ValidateAntiForgeryToken]
-    public IActionResult Save(string theme, string language)
+    public async Task<IActionResult> Save(
+        string theme,
+        string language,
+        IFormCollection form,
+        CancellationToken cancellationToken)
     {
         var themeValue = theme == "dark" ? "dark" : "light";
         var languageValue = language == "en" ? "en" : "vi";
 
         AppendCookie(ThemeCookie, themeValue);
         AppendCookie(LanguageCookie, languageValue);
+
+        if (string.Equals(form["save_ai"].ToString(), "true", StringComparison.OrdinalIgnoreCase))
+        {
+            var input = new AiGradingConfigInput(
+                Str(form, "provider"),
+                Str(form, "endpoint"),
+                Str(form, "model"),
+                SplitModels(form["fallback_models"].ToString()),
+                Str(form, "api_key"),
+                IntN(form, "max_attempts"),
+                IntN(form, "retry_base_delay_ms"),
+                IntN(form, "attempt_timeout_seconds"),
+                DblN(form, "pass_threshold"));
+
+            var result = await _apiClient.UpdateAiGradingConfigAsync(input, cancellationToken);
+            if (!result.IsSuccess)
+            {
+                SetAiFeedback(result, "AI grading settings saved.");
+                return RedirectToAction(nameof(Index));
+            }
+        }
 
         TempData["SettingsSaved"] = "Changes saved.";
         return RedirectToAction(nameof(Index));

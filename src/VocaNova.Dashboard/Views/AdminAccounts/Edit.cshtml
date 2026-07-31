@@ -4,15 +4,10 @@
 }
 
 <div class="admin-account-editor-shell">
-<nav class="breadcrumb">
-    <a href="/admin-accounts">@T["Super Admin Dashboard"]</a>
-    <span class="breadcrumb-sep">/</span>
-    <span class="breadcrumb-current">@T["Edit Admin Account"]</span>
-</nav>
+<a class="btn-primary page-back-button" href="/admin-accounts">@T["Back"]</a>
 
 <div class="page-header">
     <h1 class="page-title">@T["Edit Admin Account"]</h1>
-    <p class="page-subtitle">@T["Update administrator identity, credentials and access status."]</p>
 </div>
 
 <form method="post" action="/admin-accounts/@Model.AdminId/edit" class="panel admin-account-form">
