@@ -23,6 +23,7 @@ abstract final class ApiEndpoints {
       '$recommendations/learning-profile-options';
   static const onboardingTopicSelection = '$recommendations/topics/selection';
   static const recommendedTopics = '$recommendations/topics';
+  static const recommendedPersonalTopics = '$recommendations/personal-topics';
   static const recommendedWords = '$recommendations/words';
 
   static const words = '/api/words';
@@ -41,6 +42,8 @@ abstract final class ApiEndpoints {
   static const notifications = '/api/notifications';
 
   static String word(int id) => '$words/$id';
+
+  static const dailyWord = '$words/daily';
 
   static String topicWords(int id) => '$topics/$id/words';
 

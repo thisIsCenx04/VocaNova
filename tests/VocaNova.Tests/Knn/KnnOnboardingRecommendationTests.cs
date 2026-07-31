@@ -239,6 +239,72 @@ public class KnnOnboardingRecommendationTests
     }
 
     [Fact]
+    public async Task RecommendPersonalTopicsAsync_Should_Return_Neighbor_Words_Without_Exposing_Owned_Words()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedRecommendationDataAsync(dbContext);
+        var now = DateTime.UtcNow;
+        dbContext.Words.Add(CreateWord(4));
+        dbContext.WordTopics.Add(new WordTopic { WordId = 4, TopicId = 101 });
+        dbContext.UserLists.AddRange(
+            new UserList
+            {
+                ListId = 10,
+                UserId = 1,
+                ListName = "My words",
+                Status = UserStatus.Active,
+                CreatedAt = now,
+            },
+            new UserList
+            {
+                ListId = 20,
+                UserId = 2,
+                ListName = PersonalTopicListName.For(101),
+                Status = UserStatus.Active,
+                CreatedAt = now,
+            });
+        dbContext.UserListWords.AddRange(
+            new UserListWord
+            {
+                UserId = 1,
+                ListId = 10,
+                WordId = 2,
+                AddMethod = AddMethod.Manual,
+                Status = UserStatus.Active,
+                AddedAt = now,
+            },
+            new UserListWord
+            {
+                UserId = 2,
+                ListId = 20,
+                WordId = 2,
+                AddMethod = AddMethod.Manual,
+                Status = UserStatus.Active,
+                AddedAt = now,
+            },
+            new UserListWord
+            {
+                UserId = 2,
+                ListId = 20,
+                WordId = 4,
+                AddMethod = AddMethod.Manual,
+                Status = UserStatus.Active,
+                AddedAt = now.AddMinutes(1),
+            });
+        await dbContext.SaveChangesAsync();
+        var service = CreateService(dbContext);
+
+        var result = await service.RecommendPersonalTopicsAsync(1, 6);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().ContainSingle();
+        var recommendation = result.Value!.Single();
+        recommendation.TopicId.Should().Be(101);
+        recommendation.Words.Select(word => word.WordId).Should().Equal(4u);
+        recommendation.RecommendationScore.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
     public async Task SelectTopicsAsync_Should_Store_Onboarding_Picks_And_Retire_Deselected_Ones()
     {
         await using var dbContext = CreateDbContext();

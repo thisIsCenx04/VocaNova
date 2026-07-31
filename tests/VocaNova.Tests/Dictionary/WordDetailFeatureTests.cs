@@ -64,6 +64,21 @@ public class WordDetailFeatureTests
     }
 
     [Fact]
+    public async Task GetDailyAsync_Should_Return_A_Real_Word_With_Audio_When_Available()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedWordDetailAsync(dbContext);
+        var service = CreateService(dbContext);
+
+        var result = await service.GetDailyAsync();
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Word.Should().Be("run");
+        result.Value.Audio.Should().HaveCount(2);
+        result.Value.Senses.Should().NotBeEmpty();
+    }
+
+    [Fact]
     public async Task GetByIdAsync_Should_Return_Cached_Detail_When_Available()
     {
         await using var dbContext = CreateDbContext();

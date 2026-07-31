@@ -850,6 +850,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeLearnThisWord => 'Learn this word';
 
   @override
+  String get homeDailyWordLoading => 'Loading…';
+
+  @override
+  String get homeDailyWordUnavailable => 'Unavailable';
+
+  @override
+  String get homeDailyWordChoosing => 'Choosing a word from your dictionary…';
+
+  @override
+  String get homeDailyWordLoadError =>
+      'Could not load today’s word. Pull down to retry.';
+
+  @override
+  String get homePronunciationPlayTooltip => 'Play pronunciation';
+
+  @override
+  String get homePronunciationPlayError => 'Unable to play pronunciation.';
+
+  @override
   String get homeStatWords => 'Words';
 
   @override
@@ -886,6 +905,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeTopicsForYouTitle => 'Topics for you';
+
+  @override
+  String get homeTopicsForYouEmpty => 'Your next collection is taking shape';
+
+  @override
+  String get homeExploreTopics => 'Explore topics';
 
   @override
   String homeTopicWordCount(int count) {

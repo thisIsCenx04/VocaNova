@@ -182,6 +182,42 @@ public sealed class WordRepository : IWordRepository
         return word is null ? null : MapDetail(word);
     }
 
+    public async Task<WordDetailDto?> FindDailyDetailAsync(
+        DateOnly date,
+        CancellationToken cancellationToken = default)
+    {
+        var playableStatuses = AudioStatus.Playable.ToArray();
+        var wordIds = await _dbContext.Words
+            .AsNoTracking()
+            .Where(word => word.WordSenses.Any()
+                && word.WordAudioAssets.Any(audio =>
+                    playableStatuses.Contains(audio.Status)
+                    && !string.IsNullOrWhiteSpace(audio.StorageUrl)))
+            .OrderBy(word => word.WordId)
+            .Select(word => word.WordId)
+            .ToListAsync(cancellationToken);
+
+        // Audio is preferred, but a real dictionary word is still useful when the audio
+        // library is not populated yet; the mobile client can fall back to device TTS.
+        if (wordIds.Count == 0)
+        {
+            wordIds = await _dbContext.Words
+                .AsNoTracking()
+                .Where(word => word.WordSenses.Any())
+                .OrderBy(word => word.WordId)
+                .Select(word => word.WordId)
+                .ToListAsync(cancellationToken);
+        }
+
+        if (wordIds.Count == 0)
+        {
+            return null;
+        }
+
+        var index = Math.Abs(date.DayNumber % wordIds.Count);
+        return await FindDetailAsync(wordIds[index], cancellationToken);
+    }
+
     public Task<bool> WordKeyExistsAsync(
         string wordKey,
         uint? excludingWordId = null,

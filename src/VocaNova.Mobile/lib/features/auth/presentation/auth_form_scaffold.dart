@@ -263,11 +263,25 @@ class AuthHelperText extends StatelessWidget {
 
 InputDecoration authInputDecoration({
   required String label,
+  bool requiredField = false,
   String? hint,
   Widget? suffixIcon,
 }) {
   return InputDecoration(
-    labelText: label,
+    label: requiredField
+        ? Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(text: label),
+                const TextSpan(
+                  text: ' *',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ],
+            ),
+          )
+        : null,
+    labelText: requiredField ? null : label,
     hintText: hint,
     suffixIcon: suffixIcon,
   );

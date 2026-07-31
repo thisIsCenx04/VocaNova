@@ -15,6 +15,13 @@ class WordDetailRepository {
     return WordDetail.fromJson(_dataMap(response));
   }
 
+  Future<WordDetail> getDailyWord() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiEndpoints.dailyWord,
+    );
+    return WordDetail.fromJson(_dataMap(response));
+  }
+
   Future<List<UserListSummary>> getLists() async {
     final response = await _dio.get<Map<String, dynamic>>(ApiEndpoints.lists);
     final data = response.data?['data'];

@@ -95,7 +95,9 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
                   key: const Key('topics-search'),
                   onChanged: (value) => setState(() => _query = value.trim()),
                   decoration: InputDecoration(
-                    hintText: AppLocalizations.of(context)!.dictSearchTopicsHint,
+                    hintText: AppLocalizations.of(
+                      context,
+                    )!.dictSearchTopicsHint,
                     prefixIcon: const Icon(Icons.search),
                   ),
                 ),
@@ -135,6 +137,7 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
                   );
                 }
                 final topics = (snapshot.data ?? const <TopicSummary>[])
+                    .where((topic) => !_showPersonal || topic.wordCount > 0)
                     .where(_matches)
                     .toList(growable: false);
                 if (topics.isEmpty) {

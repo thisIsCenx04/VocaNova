@@ -140,7 +140,33 @@ builder.Services.AddSingleton<IAdminKnnTriggerRateLimiter, InMemoryAdminKnnTrigg
 builder.Services.AddSingleton<IAudioStorage, CloudinaryAudioStorage>();
 builder.Services.AddSingleton<IImageStorage, CloudinaryImageStorage>();
 builder.Services.AddSingleton<IOtpCodeGenerator, RandomOtpCodeGenerator>();
-builder.Services.AddSingleton<ISmsProvider, ConsoleSmsProvider>();
+builder.Services
+    .AddOptions<SpeedSmsSettings>()
+    .Bind(builder.Configuration.GetSection(SpeedSmsSettings.SectionName))
+    .Validate(
+        settings => !settings.Enabled
+            || (!string.IsNullOrWhiteSpace(settings.AccessToken)
+                && !string.IsNullOrWhiteSpace(settings.DeviceId)
+                && settings.SmsType == 5
+                && Uri.TryCreate(settings.BaseUrl, UriKind.Absolute, out var uri)
+                && uri.Scheme == Uri.UriSchemeHttps),
+        "Enabled SpeedSMS requires an access token, Android Device ID, sms_type 5, and an HTTPS BaseUrl.")
+    .ValidateOnStart();
+if (builder.Configuration.GetValue<bool>("SpeedSms:Enabled"))
+{
+    builder.Services.AddHttpClient<ISmsProvider, SpeedSmsProvider>((serviceProvider, client) =>
+    {
+        var settings = serviceProvider
+            .GetRequiredService<Microsoft.Extensions.Options.IOptions<SpeedSmsSettings>>()
+            .Value;
+        client.BaseAddress = new Uri($"{settings.BaseUrl.TrimEnd('/')}/");
+        client.Timeout = TimeSpan.FromSeconds(15);
+    });
+}
+else
+{
+    builder.Services.AddSingleton<ISmsProvider, ConsoleSmsProvider>();
+}
 builder.Services.AddHttpClient<IGeminiClient, GeminiClient>((serviceProvider, client) =>
 {
     var settings = serviceProvider

@@ -28,6 +28,13 @@ void main() {
           containsWord: false,
           icon: '🍎',
         ),
+        PersonalTopicSummary(
+          topicId: 2,
+          name: 'Empty topic',
+          wordCount: 0,
+          containsWord: false,
+          icon: '📭',
+        ),
       ],
     );
 
@@ -53,6 +60,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('2 personal words'), findsOneWidget);
+    expect(find.text('Empty topic'), findsNothing);
+    expect(find.text('0 personal words'), findsNothing);
     expect(
       find.text('Only words you saved appear here, ready for practice.'),
       findsOneWidget,

@@ -45,4 +45,16 @@ public sealed class WordsController : ControllerBase
 
         return this.OkResult(result.Value!, "Word loaded successfully.");
     }
+
+    [HttpGet("daily")]
+    public async Task<IActionResult> GetDaily(CancellationToken cancellationToken)
+    {
+        var result = await _wordService.GetDailyAsync(cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value!, "Daily word loaded successfully.");
+    }
 }

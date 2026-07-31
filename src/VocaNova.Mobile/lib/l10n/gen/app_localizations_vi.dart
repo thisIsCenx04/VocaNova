@@ -847,6 +847,25 @@ class AppLocalizationsVi extends AppLocalizations {
   String get homeLearnThisWord => 'Học từ này';
 
   @override
+  String get homeDailyWordLoading => 'Đang tải…';
+
+  @override
+  String get homeDailyWordUnavailable => 'Chưa có từ';
+
+  @override
+  String get homeDailyWordChoosing => 'Đang chọn một từ trong từ điển…';
+
+  @override
+  String get homeDailyWordLoadError =>
+      'Không thể tải từ hôm nay. Kéo xuống để thử lại.';
+
+  @override
+  String get homePronunciationPlayTooltip => 'Phát cách đọc';
+
+  @override
+  String get homePronunciationPlayError => 'Không thể phát cách đọc.';
+
+  @override
   String get homeStatWords => 'Từ vựng';
 
   @override
@@ -877,6 +896,13 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get homeTopicsForYouTitle => 'Chủ đề dành cho bạn';
+
+  @override
+  String get homeTopicsForYouEmpty =>
+      'Bộ từ tiếp theo của bạn đang được chuẩn bị';
+
+  @override
+  String get homeExploreTopics => 'Khám phá chủ đề';
 
   @override
   String homeTopicWordCount(int count) {

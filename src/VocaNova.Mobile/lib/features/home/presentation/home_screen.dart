@@ -7,9 +7,11 @@ import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
+import 'package:vocanova_mobile/features/dictionary/application/audio_playback_service.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
-import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
+import 'package:vocanova_mobile/features/home/application/home_daily_word_provider.dart';
 import 'package:vocanova_mobile/features/home/application/home_topics_provider.dart';
+import 'package:vocanova_mobile/features/home/domain/personal_topic_recommendation.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
 import 'package:vocanova_mobile/features/notifications/application/notifications_notifier.dart';
@@ -81,6 +83,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _refresh() async {
     ref.invalidate(homeTopicsProvider);
+    ref.invalidate(homeDailyWordProvider);
     await Future.wait([
       ref.read(progressOverviewProvider.notifier).load(),
       ref.read(listsProvider.notifier).load(),
@@ -180,17 +183,21 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Text(
-            title,
-            style: AppTextStyles.heading.copyWith(
-              color: palette.text,
-              fontSize: 17,
-              height: 22 / 17,
-              letterSpacing: -0.3,
-              fontWeight: FontWeight.w800,
+          Expanded(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.heading.copyWith(
+                color: palette.text,
+                fontSize: 17,
+                height: 22 / 17,
+                letterSpacing: -0.3,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
-          const Spacer(),
+          if (onSeeAll != null) const SizedBox(width: 8),
           if (onSeeAll != null)
             Material(
               color: palette.elevatedSurface,
@@ -450,13 +457,11 @@ class _DailyGoalCard extends ConsumerWidget {
     final summary = ref.watch(
       progressOverviewProvider.select((state) => state.summary),
     );
-    final total = summary?.totalWordsInProgress ?? 0;
-    final mastered = summary?.masteredWords ?? 0;
+    final total = summary?.totalAnswers7Days ?? 0;
+    final correct = summary?.correct7Days ?? 0;
     final streak = summary?.currentStreakDays ?? 0;
-    final progress = total == 0 ? 0.0 : (mastered / total).clamp(0.0, 1.0);
-    final goalText = summary == null
-        ? '— / —'
-        : l10n.homeGoalProgress(mastered, total);
+    final progress = total == 0 ? 0.0 : (correct / total).clamp(0.0, 1.0);
+    final goalText = summary == null ? '— / —' : '$correct / $total';
     final streakText = streak > 0
         ? l10n.homeStreakActive(streak)
         : l10n.homeStreakInactive;
@@ -475,7 +480,7 @@ class _DailyGoalCard extends ConsumerWidget {
               Icon(Icons.track_changes, size: 12, color: foreground),
               const SizedBox(width: 6),
               Text(
-                l10n.homeDailyGoalLabel,
+                l10n.progressAccuracy7DaysLabel.toUpperCase(),
                 style: AppTextStyles.caption.copyWith(
                   color: foreground,
                   fontSize: 10,
@@ -507,7 +512,7 @@ class _DailyGoalCard extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      l10n.homeMasteredSoFar,
+                      l10n.homeStatAccuracy,
                       style: AppTextStyles.caption.copyWith(
                         color: palette.isDark
                             ? palette.secondaryText
@@ -535,17 +540,6 @@ class _DailyGoalCard extends ConsumerWidget {
                               fontSize: 11,
                               height: 16.5 / 11,
                               fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerRight,
-                            child: _StreakDots(
-                              foreground: foreground,
-                              filled: streak.clamp(0, 7),
                             ),
                           ),
                         ),
@@ -645,72 +639,41 @@ class _DashedRingPainter extends CustomPainter {
   }
 }
 
-class _StreakDots extends StatelessWidget {
-  const _StreakDots({required this.foreground, this.filled = 0});
-
-  final Color foreground;
-  final int filled;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final days = [
-      l10n.homeWeekdayMonShort,
-      l10n.homeWeekdayTueShort,
-      l10n.homeWeekdayWedShort,
-      l10n.homeWeekdayThuShort,
-      l10n.homeWeekdayFriShort,
-      l10n.homeWeekdaySatShort,
-      l10n.homeWeekdaySunShort,
-    ];
-    return Row(
-      children: [
-        for (var i = 0; i < days.length; i++) ...[
-          Column(
-            children: [
-              Container(
-                width: 13,
-                height: 13,
-                decoration: BoxDecoration(
-                  color: i < filled
-                      ? foreground
-                      : foreground.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: i < filled
-                    ? Icon(
-                        Icons.check,
-                        size: 8,
-                        color: _HomePalette.of(context).background,
-                      )
-                    : null,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                days[i],
-                style: AppTextStyles.caption.copyWith(
-                  color: foreground.withValues(alpha: 0.55),
-                  fontSize: 8,
-                  height: 12 / 8,
-                ),
-              ),
-            ],
-          ),
-          if (i != days.length - 1) const SizedBox(width: 4),
-        ],
-      ],
-    );
-  }
-}
-
-class _WordOfTheDayCard extends StatelessWidget {
+class _WordOfTheDayCard extends ConsumerWidget {
   const _WordOfTheDayCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = _HomePalette.of(context);
     final l10n = AppLocalizations.of(context)!;
     final foreground = palette.isDark ? AppColors.onSurface : Colors.black;
+    final dailyWord = ref.watch(homeDailyWordProvider);
+    final word = dailyWord.asData?.value;
+    final sense = word?.senses.firstOrNull;
+    final phonetic = word?.phoneticUk ?? word?.phoneticUs;
+
+    Future<void> playPronunciation() async {
+      if (word == null) return;
+      try {
+        final ukAudio = word.audio
+            .where((item) => item.accent.toUpperCase() == 'UK')
+            .firstOrNull;
+        final audio = ukAudio ?? word.audio.firstOrNull;
+        await ref
+            .read(audioPlaybackServiceProvider)
+            .playPronunciation(
+              word: word.word,
+              accent: 'UK',
+              audioUrl: audio?.url,
+            );
+      } catch (_) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.homePronunciationPlayError)),
+        );
+      }
+    }
+
     return Container(
       constraints: const BoxConstraints(minHeight: 225),
       padding: const EdgeInsets.fromLTRB(19, 18, 19, 17),
@@ -735,24 +698,33 @@ class _WordOfTheDayCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: foreground.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.volume_up_outlined,
-                  size: 16,
-                  color: foreground,
+              Material(
+                color: foreground.withValues(alpha: 0.15),
+                shape: const CircleBorder(),
+                child: IconButton(
+                  key: const Key('daily-word-audio'),
+                  tooltip: l10n.homePronunciationPlayTooltip,
+                  onPressed: word == null ? null : playPronunciation,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 32,
+                    height: 32,
+                  ),
+                  padding: EdgeInsets.zero,
+                  icon: Icon(
+                    Icons.volume_up_outlined,
+                    size: 16,
+                    color: foreground,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
           Text(
-            'Serendipity',
+            word?.word ??
+                (dailyWord.isLoading
+                    ? l10n.homeDailyWordLoading
+                    : l10n.homeDailyWordUnavailable),
             style: AppTextStyles.heading.copyWith(
               color: foreground,
               fontSize: 28,
@@ -763,7 +735,10 @@ class _WordOfTheDayCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '/ˌser.ənˈdɪp.ə.ti/ · noun',
+            [
+              if (phonetic?.trim().isNotEmpty == true) phonetic!,
+              if (sense?.wordClass.trim().isNotEmpty == true) sense!.wordClass,
+            ].join(' · '),
             style: AppTextStyles.caption.copyWith(
               color: foreground,
               fontSize: 13,
@@ -773,7 +748,12 @@ class _WordOfTheDayCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'The occurrence of events by chance in a happy\nor beneficial way.',
+            sense?.englishDefinition ??
+                (dailyWord.hasError
+                    ? l10n.homeDailyWordLoadError
+                    : l10n.homeDailyWordChoosing),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
             style: AppTextStyles.caption.copyWith(
               color: palette.isDark
                   ? palette.secondaryText
@@ -787,7 +767,11 @@ class _WordOfTheDayCard extends StatelessWidget {
             width: 135,
             height: 35,
             child: ElevatedButton(
-              onPressed: () => context.go(AppRoutes.search),
+              onPressed: word == null
+                  ? null
+                  : () => context.push(
+                      AppRoutes.wordDetail(word.wordId.toString()),
+                    ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: palette.isDark
                     ? AppColors.primary
@@ -955,9 +939,8 @@ class _ContinueCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(18),
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
-          onTap: () => context.push(
-            AppRoutes.listDetail(list.listId.toString()),
-          ),
+          onTap: () =>
+              context.push(AppRoutes.listDetail(list.listId.toString())),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(18, 18, 16, 18),
             child: Row(
@@ -1181,12 +1164,28 @@ class _TopicsForYou extends ConsumerWidget {
       loading: () => const _TopicsSection(child: _TopicsSkeleton()),
       error: (_, _) => const SizedBox.shrink(),
       data: (topics) {
-        if (topics.isEmpty) return const SizedBox.shrink();
+        if (topics.isEmpty) {
+          final l10n = AppLocalizations.of(context)!;
+          return _TopicsSection(
+            onSeeAll: () => context.push(AppRoutes.topics),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.homeTopicsForYouEmpty),
+                const SizedBox(height: 4),
+                TextButton(
+                  onPressed: () => context.push(AppRoutes.topics),
+                  child: Text(l10n.homeExploreTopics),
+                ),
+              ],
+            ),
+          );
+        }
         final shown = topics.take(8).toList();
         return _TopicsSection(
           onSeeAll: () => context.push(AppRoutes.topics),
           child: SizedBox(
-            height: 118,
+            height: 150,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: EdgeInsets.zero,
@@ -1201,7 +1200,13 @@ class _TopicsForYou extends ConsumerWidget {
                       : _emoji[index % _emoji.length],
                   onTap: () => context.push(
                     AppRoutes.topicDetail(topic.topicId.toString()),
-                    extra: topic,
+                    extra: TopicSummary(
+                      topicId: topic.topicId,
+                      name: topic.name,
+                      nameVi: topic.nameVi,
+                      icon: topic.icon,
+                      wordCount: topic.wordCount,
+                    ),
                   ),
                 );
               },
@@ -1244,7 +1249,7 @@ class _TopicCard extends StatelessWidget {
     required this.onTap,
   });
 
-  final TopicSummary topic;
+  final PersonalTopicRecommendation topic;
   final String emoji;
   final VoidCallback onTap;
 
@@ -1271,7 +1276,10 @@ class _TopicCard extends StatelessWidget {
                 Text(emoji, style: const TextStyle(fontSize: 26)),
                 const Spacer(),
                 Text(
-                  topic.localizedName(context),
+                  Localizations.localeOf(context).languageCode == 'vi' &&
+                          topic.nameVi?.trim().isNotEmpty == true
+                      ? topic.nameVi!
+                      : topic.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.button.copyWith(
@@ -1283,15 +1291,31 @@ class _TopicCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  AppLocalizations.of(context)!.homeTopicWordCount(
-                    topic.wordCount,
-                  ),
+                  AppLocalizations.of(
+                    context,
+                  )!.homeTopicWordCount(topic.wordCount),
                   style: AppTextStyles.caption.copyWith(
                     color: palette.secondaryText,
                     fontSize: 11,
                     height: 15 / 11,
                   ),
                 ),
+                if (topic.words.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 6,
+                    children: [
+                      for (final word in topic.words.take(2))
+                        Text(
+                          word.word,
+                          style: AppTextStyles.caption.copyWith(
+                            color: palette.secondaryText,
+                            fontSize: 10,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -1474,7 +1498,10 @@ class _MyListsCard extends ConsumerWidget {
           for (var i = 0; i < lists.length; i++) ...[
             if (i > 0)
               Divider(height: 20, color: palette.border.withValues(alpha: 0.7)),
-            _MyListRow(list: lists[i], color: _listColors[i % _listColors.length]),
+            _MyListRow(
+              list: lists[i],
+              color: _listColors[i % _listColors.length],
+            ),
           ],
         ],
       ),
@@ -1501,8 +1528,7 @@ class _MyListRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        onTap: () =>
-            context.push(AppRoutes.listDetail(list.listId.toString())),
+        onTap: () => context.push(AppRoutes.listDetail(list.listId.toString())),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(
@@ -1533,9 +1559,9 @@ class _MyListRow extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      AppLocalizations.of(context)!.homeWordCount(
-                        list.wordCount,
-                      ),
+                      AppLocalizations.of(
+                        context,
+                      )!.homeWordCount(list.wordCount),
                       style: AppTextStyles.caption.copyWith(
                         color: palette.secondaryText,
                         fontSize: 12,
@@ -1545,11 +1571,7 @@ class _MyListRow extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right,
-                size: 20,
-                color: palette.secondaryText,
-              ),
+              Icon(Icons.chevron_right, size: 20, color: palette.secondaryText),
             ],
           ),
         ),

@@ -64,6 +64,35 @@ void main() {
     );
   });
 
+  testWidgets('register marks only required account fields', (tester) async {
+    await pumpAuthScreen(tester, const RegisterScreen(), repository);
+
+    for (final key in [
+      'register-display-name',
+      'register-phone',
+      'register-password',
+      'register-confirm-password',
+    ]) {
+      final decorator = tester.widget<InputDecorator>(
+        find.descendant(
+          of: find.byKey(Key(key)),
+          matching: find.byType(InputDecorator),
+        ),
+      );
+      final label = decorator.decoration.label as Text;
+      expect((label.textSpan as TextSpan).toPlainText(), endsWith(' *'));
+    }
+
+    final dateField = tester.widget<InputDecorator>(
+      find.descendant(
+        of: find.byKey(const Key('register-date-of-birth')),
+        matching: find.byType(InputDecorator),
+      ),
+    );
+    expect(dateField.decoration.labelText, 'Date of birth');
+    expect(find.text('Cá nhân hóa gợi ý học (không bắt buộc)'), findsNothing);
+  });
+
   testWidgets('login disables submit and shows progress while loading', (
     tester,
   ) async {

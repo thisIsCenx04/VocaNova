@@ -86,6 +86,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               textInputAction: TextInputAction.next,
               decoration: authInputDecoration(
                 label: l10n.authFullNameLabel,
+                requiredField: true,
                 hint: 'Nguyen Van An',
               ),
               validator: AuthValidators.displayName,
@@ -99,6 +100,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               textInputAction: TextInputAction.next,
               decoration: authInputDecoration(
                 label: l10n.authPhoneNumberLabel,
+                requiredField: true,
                 hint: '+84 90 000 0000',
               ),
               validator: AuthValidators.phone,
@@ -112,6 +114,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               textInputAction: TextInputAction.next,
               decoration: authInputDecoration(
                 label: l10n.authPasswordLabel,
+                requiredField: true,
                 hint: l10n.authPasswordHintMinChars,
                 suffixIcon: _visibilityButton(
                   obscure: _obscurePassword,
@@ -136,6 +139,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               textInputAction: TextInputAction.done,
               decoration: authInputDecoration(
                 label: l10n.authConfirmPasswordLabel,
+                requiredField: true,
                 hint: l10n.authRepeatPasswordHint,
                 suffixIcon: _visibilityButton(
                   obscure: _obscureConfirmation,
@@ -193,16 +197,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          l10n.authLearningProfileSectionTitle,
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          l10n.authLearningProfileSectionSubtitle,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        const SizedBox(height: 16),
         _dateOfBirthField(),
         if (_options.regions.isNotEmpty) ...[
           const SizedBox(height: 16),
@@ -287,7 +281,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final today = DateTime.now();
     final selected = await showDatePicker(
       context: context,
-      initialDate: _dateOfBirth ?? DateTime(today.year - 18, today.month, today.day),
+      initialDate:
+          _dateOfBirth ?? DateTime(today.year - 18, today.month, today.day),
       firstDate: DateTime(today.year - _maxAge, today.month, today.day),
       lastDate: DateTime(today.year - _minAge, today.month, today.day),
       helpText: AppLocalizations.of(context)!.authSelectDateOfBirth,

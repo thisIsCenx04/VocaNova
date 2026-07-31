@@ -13,6 +13,9 @@ public interface IWordService
         uint wordId,
         CancellationToken cancellationToken = default);
 
+    Task<Result<WordDetailDto>> GetDailyAsync(
+        CancellationToken cancellationToken = default);
+
     Task<Result<PagedResult<AdminWordListItemDto>>> SearchAdminAsync(
         AdminWordQuery query,
         CancellationToken cancellationToken = default);

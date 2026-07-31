@@ -442,6 +442,12 @@
   "homeStreakInactive": "Start a streak today",
   "homeWordOfTheDayLabel": "WORD OF THE DAY",
   "homeLearnThisWord": "Learn this word",
+  "homeDailyWordLoading": "Loading…",
+  "homeDailyWordUnavailable": "Unavailable",
+  "homeDailyWordChoosing": "Choosing a word from your dictionary…",
+  "homeDailyWordLoadError": "Could not load today’s word. Pull down to retry.",
+  "homePronunciationPlayTooltip": "Play pronunciation",
+  "homePronunciationPlayError": "Unable to play pronunciation.",
   "homeStatWords": "Words",
   "homeStatAccuracy": "Accuracy",
   "homeStatMastered": "Mastered",
@@ -459,6 +465,8 @@
   "homeActionReview": "Review",
   "homeActionTopics": "Topics",
   "homeTopicsForYouTitle": "Topics for you",
+  "homeTopicsForYouEmpty": "Your next collection is taking shape",
+  "homeExploreTopics": "Explore topics",
   "homeTopicWordCount": "{count,plural, =1{{count} word} other{{count} words}}",
   "@homeTopicWordCount": {
     "placeholders": {

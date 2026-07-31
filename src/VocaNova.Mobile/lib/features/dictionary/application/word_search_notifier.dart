@@ -142,7 +142,7 @@ class WordSearchNotifier extends _$WordSearchNotifier {
       state = state.copyWith(
         results: _searchCache(query),
         isLoading: false,
-        isOffline: true,
+        isOffline: false,
         errorMessage: _errorMessage(error),
       );
     }

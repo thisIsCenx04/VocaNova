@@ -180,6 +180,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     key: Key('onboarding-purpose-${option.id}'),
                     label: Text(option.label),
                     selected: _learningPurposeId == option.id,
+                    showCheckmark: false,
                     onSelected: isLoading
                         ? null
                         : (_) => setState(() => _learningPurposeId = option.id),
@@ -191,6 +192,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     key: Key('onboarding-topic-${topic.topicId}'),
                     label: Text(topic.localizedName(context)),
                     selected: _selectedTopicIds.contains(topic.topicId),
+                    showCheckmark: false,
                     onSelected: isLoading
                         ? null
                         : (selected) => setState(() {

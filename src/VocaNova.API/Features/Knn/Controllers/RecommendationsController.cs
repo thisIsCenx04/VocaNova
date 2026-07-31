@@ -61,6 +61,26 @@ public sealed class RecommendationsController : ControllerBase
         return this.OkResult(result.Value!, "Word recommendations loaded successfully.");
     }
 
+    [HttpGet("personal-topics")]
+    public async Task<IActionResult> GetPersonalTopics(
+        [FromQuery] int? limit,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return this.ErrorResult(
+                Result<IReadOnlyCollection<PersonalTopicRecommendationDto>>.Unauthorized("Unauthorized."));
+        }
+
+        var result = await _knnOnboardingService.RecommendPersonalTopicsAsync(
+            userId,
+            limit,
+            cancellationToken);
+        return result.IsSuccess
+            ? this.OkResult(result.Value!, "Personal topic recommendations loaded successfully.")
+            : this.ErrorResult(result);
+    }
+
     /// <summary>
     /// Lookup catalog for the sign-up form and the onboarding questions. Anonymous because the
     /// sign-up form has to render it before an account exists.

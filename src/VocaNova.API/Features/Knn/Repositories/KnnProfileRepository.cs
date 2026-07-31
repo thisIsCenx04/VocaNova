@@ -306,6 +306,110 @@ public sealed class KnnProfileRepository : IKnnProfileRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<NeighborPersonalTopicDto>> GetNeighborPersonalTopicsAsync(
+        uint currentUserId,
+        IReadOnlyCollection<uint> neighborUserIds,
+        int wordsPerTopic,
+        CancellationToken cancellationToken = default)
+    {
+        if (neighborUserIds.Count == 0)
+        {
+            return Array.Empty<NeighborPersonalTopicDto>();
+        }
+
+        var lists = await _dbContext.UserLists
+            .AsNoTracking()
+            .Where(list => neighborUserIds.Contains(list.UserId)
+                && list.Status == UserStatus.Active
+                && list.ListName.StartsWith(PersonalTopicListName.Prefix)
+                && list.UserListWords.Any())
+            .Select(list => new { list.ListId, list.UserId, list.ListName })
+            .ToListAsync(cancellationToken);
+
+        var parsedLists = lists
+            .Select(list => PersonalTopicListName.TryGetTopicId(list.ListName, out var topicId)
+                ? new { list.ListId, list.UserId, TopicId = topicId }
+                : null)
+            .Where(list => list is not null)
+            .Select(list => list!)
+            .ToArray();
+        if (parsedLists.Length == 0)
+        {
+            return Array.Empty<NeighborPersonalTopicDto>();
+        }
+
+        var topicIds = parsedLists.Select(list => list.TopicId).Distinct().ToArray();
+        var topics = await _dbContext.Topics
+            .AsNoTracking()
+            .Where(topic => topicIds.Contains(topic.TopicId))
+            .Select(topic => new
+            {
+                topic.TopicId,
+                topic.TopicName,
+                topic.TopicNameVi,
+                topic.Icon,
+            })
+            .ToDictionaryAsync(topic => topic.TopicId, cancellationToken);
+
+        var currentUserWordIds = await _dbContext.UserListWords
+            .AsNoTracking()
+            .Where(item => item.UserId == currentUserId)
+            .Select(item => item.WordId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+        var listIds = parsedLists.Select(list => list.ListId).ToArray();
+        var wordRows = await _dbContext.UserListWords
+            .AsNoTracking()
+            .Where(item => listIds.Contains(item.ListId)
+                && !currentUserWordIds.Contains(item.WordId))
+            .OrderByDescending(item => item.AddedAt)
+            .Select(item => new
+            {
+                item.ListId,
+                item.WordId,
+                Word = item.Word.Word1,
+                Phonetic = item.Word.PhoneticUk,
+                Cefr = item.Word.CefrLevel,
+                PrimaryMeaning = item.Word.WordSenses
+                    .OrderBy(sense => sense.SenseOrder)
+                    .Select(sense => sense.VietnameseMeaning ?? sense.EnglishDefinition)
+                    .FirstOrDefault(),
+            })
+            .ToListAsync(cancellationToken);
+        var wordsByListId = wordRows
+            .GroupBy(row => row.ListId)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyCollection<PersonalTopicRecommendationWordDto>)group
+                    .Take(wordsPerTopic)
+                    .Select(row => new PersonalTopicRecommendationWordDto(
+                        row.WordId,
+                        row.Word,
+                        row.Phonetic,
+                        row.Cefr,
+                        row.PrimaryMeaning))
+                    .ToArray());
+
+        return parsedLists
+            .Where(list => topics.ContainsKey(list.TopicId)
+                && wordsByListId.TryGetValue(list.ListId, out var words)
+                && words.Count > 0)
+            .Select(list =>
+            {
+                var topic = topics[list.TopicId];
+                var words = wordsByListId[list.ListId];
+                return new NeighborPersonalTopicDto(
+                    list.UserId,
+                    list.TopicId,
+                    topic.TopicName,
+                    topic.TopicNameVi,
+                    topic.Icon,
+                    wordRows.Count(row => row.ListId == list.ListId),
+                    words);
+            })
+            .ToArray();
+    }
+
     public async Task<IReadOnlyCollection<TopicRecommendationDto>> GetFallbackTopicRecommendationsAsync(
         IReadOnlyCollection<uint> excludedTopicIds,
         int limit,

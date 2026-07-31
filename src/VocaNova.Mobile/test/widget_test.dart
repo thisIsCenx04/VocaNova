@@ -39,7 +39,7 @@ void main() {
     // The app defaults to the Vietnamese locale until settings load from
     // storage change it.
     expect(find.text('Chào, An'), findsOneWidget);
-    expect(find.text('MỤC TIÊU HÀNG NGÀY'), findsOneWidget);
+    expect(find.text('ĐỘ CHÍNH XÁC 7 NGÀY'), findsOneWidget);
   });
 }
 

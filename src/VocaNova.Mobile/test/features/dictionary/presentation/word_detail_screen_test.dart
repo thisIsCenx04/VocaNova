@@ -77,7 +77,13 @@ void main() {
         containsWord: true,
       ),
     );
-    when(() => audio.play(any())).thenAnswer((_) async {});
+    when(
+      () => audio.playPronunciation(
+        word: any(named: 'word'),
+        accent: any(named: 'accent'),
+        audioUrl: any(named: 'audioUrl'),
+      ),
+    ).thenAnswer((_) async {});
   });
 
   testWidgets('renders the Figma detail sections, audio and bookmark action', (
@@ -98,7 +104,13 @@ void main() {
     expect(find.text('xin chào'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('play-us')));
-    verify(() => audio.play('https://audio.test/us.mp3')).called(1);
+    verify(
+      () => audio.playPronunciation(
+        word: 'hello',
+        accent: 'US',
+        audioUrl: 'https://audio.test/us.mp3',
+      ),
+    ).called(1);
 
     await tester.tap(find.byKey(const Key('save-word-book')));
     await tester.pump();

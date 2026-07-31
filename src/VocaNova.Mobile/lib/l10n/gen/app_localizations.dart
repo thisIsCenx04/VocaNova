@@ -1610,6 +1610,42 @@ abstract class AppLocalizations {
   /// **'Learn this word'**
   String get homeLearnThisWord;
 
+  /// No description provided for @homeDailyWordLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading…'**
+  String get homeDailyWordLoading;
+
+  /// No description provided for @homeDailyWordUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get homeDailyWordUnavailable;
+
+  /// No description provided for @homeDailyWordChoosing.
+  ///
+  /// In en, this message translates to:
+  /// **'Choosing a word from your dictionary…'**
+  String get homeDailyWordChoosing;
+
+  /// No description provided for @homeDailyWordLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load today’s word. Pull down to retry.'**
+  String get homeDailyWordLoadError;
+
+  /// No description provided for @homePronunciationPlayTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Play pronunciation'**
+  String get homePronunciationPlayTooltip;
+
+  /// No description provided for @homePronunciationPlayError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to play pronunciation.'**
+  String get homePronunciationPlayError;
+
   /// No description provided for @homeStatWords.
   ///
   /// In en, this message translates to:
@@ -1669,6 +1705,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Topics for you'**
   String get homeTopicsForYouTitle;
+
+  /// No description provided for @homeTopicsForYouEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Your next collection is taking shape'**
+  String get homeTopicsForYouEmpty;
+
+  /// No description provided for @homeExploreTopics.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore topics'**
+  String get homeExploreTopics;
 
   /// No description provided for @homeTopicWordCount.
   ///

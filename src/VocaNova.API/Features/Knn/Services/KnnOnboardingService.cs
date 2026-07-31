@@ -193,6 +193,96 @@ public sealed class KnnOnboardingService : IKnnOnboardingService
         return Result<bool>.Ok(true);
     }
 
+    public async Task<Result<IReadOnlyCollection<PersonalTopicRecommendationDto>>> RecommendPersonalTopicsAsync(
+        uint userId,
+        int? limit,
+        CancellationToken cancellationToken = default)
+    {
+        if (userId == 0)
+        {
+            return Result<IReadOnlyCollection<PersonalTopicRecommendationDto>>.Unauthorized("Unauthorized.");
+        }
+
+        var normalizedLimit = NormalizeLimit(limit);
+        if (normalizedLimit is null)
+        {
+            return Result<IReadOnlyCollection<PersonalTopicRecommendationDto>>.Fail(
+                $"Limit must be between 1 and {AppSettings.MaxPageLimit}.");
+        }
+
+        var profile = await _knnProfileRepository.GetProfileVectorSourceAsync(userId, cancellationToken);
+        if (profile is null)
+        {
+            return Result<IReadOnlyCollection<PersonalTopicRecommendationDto>>.Ok(
+                Array.Empty<PersonalTopicRecommendationDto>());
+        }
+
+        var dimensions = await _knnProfileRepository.GetActiveLookupDimensionsAsync(cancellationToken);
+        var weights = await GetVectorWeightsAsync(cancellationToken);
+        var userVector = BuildProfileVector(profile, dimensions, weights);
+        if (KnnProfileVectorBuilder.IsZeroVector(userVector))
+        {
+            return Result<IReadOnlyCollection<PersonalTopicRecommendationDto>>.Ok(
+                Array.Empty<PersonalTopicRecommendationDto>());
+        }
+
+        var neighbors = (await _knnProfileRepository.GetCandidateProfileSourcesAsync(
+                userId,
+                cancellationToken))
+            .Select(candidate => new
+            {
+                candidate.UserId,
+                Similarity = KnnMathHelper.CosineSimilarity(
+                    userVector,
+                    BuildProfileVector(candidate, dimensions, weights)),
+            })
+            .Where(candidate => candidate.Similarity >= _options.Onboarding.MinSimilarity)
+            .OrderByDescending(candidate => candidate.Similarity)
+            .ThenBy(candidate => candidate.UserId)
+            .Take(_options.Onboarding.KValue)
+            .ToArray();
+        if (neighbors.Length == 0)
+        {
+            return Result<IReadOnlyCollection<PersonalTopicRecommendationDto>>.Ok(
+                Array.Empty<PersonalTopicRecommendationDto>());
+        }
+
+        var similarityByUserId = neighbors.ToDictionary(item => item.UserId, item => item.Similarity);
+        var personalTopics = await _knnProfileRepository.GetNeighborPersonalTopicsAsync(
+            userId,
+            similarityByUserId.Keys.ToArray(),
+            4,
+            cancellationToken);
+
+        var recommendations = personalTopics
+            .GroupBy(topic => topic.TopicId)
+            .Select(group =>
+            {
+                var first = group.First();
+                var words = group
+                    .OrderByDescending(topic => similarityByUserId[topic.OwnerUserId])
+                    .SelectMany(topic => topic.Words)
+                    .DistinctBy(word => word.WordId)
+                    .Take(4)
+                    .ToArray();
+                return new PersonalTopicRecommendationDto(
+                    first.TopicId,
+                    first.Name,
+                    first.NameVi,
+                    first.Icon,
+                    group.Sum(topic => topic.WordCount),
+                    group.Sum(topic => similarityByUserId[topic.OwnerUserId]),
+                    words);
+            })
+            .Where(topic => topic.Words.Count > 0)
+            .OrderByDescending(topic => topic.RecommendationScore)
+            .ThenBy(topic => topic.Name)
+            .Take(normalizedLimit.Value)
+            .ToArray();
+
+        return Result<IReadOnlyCollection<PersonalTopicRecommendationDto>>.Ok(recommendations);
+    }
+
     private async Task<IReadOnlyCollection<TopicRecommendationDto>> BuildKnnRecommendationsAsync(
         uint userId,
         double[] userVector,

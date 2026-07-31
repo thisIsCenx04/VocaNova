@@ -18,6 +18,10 @@ public interface IWordRepository
         uint wordId,
         CancellationToken cancellationToken = default);
 
+    Task<WordDetailDto?> FindDailyDetailAsync(
+        DateOnly date,
+        CancellationToken cancellationToken = default);
+
     Task<PagedResult<AdminWordListItemDto>> SearchAdminAsync(
         string? normalizedQuery,
         int page,

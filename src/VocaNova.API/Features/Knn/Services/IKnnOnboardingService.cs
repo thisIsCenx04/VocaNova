@@ -19,6 +19,11 @@ public interface IKnnOnboardingService
         int? limit,
         CancellationToken cancellationToken = default);
 
+    Task<Result<IReadOnlyCollection<PersonalTopicRecommendationDto>>> RecommendPersonalTopicsAsync(
+        uint userId,
+        int? limit,
+        CancellationToken cancellationToken = default);
+
     Task<Result<bool>> AcceptTopicAsync(
         uint userId,
         uint topicId,

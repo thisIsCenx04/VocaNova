@@ -74,7 +74,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
               : ref
                     .read(wordDetailProvider(widget.wordId).notifier)
                     .saveToWordBook,
-          onPlay: _play,
+          onPlay: _playPronunciation,
         ),
         if (state.isOffline) const _OfflineBanner(),
         Expanded(
@@ -133,13 +133,17 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
   void _autoPlay(WordDetail word) {
     if (_hasAutoPlayed ||
         !AppSettingsNotifier.instance.state.autoPlayPronunciation ||
-        word.audio.isEmpty) {
+        word.word.trim().isEmpty) {
       return;
     }
     _hasAutoPlayed = true;
     final uk = word.audio.where((item) => item.accent.toUpperCase() == 'UK');
-    final audio = uk.isEmpty ? word.audio.first : uk.first;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _play(audio.url));
+    final audio = uk.isNotEmpty
+        ? uk.first
+        : (word.audio.isEmpty ? null : word.audio.first);
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _playPronunciation(audio?.url, word.word, audio?.accent ?? 'UK'),
+    );
   }
 
   List<WordRelation> _allRelations(WordDetail word) {
@@ -153,9 +157,15 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
     return unique.values.toList(growable: false);
   }
 
-  Future<void> _play(String url) async {
+  Future<void> _playPronunciation(
+    String? audioUrl,
+    String word,
+    String accent,
+  ) async {
     try {
-      await ref.read(audioPlaybackServiceProvider).play(url);
+      await ref
+          .read(audioPlaybackServiceProvider)
+          .playPronunciation(word: word, accent: accent, audioUrl: audioUrl);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -221,7 +231,7 @@ class _DetailHeader extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onShare;
   final VoidCallback? onSave;
-  final ValueChanged<String> onPlay;
+  final void Function(String? audioUrl, String word, String accent) onPlay;
 
   @override
   Widget build(BuildContext context) {
@@ -309,6 +319,7 @@ class _DetailHeader extends StatelessWidget {
                   accent: 'UK',
                   phonetic: word.phoneticUk!,
                   audioUrl: _audioUrl(word.audio, 'UK'),
+                  word: word.word,
                   onPlay: onPlay,
                 ),
               if (word.phoneticUs != null)
@@ -317,6 +328,7 @@ class _DetailHeader extends StatelessWidget {
                   accent: 'US',
                   phonetic: word.phoneticUs!,
                   audioUrl: _audioUrl(word.audio, 'US'),
+                  word: word.word,
                   onPlay: onPlay,
                 ),
             ],
@@ -424,6 +436,7 @@ class _PronunciationButton extends StatelessWidget {
     required this.accent,
     required this.phonetic,
     required this.audioUrl,
+    required this.word,
     required this.onPlay,
     super.key,
   });
@@ -431,7 +444,8 @@ class _PronunciationButton extends StatelessWidget {
   final String accent;
   final String phonetic;
   final String? audioUrl;
-  final ValueChanged<String> onPlay;
+  final String word;
+  final void Function(String? audioUrl, String word, String accent) onPlay;
 
   @override
   Widget build(BuildContext context) {
@@ -444,7 +458,7 @@ class _PronunciationButton extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: audioUrl == null ? null : () => onPlay(audioUrl!),
+        onTap: () => onPlay(audioUrl, word, accent),
         child: Container(
           height: 38,
           padding: const EdgeInsets.symmetric(horizontal: 13),

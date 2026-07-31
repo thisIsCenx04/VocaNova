@@ -209,6 +209,17 @@ public sealed class WordService : IWordService
         return Result<WordDetailDto>.Ok(word);
     }
 
+    public async Task<Result<WordDetailDto>> GetDailyAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var word = await _wordRepository.FindDailyDetailAsync(
+            DateOnly.FromDateTime(DateTime.UtcNow),
+            cancellationToken);
+        return word is null
+            ? Result<WordDetailDto>.NotFound("No daily word is available.")
+            : Result<WordDetailDto>.Ok(word);
+    }
+
     public async Task<Result<WordDetailDto>> CreateAsync(
         CreateWordRequest request,
         CancellationToken cancellationToken = default)

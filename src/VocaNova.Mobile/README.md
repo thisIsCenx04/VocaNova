@@ -9,7 +9,9 @@ flutter pub get
 flutter run
 ```
 
-The default API URL is `http://10.0.2.2:5013` for an Android emulator. Override
+The default API URL is `http://10.0.3.2:5013` for Genymotion. For the Android
+Studio emulator, override it with `http://10.0.2.2:5013`. For a physical
+device, use the development machine's LAN address:
 it for another device or environment:
 
 ```powershell

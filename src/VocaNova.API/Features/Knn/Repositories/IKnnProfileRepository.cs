@@ -35,6 +35,12 @@ public interface IKnnProfileRepository
         IReadOnlySet<string> sources,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<NeighborPersonalTopicDto>> GetNeighborPersonalTopicsAsync(
+        uint currentUserId,
+        IReadOnlyCollection<uint> neighborUserIds,
+        int wordsPerTopic,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyCollection<TopicRecommendationDto>> GetFallbackTopicRecommendationsAsync(
         IReadOnlyCollection<uint> excludedTopicIds,
         int limit,
