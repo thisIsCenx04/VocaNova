@@ -21,7 +21,6 @@
 <div class="page-header admin-accounts-header">
     <div>
         <h1 class="page-title">@T["Role Management"]</h1>
-        <p class="page-subtitle">@Model.TotalRoles @T["role(s). Manage system and custom roles."]</p>
     </div>
     <div class="role-header-actions">
         <a class="btn-primary" href="/roles/create">@T["Add Role"]</a>
@@ -85,7 +84,7 @@
                                         title="@T["System role names cannot be changed."]" aria-label="@T["Edit"]">
                                     <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></svg>
                                 </button>
-                                <button class="icon-link warn" type="button" disabled
+                                <button class="icon-link danger" type="button" disabled
                                         title="@T["System roles cannot be deleted."]" aria-label="@T["Delete"]">
                                     <svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Z"/></svg>
                                 </button>
@@ -99,7 +98,7 @@
                                 <form method="post" action="/roles/@role.RoleId/delete" class="inline-form"
                                       onsubmit="return confirm('@T["Delete this role?"]');">
                                     @Html.AntiForgeryToken()
-                                    <button class="icon-link warn" type="submit"
+                                    <button class="icon-link danger" type="submit"
                                             title="@T["Delete"]" aria-label="@T["Delete"]">
                                         <svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Z"/></svg>
                                     </button>

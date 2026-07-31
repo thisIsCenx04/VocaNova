@@ -23,6 +23,8 @@
             label.textContent = toggle.checked
                 ? (label.dataset.active || "Active")
                 : (label.dataset.inactive || "Inactive");
+            label.classList.toggle("is-active", toggle.checked);
+            label.classList.toggle("is-inactive", !toggle.checked);
         });
     }
 

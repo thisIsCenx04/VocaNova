@@ -50,7 +50,6 @@
 <div class="page-header admin-accounts-header">
     <div>
         <h1 class="page-title">@T["Admin Accounts"]</h1>
-        <p class="page-subtitle">@Model.TotalItems @T["admin account(s). Manage administrator access."]</p>
     </div>
     <div class="role-header-actions">
         <a class="btn-secondary" href="/admin-accounts/role-assignment">@T["Assign Account Roles"]</a>
@@ -146,16 +145,16 @@
                         @if (admin.Status != "deleted")
                         {
                             <div class="action-icons admin-actions">
-                                <a class="btn-icon topic-action-icon" href="/admin-accounts/@admin.AdminId/edit" title="@T["Edit"]" aria-label="@T["Edit"]">
-                                    <svg viewBox="0 0 24 24"><path d="m4 16.5 9.9-9.9 3.5 3.5L7.5 20H4v-3.5ZM19.8 7.7l-3.5-3.5 1.4-1.4a2 2 0 0 1 2.8 0l.7.7a2 2 0 0 1 0 2.8l-1.4 1.4Z"/></svg>
+                                <a class="icon-link" href="/admin-accounts/@admin.AdminId/edit" title="@T["Edit"]" aria-label="@T["Edit"]">
+                                    <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></svg>
                                 </a>
                                 @if (admin.Status == "active")
                                 {
                                     <form method="post" action="/admin-accounts/@admin.AdminId/lock" class="inline-form" onsubmit="return confirm('@T["Lock this admin account?"]');">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                        <button class="btn-icon btn-warning-outline topic-action-icon" type="submit" title="@T["Lock"]" aria-label="@T["Lock"]">
-                                            <svg viewBox="0 0 24 24"><path d="M17 9V6a5 5 0 0 0-10 0v3H5v13h14V9h-2Zm-8 0V6a3 3 0 0 1 6 0v3H9Z"/></svg>
+                                        <button class="icon-link warn" type="submit" title="@T["Lock"]" aria-label="@T["Lock"]">
+                                            <svg viewBox="0 0 24 24"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 0 1 6 0v3H9Zm3 4a1.5 1.5 0 0 1 1 2.6V19h-2v-3.4A1.5 1.5 0 0 1 12 13Z"/></svg>
                                         </button>
                                     </form>
                                 }
@@ -164,16 +163,16 @@
                                     <form method="post" action="/admin-accounts/@admin.AdminId/unlock" class="inline-form">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                        <button class="btn-icon btn-success topic-action-icon" type="submit" title="@T["Unlock"]" aria-label="@T["Unlock"]">
-                                            <svg viewBox="0 0 24 24"><path d="M17 9V6a5 5 0 0 0-9.9-1H9a3 3 0 0 1 6 1v3H5v13h14V9h-2Z"/></svg>
+                                        <button class="icon-link ok" type="submit" title="@T["Unlock"]" aria-label="@T["Unlock"]">
+                                            <svg viewBox="0 0 24 24"><path d="M12 1a5 5 0 0 0-5 5h2a3 3 0 0 1 6 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Z"/></svg>
                                         </button>
                                     </form>
                                 }
                                 <form method="post" action="/admin-accounts/@admin.AdminId/delete" class="inline-form" onsubmit="return confirm('@T["Delete this admin account? This action removes its login credentials."]');">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                    <button class="btn-icon btn-danger topic-action-icon" type="submit" title="@T["Delete"]" aria-label="@T["Delete"]">
-                                        <svg viewBox="0 0 24 24"><path d="M7 21h10l1-14H6l1 14ZM9 3h6l1 2h4v2H4V5h4l1-2Z"/></svg>
+                                    <button class="icon-link danger" type="submit" title="@T["Delete"]" aria-label="@T["Delete"]">
+                                        <svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Z"/></svg>
                                     </button>
                                 </form>
                             </div>
