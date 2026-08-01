@@ -77,11 +77,12 @@
                         };
                     }
                     <input type="checkbox" id="knn-toggle" class="sidebar-group-check" checked="@knnOpen" />
-                    <label for="knn-toggle" class="sidebar-link sidebar-group-toggle@(knnOpen ? " active" : "")">
+                    <a href="/knn" class="sidebar-link sidebar-group-toggle@(knnOpen ? " active" : "")"
+                       aria-expanded="@(knnOpen ? "true" : "false")" aria-controls="knn-subnav">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm12 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM12 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm-4.7-11.3 3.3 3.3 1.4-1.4-3.3-3.3-1.4 1.4Zm9.4 0-3.3 3.3 1.4 1.4 3.3-3.3-1.4-1.4Z" /></svg>
                         <span>@T["KNN Management"]</span>
                         <svg class="sidebar-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z" /></svg>
-                    </label>
+                    </a>
                     <div class="sidebar-subnav" id="knn-subnav">
                         @foreach (var (slug, label) in knnLinks)
                         {
