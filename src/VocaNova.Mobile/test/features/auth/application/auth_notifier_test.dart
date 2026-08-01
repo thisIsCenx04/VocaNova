@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,6 +16,7 @@ import 'package:vocanova_mobile/core/storage/secure_storage.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
 import 'package:vocanova_mobile/features/auth/data/auth_repository.dart';
+import 'package:vocanova_mobile/features/auth/data/google_auth_service.dart';
 import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
 import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
 
@@ -40,6 +42,7 @@ void main() {
   late MockAppRouter appRouter;
   late MockGoRouter goRouter;
   late MockCacheWarmingService cacheWarmingService;
+  late MockGoogleAuthService googleAuthService;
   late LocalStorage localStorage;
   late SharedPreferences preferences;
   late ProviderContainer container;
@@ -53,6 +56,7 @@ void main() {
     appRouter = MockAppRouter();
     goRouter = MockGoRouter();
     cacheWarmingService = MockCacheWarmingService();
+    googleAuthService = MockGoogleAuthService();
     when(() => appRouter.router).thenReturn(goRouter);
     when(() => cacheWarmingService.warm()).thenAnswer((_) async {});
 
@@ -63,6 +67,7 @@ void main() {
         secureStorageProvider.overrideWithValue(secureStorage),
         appRouterProvider.overrideWithValue(appRouter),
         cacheWarmingServiceProvider.overrideWithValue(cacheWarmingService),
+        googleAuthServiceProvider.overrideWithValue(googleAuthService),
       ],
     );
   });
@@ -147,6 +152,46 @@ void main() {
       ),
     ).called(1);
   });
+
+  test('Google sign-in exchanges the ID token and authenticates', () async {
+    when(
+      () => googleAuthService.getIdToken(),
+    ).thenAnswer((_) async => 'google-id-token');
+    when(
+      () => repository.googleLogin('google-id-token'),
+    ).thenAnswer((_) async => tokens);
+    when(
+      () => secureStorage.saveTokens(
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      ),
+    ).thenAnswer((_) async {});
+    when(
+      () => secureStorage.getAccessToken(),
+    ).thenAnswer((_) async => tokens.accessToken);
+    when(() => repository.getCurrentUser()).thenAnswer((_) async => user);
+
+    await container.read(authProvider.notifier).signInWithGoogle();
+
+    expect(container.read(authProvider).status, AuthStatus.authenticated);
+    verify(() => repository.googleLogin('google-id-token')).called(1);
+  });
+
+  test(
+    'Google account selection failure exposes an actionable error',
+    () async {
+      when(() => googleAuthService.getIdToken()).thenThrow(
+        const GoogleSignInException(code: GoogleSignInExceptionCode.canceled),
+      );
+
+      await container.read(authProvider.notifier).signInWithGoogle();
+
+      final state = container.read(authProvider);
+      expect(state.status, AuthStatus.error);
+      expect(state.errorMessage, isNotEmpty);
+      verifyNever(() => repository.googleLogin(any()));
+    },
+  );
 
   test('loadCurrentUser uses valid one-day cache when API fails', () async {
     await localStorage.setWithTtl(
@@ -257,6 +302,7 @@ void main() {
       () => repository.logout(tokens.refreshToken),
     ).thenThrow(const AppException('Máy chủ đang gặp sự cố.'));
     when(() => secureStorage.clearTokens()).thenAnswer((_) async {});
+    when(() => googleAuthService.signOut()).thenAnswer((_) async {});
     when(() => goRouter.go(AppRoutes.login)).thenReturn(null);
 
     await container.read(authProvider.notifier).logout();
@@ -264,6 +310,7 @@ void main() {
     expect(container.read(authProvider).status, AuthStatus.unauthenticated);
     expect(preferences.getKeys(), isEmpty);
     verify(() => secureStorage.clearTokens()).called(1);
+    verify(() => googleAuthService.signOut()).called(1);
     verify(() => goRouter.go(AppRoutes.login)).called(1);
   });
 
@@ -293,3 +340,5 @@ class MockAppRouter extends Mock implements AppRouter {}
 class MockGoRouter extends Mock implements GoRouter {}
 
 class MockCacheWarmingService extends Mock implements CacheWarmingService {}
+
+class MockGoogleAuthService extends Mock implements GoogleAuthService {}

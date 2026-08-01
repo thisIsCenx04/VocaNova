@@ -55,8 +55,10 @@ void main() {
   test('register sends date of birth as an ISO date', () async {
     final dio = Dio();
     dio.httpClientAdapter = CallbackAdapter((options) {
-      expect((options.data as Map<String, dynamic>)['date_of_birth'],
-          '2001-03-09');
+      expect(
+        (options.data as Map<String, dynamic>)['date_of_birth'],
+        '2001-03-09',
+      );
       return tokenResponse();
     });
 
@@ -109,10 +111,9 @@ void main() {
       return jsonResponse({'data': 2});
     });
 
-    final stored = await AuthRepository(dio: dio).selectOnboardingTopics([
-      11,
-      12,
-    ]);
+    final stored = await AuthRepository(
+      dio: dio,
+    ).selectOnboardingTopics([11, 12]);
 
     expect(stored, 2);
   });
@@ -132,6 +133,22 @@ void main() {
     expect(tokens.accessToken, 'access');
     expect(tokens.refreshToken, 'refresh');
     expect(tokens.expiresIn, 900);
+  });
+
+  test('Google login sends the Google ID token to the backend', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      expect(options.path, ApiEndpoints.googleLogin);
+      expect(options.data, {'id_token': 'google-id-token'});
+      return tokenResponse();
+    });
+
+    final tokens = await AuthRepository(
+      dio: dio,
+    ).googleLogin('google-id-token');
+
+    expect(tokens.accessToken, 'access');
+    expect(tokens.refreshToken, 'refresh');
   });
 
   test('sendOtp and verifyOtp use backend OTP contracts', () async {

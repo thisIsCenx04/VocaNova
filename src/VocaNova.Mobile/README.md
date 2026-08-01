@@ -25,6 +25,18 @@ tokens:
 flutter run --dart-define=GOOGLE_SERVER_CLIENT_ID=your-web-client-id
 ```
 
+Create an Android OAuth client in Google Cloud with application ID
+`com.vocanova.vocanova_mobile` and the SHA-1 fingerprints of every signing key
+(debug and release). Add the same web client ID to the API configuration:
+
+```text
+GoogleAuth__ClientIds__0=your-web-client-id
+```
+
+For iOS, also add `GoogleService-Info.plist` to `ios/Runner` in Xcode and add
+its `REVERSED_CLIENT_ID` as a URL scheme. Never commit OAuth secrets or local
+Google configuration files.
+
 ## Verify
 
 ```powershell

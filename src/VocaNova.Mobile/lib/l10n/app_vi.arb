@@ -84,6 +84,18 @@
   "authLearningProfileSaveFailedRetry": "Không thể lưu thiết lập học tập. Vui lòng thử lại.",
   "authApiResponseInvalid": "Dữ liệu phản hồi từ máy chủ không hợp lệ.",
   "authGoogleTokenMissing": "Google không trả về mã đăng nhập hợp lệ.",
+  "authGoogleClientIdMissing": "Google Login chưa được cấu hình. Hãy chạy Flutter với --dart-define=GOOGLE_SERVER_CLIENT_ID=WEB_CLIENT_ID_CỦA_BẠN.",
+  "authGoogleClientConfigurationError": "Cấu hình Google Login không hợp lệ. Hãy kiểm tra package Android, SHA-1 của signing key và Web Client ID.",
+  "authGoogleProviderConfigurationError": "Google Play services hoặc nhà cung cấp Google chưa sẵn sàng hay cấu hình sai trên thiết bị này.",
+  "authGoogleUiUnavailable": "Google không thể mở màn hình chọn tài khoản. Hãy mở lại ứng dụng và thử lại.",
+  "authGoogleInterrupted": "Quá trình đăng nhập Google bị gián đoạn. Vui lòng thử lại.",
+  "authGoogleCanceled": "Đăng nhập Google đã bị hủy. Nếu bạn đã chọn tài khoản trước khi thấy thông báo này, hãy kiểm tra package Android, SHA-1 và Web Client ID.",
+  "authGoogleUnknownError": "Đăng nhập Google thất bại: {details}",
+  "@authGoogleUnknownError": {
+    "placeholders": {
+      "details": { "type": "String" }
+    }
+  },
   "dictBackTooltip": "Quay lại",
   "dictSearchHint": "Tìm kiếm từ vựng...",
   "dictClearSearchTooltip": "Xóa tìm kiếm",

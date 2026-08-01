@@ -286,6 +286,35 @@ class AppLocalizationsVi extends AppLocalizations {
       'Google không trả về mã đăng nhập hợp lệ.';
 
   @override
+  String get authGoogleClientIdMissing =>
+      'Google Login chưa được cấu hình. Hãy chạy Flutter với --dart-define=GOOGLE_SERVER_CLIENT_ID=WEB_CLIENT_ID_CỦA_BẠN.';
+
+  @override
+  String get authGoogleClientConfigurationError =>
+      'Cấu hình Google Login không hợp lệ. Hãy kiểm tra package Android, SHA-1 của signing key và Web Client ID.';
+
+  @override
+  String get authGoogleProviderConfigurationError =>
+      'Google Play services hoặc nhà cung cấp Google chưa sẵn sàng hay cấu hình sai trên thiết bị này.';
+
+  @override
+  String get authGoogleUiUnavailable =>
+      'Google không thể mở màn hình chọn tài khoản. Hãy mở lại ứng dụng và thử lại.';
+
+  @override
+  String get authGoogleInterrupted =>
+      'Quá trình đăng nhập Google bị gián đoạn. Vui lòng thử lại.';
+
+  @override
+  String get authGoogleCanceled =>
+      'Đăng nhập Google đã bị hủy. Nếu bạn đã chọn tài khoản trước khi thấy thông báo này, hãy kiểm tra package Android, SHA-1 và Web Client ID.';
+
+  @override
+  String authGoogleUnknownError(String details) {
+    return 'Đăng nhập Google thất bại: $details';
+  }
+
+  @override
   String get dictBackTooltip => 'Quay lại';
 
   @override
