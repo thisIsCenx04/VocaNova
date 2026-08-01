@@ -225,6 +225,7 @@ public sealed class VocabularyController : Controller
         [FromForm] string? cefr,
         [FromForm] string? phoneticUk,
         [FromForm] string? phoneticUs,
+        [FromForm] string? imageUrl,
         [FromForm] bool isPhrase,
         [FromForm] bool isActive,
         [FromForm] bool wasActive,
@@ -258,7 +259,8 @@ public sealed class VocabularyController : Controller
                 string.IsNullOrWhiteSpace(cefr) ? null : cefr,
                 string.IsNullOrWhiteSpace(phoneticUk) ? null : phoneticUk.Trim(),
                 string.IsNullOrWhiteSpace(phoneticUs) ? null : phoneticUs.Trim(),
-                isPhrase),
+                isPhrase,
+                string.IsNullOrWhiteSpace(imageUrl) ? null : imageUrl.Trim()),
             cancellationToken);
         if (!metaResult.IsSuccess)
         {
@@ -485,7 +487,13 @@ public sealed class VocabularyController : Controller
             id,
             new ImageUpload(stream, file.FileName, file.ContentType),
             cancellationToken);
-        return JsonResultFor(result, "Image uploaded.");
+        if (!result.IsSuccess)
+        {
+            return JsonResultFor(result, "Image uploaded.");
+        }
+
+        var detail = await _apiClient.GetWordDetailAsync(id, cancellationToken);
+        return Json(new { success = true, message = "Image uploaded.", imageUrl = detail?.ImageUrl });
     }
 
     [HttpPost("/vocabulary/{id:uint}/image/delete")]

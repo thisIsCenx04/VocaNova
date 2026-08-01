@@ -72,6 +72,7 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
             input.Cefr,
             input.PhoneticUk,
             input.PhoneticUs,
+            input.ImageUrl,
             input.IsPhrase,
         }, cancellationToken);
 
@@ -135,6 +136,7 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
             input.Cefr,
             input.PhoneticUk,
             input.PhoneticUs,
+            input.ImageUrl,
             input.IsPhrase,
         }, cancellationToken);
 

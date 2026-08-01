@@ -5,13 +5,16 @@
     if (editForm) {
         var wordId = editForm.dataset.wordId;
         var tokenInput = editForm.querySelector('input[name="__RequestVerificationToken"]');
+        var imageUrlInput = document.getElementById("edit-image-url");
+        var saveButton = editForm.querySelector('button[type="submit"]');
         var toastEl = document.getElementById("edit-toast");
+        var activeUploads = 0;
 
         function showToast(message, success) {
             if (!toastEl) { return; }
             toastEl.textContent = message || editForm.dataset.msgRequestFailed || "Request failed.";
-            toastEl.classList.toggle("success", !!success);
-            toastEl.classList.toggle("error", !success);
+            toastEl.classList.toggle("toast-ok", !!success);
+            toastEl.classList.toggle("toast-err", !success);
             toastEl.hidden = false;
             window.setTimeout(function () { toastEl.hidden = true; }, 3500);
         }
@@ -26,6 +29,8 @@
             if (tokenInput) { data.append("__RequestVerificationToken", tokenInput.value); }
             var button = editForm.querySelector('[data-file-picker="' + input.id + '"]');
             if (button) { button.disabled = true; }
+            activeUploads++;
+            if (saveButton) { saveButton.disabled = true; }
             fetch("/vocabulary/" + wordId + endpoint, { method: "POST", body: data, credentials: "same-origin" })
                 .then(function (response) {
                     if (!response.ok) { throw new Error(); }
@@ -47,6 +52,7 @@
                             var image = imagePreview.querySelector("img");
                             link.href = objectUrl;
                             image.src = objectUrl;
+                            if (imageUrlInput) { imageUrlInput.value = result.imageUrl || ""; }
                         }
                     } else {
                         var audioPreview = document.getElementById("edit-audio-preview");
@@ -64,6 +70,8 @@
                 .finally(function () {
                     input.value = "";
                     if (button) { button.disabled = false; }
+                    activeUploads--;
+                    if (saveButton && activeUploads === 0) { saveButton.disabled = false; }
                 });
         }
 
@@ -120,6 +128,7 @@
                         if (!result.success) { return; }
                         var preview = document.getElementById(type === "image" ? "edit-image-preview" : "edit-audio-preview");
                         if (preview) { preview.innerHTML = '<p class="text-muted">' + (type === "image" ? "No image." : "No audio.") + '</p>'; }
+                        if (type === "image" && imageUrlInput) { imageUrlInput.value = ""; }
                         var picker = editForm.querySelector('[data-file-picker="' + (type === "image" ? "edit-image-file" : "edit-audio-file") + '"]');
                         if (picker) { picker.textContent = type === "image" ? "Upload image" : "Upload audio"; }
                     })
