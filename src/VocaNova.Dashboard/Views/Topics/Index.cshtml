@@ -40,6 +40,12 @@
     string SortIcon(string column) => Model.SortBy != column
         ? "bi bi-arrow-down-up th-sort-idle"
         : (Model.SortDirection == "desc" ? "bi bi-caret-down-fill" : "bi bi-caret-up-fill");
+
+    string TopicIconClass(string? icon) => !string.IsNullOrWhiteSpace(icon)
+        && icon.StartsWith("bi bi-", StringComparison.Ordinal)
+        && icon.Length <= 20
+            ? icon
+            : "bi bi-book";
 }
 
 <div class="page-header page-header-row">
@@ -114,7 +120,7 @@
                         <td><span class="rank-pill">#@topic.TopicId</span></td>
                         <td>
                             <div class="topic-cell">
-                                <span class="topic-avatar" aria-hidden="true">@(string.IsNullOrWhiteSpace(topic.Icon) ? "#" : topic.Icon)</span>
+                                <span class="topic-avatar" aria-hidden="true"><i class="@TopicIconClass(topic.Icon)"></i></span>
                                 <div class="user-cell-text">
                                     <span class="word-text">@topic.TopicName</span>
                                     <span class="user-role-sub">@(string.IsNullOrWhiteSpace(topic.TopicNameVi) ? T["No Vietnamese name"] : topic.TopicNameVi)</span>
