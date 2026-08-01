@@ -446,7 +446,18 @@ public sealed class VocabularyController : Controller
             id,
             new AudioUpload("us", stream, file.FileName, file.ContentType),
             cancellationToken);
-        return JsonResultFor(result, "Audio uploaded.");
+        if (!result.IsSuccess)
+        {
+            return JsonResultFor(result, "Audio uploaded.");
+        }
+
+        var detail = await _apiClient.GetWordDetailAsync(id, cancellationToken);
+        var audioId = detail?.Audio
+            .Where(audio => string.Equals(audio.Accent, "us", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(audio => audio.AudioId)
+            .Select(audio => (uint?)audio.AudioId)
+            .FirstOrDefault();
+        return Json(new { success = true, message = "Audio uploaded.", audioId });
     }
 
     [HttpPost("/vocabulary/{id:uint}/audio/{audioId:uint}/delete")]

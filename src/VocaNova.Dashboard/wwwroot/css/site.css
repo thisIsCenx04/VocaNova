@@ -3001,6 +3001,10 @@ html, body {
 .edit-panel-title { font-size: 15px; font-weight: 700; margin: 0; color: var(--text); }
 .edit-panel-body { padding: 22px; display: flex; flex-direction: column; gap: 18px; }
 
+.edit-media-grid { margin-top: 0; }
+.edit-media-panel-body { padding: 18px; }
+.edit-media-panel-body > .btn-secondary { display: inline-flex; align-items: center; justify-content: center; }
+
 .field-grid-3 {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -3160,6 +3164,8 @@ html, body {
 .edit-form-actions-inner .btn-primary,
 .edit-form-actions-inner .btn-secondary {
     min-width: 132px;
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
 }
 
@@ -3187,6 +3193,7 @@ html, body {
     .edit-form-actions-inner .btn-secondary {
         width: 100%;
     }
+
 }
 
 /* ===== Settings screen ===== */
