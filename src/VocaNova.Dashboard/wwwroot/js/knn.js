@@ -76,6 +76,27 @@
         });
     });
 
+    var resetModal = document.getElementById('knn-reset-modal');
+    var resetConfirm = document.getElementById('knn-reset-confirm');
+    var pendingResetForm = null;
+
+    document.querySelectorAll('form.js-knn-reset-confirm').forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (form.dataset.confirmed === 'true') { return; }
+            event.preventDefault();
+            pendingResetForm = form;
+            openModal(resetModal, form.querySelector('button[type="submit"]'));
+        });
+    });
+
+    if (resetConfirm) {
+        resetConfirm.addEventListener('click', function () {
+            if (!pendingResetForm) { return; }
+            pendingResetForm.dataset.confirmed = 'true';
+            pendingResetForm.requestSubmit();
+        });
+    }
+
     // The KNN overview still uses a single rebuild confirmation form.
     document.querySelectorAll('form.js-confirm').forEach(function (form) {
         form.addEventListener('submit', function (event) {
