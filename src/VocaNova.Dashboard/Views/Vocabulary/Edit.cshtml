@@ -7,6 +7,7 @@
     var primaryType = senses.FirstOrDefault()?.WordClass;
     var ukAudio = Model.Audio.FirstOrDefault(a => string.Equals(a.Accent, "uk", StringComparison.OrdinalIgnoreCase))
                   ?? Model.Audio.FirstOrDefault();
+    var usAudio = Model.Audio.FirstOrDefault(a => string.Equals(a.Accent, "us", StringComparison.OrdinalIgnoreCase));
     var isActive = !string.Equals(Model.Status, "deleted", StringComparison.OrdinalIgnoreCase);
 
 }
@@ -23,7 +24,13 @@
     <div class="alert alert-danger">@T[errMsg]</div>
 }
 
-<form method="post" action="/vocabulary/@Model.WordId/edit" class="edit-form">
+<form method="post" action="/vocabulary/@Model.WordId/edit" class="edit-form" id="vocabulary-edit-form"
+      data-word-id="@Model.WordId"
+      data-msg-request-failed="@T["Request failed."]"
+      data-msg-image-required="@T["Please choose an image file."]"
+      data-msg-audio-required="@T["Please choose an audio file."]"
+      data-msg-delete-image="@T["Remove image"]"
+      data-msg-delete-audio="@T["Delete this audio?"]">
     @Html.AntiForgeryToken()
     <input type="hidden" name="phoneticUs" value="@Model.PhoneticUs" />
     <input type="hidden" name="isPhrase" value="@Model.IsPhrase.ToString().ToLowerInvariant()" />
@@ -104,6 +111,57 @@
                     </div>
                 </div>
             </section>
+
+            <div class="vd-manage-grid edit-media-grid">
+                <section class="panel vd-extra">
+                    <div class="panel-head"><h2 class="panel-title">@T["Image"]</h2></div>
+                    <div class="edit-media-panel-body">
+                        <div id="edit-image-preview">
+                            @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+                            {
+                                <div class="word-image-review">
+                                    <a class="word-image-preview" href="@Model.ImageUrl" target="_blank" rel="noopener" title="@T["Open full image"]">
+                                        <img class="word-image" src="@Model.ImageUrl" alt="@Model.Word" />
+                                    </a>
+                                    <div class="word-image-review-meta">
+                                        <span>@T["Image preview"]</span>
+                                        <button type="button" class="btn-icon btn-danger edit-media-delete" data-delete-media="image">@T["Delete"]</button>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted">@T["No image."]</p>
+                            }
+                        </div>
+                        <input id="edit-image-file" type="file" accept="image/png,image/jpeg,image/webp" hidden />
+                        <button type="button" class="btn-secondary btn-sm" data-file-picker="edit-image-file">@T["Upload image"]</button>
+                    </div>
+                </section>
+
+                <section class="panel vd-extra">
+                    <div class="panel-head"><h2 class="panel-title">@T["Audio"]</h2></div>
+                    <div class="edit-media-panel-body">
+                        <div id="edit-audio-preview">
+                            @if (usAudio is null)
+                            {
+                                <p class="text-muted">@T["No audio."]</p>
+                            }
+                            else
+                            {
+                                <ul class="audio-list"><li class="audio-item">
+                                    <span class="badge badge-muted">US</span>
+                                    <audio controls preload="none" src="@usAudio.Url"></audio>
+                                    <button type="button" class="btn-icon btn-danger edit-media-delete"
+                                            data-delete-media="audio" data-audio-id="@usAudio.AudioId">@T["Delete"]</button>
+                                </li></ul>
+                            }
+                        </div>
+                        <input id="edit-audio-file" type="file" accept="audio/mpeg,audio/wav,audio/ogg" hidden />
+                        <button type="button" class="btn-secondary btn-sm" data-file-picker="edit-audio-file">@(usAudio is null ? T["Upload audio"] : T["Replace"])</button>
+                    </div>
+                </section>
+            </div>
 
             <!-- Meaning & Examples -->
             <section class="panel edit-panel">
@@ -210,6 +268,23 @@
         </div>
     </div>
 </form>
+
+<div id="edit-toast" class="detail-toast" hidden></div>
+
+<div class="confirm-modal" id="edit-media-delete-modal" hidden>
+    <div class="confirm-overlay" data-close></div>
+    <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="edit-media-delete-title">
+        <span class="confirm-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="26" height="26"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Zm4 0v8h2v-8h-2Z" fill="currentColor"/></svg>
+        </span>
+        <h3 class="confirm-title" id="edit-media-delete-title">@T["Are you sure?"]</h3>
+        <p class="confirm-note" id="edit-media-delete-message"></p>
+        <div class="confirm-actions">
+            <button type="button" class="btn-secondary" data-close>@T["Cancel"]</button>
+            <button type="button" class="btn-danger-solid" id="edit-media-delete-confirm">@T["Delete"]</button>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script src="~/js/vocabulary-edit.js" asp-append-version="true"></script>
