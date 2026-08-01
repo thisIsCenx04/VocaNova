@@ -20,7 +20,7 @@
 
 @if (TempData["VocabError"] is string errMsg)
 {
-    <div class="alert alert-danger">@errMsg</div>
+    <div class="alert alert-danger">@T[errMsg]</div>
 }
 
 <form method="post" action="/vocabulary/@Model.WordId/edit" class="edit-form">
@@ -68,7 +68,8 @@
                                 <option value="">—</option>
                                 @foreach (var wt in VocabularyListViewModel.WordTypes)
                                 {
-                                    <option value="@wt" selected="@(string.Equals(primaryType, wt, StringComparison.OrdinalIgnoreCase))">@(char.ToUpper(wt[0]) + wt[1..])</option>
+                                    var wordTypeLabel = char.ToUpper(wt[0]) + wt[1..];
+                                    <option value="@wt" selected="@(string.Equals(primaryType, wt, StringComparison.OrdinalIgnoreCase))">@T[wordTypeLabel]</option>
                                 }
                             </select>
                         </div>

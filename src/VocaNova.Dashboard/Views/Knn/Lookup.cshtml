@@ -1,7 +1,17 @@
 @using VocaNova.Dashboard.Models.Knn
 @model KnnLookupViewModel
 @{
-    ViewData["Title"] = $"{Model.Title} Management";
+    var managementTitle = $"{Model.Title} Management";
+    var itemTitle = Model.Slug switch
+    {
+        "age-ranges" => "Age Range",
+        "regions" => "Region",
+        "occupations" => "Occupation",
+        "education-levels" => "Education Level",
+        "learning-purposes" => "Learning Purpose",
+        _ => Model.Title.TrimEnd('s'),
+    };
+    ViewData["Title"] = T[managementTitle];
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
     var colSpan = Model.Columns.Count + 3;
     var pageSizes = new[] { 10, 20, 50, 100 };
@@ -50,7 +60,7 @@
 <div class="page-header page-header-row">
     <div>
         <a class="btn-primary page-back-button" href="/knn">@T["Back"]</a>
-        <h1 class="page-title">@Model.Title @T["Management"]</h1>
+        <h1 class="page-title">@T[managementTitle]</h1>
     </div>
     <button type="button" class="btn-primary" data-open-knn-modal="knn-create-modal"
             aria-haspopup="dialog" aria-controls="knn-create-modal">
@@ -60,11 +70,11 @@
 
 @if (TempData["KnnSuccess"] is string okMsg)
 {
-    <div class="alert alert-success">@okMsg</div>
+    <div class="alert alert-success">@T[okMsg]</div>
 }
 @if (TempData["KnnError"] is string errMsg)
 {
-    <div class="alert alert-danger">@errMsg</div>
+    <div class="alert alert-danger">@T[errMsg]</div>
 }
 
 <form method="get" action="/knn/@Model.Slug" class="filter-bar">
@@ -130,7 +140,7 @@
                         {
                             <td>@(string.IsNullOrWhiteSpace(cell) ? "—" : cell)</td>
                         }
-                        <td><span class="@StatusBadge(row.Status)">@row.Status</span></td>
+                        <td><span class="@StatusBadge(row.Status)">@T[row.Status switch { "active" => "Active", "deleted" => "Deleted", _ => row.Status }]</span></td>
                         <td class="col-actions">
                             <div class="action-icons">
                                 @if (row.Status != "deleted")
@@ -220,7 +230,7 @@
                 <svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"/></svg>
             </div>
             <div>
-                <h3 class="modal-title" id="knn-create-title">@T["Add"] @Model.Title.TrimEnd('s')</h3>
+                <h3 class="modal-title" id="knn-create-title">@T["Add"] @T[itemTitle]</h3>
                 <p class="modal-text">@T["Enter the lookup information, then save the new item."]</p>
             </div>
         </div>
@@ -255,7 +265,7 @@
                     <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></svg>
                 </div>
                 <div>
-                    <h3 class="modal-title" id="knn-edit-title-@row.Id">@T["Edit"] @Model.Title.TrimEnd('s')</h3>
+                    <h3 class="modal-title" id="knn-edit-title-@row.Id">@T["Edit"] @T[itemTitle]</h3>
                     <p class="modal-text">@T["Update the lookup information and save your changes."]</p>
                 </div>
             </div>

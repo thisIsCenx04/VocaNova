@@ -49,7 +49,7 @@
     </div>
 </div>
 
-@if (TempData["TopicError"] is string errorMessage) { <div class="alert alert-danger">@errorMessage</div> }
+@if (TempData["TopicError"] is string errorMessage) { <div class="alert alert-danger">@T[errorMessage]</div> }
 @if (!ViewData.ModelState.IsValid) { <div class="alert alert-danger validation-summary" asp-validation-summary="All"></div> }
 
 @* Các control filter dùng form GET riêng để không lồng form vào form cập nhật topic. *@
@@ -102,7 +102,10 @@
                 <i class="bi bi-plus-lg" aria-hidden="true"></i> @T["Add word"]
             </button>
         </div>
-        <div id="topic-keyword-entry" class="topic-keyword-entry" hidden>
+        <div id="topic-keyword-entry" class="topic-keyword-entry" hidden
+             data-enter-error="@T["Please enter or select a vocabulary word."]"
+             data-select-error="@T["Please select an existing vocabulary word from the suggestions."]"
+             data-duplicate-error="@T["This vocabulary has already been added."]">
             <div class="topic-keyword-autocomplete">
                 <input id="topic-keyword-input" type="text" class="form-control" maxlength="50" placeholder="@T["Search for vocabulary..."]" autocomplete="off"
                        role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="topic-word-suggestions" />
@@ -127,7 +130,8 @@
                 <option value="">@T["Word Type"]</option>
                 @foreach (var type in VocabularyListViewModel.WordTypes)
                 {
-                    <option value="@type" selected="@(Model.WordType == type)">@(char.ToUpper(type[0]) + type[1..])</option>
+                    var typeLabel = char.ToUpper(type[0]) + type[1..];
+                    <option value="@type" selected="@(Model.WordType == type)">@T[typeLabel]</option>
                 }
             </select>
             <select form="topic-word-filter-form" name="status" class="form-control">
@@ -159,10 +163,10 @@
                     {
                         <tr class="topic-keyword-row" data-word-id="@word.WordId">
                             <td><a class="vocab-word" href="/vocabulary/@word.WordId">@word.Word</a></td>
-                            <td>@(word.WordType ?? "—")</td>
+                            <td>@(string.IsNullOrWhiteSpace(word.WordType) ? "—" : T[char.ToUpper(word.WordType[0]) + word.WordType[1..]])</td>
                             <td>@(word.Cefr ?? "—")</td>
                             <td>@(word.Phonetic ?? "—")</td>
-                            <td><span class="@Badge(word.Status)">@word.Status</span></td>
+                            <td><span class="@Badge(word.Status)">@(word.Status == "active" ? T["Active"] : word.Status == "deleted" ? T["Deleted"] : T[word.Status])</span></td>
                             <td class="col-actions">
                                 <div class="action-icons">
                                     <button type="button" class="icon-link topic-keyword-remove danger"

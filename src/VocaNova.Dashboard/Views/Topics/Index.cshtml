@@ -57,11 +57,11 @@
 
 @if (TempData["TopicSuccess"] is string okMsg)
 {
-    <div class="alert alert-success">@okMsg</div>
+    <div class="alert alert-success">@T[okMsg]</div>
 }
 @if (TempData["TopicError"] is string errMsg)
 {
-    <div class="alert alert-danger">@errMsg</div>
+    <div class="alert alert-danger">@T[errMsg]</div>
 }
 
 <form method="get" action="/topics" class="filter-bar">
@@ -128,7 +128,7 @@
                             </div>
                         </td>
                         <td>@topic.WordCount</td>
-                        <td><span class="@StatusBadge(topic.Status)">@topic.Status</span></td>
+                        <td><span class="@StatusBadge(topic.Status)">@(topic.Status == "active" ? T["Active"] : topic.Status == "deleted" ? T["Deleted"] : T[topic.Status])</span></td>
                         <td class="col-actions">
                             <div class="action-icons">
                                 <a class="icon-link" href="/topics/@topic.TopicId" title="@T["View details"]" aria-label="@T["View details"]">

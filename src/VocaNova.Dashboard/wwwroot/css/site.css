@@ -15,6 +15,10 @@
     --surface: #ffffff;
     --surface-2: #fafbff;
     --surface-3: #f4f5fa;
+    --table-row-alt: #f7f8fc;
+    --table-row-hover: #eeecff;
+    --table-header-bg: #eaf1ff;
+    --table-row-border: #cfd4e1;
     --border: #ebecf3;
     --border-strong: #e0e2ee;
     --text: #1b1e2e;
@@ -51,6 +55,10 @@
     --surface: #141a2b;
     --surface-2: #111729;
     --surface-3: #1a2138;
+    --table-row-alt: #111729;
+    --table-row-hover: #202746;
+    --table-header-bg: #1b2944;
+    --table-row-border: #35405a;
     --border: #232b42;
     --border-strong: #2c3550;
     --text: #e7eaf5;
@@ -1992,6 +2000,11 @@ select.form-control:hover {
     align-items: start;
 }
 
+/* table-panel bỏ padding để bảng sát mép; trả lại padding riêng cho tiêu đề thống kê. */
+.stats-wrong-words-panel > .panel-head {
+    padding: 24px 24px 14px;
+}
+
 .demo-charts {
     display: flex;
     flex-direction: column;
@@ -2016,7 +2029,8 @@ select.form-control:hover {
 /* ----- KNN management (F063) ----- */
 .knn-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: stretch;
     gap: 14px;
     margin-bottom: 20px;
 }
@@ -2029,6 +2043,7 @@ select.form-control:hover {
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 18px 20px;
+    min-height: 104px;
     transition: border-color 0.15s, box-shadow 0.15s;
 }
 
@@ -2045,6 +2060,15 @@ select.form-control:hover {
 .knn-card-desc {
     font-size: 13px;
     color: var(--text-muted);
+    line-height: 1.45;
+}
+
+@media (max-width: 1300px) {
+    .knn-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+    .knn-cards { grid-template-columns: 1fr; }
 }
 
 /* Nhóm KNN có thể thu/xổ — pure CSS bằng checkbox ẩn + label */
@@ -2106,9 +2130,28 @@ select.form-control:hover {
    Theme-adaptive overrides (token-based) — đặt cuối để thắng các
    giá trị hardcode trước đó; nhờ đó light + dark đều đúng.
    ================================================================= */
-.data-table th { background: var(--surface-3); color: var(--text-muted); }
-.data-table th, .data-table td { border-bottom-color: var(--border); }
-.data-table tbody tr:hover { background: var(--surface-3); }
+.data-table th {
+    background: var(--table-header-bg);
+    color: var(--text-muted);
+}
+.data-table th, .data-table td { border-bottom-color: var(--table-row-border); }
+
+/* Zebra rows dùng chung cho mọi bảng quản lý: dòng lẻ xám nhẹ, dòng chẵn trắng/surface. */
+.data-table tbody tr:not(.edit-row):nth-child(odd) > td {
+    background: var(--table-row-alt);
+}
+
+.data-table tbody tr:not(.edit-row):nth-child(even) > td {
+    background: var(--surface);
+}
+
+.data-table tbody tr:not(.edit-row):hover > td {
+    background: var(--table-row-hover);
+}
+
+.data-table tbody td {
+    transition: background-color .15s ease;
+}
 .chip { background: var(--surface-3); border-color: var(--border); color: var(--text); }
 .edit-row > td { background: var(--surface-3); }
 code { background: var(--surface-3); color: var(--text); }
@@ -4130,10 +4173,50 @@ body.crud-modal-open {
 }
 
 /* ----- KNN vector weights + AI grading settings forms ----- */
+.knn-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.knn-overview-grid > .panel {
+    height: 100%;
+}
+
+.knn-rebuild-rate-limit {
+    margin: 10px 0;
+}
+
 .knn-weights-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px 14px;
+}
+
+.knn-vector-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.knn-vector-actions .inline-form {
+    margin: 0;
+}
+
+@media (max-width: 1350px) {
+    .knn-overview-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .knn-weights-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .ai-grading-grid {

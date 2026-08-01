@@ -71,7 +71,9 @@
     <input type="hidden" name="Icon" value="@currentIcon" data-topic-icon-input />
 </div>
 
-<div class="modal-overlay" id="topic-icon-modal" data-topic-icon-modal role="dialog" aria-modal="true"
+<div class="modal-overlay" id="topic-icon-modal" data-topic-icon-modal
+     data-invalid-icon="@T["Please enter a valid Bootstrap icon class, for example: bi bi-book."]"
+     role="dialog" aria-modal="true"
      aria-labelledby="topic-icon-modal-title" hidden>
     <div class="modal-card topic-icon-modal-card">
         <div class="topic-icon-modal-head">

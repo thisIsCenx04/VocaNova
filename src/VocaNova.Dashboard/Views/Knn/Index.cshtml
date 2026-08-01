@@ -1,7 +1,6 @@
 @model VocaNova.Dashboard.Models.Knn.KnnOverviewViewModel
 @{
     ViewData["Title"] = "KNN Management";
-    var cfg = Model.Config;
     var rb = Model.RebuildStatus;
     var vector = Model.Vector;
     var inv = System.Globalization.CultureInfo.InvariantCulture;
@@ -13,25 +12,25 @@
 
 @if (TempData["KnnSuccess"] is string okMsg)
 {
-    <div class="alert alert-success">@okMsg</div>
+    <div class="alert alert-success">@T[okMsg]</div>
 }
 @if (TempData["KnnError"] is string errMsg)
 {
-    <div class="alert alert-danger">@errMsg</div>
+    <div class="alert alert-danger">@T[errMsg]</div>
 }
 
 <div class="knn-cards">
     @foreach (var lookup in Model.Lookups)
     {
         <a class="knn-card" href="/knn/@lookup.Slug">
-            <span class="knn-card-title">@lookup.Title</span>
-            <span class="knn-card-desc">@lookup.Description</span>
+            <span class="knn-card-title">@T[lookup.Title]</span>
+            <span class="knn-card-desc">@T[lookup.Description]</span>
         </a>
     }
 </div>
 
-<div class="chart-grid stats-grid">
-    <section class="panel">
+<div class="knn-overview-grid">
+    <section class="panel knn-rebuild-panel">
         <div class="panel-head"><h2 class="panel-title">@T["Recommendation rebuild"]</h2></div>
         @if (rb is null)
         {
@@ -46,47 +45,16 @@
                 <dd>@(rb.IsRunning ? "Yes" : "No")</dd>
             </dl>
         }
+        <p class="panel-muted knn-rebuild-rate-limit">@T["Rate limited to 1 request / 5 minutes."]</p>
         <form method="post" action="/knn/trigger-rebuild" class="inline-form js-confirm" data-confirm="@T["Trigger a KNN recommendation rebuild now?"]">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn-primary btn-sm">@T["Trigger rebuild"]</button>
         </form>
-        <p class="panel-muted" style="margin-top:10px;">@T["Rate limited to 1 request / 5 minutes."]</p>
     </section>
 
-    <section class="panel">
-        <div class="panel-head"><h2 class="panel-title">@T["Algorithm config (read-only)"]</h2></div>
-        @* Neighbour count, thresholds and TTLs still come from deployment config; only the
-           profile-vector weights below are editable at runtime. *@
-        @if (cfg is null)
-        {
-            <p class="text-muted">@T["Config unavailable."]</p>
-        }
-        else
-        {
-            <h4>@T["Onboarding"]</h4>
-            <dl class="detail-list">
-                <dt>@T["K value"]</dt><dd>@cfg.Onboarding.KValue</dd>
-                <dt>@T["Default topic limit"]</dt><dd>@cfg.Onboarding.DefaultTopicLimit</dd>
-                <dt>@T["Min similarity"]</dt><dd>@cfg.Onboarding.MinSimilarity</dd>
-                <dt>@T["Cache TTL (min)"]</dt><dd>@cfg.Onboarding.CacheTtlMinutes</dd>
-            </dl>
-            <h4 style="margin-top:14px;">@T["Learning"]</h4>
-            <dl class="detail-list">
-                <dt>@T["K value"]</dt><dd>@cfg.Learning.KValue</dd>
-                <dt>@T["Min sessions"]</dt><dd>@cfg.Learning.MinSessions</dd>
-                <dt>@T["Min similarity"]</dt><dd>@cfg.Learning.MinSimilarity</dd>
-                <dt>@T["Recommendation count"]</dt><dd>@cfg.Learning.RecommendationCount</dd>
-                <dt>@T["Rebuild interval (h)"]</dt><dd>@cfg.Learning.RebuildIntervalHours</dd>
-                <dt>@T["Cache TTL (min)"]</dt><dd>@cfg.Learning.CacheTtlMinutes</dd>
-            </dl>
-            <p class="panel-muted" style="margin-top:10px;">@T["Change via"] <code>.env</code> @T["/ deployment config then restart."]</p>
-        }
-    </section>
-</div>
-
-@if (vector is not null)
-{
-    <section class="panel" style="margin-top:18px;">
+    @if (vector is not null)
+    {
+    <section class="panel knn-vector-panel">
         <div class="panel-head">
             <h2 class="panel-title">@T["Profile vector weights"]</h2>
             @if (vector.IsOverridden)
@@ -94,11 +62,7 @@
                 <span class="badge badge-warning">@T["Overridden"]</span>
             }
         </div>
-        <p class="panel-muted">
-            @T["Each block of the profile vector is normalised then scaled by its weight, so these numbers set how much each answer counts when matching similar learners. 0 disables a block."]
-        </p>
-
-        <form method="post" action="/knn/vector-weights" class="knn-weights-form">
+        <form id="knn-weights-form" method="post" action="/knn/vector-weights" class="knn-weights-form">
             @Html.AntiForgeryToken()
             <div class="knn-weights-grid">
                 @foreach (var field in Model.WeightFields)
@@ -107,36 +71,23 @@
                         <span>@T[field.Label]</span>
                         <input type="number" name="@field.Name" value="@field.Value.ToString(inv)"
                                step="0.1" min="0" max="10" required class="form-control" />
-                        <small>@T[field.Source] · @T["default"] @field.Default.ToString(inv)</small>
                     </label>
                 }
             </div>
-            <div class="modal-actions" style="margin-top:14px;">
-                <button type="submit" class="btn-primary btn-sm">@T["Save weights"]</button>
-            </div>
         </form>
 
-        <form method="post" action="/knn/vector-weights/reset" class="inline-form js-confirm"
-              data-confirm="@T["Reset vector weights to the deployment configuration?"]" style="margin-top:10px;">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="btn-secondary btn-sm">@T["Reset to defaults"]</button>
-        </form>
-
-        <p class="panel-muted" style="margin-top:10px;">
-            @if (vector.IsStoredInEnvFile)
-            {
-                @T["Saved to the .env file and reloaded automatically."]
-            }
-            else
-            {
-                <strong>@T[".env is not writable — weights are held in the shared cache and will be lost if it is cleared."]</strong>
-            }
-        </p>
-        <p class="panel-muted">
-            @T["New weights apply to the next recommendation computed. Recommendations already cached keep serving until their TTL expires"] (@(cfg?.Onboarding.CacheTtlMinutes ?? 30) @T["min"]).
-        </p>
+        <div class="knn-vector-actions">
+            <form method="post" action="/knn/vector-weights/reset" class="inline-form js-confirm"
+                  data-confirm="@T["Reset vector weights to the deployment configuration?"]">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-secondary btn-sm">@T["Reset to defaults"]</button>
+            </form>
+            <button type="submit" form="knn-weights-form" class="btn-primary btn-sm">@T["Save weights"]</button>
+        </div>
     </section>
-}
+    }
+
+</div>
 
 @section Scripts {
     <script src="~/js/knn.js" asp-append-version="true"></script>

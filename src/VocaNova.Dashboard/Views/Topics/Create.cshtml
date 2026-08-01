@@ -12,7 +12,7 @@
 
 @if (TempData["TopicError"] is string errorMessage)
 {
-    <div class="alert alert-danger">@errorMessage</div>
+    <div class="alert alert-danger">@T[errorMessage]</div>
 }
 @if (!ViewData.ModelState.IsValid)
 {
@@ -49,7 +49,10 @@
                 <i class="bi bi-plus-lg" aria-hidden="true"></i> @T["Add word"]
             </button>
         </div>
-        <div id="topic-keyword-entry" class="topic-keyword-entry" hidden>
+        <div id="topic-keyword-entry" class="topic-keyword-entry" hidden
+             data-enter-error="@T["Please enter or select a vocabulary word."]"
+             data-select-error="@T["Please select an existing vocabulary word from the suggestions."]"
+             data-duplicate-error="@T["This vocabulary has already been added."]">
             <div class="topic-keyword-autocomplete">
                 <input id="topic-keyword-input" type="text" class="form-control" maxlength="50" placeholder="@T["Enter a keyword..."]" autocomplete="off"
                        role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="topic-word-suggestions" />
@@ -74,7 +77,8 @@
                 <option value="">@T["Word Type"]</option>
                 @foreach (var type in VocaNova.Dashboard.Models.Vocabulary.VocabularyListViewModel.WordTypes)
                 {
-                    <option value="@type">@(char.ToUpper(type[0]) + type[1..])</option>
+                    var typeLabel = char.ToUpper(type[0]) + type[1..];
+                    <option value="@type">@T[typeLabel]</option>
                 }
             </select>
             <select class="form-control" data-topic-filter-status>

@@ -80,7 +80,7 @@
                         </td>
                         <td>@(account.GoogleEmail ?? "—")</td>
                         <td>@(account.Phone ?? "—")</td>
-                        <td><span class="badge @(account.Role == "admin" ? "badge-warning" : "badge-muted")">@account.Role</span></td>
+                        <td><span class="badge @(account.Role == "admin" ? "badge-warning" : "badge-muted")">@T[account.Role == "admin" ? "Admin" : "User"]</span></td>
                         <td class="col-actions">
                             <form method="post" action="/admin-accounts/@account.UserId/role" class="inline-form"
                                   onsubmit="return confirm('@actionLabel?');">

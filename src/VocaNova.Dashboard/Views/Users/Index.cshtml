@@ -67,14 +67,15 @@
         <option value="">@T["All status"]</option>
         @foreach (var s in VocaNova.Dashboard.Models.Users.UserListViewModel.Statuses)
         {
-            <option value="@s" selected="@(Model.Status == s)">@s</option>
+            var statusLabel = char.ToUpper(s[0]) + s[1..];
+            <option value="@s" selected="@(Model.Status == s)">@T[statusLabel]</option>
         }
     </select>
     <select name="role" class="form-control">
         <option value="">@T["All roles"]</option>
         @foreach (var (value, label) in VocaNova.Dashboard.Models.Users.UserListViewModel.Roles)
         {
-            <option value="@value" selected="@(Model.Role == value)">@label</option>
+            <option value="@value" selected="@(Model.Role == value)">@T[label]</option>
         }
     </select>
     <label class="checkbox-inline">
@@ -140,12 +141,12 @@
                                 }
                                 <div class="user-cell-text">
                                     <span class="word-text">@user.DisplayName</span>
-                                    <span class="user-role-sub">@user.Role.Replace("_", " ")</span>
+                                    <span class="user-role-sub">@T[user.Role switch { "super_admin" => "Super admin", "admin" => "Admin", "user" => "User", "guest" => "Guest", _ => user.Role.Replace("_", " ") }]</span>
                                 </div>
                             </div>
                         </td>
                         <td>@(string.IsNullOrWhiteSpace(user.GoogleEmail) ? "—" : user.GoogleEmail)</td>
-                        <td><span class="@StatusBadge(user.Status)">@user.Status</span></td>
+                        <td><span class="@StatusBadge(user.Status)">@T[user.Status switch { "active" => "Active", "locked" => "Locked", "deleted" => "Deleted", _ => user.Status }]</span></td>
                         <td>@(user.Phone ?? "—")</td>
                         <td class="col-actions">
                             <div class="action-icons">
