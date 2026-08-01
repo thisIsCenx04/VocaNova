@@ -37,6 +37,12 @@
         : (Model.SortDirection == "desc" ? "bi bi-caret-down-fill" : "bi bi-caret-up-fill");
 
     string Badge(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
+
+    string TopicIconClass(string? icon) => !string.IsNullOrWhiteSpace(icon)
+        && icon.StartsWith("bi bi-", StringComparison.Ordinal)
+        && icon.Length <= 20
+            ? icon
+            : "bi bi-book";
 }
 
 <div class="page-header page-header-row">
@@ -54,7 +60,7 @@
 @if (TempData["TopicError"] is string topicError) { <div class="alert alert-danger">@topicError</div> }
 
 <section class="panel topic-summary-panel">
-    <div class="topic-summary-icon" aria-hidden="true">@(string.IsNullOrWhiteSpace(Model.Topic.Icon) ? "#" : Model.Topic.Icon)</div>
+    <div class="topic-summary-icon" aria-hidden="true"><i class="@TopicIconClass(Model.Topic.Icon)"></i></div>
     <div class="topic-summary-main">
         <span class="info-label">@T["Topic"] #@Model.Topic.TopicId</span>
         <h2 class="topic-summary-name">@Model.Topic.TopicName</h2>
@@ -63,16 +69,30 @@
     <span class="@Badge(Model.Topic.Status)">@Model.Topic.Status</span>
 </section>
 
-<div class="panel topic-add-word-panel">
-    <div class="panel-head"><h2 class="panel-title">@T["Add vocabulary to topic"]</h2></div>
-    <form method="post" action="/topics/@Model.Topic.TopicId/words" id="topic-add-word-form" class="topic-keyword-entry">
+<section class="panel topic-create-panel topic-detail-word-panel">
+<div class="panel-head"><h2 class="panel-title">@T["Vocabulary"]</h2></div>
+
+<div class="topic-keyword-launch">
+    <button type="button" id="topic-add-word-toggle" class="btn-primary topic-add-word-toggle"
+            aria-expanded="@(Model.IsAddingWord ? "true" : "false")" aria-controls="topic-add-word-panel">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span>@T["Add word"]</span>
+    </button>
+</div>
+
+<div class="topic-add-word-panel" id="topic-add-word-panel" hidden="@(!Model.IsAddingWord)">
+    <form method="post" action="/topics/@Model.Topic.TopicId/words" id="topic-add-word-form" class="topic-keyword-entry"
+          data-select-error="@T["Please select an existing vocabulary word from the suggestions."]">
         @Html.AntiForgeryToken()
         <div class="topic-keyword-autocomplete">
-            <input id="topic-add-word-input" class="form-control" type="text" autocomplete="off" placeholder="@T["Search for vocabulary..."]" />
+            <input id="topic-add-word-input" class="form-control" type="search" autocomplete="off"
+                   placeholder="@T["Search for vocabulary..."]" role="combobox" aria-autocomplete="list"
+                   aria-expanded="false" aria-controls="topic-add-word-suggestions" />
             <input id="topic-add-word-id" type="hidden" name="wordIds" />
-            <div id="topic-add-word-suggestions" class="topic-word-suggestions" hidden></div>
+            <div id="topic-add-word-suggestions" class="topic-word-suggestions" role="listbox" hidden></div>
         </div>
         <button type="submit" class="btn-primary">@T["Add to Topic"]</button>
+        <button type="button" id="topic-add-word-cancel" class="btn-secondary">@T["Cancel adding word"]</button>
     </form>
     <p id="topic-add-word-error" class="field-validation-error topic-keyword-error" role="alert"></p>
 </div>
@@ -94,7 +114,7 @@
     <a href="/topics/@Model.Topic.TopicId" class="btn-secondary">@T["Reset"]</a>
 </form>
 
-<div class="panel table-panel"><table class="data-table">
+<div class="table-panel topic-word-table-panel"><table class="data-table">
     <thead><tr>
         <th><a class="th-sort @(Model.SortBy == "word" ? "active" : "")" href="@SortUrl("word")">@T["Vocabulary"] <i class="@SortIcon("word")" aria-hidden="true"></i></a></th>
         <th style="width:130px;"><a class="th-sort @(Model.SortBy == "type" ? "active" : "")" href="@SortUrl("type")">@T["Word Type"] <i class="@SortIcon("type")" aria-hidden="true"></i></a></th>
@@ -155,6 +175,7 @@
     else { <span class="pager-link disabled">@T["Next"] &rsaquo;</span> }
 </nav> }
 </div>
+</section>
 
 @section Scripts {
     <script src="~/js/topic-detail.js" asp-append-version="true"></script>

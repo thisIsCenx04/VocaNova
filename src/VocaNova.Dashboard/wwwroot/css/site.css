@@ -1742,7 +1742,21 @@ select.form-control:hover {
 .topic-keyword-entry {
     display: flex;
     gap: 8px;
-    max-width: 640px;
+    max-width: 900px;
+}
+
+.topic-keyword-entry[hidden] {
+    display: none;
+}
+
+.topic-keyword-launch {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+.topic-keyword-launch .btn-primary {
+    gap: 8px;
 }
 
 .topic-keyword-autocomplete {
@@ -3844,6 +3858,70 @@ html, body {
     margin-bottom: 20px;
 }
 
+.topic-cell,
+.topic-summary-panel {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.topic-avatar,
+.topic-summary-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #d9d4ff;
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.topic-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    font-size: 18px;
+}
+
+.topic-summary-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 14px;
+    font-size: 26px;
+}
+
+.topic-summary-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.topic-summary-name,
+.topic-summary-sub {
+    margin: 0;
+}
+
+.topic-summary-panel + .topic-detail-word-panel {
+    margin-top: 16px;
+}
+
+.topic-add-word-panel[hidden] {
+    display: none;
+}
+
+.topic-add-word-shell {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+.topic-add-word-toggle {
+    gap: 8px;
+}
+
+.topic-add-word-toggle.is-open {
+    background: var(--accent-hover);
+}
+
 .modal-overlay[hidden] {
     display: none;
 }
@@ -4110,8 +4188,7 @@ body.crud-modal-open {
     }
 }
 
-/* ----- Modal chọn icon cho topic ----- */
-/* Không còn ô gõ tay: nút mở modal chính là control duy nhất của trường Icon. */
+/* ----- Modal chọn Bootstrap Icon cho topic ----- */
 .topic-icon-trigger {
     display: flex;
     align-items: center;
@@ -4136,14 +4213,24 @@ body.crud-modal-open {
     line-height: 1;
 }
 
+.topic-icon-code {
+    flex: 1;
+    overflow: hidden;
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 13px;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .topic-icon-modal-card {
     max-width: 460px;
     padding: 20px;
     text-align: left;
     display: flex;
     flex-direction: column;
-    /* Chiều cao cố định để lưới emoji tự cuộn thay vì đẩy modal dài ra ngoài màn hình. */
-    max-height: min(560px, calc(100vh - 60px));
+    max-height: min(680px, calc(100vh - 60px));
 }
 
 .topic-icon-modal-head {
@@ -4191,6 +4278,7 @@ body.crud-modal-open {
     cursor: pointer;
     font-size: 18px;
     line-height: 1;
+    color: var(--text-muted);
 }
 
 .topic-icon-tab:hover,
@@ -4242,6 +4330,7 @@ body.crud-modal-open {
     cursor: pointer;
     font-size: 22px;
     line-height: 1;
+    color: var(--text);
 }
 
 .topic-icon-option:hover {
@@ -4257,6 +4346,40 @@ body.crud-modal-open {
     margin: 16px 0;
     text-align: center;
     color: var(--text-muted);
+}
+
+.topic-icon-custom {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+
+.topic-icon-custom > label {
+    display: block;
+    margin-bottom: 7px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.topic-icon-custom-row {
+    display: flex;
+    gap: 8px;
+}
+
+.topic-icon-custom-row .form-control {
+    flex: 1;
+    min-width: 0;
+}
+
+.topic-icon-custom > small {
+    display: block;
+    margin-top: 5px;
+}
+
+.topic-icon-custom-error {
+    min-height: 18px;
+    margin: 4px 0 0;
 }
 
 .topic-icon-modal-foot {

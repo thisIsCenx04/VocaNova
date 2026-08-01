@@ -1,71 +1,62 @@
 @model string
 @{
-    // Bảng emoji chia nhóm như bàn phím điện thoại. Mỗi emoji kèm từ khoá tiếng Anh để ô
-    // tìm kiếm lọc được; vẫn cho gõ tay vào ô input nên không bị giới hạn trong danh sách.
+    const string DefaultIcon = "bi bi-book";
+    var currentIcon = !string.IsNullOrWhiteSpace(Model)
+        && Model.StartsWith("bi bi-", StringComparison.Ordinal)
+        && Model.Length <= 20
+            ? Model
+            : DefaultIcon;
+
+    // Lưu thẳng Bootstrap Icon class để icon nhất quán ở form, danh sách và trang chi tiết.
     var groups = new (string Key, string Label, string Tab, (string Icon, string Keywords)[] Icons)[]
     {
-        ("learning", "Learning", "📚",
+        ("learning", "Learning", "bi bi-book",
         [
-            ("📚", "book books study library"), ("📖", "open book read reading"),
-            ("✏️", "pencil write writing"), ("🎓", "graduation school university degree"),
-            ("🧠", "brain mind think memory"), ("🔤", "abc letters alphabet"),
-            ("📝", "note memo exam test"), ("🗣️", "speaking talk pronunciation"),
-            ("🔬", "science lab research"), ("🧮", "abacus math maths numbers"),
-            ("🗂️", "files index category"), ("🏫", "school building class"),
+            ("bi bi-book", "book study library"), ("bi bi-book-half", "open book read reading"),
+            ("bi bi-pencil", "pencil write writing"), ("bi bi-mortarboard", "graduation school university"),
+            ("bi bi-lightbulb", "idea learn memory"), ("bi bi-translate", "language translate alphabet"),
+            ("bi bi-journal", "journal note exam"), ("bi bi-chat-dots", "speaking chat pronunciation"),
         ]),
-        ("daily", "Daily life", "🏠",
+        ("daily", "Daily life", "bi bi-house",
         [
-            ("🏠", "home house"), ("🍽️", "food eat meal dining"),
-            ("🛒", "shopping cart supermarket"), ("👕", "clothes shirt clothing"),
-            ("🛏️", "bed sleep bedroom"), ("🚿", "shower bath bathroom"),
-            ("🧹", "clean cleaning housework"), ("👨‍👩‍👧", "family parents children"),
-            ("☕", "coffee drink cafe"), ("🍳", "cooking cook kitchen"),
-            ("🐶", "pet dog animal"), ("💡", "light lamp idea"),
+            ("bi bi-house", "home house"), ("bi bi-cup-hot", "food drink cafe"),
+            ("bi bi-cart", "shopping cart supermarket"), ("bi bi-bag", "clothes shopping bag"),
+            ("bi bi-clock", "time clock daily"), ("bi bi-telephone", "phone call telephone"),
+            ("bi bi-envelope", "email mail letter"), ("bi bi-people", "family people friends"),
         ]),
-        ("work", "Work", "💼",
+        ("work", "Work", "bi bi-briefcase",
         [
-            ("💼", "work business briefcase job"), ("🏢", "office company building"),
-            ("💻", "computer laptop it technology"), ("📊", "chart report statistics"),
-            ("📈", "growth increase sales"), ("🤝", "meeting deal partner"),
-            ("⏰", "time clock schedule deadline"), ("✉️", "email mail letter"),
-            ("📞", "phone call telephone"), ("🖊️", "pen sign contract"),
-            ("💰", "money finance salary"), ("🏭", "factory industry"),
+            ("bi bi-briefcase", "work business job"), ("bi bi-building", "office company building"),
+            ("bi bi-laptop", "computer laptop technology"), ("bi bi-bar-chart", "chart report statistics"),
+            ("bi bi-graph-up", "growth increase sales"), ("bi bi-cash", "money finance salary"),
+            ("bi bi-calendar", "calendar meeting schedule"), ("bi bi-tools", "tools engineering industry"),
         ]),
-        ("travel", "Travel", "✈️",
+        ("travel", "Travel", "bi bi-airplane",
         [
-            ("✈️", "plane flight airport travel"), ("🌍", "world earth global country"),
-            ("🗺️", "map direction navigation"), ("🏖️", "beach holiday vacation"),
-            ("🏨", "hotel accommodation stay"), ("🚗", "car drive road"),
-            ("🚆", "train railway station"), ("🧳", "luggage suitcase baggage"),
-            ("🚕", "taxi cab"), ("⛵", "boat sail ship"),
-            ("🏕️", "camping tent outdoor"), ("🎫", "ticket booking"),
+            ("bi bi-airplane", "plane flight airport travel"), ("bi bi-globe", "world global country"),
+            ("bi bi-map", "map direction navigation"), ("bi bi-car-front", "car drive road"),
+            ("bi bi-train-front", "train railway station"), ("bi bi-suitcase", "luggage suitcase baggage"),
+            ("bi bi-signpost", "signpost direction route"), ("bi bi-compass", "compass explore journey"),
         ]),
-        ("nature", "Nature", "🌳",
+        ("nature", "Nature", "bi bi-tree",
         [
-            ("🌳", "tree forest plant"), ("🌸", "flower blossom spring"),
-            ("🐾", "animal paw wildlife"), ("🌦️", "weather rain sun forecast"),
-            ("⛰️", "mountain hill"), ("🌊", "sea ocean wave water"),
-            ("🔥", "fire flame heat"), ("🌙", "moon night sky"),
-            ("☀️", "sun sunny day"), ("❄️", "snow winter cold"),
-            ("🍂", "autumn leaves fall"), ("🌱", "seed grow sprout"),
+            ("bi bi-tree", "tree forest plant"), ("bi bi-flower1", "flower blossom spring"),
+            ("bi bi-cloud-sun", "weather cloud sun"), ("bi bi-water", "sea ocean wave water"),
+            ("bi bi-fire", "fire flame heat"), ("bi bi-moon", "moon night sky"),
+            ("bi bi-sun", "sun sunny day"), ("bi bi-snow", "snow winter cold"),
         ]),
-        ("culture", "Culture", "🎨",
+        ("culture", "Culture", "bi bi-palette",
         [
-            ("🎨", "art paint drawing"), ("🎵", "music song sound"),
-            ("🎬", "film movie cinema"), ("🎭", "theatre drama performance"),
-            ("📷", "photo camera picture"), ("🏛️", "museum history heritage"),
-            ("⚽", "sport football game"), ("🍿", "entertainment popcorn show"),
-            ("📺", "tv television media"), ("🎮", "game gaming video game"),
-            ("📰", "news newspaper press"), ("🎉", "festival party celebration"),
+            ("bi bi-palette", "art paint drawing"), ("bi bi-music-note", "music song sound"),
+            ("bi bi-film", "film movie cinema"), ("bi bi-camera", "photo camera picture"),
+            ("bi bi-controller", "game gaming controller"), ("bi bi-newspaper", "news newspaper press"),
+            ("bi bi-trophy", "sport award trophy"), ("bi bi-stars", "festival celebration stars"),
         ]),
-        ("health", "Health", "❤️",
+        ("health", "Health", "bi bi-heart-pulse",
         [
-            ("🏥", "hospital clinic medical"), ("💊", "medicine pill drug"),
-            ("🩺", "doctor checkup health"), ("🏃", "run exercise sport fitness"),
-            ("🧘", "yoga meditation relax"), ("🥗", "salad diet healthy food"),
-            ("😴", "sleep rest tired"), ("❤️", "heart love health"),
-            ("🦷", "tooth dental teeth"), ("🧴", "care lotion hygiene"),
-            ("🚑", "ambulance emergency"), ("🩹", "bandage injury first aid"),
+            ("bi bi-heart-pulse", "heart health medical"), ("bi bi-capsule", "medicine pill drug"),
+            ("bi bi-hospital", "hospital clinic doctor"), ("bi bi-activity", "exercise activity fitness"),
+            ("bi bi-bandaid", "bandage injury first aid"), ("bi bi-heart", "heart care wellness"),
         ]),
     };
 }
@@ -73,14 +64,12 @@
 <div class="topic-icon-picker" data-topic-icon-picker>
     <button type="button" class="topic-icon-trigger" data-topic-icon-trigger
             aria-haspopup="dialog" aria-labelledby="topic-icon-label">
-        <span class="topic-icon-preview" data-topic-icon-preview>@(string.IsNullOrWhiteSpace(Model) ? "🎨" : Model)</span>
+        <i class="topic-icon-preview @currentIcon" data-topic-icon-preview aria-hidden="true"></i>
+        <span class="topic-icon-code" data-topic-icon-code>@currentIcon</span>
         <i class="bi bi-chevron-down" aria-hidden="true"></i>
     </button>
-
-    @* Giá trị chỉ đến từ modal, nên trường post lên là hidden thay vì ô gõ tay. *@
-    <input type="hidden" name="Icon" value="@Model" data-topic-icon-input />
+    <input type="hidden" name="Icon" value="@currentIcon" data-topic-icon-input />
 </div>
-<small>@T["Pick an icon from the list."]</small>
 
 <div class="modal-overlay" id="topic-icon-modal" data-topic-icon-modal role="dialog" aria-modal="true"
      aria-labelledby="topic-icon-modal-title" hidden>
@@ -98,7 +87,9 @@
             @foreach (var group in groups)
             {
                 <button type="button" class="topic-icon-tab" data-topic-icon-tab="@group.Key"
-                        role="tab" title="@T[group.Label]" aria-label="@T[group.Label]">@group.Tab</button>
+                        role="tab" title="@T[group.Label]" aria-label="@T[group.Label]">
+                    <i class="@group.Tab" aria-hidden="true"></i>
+                </button>
             }
         </div>
 
@@ -110,14 +101,27 @@
                     <div class="topic-icon-grid">
                         @foreach (var (icon, keywords) in group.Icons)
                         {
-                            <button type="button" class="topic-icon-option @(icon == Model ? "is-selected" : "")"
-                                    data-topic-icon-option="@icon" data-keywords="@keywords"
-                                    title="@icon" aria-label="@keywords">@icon</button>
+                            <button type="button" class="topic-icon-option @(icon == currentIcon ? "is-selected" : "")"
+                                    data-topic-icon-option="@icon" data-keywords="@keywords @icon"
+                                    title="@icon" aria-label="@icon">
+                                <i class="@icon" aria-hidden="true"></i>
+                            </button>
                         }
                     </div>
                 </section>
             }
             <p class="topic-icon-empty is-hidden" data-topic-icon-empty>@T["No icons match your search."]</p>
+        </div>
+
+        <div class="topic-icon-custom">
+            <label for="topic-icon-custom-code">@T["Bootstrap icon class"]</label>
+            <div class="topic-icon-custom-row">
+                <input id="topic-icon-custom-code" type="text" class="form-control" maxlength="20"
+                       data-topic-icon-custom placeholder="bi bi-book" autocomplete="off" />
+                <button type="button" class="btn-secondary btn-sm" data-topic-icon-apply>@T["Apply"]</button>
+            </div>
+            <small>@T["Example: bi bi-book"]</small>
+            <p class="field-validation-error topic-icon-custom-error" data-topic-icon-error role="alert"></p>
         </div>
 
         <div class="topic-icon-modal-foot">

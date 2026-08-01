@@ -102,7 +102,7 @@ public sealed class TopicsController : Controller
     public async Task<IActionResult> Detail(
         uint id, string? q, string? cefr, string? status, string? wordType,
         bool includeDeleted = false, int page = 1, int limit = DefaultPageSize,
-        string? sortBy = null, string? sortDirection = null,
+        string? sortBy = null, string? sortDirection = null, bool addWord = false,
         CancellationToken cancellationToken = default)
     {
         page = Math.Max(1, page);
@@ -131,7 +131,7 @@ public sealed class TopicsController : Controller
 
         return View(new TopicDetailViewModel
         {
-            Topic = topic, Items = words.Items, Q = filter.Q, Cefr = filter.Cefr,
+            Topic = topic, IsAddingWord = addWord, Items = words.Items, Q = filter.Q, Cefr = filter.Cefr,
             Status = filter.Status, WordType = filter.WordType, IncludeDeleted = includeDeleted,
             Page = words.Page, Limit = words.Limit, TotalItems = words.TotalItems, TotalPages = words.TotalPages,
             SortBy = filter.SortBy, SortDirection = filter.SortDirection,
@@ -147,21 +147,48 @@ public sealed class TopicsController : Controller
     [HttpGet("/topics/{id:uint}/edit")]
     public async Task<IActionResult> EditPage(
         uint id,
-        string? sortBy,
-        string? sortDirection,
-        CancellationToken cancellationToken)
+        string? q,
+        string? cefr,
+        string? status,
+        string? wordType,
+        bool includeDeleted = false,
+        int page = 1,
+        int limit = DefaultPageSize,
+        string? sortBy = null,
+        string? sortDirection = null,
+        CancellationToken cancellationToken = default)
     {
+        page = Math.Max(1, page);
+        limit = AllowedPageSizes.Contains(limit) ? limit : DefaultPageSize;
         var topics = await _apiClient.GetAdminTopicsAsync(null, null, false, cancellationToken);
         var topic = topics.SingleOrDefault(item => item.TopicId == id);
         if (topic is null) return NotFound();
 
-        var words = await _apiClient.GetWordsAsync(
+        var filter = new WordListFilter(
+            string.IsNullOrWhiteSpace(q) ? null : q.Trim(),
+            string.IsNullOrWhiteSpace(cefr) ? null : cefr,
+            id,
+            string.IsNullOrWhiteSpace(status) ? null : status,
+            includeDeleted,
+            page,
+            limit,
+            string.IsNullOrWhiteSpace(wordType) ? null : wordType,
+            string.IsNullOrWhiteSpace(sortBy) ? null : sortBy,
+            string.IsNullOrWhiteSpace(sortDirection) ? null : sortDirection);
+        var words = await _apiClient.GetWordsAsync(filter, cancellationToken);
+
+        // Danh sách đầy đủ được giữ riêng để submit không làm mất các từ nằm ngoài trang hiện tại.
+        var allWordsPage = await _apiClient.GetWordsAsync(
             new WordListFilter(null, null, id, null, true, 1, 100),
             cancellationToken);
-
-        // Sắp xếp phía dashboard: toàn bộ từ của topic đã nằm trong bộ nhớ (một trang 100),
-        // nên không cần gọi lại API mỗi lần đổi cột.
-        var sorted = SortWords(words.Items, sortBy, sortDirection);
+        var allWords = allWordsPage.Items.ToList();
+        for (var allPage = 2; allPage <= allWordsPage.TotalPages; allPage++)
+        {
+            var nextPage = await _apiClient.GetWordsAsync(
+                new WordListFilter(null, null, id, null, true, allPage, 100),
+                cancellationToken);
+            allWords.AddRange(nextPage.Items);
+        }
 
         return View("Edit", new TopicEditViewModel
         {
@@ -169,37 +196,21 @@ public sealed class TopicsController : Controller
             Icon = topic.Icon,
             TopicName = topic.TopicName,
             TopicNameVi = topic.TopicNameVi,
-            Keywords = sorted.Select(word => word.Word).ToList(),
-            WordIds = sorted.Select(word => word.WordId).ToList(),
-            Words = sorted,
-            SortBy = sortBy,
-            SortDirection = sortDirection,
+            Keywords = allWords.Select(word => word.Word).ToList(),
+            WordIds = allWords.Select(word => word.WordId).ToList(),
+            Words = words.Items,
+            Q = filter.Q,
+            Cefr = filter.Cefr,
+            Status = filter.Status,
+            WordType = filter.WordType,
+            IncludeDeleted = includeDeleted,
+            Page = words.Page,
+            Limit = words.Limit,
+            TotalItems = words.TotalItems,
+            TotalPages = words.TotalPages,
+            SortBy = filter.SortBy,
+            SortDirection = filter.SortDirection,
         });
-    }
-
-    private static IReadOnlyList<WordListItem> SortWords(
-        IReadOnlyList<WordListItem> words,
-        string? sortBy,
-        string? sortDirection)
-    {
-        if (string.IsNullOrWhiteSpace(sortBy))
-        {
-            return words;
-        }
-
-        var descending = string.Equals(sortDirection, "desc", StringComparison.OrdinalIgnoreCase);
-        Func<WordListItem, string?> key = sortBy switch
-        {
-            "type" => word => word.WordType,
-            "cefr" => word => word.Cefr,
-            "phonetic" => word => word.Phonetic,
-            "status" => word => word.Status,
-            _ => word => word.Word,
-        };
-
-        return descending
-            ? words.OrderByDescending(key, StringComparer.OrdinalIgnoreCase).ToArray()
-            : words.OrderBy(key, StringComparer.OrdinalIgnoreCase).ToArray();
     }
 
     [HttpGet("/topics/word-suggestions")]
@@ -292,7 +303,8 @@ public sealed class TopicsController : Controller
     {
         var result = await _apiClient.AddWordsToTopicAsync(id, wordIds, cancellationToken);
         SetFeedback(result, result.IsSuccess ? "Vocabulary added to topic." : "");
-        return RedirectToAction(nameof(Detail), new { id });
+        // Giữ khu vực tìm kiếm mở sau mỗi lần thêm để quản trị viên có thể thêm liên tiếp.
+        return RedirectToAction(nameof(Detail), new { id, addWord = true });
     }
 
     [HttpPost("/topics/{id:uint}/update")]

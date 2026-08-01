@@ -28,6 +28,7 @@
             <div class="form-field topic-icon-field">
                 <span id="topic-icon-label">@T["Icon"]</span>
                 <partial name="_TopicIconPicker" model="Model.Icon" />
+                <span asp-validation-for="Icon" class="field-validation-error"></span>
             </div>
             <label class="form-field">
                 <span>@T["Topic name (EN)"] <strong aria-hidden="true">*</strong></span>
@@ -43,17 +44,47 @@
 
     <div class="panel topic-create-panel">
         <div class="panel-head"><h2 class="panel-title">@T["Vocabulary"]</h2></div>
-        <p class="text-muted topic-keyword-help">@T["Add words that describe or belong to this topic. Press Enter or click Add after each keyword."]</p>
-        <div class="topic-keyword-entry">
+        <div class="topic-keyword-launch">
+            <button id="topic-keyword-toggle" type="button" class="btn-primary" aria-expanded="false" aria-controls="topic-keyword-entry">
+                <i class="bi bi-plus-lg" aria-hidden="true"></i> @T["Add word"]
+            </button>
+        </div>
+        <div id="topic-keyword-entry" class="topic-keyword-entry" hidden>
             <div class="topic-keyword-autocomplete">
                 <input id="topic-keyword-input" type="text" class="form-control" maxlength="50" placeholder="@T["Enter a keyword..."]" autocomplete="off"
                        role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="topic-word-suggestions" />
-        <div id="topic-word-suggestions" class="topic-word-suggestions" role="listbox" hidden></div>
+                <div id="topic-word-suggestions" class="topic-word-suggestions" role="listbox" hidden></div>
             </div>
-            <button id="topic-keyword-add" type="button" class="btn-secondary">@T["Add keyword"]</button>
+            <button id="topic-keyword-add" type="button" class="btn-primary">@T["Add to Topic"]</button>
+            <button id="topic-keyword-cancel" type="button" class="btn-secondary">@T["Cancel adding word"]</button>
         </div>
         <p id="topic-keyword-error" class="field-validation-error topic-keyword-error" role="alert" aria-live="polite"></p>
         <span asp-validation-for="Keywords" class="field-validation-error"></span>
+
+        <div class="filter-bar topic-create-word-filter" data-topic-client-filter>
+            <input type="text" class="form-control" data-topic-filter-query placeholder="@T["Search for vocabulary..."]" />
+            <select class="form-control" data-topic-filter-cefr>
+                <option value="">@T["CEFR Level"]</option>
+                @foreach (var level in VocaNova.Dashboard.Models.Vocabulary.VocabularyListViewModel.CefrLevels)
+                {
+                    <option value="@level">@level</option>
+                }
+            </select>
+            <select class="form-control" data-topic-filter-type>
+                <option value="">@T["Word Type"]</option>
+                @foreach (var type in VocaNova.Dashboard.Models.Vocabulary.VocabularyListViewModel.WordTypes)
+                {
+                    <option value="@type">@(char.ToUpper(type[0]) + type[1..])</option>
+                }
+            </select>
+            <select class="form-control" data-topic-filter-status>
+                <option value="">@T["Any status"]</option>
+                <option value="active">@T["Active"]</option>
+                <option value="deleted">@T["Deleted"]</option>
+            </select>
+            <button type="button" class="btn-primary" data-topic-filter-apply>@T["Filter"]</button>
+            <button type="button" class="btn-secondary" data-topic-filter-reset>@T["Reset"]</button>
+        </div>
 
         @* Cùng cấu trúc bảng với Word Management và trang Edit topic. *@
         <div class="table-panel topic-word-table-panel">
@@ -71,7 +102,8 @@
                 <tbody id="topic-keyword-list">
                     @for (var index = 0; index < Model.Keywords.Count; index++)
                     {
-                        <tr class="topic-keyword-row">
+                        <tr class="topic-keyword-row" data-word-id="@(index < Model.WordIds.Count ? Model.WordIds[index] : 0)"
+                            data-word="@Model.Keywords[index]" data-word-type="" data-cefr="" data-status="">
                             <td>
                                 <span class="vocab-word">@Model.Keywords[index]</span>
                                 <input type="hidden" name="Keywords" value="@Model.Keywords[index]" />
@@ -96,6 +128,22 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <div class="table-foot-bar" data-topic-client-pagination>
+            <div class="page-size-form">
+                <label class="page-size-control">
+                    <span>@T["Items per page"]</span>
+                    <select class="form-control" data-topic-client-page-size aria-label="@T["Items per page"]">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </label>
+            </div>
+            <nav class="pager" data-topic-client-pager data-prev="@T["Prev"]" data-next="@T["Next"]"
+                 aria-label="@T["Topic pages"]"></nav>
         </div>
     </div>
 
