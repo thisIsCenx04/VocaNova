@@ -300,27 +300,10 @@ h1, h2, h3, h4, .page-title, .panel-title {
     margin-left: auto;
 }
 
-.account-summary .icon-button {
-    position: relative;
-}
-
-.notif-dot {
-    position: absolute;
-    top: 9px;
-    right: 10px;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--danger);
-    border: 2px solid var(--topbar-bg);
-}
-
 .account-link {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding-left: 12px;
-    border-left: 1px solid var(--border);
 }
 
 .account-link img,
