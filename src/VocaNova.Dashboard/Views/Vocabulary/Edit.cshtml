@@ -33,6 +33,7 @@
       data-msg-delete-audio="@T["Delete this audio?"]">
     @Html.AntiForgeryToken()
     <input type="hidden" name="phoneticUs" value="@Model.PhoneticUs" />
+    <input type="hidden" name="imageUrl" id="edit-image-url" value="@Model.ImageUrl" />
     <input type="hidden" name="isPhrase" value="@Model.IsPhrase.ToString().ToLowerInvariant()" />
     <input type="hidden" name="wasActive" value="@isActive.ToString().ToLowerInvariant()" />
 

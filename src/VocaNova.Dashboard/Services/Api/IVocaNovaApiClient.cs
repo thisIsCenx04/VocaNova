@@ -248,4 +248,10 @@ public sealed record WordListFilter(
     string? SortDirection = null);
 
 /// <summary>Payload tạo từ mới (khớp CreateWordRequest của API).</summary>
-public sealed record WordInput(string? Word, string? Cefr, string? PhoneticUk, string? PhoneticUs, bool IsPhrase);
+public sealed record WordInput(
+    string? Word,
+    string? Cefr,
+    string? PhoneticUk,
+    string? PhoneticUs,
+    bool IsPhrase,
+    string? ImageUrl = null);
