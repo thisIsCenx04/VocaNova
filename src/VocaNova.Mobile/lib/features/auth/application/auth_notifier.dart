@@ -231,6 +231,11 @@ class AuthNotifier extends _$AuthNotifier {
     } catch (_) {
       // Local logout must succeed even when the API is unavailable.
     } finally {
+      try {
+        await ref.read(googleAuthServiceProvider).signOut();
+      } catch (_) {
+        // Backend and local logout must still succeed if Google is unavailable.
+      }
       await secureStorage.clearTokens();
       await ref.read(localStorageProvider).clearAll();
       state = const AuthState(status: AuthStatus.unauthenticated);
@@ -313,7 +318,9 @@ class AuthNotifier extends _$AuthNotifier {
     if (error is FormatException) {
       return error.message;
     }
-    final l10n = lookupAppLocalizations(AppSettingsNotifier.instance.state.locale);
+    final l10n = lookupAppLocalizations(
+      AppSettingsNotifier.instance.state.locale,
+    );
     return l10n.authGenericError;
   }
 }

@@ -288,6 +288,35 @@ class AppLocalizationsEn extends AppLocalizations {
       'Google did not return a valid sign-in token.';
 
   @override
+  String get authGoogleClientIdMissing =>
+      'Google Sign-In is not configured. Run Flutter with --dart-define=GOOGLE_SERVER_CLIENT_ID=YOUR_WEB_CLIENT_ID.';
+
+  @override
+  String get authGoogleClientConfigurationError =>
+      'Google Sign-In configuration is invalid. Check the Android package name, signing SHA-1, and Web client ID.';
+
+  @override
+  String get authGoogleProviderConfigurationError =>
+      'Google Play services or the Google provider is unavailable or incorrectly configured on this device.';
+
+  @override
+  String get authGoogleUiUnavailable =>
+      'Google could not open the account selection screen. Please reopen the app and try again.';
+
+  @override
+  String get authGoogleInterrupted =>
+      'Google Sign-In was interrupted. Please try again.';
+
+  @override
+  String get authGoogleCanceled =>
+      'Google Sign-In was canceled. If you selected an account before seeing this message, check the Android package name, SHA-1, and Web client ID.';
+
+  @override
+  String authGoogleUnknownError(String details) {
+    return 'Google Sign-In failed: $details';
+  }
+
+  @override
   String get dictBackTooltip => 'Back';
 
   @override
