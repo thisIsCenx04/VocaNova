@@ -253,7 +253,7 @@ public sealed class TopicsController : Controller
             .FirstOrDefault(group => group.Count() > 1)?.Key;
         if (duplicateKeyword is not null)
         {
-            ModelState.AddModelError(nameof(model.Keywords), $"The vocabulary '{duplicateKeyword}' has already been added.");
+            ModelState.AddModelError(nameof(model.Keywords), "This vocabulary has already been added.");
         }
 
         if (model.WordIds.Count != model.Keywords.Count

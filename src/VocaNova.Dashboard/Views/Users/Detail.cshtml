@@ -62,8 +62,8 @@
             <h2 class="profile-name">@d.DisplayName</h2>
             <p class="profile-uid">UID-@d.UserId.ToString("D4")</p>
             <div class="profile-badges">
-                <span class="@StatusBadge(d.Status)">@d.Status</span>
-                <span class="badge badge-premium">@d.Role.Replace("_", " ")</span>
+                <span class="@StatusBadge(d.Status)">@T[d.Status switch { "active" => "Active", "locked" => "Locked", "deleted" => "Deleted", _ => d.Status }]</span>
+                <span class="badge badge-premium">@T[d.Role switch { "super_admin" => "Super admin", "admin" => "Admin", "user" => "User", "guest" => "Guest", _ => d.Role.Replace("_", " ") }]</span>
             </div>
         </section>
 
@@ -174,7 +174,7 @@
                                 <td>@sn.Mode</td>
                                 <td>@sn.CorrectCount/@sn.QuestionCount</td>
                                 <td>@sn.Accuracy.ToString("0.#")%</td>
-                                <td><span class="badge badge-muted">@sn.Status</span></td>
+                                <td><span class="badge badge-muted">@T[sn.Status switch { "completed" => "Completed", "in_progress" => "In progress", "cancelled" => "Cancelled", _ => sn.Status }]</span></td>
                                 <td>@sn.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
                             </tr>
                         }

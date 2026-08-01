@@ -40,7 +40,7 @@
         function applyCustomIcon() {
             var value = customInput ? customInput.value.trim().replace(/\s+/g, ' ') : '';
             if (!/^bi bi-[a-z0-9-]+$/.test(value) || value.length > 20) {
-                setCustomError('Please enter a valid Bootstrap icon class, for example: bi bi-book.');
+                setCustomError(modal.dataset.invalidIcon || 'Please enter a valid Bootstrap icon class, for example: bi bi-book.');
                 if (customInput) customInput.focus();
                 return;
             }
@@ -176,6 +176,8 @@
     var filterReset = clientFilter && clientFilter.querySelector('[data-topic-filter-reset]');
     var clientPageSize = document.querySelector('[data-topic-client-page-size]');
     var clientPager = document.querySelector('[data-topic-client-pager]');
+    var wordTypeLabelSource = document.querySelector('[data-topic-filter-type], select[name="wordType"]');
+    var statusLabelSource = document.querySelector('[data-topic-filter-status], select[name="status"]');
     var currentClientPage = 1;
     var searchTimer;
     var searchRequest;
@@ -340,6 +342,12 @@
         return cell;
     }
 
+    function localizedOptionLabel(select, value) {
+        if (!value || !select) return value;
+        var option = Array.from(select.options).find(function (item) { return item.value === value; });
+        return option ? option.textContent.trim() : value;
+    }
+
     function buildRow(word) {
         var row = document.createElement('tr');
         row.className = 'topic-keyword-row';
@@ -372,7 +380,7 @@
         }
 
         row.appendChild(wordCell);
-        row.appendChild(textCell(word.wordType));
+        row.appendChild(textCell(localizedOptionLabel(wordTypeLabelSource, word.wordType)));
         row.appendChild(textCell(word.cefr));
         row.appendChild(textCell(word.phonetic));
 
@@ -380,7 +388,7 @@
         if (word.status) {
             var badge = document.createElement('span');
             badge.className = word.status === 'deleted' ? 'badge badge-danger' : 'badge badge-success';
-            badge.textContent = word.status;
+            badge.textContent = localizedOptionLabel(statusLabelSource, word.status);
             statusCell.appendChild(badge);
         } else {
             statusCell.textContent = '—';
@@ -427,12 +435,12 @@
     function addKeyword() {
         var value = input.value.trim();
         if (!value) {
-            setKeywordError('Please enter or select a vocabulary word.');
+            setKeywordError(entry.dataset.enterError || 'Please enter or select a vocabulary word.');
             input.focus();
             return;
         }
         if (!selected || !selected.wordId) {
-            setKeywordError('Please select an existing vocabulary word from the suggestions.');
+            setKeywordError(entry.dataset.selectError || 'Please select an existing vocabulary word from the suggestions.');
             input.focus();
             return;
         }
@@ -441,7 +449,7 @@
         var duplicate = Array.from(stateRoot.querySelectorAll('input[name="Keywords"]'))
             .some(function (item) { return item.value.toLocaleLowerCase() === value.toLocaleLowerCase(); });
         if (duplicate) {
-            setKeywordError('This vocabulary has already been added.');
+            setKeywordError(entry.dataset.duplicateError || 'This vocabulary has already been added.');
             input.focus();
             return;
         }

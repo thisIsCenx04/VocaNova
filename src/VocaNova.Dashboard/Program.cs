@@ -6,7 +6,8 @@ using VocaNova.Dashboard.Services.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+    options.Filters.Add<VocaNova.Dashboard.Services.Localization.LocalizedModelStateFilter>());
 
 // Đa ngôn ngữ UI dashboard (Tiếng Việt / English) đọc từ cookie, render server-side.
 builder.Services.AddScoped<VocaNova.Dashboard.Services.Localization.ITranslator,

@@ -81,11 +81,11 @@
 
 @if (TempData["VocabSuccess"] is string okMsg)
 {
-    <div class="alert alert-success">@okMsg</div>
+    <div class="alert alert-success">@T[okMsg]</div>
 }
 @if (TempData["VocabError"] is string errMsg)
 {
-    <div class="alert alert-danger">@errMsg</div>
+    <div class="alert alert-danger">@T[errMsg]</div>
 }
 
 <form method="get" action="/vocabulary" class="filter-bar">
@@ -104,7 +104,8 @@
         <option value="">@T["Word Type"]</option>
         @foreach (var wt in VocaNova.Dashboard.Models.Vocabulary.VocabularyListViewModel.WordTypes)
         {
-            <option value="@wt" selected="@(Model.WordType == wt)">@(char.ToUpper(wt[0]) + wt[1..])</option>
+            var wordTypeLabel = char.ToUpper(wt[0]) + wt[1..];
+            <option value="@wt" selected="@(Model.WordType == wt)">@T[wordTypeLabel]</option>
         }
     </select>
     <select name="topicId" class="form-control">
@@ -187,7 +188,7 @@
                                 <a class="vocab-word" href="/vocabulary/@item.WordId">@item.Word</a>
                             }
                         </td>
-                        <td>@(string.IsNullOrWhiteSpace(item.WordType) ? "—" : char.ToUpper(item.WordType[0]) + item.WordType[1..])</td>
+                        <td>@(string.IsNullOrWhiteSpace(item.WordType) ? "—" : T[char.ToUpper(item.WordType[0]) + item.WordType[1..]])</td>
                         <td>
                             @if (!string.IsNullOrWhiteSpace(item.Cefr))
                             {
@@ -199,7 +200,7 @@
                             }
                         </td>
                         <td class="phonetics-cell">@(string.IsNullOrWhiteSpace(item.Phonetic) ? "—" : item.Phonetic)</td>
-                        <td><span class="@StatusBadgeClass(item.Status)">@item.Status</span></td>
+                        <td><span class="@StatusBadgeClass(item.Status)">@(item.Status == "active" ? T["Active"] : item.Status == "deleted" ? T["Deleted"] : T[item.Status])</span></td>
                         <td class="col-actions">
                             <div class="action-icons">
                                 <a class="icon-link" href="/vocabulary/@item.WordId" title="@T["View details"]" aria-label="@T["View details"]">

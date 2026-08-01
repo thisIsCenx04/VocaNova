@@ -80,11 +80,11 @@
 
 @if (TempData["AiGradingSaved"] is string aiSaved)
 {
-    <div class="alert alert-success">@aiSaved</div>
+    <div class="alert alert-success">@T[aiSaved]</div>
 }
 @if (TempData["AiGradingError"] is string aiError)
 {
-    <div class="alert alert-danger">@aiError</div>
+    <div class="alert alert-danger">@T[aiError]</div>
 }
 
 <section class="settings-panel ai-settings-panel">

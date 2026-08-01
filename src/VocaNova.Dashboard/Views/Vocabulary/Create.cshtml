@@ -24,7 +24,7 @@
 
 @if (TempData["VocabError"] is string errMsg)
 {
-    <div class="alert alert-danger">@errMsg</div>
+    <div class="alert alert-danger">@T[errMsg]</div>
 }
 
 <form method="post" action="/vocabulary/create" class="management-form" id="create-form">
@@ -87,7 +87,8 @@
                             <option value="">@T["— none —"]</option>
                             @foreach (var wt in wordTypes)
                             {
-                                <option value="@wt">@(char.ToUpper(wt[0]) + wt[1..])</option>
+                                var wordTypeLabel = char.ToUpper(wt[0]) + wt[1..];
+                                <option value="@wt">@T[wordTypeLabel]</option>
                             }
                         </select>
                     </div>
