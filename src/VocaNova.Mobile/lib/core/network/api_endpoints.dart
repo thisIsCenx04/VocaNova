@@ -9,6 +9,7 @@ abstract final class ApiEndpoints {
   static const sendOtp = '/api/auth/otp/send';
   static const verifyOtp = '/api/auth/otp/verify';
   static const forgotPassword = '/api/auth/forgot-password';
+  static const verifyResetOtp = '/api/auth/reset-password/verify-otp';
   static const resetPassword = '/api/auth/reset-password';
   static const currentUser = '/api/auth/me';
   static const deleteAccount = '/api/auth/me';

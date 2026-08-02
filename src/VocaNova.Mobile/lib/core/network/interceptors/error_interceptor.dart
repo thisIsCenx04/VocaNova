@@ -90,6 +90,14 @@ class ErrorInterceptor extends Interceptor {
     if (normalized.contains('not found')) {
       return 'Không tìm thấy dữ liệu yêu cầu.';
     }
+    if (normalized.contains('phone already exists')) {
+      return 'Tài khoản đã tồn tại. Vui lòng thay đổi số điện thoại.';
+    }
+    if (normalized.contains(
+      'new password must be different from current password',
+    )) {
+      return 'Mật khẩu mới trùng với mật khẩu cũ. Vui lòng chọn mật khẩu khác hoặc đăng nhập lại bằng mật khẩu cũ.';
+    }
     if (normalized.contains('already exists') ||
         normalized.contains('conflict')) {
       return 'Dữ liệu đã tồn tại.';

@@ -606,6 +606,35 @@ public sealed class AuthService : IAuthService
         return await SendOtpAsync(new OtpSendRequest(phone, OtpPurpose.Reset), cancellationToken);
     }
 
+    public async Task<Result<OtpVerifyResponse>> VerifyResetOtpAsync(
+        OtpVerifyRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var phone = request.Phone!.Trim();
+        var user = await _authRepository.FindByPhoneAsync(phone, cancellationToken);
+        if (user?.UserAuth?.PasswordHash is null || user.Status == UserStatus.Deleted)
+        {
+            return Result<OtpVerifyResponse>.Unauthorized("Invalid phone or OTP.");
+        }
+
+        var otpResult = await ValidateOtpAsync(
+            phone,
+            user.UserId,
+            request.OtpCode!,
+            cancellationToken);
+        if (!otpResult.IsSuccess)
+        {
+            return PropagateFailure<OtpVerifyResponse, OtpVerification>(otpResult);
+        }
+
+        // Keep the OTP active until ResetPasswordAsync consumes it. Validation increments
+        // the attempt counter, so undo the successful check here; invalid attempts remain
+        // counted and are already persisted by ValidateOtpAsync.
+        otpResult.Value!.VerifyAttemptCount--;
+        await _authRepository.SaveChangesAsync(cancellationToken);
+        return Result<OtpVerifyResponse>.Ok(new OtpVerifyResponse(true));
+    }
+
     public async Task<Result<bool>> ResetPasswordAsync(
         ResetPasswordRequest request,
         CancellationToken cancellationToken = default)
@@ -625,6 +654,11 @@ public sealed class AuthService : IAuthService
         if (!otpResult.IsSuccess)
         {
             return PropagateFailure<bool, OtpVerification>(otpResult);
+        }
+
+        if (PasswordHelper.Verify(request.NewPassword!, user.UserAuth.PasswordHash))
+        {
+            return Result<bool>.Conflict("New password must be different from current password.");
         }
 
         var now = DateTime.UtcNow;

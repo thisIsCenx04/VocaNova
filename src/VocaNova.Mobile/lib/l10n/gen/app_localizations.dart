@@ -362,11 +362,11 @@ abstract class AppLocalizations {
   /// **'Sign in'**
   String get authSignInTitle;
 
-  /// No description provided for @authWelcomeBackSubtitle.
+  /// No description provided for @authSignInSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Welcome back to VocaNova'**
-  String get authWelcomeBackSubtitle;
+  /// **'Welcome to VocaNova'**
+  String get authSignInSubtitle;
 
   /// No description provided for @authPhoneNumberLabel.
   ///
@@ -398,11 +398,11 @@ abstract class AppLocalizations {
   /// **'Create account'**
   String get authCreateAccountTitle;
 
-  /// No description provided for @authVerifyEmailTitle.
+  /// No description provided for @authVerifyPhoneTitle.
   ///
   /// In en, this message translates to:
-  /// **'Verify your email'**
-  String get authVerifyEmailTitle;
+  /// **'Verify your phone number'**
+  String get authVerifyPhoneTitle;
 
   /// No description provided for @authOtpSubtitle.
   ///

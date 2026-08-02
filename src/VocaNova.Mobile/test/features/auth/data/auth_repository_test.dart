@@ -185,44 +185,61 @@ void main() {
     expect(verified, isTrue);
   });
 
-  test('forgotPassword and resetPassword use backend contracts', () async {
-    final dio = Dio();
-    var requestNumber = 0;
-    dio.httpClientAdapter = CallbackAdapter((options) {
-      requestNumber++;
-      if (requestNumber == 1) {
-        expect(options.path, ApiEndpoints.forgotPassword);
-        expect(options.data, {'phone': '0901234567'});
+  test(
+    'forgotPassword, OTP verification, and reset use backend contracts',
+    () async {
+      final dio = Dio();
+      var requestNumber = 0;
+      dio.httpClientAdapter = CallbackAdapter((options) {
+        requestNumber++;
+        if (requestNumber == 1) {
+          expect(options.path, ApiEndpoints.forgotPassword);
+          expect(options.data, {'phone': '0901234567'});
+          return jsonResponse({
+            'success': true,
+            'data': {'expires_in': 300},
+            'errors': <String>[],
+          });
+        }
+        if (requestNumber == 2) {
+          expect(options.path, ApiEndpoints.verifyResetOtp);
+          expect(options.data, {'phone': '0901234567', 'otp_code': '123456'});
+          return jsonResponse({
+            'success': true,
+            'data': {'verified': true},
+            'errors': <String>[],
+          });
+        }
+        expect(options.path, ApiEndpoints.resetPassword);
+        expect(options.data, {
+          'phone': '0901234567',
+          'otp_code': '123456',
+          'new_password': 'NewPassword1',
+        });
         return jsonResponse({
           'success': true,
-          'data': {'expires_in': 300},
+          'data': true,
           'errors': <String>[],
         });
-      }
-      expect(options.path, ApiEndpoints.resetPassword);
-      expect(options.data, {
-        'phone': '0901234567',
-        'otp_code': '123456',
-        'new_password': 'NewPassword1',
       });
-      return jsonResponse({
-        'success': true,
-        'data': true,
-        'errors': <String>[],
-      });
-    });
-    final repository = AuthRepository(dio: dio);
+      final repository = AuthRepository(dio: dio);
 
-    final expiresIn = await repository.forgotPassword('0901234567');
-    final reset = await repository.resetPassword(
-      phone: '0901234567',
-      otpCode: '123456',
-      newPassword: 'NewPassword1',
-    );
+      final expiresIn = await repository.forgotPassword('0901234567');
+      final verified = await repository.verifyResetOtp(
+        phone: '0901234567',
+        otpCode: '123456',
+      );
+      final reset = await repository.resetPassword(
+        phone: '0901234567',
+        otpCode: '123456',
+        newPassword: 'NewPassword1',
+      );
 
-    expect(expiresIn, 300);
-    expect(reset, isTrue);
-  });
+      expect(expiresIn, 300);
+      expect(verified, isTrue);
+      expect(reset, isTrue);
+    },
+  );
 
   test('getCurrentUser parses backend profile contract', () async {
     final dio = Dio();

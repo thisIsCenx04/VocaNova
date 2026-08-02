@@ -195,6 +195,21 @@ public sealed class AuthController : ControllerBase
     }
 
     [AllowAnonymous]
+    [HttpPost("reset-password/verify-otp")]
+    public async Task<IActionResult> VerifyResetOtp(
+        [FromBody] OtpVerifyRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _authService.VerifyResetOtpAsync(request, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return this.ErrorResult(result);
+        }
+
+        return this.OkResult(result.Value!, "Password reset OTP verified successfully.");
+    }
+
+    [AllowAnonymous]
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword(
         [FromBody] ResetPasswordRequest request,

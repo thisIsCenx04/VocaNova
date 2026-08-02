@@ -36,7 +36,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return AuthFormScaffold(
       title: l10n.authSignInTitle,
-      subtitle: l10n.authWelcomeBackSubtitle,
+      subtitle: l10n.authSignInSubtitle,
       form: Form(
         key: _formKey,
         child: Column(

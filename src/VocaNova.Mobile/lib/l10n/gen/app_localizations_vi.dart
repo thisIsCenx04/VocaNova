@@ -153,7 +153,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get authSignInTitle => 'Đăng nhập';
 
   @override
-  String get authWelcomeBackSubtitle => 'Chào mừng bạn quay lại VocaNova';
+  String get authSignInSubtitle => 'Chào mừng bạn đến với VocaNova';
 
   @override
   String get authPhoneNumberLabel => 'Số điện thoại';
@@ -171,7 +171,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get authCreateAccountTitle => 'Tạo tài khoản';
 
   @override
-  String get authVerifyEmailTitle => 'Xác minh email của bạn';
+  String get authVerifyPhoneTitle => 'Xác minh số điện thoại của bạn';
 
   @override
   String authOtpSubtitle(String phone) {
