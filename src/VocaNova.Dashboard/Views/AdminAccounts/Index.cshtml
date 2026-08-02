@@ -150,7 +150,11 @@
                                 </a>
                                 @if (admin.Status == "active")
                                 {
-                                    <form method="post" action="/admin-accounts/@admin.AdminId/lock" class="inline-form" onsubmit="return confirm('@T["Lock this admin account?"]');">
+                                    <form method="post" action="/admin-accounts/@admin.AdminId/lock" class="inline-form"
+                                          data-admin-confirm
+                                          data-confirm-title="@T["Lock administrator account"]"
+                                          data-confirm-message="@T["This administrator will no longer be able to sign in until the account is unlocked."]"
+                                          data-confirm-button="@T["Lock"]">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="returnUrl" value="@returnUrl" />
                                         <button class="icon-link warn" type="submit" title="@T["Lock"]" aria-label="@T["Lock"]">
@@ -168,7 +172,12 @@
                                         </button>
                                     </form>
                                 }
-                                <form method="post" action="/admin-accounts/@admin.AdminId/delete" class="inline-form" onsubmit="return confirm('@T["Delete this admin account? This action removes its login credentials."]');">
+                                <form method="post" action="/admin-accounts/@admin.AdminId/delete" class="inline-form"
+                                      data-admin-confirm
+                                      data-confirm-title="@T["Delete administrator account"]"
+                                      data-confirm-message="@T["This action removes the administrator's login credentials."]"
+                                      data-confirm-button="@T["Delete"]"
+                                      data-confirm-danger="true">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="returnUrl" value="@returnUrl" />
                                     <button class="icon-link danger" type="submit" title="@T["Delete"]" aria-label="@T["Delete"]">
@@ -184,6 +193,12 @@
         </tbody>
     </table>
 </div>
+
+<partial name="_ActionConfirmModal" />
+
+@section Scripts {
+    <script src="~/js/admin-account-actions.js" asp-append-version="true"></script>
+}
 
 <div class="table-foot-bar">
     <span class="pager-info">@T["Showing"] @pageStart @T["to"] @pageEnd @T["of"] @Model.TotalItems @T["entries"]</span>
