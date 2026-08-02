@@ -68,6 +68,12 @@
                     var actionLabel = targetRole == "admin"
                         ? T["Promote to administrator"]
                         : T["Change to user"];
+                    var confirmTitle = targetRole == "admin"
+                        ? T["Promote account"]
+                        : T["Change administrator to user"];
+                    var confirmMessage = targetRole == "admin"
+                        ? T["This account will receive administrator access to the dashboard."]
+                        : T["This account will lose administrator access to the dashboard."];
                     <tr>
                         <td>@account.UserId</td>
                         <td>
@@ -83,7 +89,10 @@
                         <td><span class="badge @(account.Role == "admin" ? "badge-warning" : "badge-muted")">@T[account.Role == "admin" ? "Admin" : "User"]</span></td>
                         <td class="col-actions">
                             <form method="post" action="/admin-accounts/@account.UserId/role" class="inline-form"
-                                  onsubmit="return confirm('@actionLabel?');">
+                                  data-admin-confirm
+                                  data-confirm-title="@confirmTitle"
+                                  data-confirm-message="@confirmMessage"
+                                  data-confirm-button="@actionLabel">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="role" value="@targetRole" />
                                 <input type="hidden" name="returnUrl" value="@returnUrl" />
@@ -112,3 +121,9 @@
         }
     </div>
 </div>
+
+<partial name="_ActionConfirmModal" />
+
+@section Scripts {
+    <script src="~/js/admin-account-actions.js" asp-append-version="true"></script>
+}
