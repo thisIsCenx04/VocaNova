@@ -71,13 +71,13 @@
   "authOtpResentMessage": "OTP code resent.",
   "authPasswordChangedMessage": "Password changed.",
   "authSignInTitle": "Sign in",
-  "authWelcomeBackSubtitle": "Welcome back to VocaNova",
+  "authSignInSubtitle": "Welcome to VocaNova",
   "authPhoneNumberLabel": "Phone number",
   "authPasswordLabel": "Password",
   "authForgotPasswordLink": "Forgot password?",
   "authNewHerePrefix": "New here? ",
   "authCreateAccountTitle": "Create account",
-  "authVerifyEmailTitle": "Verify your email",
+  "authVerifyPhoneTitle": "Verify your phone number",
   "authOtpSubtitle": "Enter the 6-digit code sent to\n{phone}",
   "@authOtpSubtitle": {
     "placeholders": {

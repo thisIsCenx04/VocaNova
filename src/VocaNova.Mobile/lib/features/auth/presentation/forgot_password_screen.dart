@@ -125,18 +125,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         OtpCodeFields(
           key: _otpKey,
           enabled: !_isLoading && _failedAttempts < maxAttempts,
-          onCompleted: (code) {
-            setState(() {
-              _otpCode = code;
-              _step = ForgotPasswordStep.password;
-            });
-          },
+          onCompleted: _verifyResetOtp,
         ),
         const SizedBox(height: 16),
         AuthHelperText(
           _failedAttempts >= maxAttempts
               ? l10n.authOtpMaxAttemptsReached
-              : l10n.authOtpVerifiedOnSave,
+              : l10n.authAttemptsRemaining(maxAttempts - _failedAttempts),
           widgetKey: const Key('forgot-otp-message'),
         ),
         const SizedBox(height: 16),
@@ -270,10 +265,37 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       _otpKey.currentState?.clear();
       _startCountdown();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.authOtpResentMessage)),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.authOtpResentMessage),
+        ),
       );
     } catch (error) {
       if (mounted) _showError(authRequestError(error));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _verifyResetOtp(String code) async {
+    setState(() => _isLoading = true);
+    try {
+      final verified = await ref
+          .read(authRepositoryProvider)
+          .verifyResetOtp(phone: _phoneController.text.trim(), otpCode: code);
+      if (!mounted || !verified) return;
+      setState(() {
+        _otpCode = code;
+        _step = ForgotPasswordStep.password;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _failedAttempts++);
+      _otpKey.currentState?.clear();
+      _showError(
+        _failedAttempts >= maxAttempts
+            ? AppLocalizations.of(context)!.authOtpMaxAttemptsReached
+            : authRequestError(error),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -295,24 +317,15 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.authPasswordChangedMessage),
+          content: Text(
+            AppLocalizations.of(context)!.authPasswordChangedMessage,
+          ),
         ),
       );
       context.go(AppRoutes.login);
     } catch (error) {
       if (!mounted) return;
-      setState(() {
-        _failedAttempts++;
-        _step = ForgotPasswordStep.otp;
-      });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _otpKey.currentState?.clear();
-      });
-      _showError(
-        _failedAttempts >= maxAttempts
-            ? AppLocalizations.of(context)!.authOtpMaxAttemptsReached
-            : authRequestError(error),
-      );
+      _showError(authRequestError(error));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

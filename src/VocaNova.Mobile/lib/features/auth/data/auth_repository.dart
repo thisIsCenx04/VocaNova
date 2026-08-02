@@ -120,6 +120,17 @@ class AuthRepository {
     return _responseData(response)['expires_in'] as int;
   }
 
+  Future<bool> verifyResetOtp({
+    required String phone,
+    required String otpCode,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.verifyResetOtp,
+      data: {'phone': phone, 'otp_code': otpCode},
+    );
+    return _responseData(response)['verified'] as bool;
+  }
+
   Future<bool> resetPassword({
     required String phone,
     required String otpCode,

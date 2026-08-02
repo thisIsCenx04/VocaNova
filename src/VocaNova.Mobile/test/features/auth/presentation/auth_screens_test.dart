@@ -18,6 +18,29 @@ void main() {
     repository = MockAuthRepository();
   });
 
+  testWidgets('login uses a neutral subtitle for every user type', (
+    tester,
+  ) async {
+    await pumpAuthScreen(tester, const LoginScreen(), repository);
+
+    expect(find.text('Welcome to VocaNova'), findsOneWidget);
+    expect(find.text('Welcome back to VocaNova'), findsNothing);
+  });
+
+  testWidgets('login welcomes Vietnamese users without implying a return', (
+    tester,
+  ) async {
+    await pumpAuthScreen(
+      tester,
+      const LoginScreen(),
+      repository,
+      locale: const Locale('vi'),
+    );
+
+    expect(find.text('Chào mừng bạn đến với VocaNova'), findsOneWidget);
+    expect(find.text('Chào mừng bạn quay lại VocaNova'), findsNothing);
+  });
+
   testWidgets('login shows Vietnamese inline validation errors', (
     tester,
   ) async {
@@ -141,12 +164,14 @@ void main() {
 Future<void> pumpAuthScreen(
   WidgetTester tester,
   Widget screen,
-  AuthRepository repository,
-) async {
+  AuthRepository repository, {
+  Locale? locale,
+}) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [authRepositoryProvider.overrideWithValue(repository)],
       child: MaterialApp(
+        locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: screen,

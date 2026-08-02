@@ -17,6 +17,15 @@ void main() {
     repository = MockAuthRepository();
   });
 
+  testWidgets('labels OTP verification as phone-number verification', (
+    tester,
+  ) async {
+    await pumpScreen(tester, const OtpScreen(phone: '0901234567'), repository);
+
+    expect(find.text('Verify your phone number'), findsOneWidget);
+    expect(find.text('Verify your email'), findsNothing);
+  });
+
   testWidgets('OTP auto-submits after entering all six digits', (tester) async {
     when(
       () => repository.verifyOtp(phone: '0901234567', otpCode: '123456'),
@@ -67,6 +76,9 @@ void main() {
       () => repository.forgotPassword('0901234567'),
     ).thenAnswer((_) async => 300);
     when(
+      () => repository.verifyResetOtp(phone: '0901234567', otpCode: '123456'),
+    ).thenAnswer((_) async => true);
+    when(
       () => repository.resetPassword(
         phone: '0901234567',
         otpCode: '123456',
@@ -103,6 +115,47 @@ void main() {
       ),
     ).called(1);
     expect(find.text('Login destination'), findsOneWidget);
+  });
+
+  testWidgets('forgot password stays on phone step when account is absent', (
+    tester,
+  ) async {
+    when(
+      () => repository.forgotPassword('0901234567'),
+    ).thenThrow(const AppException('User not found.', statusCode: 404));
+    await pumpScreen(tester, const ForgotPasswordScreen(), repository);
+
+    await tester.enterText(find.byKey(const Key('forgot-phone')), '0901234567');
+    await tester.tap(find.byKey(const Key('forgot-send-otp')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Step 1/3'), findsOneWidget);
+    expect(find.byKey(const Key('forgot-phone')), findsOneWidget);
+    expect(find.byKey(const Key('otp-digit-0')), findsNothing);
+  });
+
+  testWidgets('forgot password rejects OTP before showing password fields', (
+    tester,
+  ) async {
+    when(
+      () => repository.forgotPassword('0901234567'),
+    ).thenAnswer((_) async => 300);
+    when(
+      () => repository.verifyResetOtp(phone: '0901234567', otpCode: '999999'),
+    ).thenThrow(const AppException('Invalid OTP.', statusCode: 401));
+    await pumpScreen(tester, const ForgotPasswordScreen(), repository);
+
+    await tester.enterText(find.byKey(const Key('forgot-phone')), '0901234567');
+    await tester.tap(find.byKey(const Key('forgot-send-otp')));
+    await tester.pumpAndSettle();
+    await enterOtp(tester, '999999');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Step 2/3'), findsOneWidget);
+    expect(find.byKey(const Key('forgot-new-password')), findsNothing);
+    verify(
+      () => repository.verifyResetOtp(phone: '0901234567', otpCode: '999999'),
+    ).called(1);
   });
 
   testWidgets('forgot password enables resend after 60 seconds', (

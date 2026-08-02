@@ -154,7 +154,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authSignInTitle => 'Sign in';
 
   @override
-  String get authWelcomeBackSubtitle => 'Welcome back to VocaNova';
+  String get authSignInSubtitle => 'Welcome to VocaNova';
 
   @override
   String get authPhoneNumberLabel => 'Phone number';
@@ -172,7 +172,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authCreateAccountTitle => 'Create account';
 
   @override
-  String get authVerifyEmailTitle => 'Verify your email';
+  String get authVerifyPhoneTitle => 'Verify your phone number';
 
   @override
   String authOtpSubtitle(String phone) {

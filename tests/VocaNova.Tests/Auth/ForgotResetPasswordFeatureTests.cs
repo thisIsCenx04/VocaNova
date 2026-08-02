@@ -86,6 +86,38 @@ public class ForgotResetPasswordFeatureTests
     }
 
     [Fact]
+    public async Task VerifyResetOtpAsync_Should_Accept_Valid_Reset_Otp_Without_Consuming_It()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserAsync(dbContext);
+        await SeedOtpAsync(dbContext, DateTime.UtcNow.AddMinutes(5));
+        var service = CreateAuthService(dbContext);
+
+        var result = await service.VerifyResetOtpAsync(new OtpVerifyRequest(Phone, OtpCode));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Verified.Should().BeTrue();
+        var otp = await dbContext.OtpVerifications.SingleAsync();
+        otp.IsUsed.Should().BeFalse();
+        otp.VerifyAttemptCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task VerifyResetOtpAsync_Should_Reject_Invalid_Otp()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserAsync(dbContext);
+        await SeedOtpAsync(dbContext, DateTime.UtcNow.AddMinutes(5));
+        var service = CreateAuthService(dbContext);
+
+        var result = await service.VerifyResetOtpAsync(new OtpVerifyRequest(Phone, "999999"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
+        (await dbContext.OtpVerifications.SingleAsync()).IsUsed.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task ResetPasswordAsync_Should_Return_401_And_Not_Update_Password_When_Otp_Is_Expired()
     {
         await using var dbContext = CreateDbContext();
@@ -106,6 +138,27 @@ public class ForgotResetPasswordFeatureTests
         var otp = await dbContext.OtpVerifications.SingleAsync();
         otp.IsUsed.Should().BeFalse();
         otp.VerifyAttemptCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ResetPasswordAsync_Should_Reject_Current_Password_And_Keep_Otp_Active()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedUserAsync(dbContext);
+        await SeedOtpAsync(dbContext, DateTime.UtcNow.AddMinutes(5));
+        var service = CreateAuthService(dbContext);
+
+        var result = await service.ResetPasswordAsync(
+            new ResetPasswordRequest(Phone, OtpCode, "OldPassword1"));
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status409Conflict);
+        result.Error.Should().Be("New password must be different from current password.");
+
+        var userAuth = await dbContext.UserAuths.SingleAsync(auth => auth.UserId == 1);
+        PasswordHelper.Verify("OldPassword1", userAuth.PasswordHash!).Should().BeTrue();
+        var otp = await dbContext.OtpVerifications.SingleAsync();
+        otp.IsUsed.Should().BeFalse();
     }
 
     [Fact]

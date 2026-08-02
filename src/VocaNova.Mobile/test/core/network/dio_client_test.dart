@@ -171,6 +171,61 @@ void main() {
         expect((error.error! as AppException).message, 'Mã OTP không đúng.');
       }
     });
+
+    test('identifies the duplicate phone field during registration', () async {
+      final client = DioClient.create(
+        baseUrl: 'https://api.vocanova.test',
+        tokenStorage: MemoryTokenStorage(),
+        adapter: CallbackAdapter(
+          (_) => jsonResponse(
+            409,
+            body: {
+              'success': false,
+              'data': null,
+              'message': 'Phone already exists.',
+              'errors': ['Phone already exists.'],
+            },
+          ),
+        ),
+      );
+
+      try {
+        await client.dio.post<Map<String, dynamic>>(ApiEndpoints.register);
+        fail('Expected DioException.');
+      } on DioException catch (error) {
+        expect(
+          (error.error! as AppException).message,
+          'Tài khoản đã tồn tại. Vui lòng thay đổi số điện thoại.',
+        );
+      }
+    });
+
+    test('explains that a reset password must differ from the old one', () async {
+      final client = DioClient.create(
+        baseUrl: 'https://api.vocanova.test',
+        tokenStorage: MemoryTokenStorage(),
+        adapter: CallbackAdapter(
+          (_) => jsonResponse(
+            409,
+            body: {
+              'errors': [
+                'New password must be different from current password.',
+              ],
+            },
+          ),
+        ),
+      );
+
+      try {
+        await client.dio.post<Map<String, dynamic>>(ApiEndpoints.resetPassword);
+        fail('Expected DioException.');
+      } on DioException catch (error) {
+        expect(
+          (error.error! as AppException).message,
+          'Mật khẩu mới trùng với mật khẩu cũ. Vui lòng chọn mật khẩu khác hoặc đăng nhập lại bằng mật khẩu cũ.',
+        );
+      }
+    });
   });
 }
 

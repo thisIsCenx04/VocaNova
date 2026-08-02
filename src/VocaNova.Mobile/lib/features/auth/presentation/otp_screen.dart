@@ -53,7 +53,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     final attemptsLeft = maxAttempts - _failedAttempts;
     final l10n = AppLocalizations.of(context)!;
     return AuthFormScaffold(
-      title: l10n.authVerifyEmailTitle,
+      title: l10n.authVerifyPhoneTitle,
       subtitle: l10n.authOtpSubtitle(widget.phone),
       showBackButton: true,
       onBack: () {
@@ -188,7 +188,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       _otpKey.currentState?.clear();
       _startCountdown();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.authOtpResentMessage)),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.authOtpResentMessage),
+        ),
       );
     } catch (error) {
       if (mounted) {
