@@ -6,6 +6,7 @@ import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_icon.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
@@ -337,7 +338,6 @@ class _PersonalTopicCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final icon = topic.icon?.trim();
     return Card(
       child: InkWell(
         key: Key('personal-topic-card-${topic.topicId}'),
@@ -348,14 +348,12 @@ class _PersonalTopicCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (icon?.isNotEmpty == true)
-                Text(icon!, style: const TextStyle(fontSize: 30))
-              else
-                Icon(
-                  Icons.auto_stories_outlined,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 32,
-                ),
+              TopicIcon(
+                icon: topic.icon,
+                name: topic.name,
+                size: 32,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               const Spacer(),
               Text(
                 topic.localizedName(context),

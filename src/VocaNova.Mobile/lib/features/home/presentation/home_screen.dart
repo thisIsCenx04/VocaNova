@@ -9,6 +9,7 @@ import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/application/audio_playback_service.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_icon.dart';
 import 'package:vocanova_mobile/features/home/application/home_daily_word_provider.dart';
 import 'package:vocanova_mobile/features/home/application/home_topics_provider.dart';
 import 'package:vocanova_mobile/features/home/domain/personal_topic_recommendation.dart';
@@ -1155,8 +1156,6 @@ class _QuickAction extends StatelessWidget {
 class _TopicsForYou extends ConsumerWidget {
   const _TopicsForYou();
 
-  static const _emoji = ['🎓', '💼', '💻', '🗣️', '🔬', '✈️', '🍽️', '⚽'];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final topicsAsync = ref.watch(homeTopicsProvider);
@@ -1195,9 +1194,6 @@ class _TopicsForYou extends ConsumerWidget {
                 final topic = shown[index];
                 return _TopicCard(
                   topic: topic,
-                  emoji: topic.icon?.trim().isNotEmpty == true
-                      ? topic.icon!.trim()
-                      : _emoji[index % _emoji.length],
                   onTap: () => context.push(
                     AppRoutes.topicDetail(topic.topicId.toString()),
                     extra: TopicSummary(
@@ -1243,14 +1239,9 @@ class _TopicsSection extends StatelessWidget {
 }
 
 class _TopicCard extends StatelessWidget {
-  const _TopicCard({
-    required this.topic,
-    required this.emoji,
-    required this.onTap,
-  });
+  const _TopicCard({required this.topic, required this.onTap});
 
   final PersonalTopicRecommendation topic;
-  final String emoji;
   final VoidCallback onTap;
 
   @override
@@ -1273,7 +1264,7 @@ class _TopicCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(emoji, style: const TextStyle(fontSize: 26)),
+                TopicIcon(icon: topic.icon, name: topic.name, size: 26),
                 const Spacer(),
                 Text(
                   Localizations.localeOf(context).languageCode == 'vi' &&

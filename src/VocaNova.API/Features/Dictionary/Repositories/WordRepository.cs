@@ -272,9 +272,19 @@ public sealed class WordRepository : IWordRepository
         CreateWordRequest wordRequest,
         string wordKey,
         CreateSenseRequest senseRequest,
+        IReadOnlyList<SenseExampleInput>? examples = null,
+        IReadOnlyCollection<uint>? topicIds = null,
         CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;
+        var sense = new WordSense
+        {
+            SenseOrder = senseRequest.SenseOrder,
+            WordClass = senseRequest.WordClass!.Trim(),
+            EnglishDefinition = senseRequest.EnglishDefinition!.Trim(),
+            VietnameseMeaning = NormalizeNullable(senseRequest.VietnameseMeaning),
+        };
+
         var word = new Word
         {
             Word1 = wordRequest.Word!.Trim(),
@@ -287,22 +297,98 @@ public sealed class WordRepository : IWordRepository
             Status = UserStatus.Active,
             CreatedAt = now,
             UpdatedAt = now,
-            WordSenses =
-            {
-                new WordSense
-                {
-                    SenseOrder = senseRequest.SenseOrder,
-                    WordClass = senseRequest.WordClass!.Trim(),
-                    EnglishDefinition = senseRequest.EnglishDefinition!.Trim(),
-                    VietnameseMeaning = NormalizeNullable(senseRequest.VietnameseMeaning),
-                },
-            },
+            WordSenses = { sense },
         };
+        if (topicIds is { Count: > 0 })
+        {
+            foreach (var topicId in topicIds.Distinct())
+            {
+                word.WordTopics.Add(new WordTopic { TopicId = topicId, IsPrimary = word.WordTopics.Count == 0 });
+            }
+        }
 
         _dbContext.Words.Add(word);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        AddExamples(word.WordId, sense, examples);
+        if (sense.WordExamples.Count > 0)
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
 
         return (await FindDetailAsync(word.WordId, cancellationToken))!;
+    }
+
+    public async Task<bool?> UpdateMissingImportMetadataAsync(
+        uint wordId,
+        string? cefr,
+        string? phoneticUk,
+        string? phoneticUs,
+        string? imageUrl,
+        bool? isPhrase,
+        CancellationToken cancellationToken = default)
+    {
+        var word = await _dbContext.Words
+            .IgnoreQueryFilters()
+            .SingleOrDefaultAsync(entity => entity.WordId == wordId, cancellationToken);
+        if (word is null)
+        {
+            return null;
+        }
+
+        var changed = false;
+        if (string.IsNullOrWhiteSpace(word.CefrLevel) && !string.IsNullOrWhiteSpace(cefr))
+        {
+            word.CefrLevel = NormalizeNullable(cefr);
+            changed = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(word.PhoneticUk) && !string.IsNullOrWhiteSpace(phoneticUk))
+        {
+            word.PhoneticUk = NormalizeNullable(phoneticUk);
+            changed = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(word.PhoneticUs) && !string.IsNullOrWhiteSpace(phoneticUs))
+        {
+            word.PhoneticUs = NormalizeNullable(phoneticUs);
+            changed = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(word.ImageUrl) && !string.IsNullOrWhiteSpace(imageUrl))
+        {
+            word.ImageUrl = NormalizeNullable(imageUrl);
+            changed = true;
+        }
+
+        if (isPhrase == true && !word.IsPhrase)
+        {
+            word.IsPhrase = true;
+            changed = true;
+        }
+
+        if (!changed)
+        {
+            return false;
+        }
+
+        word.UpdatedAt = DateTime.UtcNow;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public Task<bool> SenseExistsAsync(
+        uint wordId,
+        string wordClass,
+        string englishDefinition,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedClass = wordClass.Trim().ToLowerInvariant();
+        var normalizedDefinition = englishDefinition.Trim().ToLowerInvariant();
+        return _dbContext.WordSenses.AnyAsync(
+            sense => sense.WordId == wordId
+                && sense.WordClass.ToLower() == normalizedClass
+                && sense.EnglishDefinition.ToLower() == normalizedDefinition,
+            cancellationToken);
     }
 
     public async Task<WordDetailDto?> UpdateMetadataAsync(
@@ -504,6 +590,7 @@ public sealed class WordRepository : IWordRepository
         string wordClass,
         string englishDefinition,
         string? vietnameseMeaning,
+        IReadOnlyList<SenseExampleInput>? examples = null,
         CancellationToken cancellationToken = default)
     {
         var word = await _dbContext.Words
@@ -527,12 +614,98 @@ public sealed class WordRepository : IWordRepository
             EnglishDefinition = englishDefinition.Trim(),
             VietnameseMeaning = NormalizeNullable(vietnameseMeaning),
         };
-
         word.UpdatedAt = DateTime.UtcNow;
         _dbContext.WordSenses.Add(sense);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        AddExamples(wordId, sense, examples);
+        if (sense.WordExamples.Count > 0)
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
 
         return MapSense(sense);
+    }
+
+    public async Task<IReadOnlyDictionary<string, uint>> FindActiveTopicIdsByNamesAsync(
+        IReadOnlyCollection<string> topicNames,
+        CancellationToken cancellationToken = default)
+    {
+        if (topicNames.Count == 0)
+        {
+            return new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        var normalizedNames = topicNames
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Select(name => name.Trim().ToLowerInvariant())
+            .Distinct()
+            .ToArray();
+
+        var topics = await _dbContext.Topics
+            .AsNoTracking()
+            .Where(topic => normalizedNames.Contains(topic.TopicName.ToLower())
+                || (topic.TopicNameVi != null && normalizedNames.Contains(topic.TopicNameVi.ToLower())))
+            .Select(topic => new { topic.TopicId, topic.TopicName, topic.TopicNameVi })
+            .ToListAsync(cancellationToken);
+
+        var result = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase);
+        foreach (var topic in topics)
+        {
+            result[topic.TopicName.Trim()] = topic.TopicId;
+            if (!string.IsNullOrWhiteSpace(topic.TopicNameVi))
+            {
+                result[topic.TopicNameVi.Trim()] = topic.TopicId;
+            }
+        }
+
+        return result;
+    }
+
+    public async Task<int> AddTopicsToWordAsync(
+        uint wordId,
+        IReadOnlyCollection<uint> topicIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (topicIds.Count == 0)
+        {
+            return 0;
+        }
+
+        var word = await _dbContext.Words
+            .IgnoreQueryFilters()
+            .Include(entity => entity.WordTopics)
+            .SingleOrDefaultAsync(entity => entity.WordId == wordId, cancellationToken);
+        if (word is null)
+        {
+            return 0;
+        }
+
+        var existingTopicIds = word.WordTopics.Select(topic => topic.TopicId).ToHashSet();
+        var added = 0;
+        foreach (var topicId in topicIds.Distinct())
+        {
+            if (!existingTopicIds.Add(topicId))
+            {
+                continue;
+            }
+
+            word.WordTopics.Add(new WordTopic
+            {
+                WordId = wordId,
+                TopicId = topicId,
+                IsPrimary = word.WordTopics.Count == 0,
+            });
+            added++;
+        }
+
+        if (added == 0)
+        {
+            return 0;
+        }
+
+        word.UpdatedAt = DateTime.UtcNow;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return added;
     }
 
     public async Task<WordSenseDto?> UpdateSenseAsync(
@@ -732,5 +905,31 @@ public sealed class WordRepository : IWordRepository
     private static string? NormalizeNullable(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private static void AddExamples(uint wordId, WordSense sense, IReadOnlyList<SenseExampleInput>? examples)
+    {
+        if (examples is null || examples.Count == 0)
+        {
+            return;
+        }
+
+        var order = 0;
+        foreach (var example in examples)
+        {
+            if (string.IsNullOrWhiteSpace(example.ExampleEn))
+            {
+                continue;
+            }
+
+            sense.WordExamples.Add(new WordExample
+            {
+                WordId = wordId,
+                SenseId = sense.SenseId == 0 ? null : sense.SenseId,
+                ExampleEn = example.ExampleEn.Trim(),
+                ExampleVi = NormalizeNullable(example.ExampleVi),
+                OrderIndex = order++,
+            });
+        }
     }
 }

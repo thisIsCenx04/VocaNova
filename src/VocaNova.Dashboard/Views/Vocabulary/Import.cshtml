@@ -15,6 +15,8 @@
     <p class="panel-muted">
         @T["Expected columns:"]
         <code>word, cefr_level, phonetic_uk, phonetic_us, word_class, english_definition, vietnamese_meaning</code>.
+        @T["Optional columns:"]
+        <code>is_phrase, topic_names, example_en, example_vi, image_url</code>.
         <a href="/vocabulary/import/template">@T["Download template CSV"]</a>
     </p>
 
@@ -41,7 +43,10 @@
 
     <div class="stat-grid result-summary">
         <div class="stat-card"><span class="stat-label">@T["Imported words"]</span><span class="stat-value" id="r-words">0</span></div>
+        <div class="stat-card"><span class="stat-label">@T["Updated words"]</span><span class="stat-value" id="r-updated">0</span></div>
         <div class="stat-card"><span class="stat-label">@T["Imported senses"]</span><span class="stat-value" id="r-senses">0</span></div>
+        <div class="stat-card"><span class="stat-label">@T["Topic links"]</span><span class="stat-value" id="r-topics">0</span></div>
+        <div class="stat-card"><span class="stat-label">@T["Examples"]</span><span class="stat-value" id="r-examples">0</span></div>
         <div class="stat-card"><span class="stat-label">@T["Skipped"]</span><span class="stat-value" id="r-skipped">0</span></div>
         <div class="stat-card"><span class="stat-label">@T["Errors"]</span><span class="stat-value" id="r-errors">0</span></div>
     </div>

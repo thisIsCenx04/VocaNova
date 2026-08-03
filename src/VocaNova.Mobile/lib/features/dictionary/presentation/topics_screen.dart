@@ -6,6 +6,7 @@ import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_icon.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class TopicsScreen extends ConsumerStatefulWidget {
@@ -381,10 +382,7 @@ class _TopicGridCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Text(
-                    topic.icon?.trim().isNotEmpty == true ? topic.icon! : '📚',
-                    style: const TextStyle(fontSize: 30),
-                  ),
+                  TopicIcon(icon: topic.icon, name: topic.name, size: 30),
                   const Spacer(),
                   if (personal)
                     Icon(

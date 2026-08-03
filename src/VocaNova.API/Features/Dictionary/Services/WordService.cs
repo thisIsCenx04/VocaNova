@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.VisualBasic.FileIO;
 using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Extensions;
 using VocaNova.API.Common.Results;
@@ -21,6 +22,12 @@ public sealed class WordService : IWordService
     private const string CsvWordClassColumn = "word_class";
     private const string CsvEnglishDefinitionColumn = "english_definition";
     private const string CsvVietnameseMeaningColumn = "vietnamese_meaning";
+    private const string CsvIsPhraseColumn = "is_phrase";
+    private const string CsvTopicNamesColumn = "topic_names";
+    private const string CsvExampleEnColumn = "example_en";
+    private const string CsvExampleViColumn = "example_vi";
+    private const string CsvImageUrlColumn = "image_url";
+    private const long MaxCsvFileBytes = 10 * 1024 * 1024;
     private const long MaxAudioFileBytes = 5 * 1024 * 1024;
     private const long MaxImageFileBytes = 5 * 1024 * 1024;
 
@@ -297,22 +304,30 @@ public sealed class WordService : IWordService
             return Result<BulkImportResultDto>.Fail("CSV file is required.");
         }
 
+        var fileValidation = ValidateCsvFile(file);
+        if (!fileValidation.IsSuccess)
+        {
+            return Result<BulkImportResultDto>.Fail(fileValidation.Error!);
+        }
+
         var errors = new List<BulkImportErrorDto>();
         var knownWordIds = new Dictionary<string, uint>(StringComparer.Ordinal);
         var importedWords = 0;
         var importedSenses = 0;
+        var updatedWords = 0;
+        var importedTopics = 0;
+        var importedExamples = 0;
         var skipped = 0;
 
         await using var stream = file.OpenReadStream();
-        using var reader = new StreamReader(stream);
-
-        var headerLine = await reader.ReadLineAsync(cancellationToken);
-        if (string.IsNullOrWhiteSpace(headerLine))
+        using var parser = CreateCsvParser(stream);
+        var headers = parser.ReadFields();
+        if (headers is null || headers.Length == 0 || headers.All(string.IsNullOrWhiteSpace))
         {
             return Result<BulkImportResultDto>.Fail("CSV header is required.");
         }
 
-        var headerIndexes = BuildHeaderIndexes(ParseCsvLine(headerLine));
+        var headerIndexes = BuildHeaderIndexes(headers);
         var missingColumn = RequiredCsvColumns()
             .FirstOrDefault(column => !headerIndexes.ContainsKey(column));
         if (missingColumn is not null)
@@ -321,19 +336,28 @@ public sealed class WordService : IWordService
         }
 
         var rowNumber = 1;
-        while (!reader.EndOfStream)
+        while (!parser.EndOfData)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var line = await reader.ReadLineAsync(cancellationToken);
+            string[] cells;
             rowNumber++;
+            try
+            {
+                cells = parser.ReadFields() ?? Array.Empty<string>();
+            }
+            catch (MalformedLineException exception)
+            {
+                errors.Add(new BulkImportErrorDto(rowNumber, "csv", exception.Message));
+                skipped++;
+                continue;
+            }
 
-            if (string.IsNullOrWhiteSpace(line))
+            if (cells.All(string.IsNullOrWhiteSpace))
             {
                 continue;
             }
 
-            var cells = ParseCsvLine(line);
             var row = new CsvImportRow(
                 GetCell(cells, headerIndexes, CsvWordColumn),
                 GetCell(cells, headerIndexes, CsvCefrColumn),
@@ -341,13 +365,41 @@ public sealed class WordService : IWordService
                 GetCell(cells, headerIndexes, CsvPhoneticUsColumn),
                 GetCell(cells, headerIndexes, CsvWordClassColumn),
                 GetCell(cells, headerIndexes, CsvEnglishDefinitionColumn),
-                GetCell(cells, headerIndexes, CsvVietnameseMeaningColumn));
+                GetCell(cells, headerIndexes, CsvVietnameseMeaningColumn),
+                GetOptionalCell(cells, headerIndexes, CsvIsPhraseColumn),
+                GetOptionalCell(cells, headerIndexes, CsvTopicNamesColumn),
+                GetOptionalCell(cells, headerIndexes, CsvExampleEnColumn),
+                GetOptionalCell(cells, headerIndexes, CsvExampleViColumn),
+                GetOptionalCell(cells, headerIndexes, CsvImageUrlColumn));
 
-            if (!TryValidateImportRow(row, rowNumber, errors))
+            if (!TryValidateImportRow(row, rowNumber, errors, out var isPhrase))
             {
                 skipped++;
                 continue;
             }
+
+            var topicNames = SplitMultiValue(row.TopicNames);
+            var topicIds = Array.Empty<uint>();
+            if (topicNames.Count > 0)
+            {
+                var topicMap = await _wordRepository.FindActiveTopicIdsByNamesAsync(topicNames, cancellationToken);
+                var missingTopics = topicNames
+                    .Where(name => !topicMap.ContainsKey(name))
+                    .ToArray();
+                if (missingTopics.Length > 0)
+                {
+                    errors.Add(new BulkImportErrorDto(
+                        rowNumber,
+                        CsvTopicNamesColumn,
+                        $"Topic not found: {string.Join(", ", missingTopics)}."));
+                    skipped++;
+                    continue;
+                }
+
+                topicIds = topicNames.Select(name => topicMap[name]).Distinct().ToArray();
+            }
+
+            var examples = BuildExamples(row.ExampleEn, row.ExampleVi);
 
             var wordKey = row.Word.NormalizeWord();
             if (!knownWordIds.TryGetValue(wordKey, out var wordId))
@@ -363,28 +415,68 @@ public sealed class WordService : IWordService
                         NormalizeCefr(row.Cefr),
                         NormalizeNullable(row.PhoneticUk),
                         NormalizeNullable(row.PhoneticUs),
-                        null),
+                        NormalizeNullable(row.ImageUrl),
+                        isPhrase ?? false),
                     wordKey,
                     new CreateSenseRequest(
                         1,
                         row.WordClass.Trim(),
                         row.EnglishDefinition.Trim(),
                         NormalizeNullable(row.VietnameseMeaning)),
+                    examples,
+                    topicIds,
                     cancellationToken);
 
                 knownWordIds[wordKey] = word.WordId;
                 importedWords++;
                 importedSenses++;
+                importedExamples += examples.Count;
+                importedTopics += topicIds.Length;
                 continue;
             }
 
             knownWordIds[wordKey] = wordId;
+
+            var metadataUpdated = await _wordRepository.UpdateMissingImportMetadataAsync(
+                wordId,
+                NormalizeCefr(row.Cefr),
+                NormalizeNullable(row.PhoneticUk),
+                NormalizeNullable(row.PhoneticUs),
+                NormalizeNullable(row.ImageUrl),
+                isPhrase,
+                cancellationToken);
+            if (metadataUpdated is null)
+            {
+                errors.Add(new BulkImportErrorDto(rowNumber, CsvWordColumn, "Word not found."));
+                skipped++;
+                continue;
+            }
+
+            var addedTopics = await _wordRepository.AddTopicsToWordAsync(wordId, topicIds, cancellationToken);
+            importedTopics += addedTopics;
+
+            if (await _wordRepository.SenseExistsAsync(
+                    wordId,
+                    row.WordClass,
+                    row.EnglishDefinition,
+                    cancellationToken))
+            {
+                skipped++;
+                if (metadataUpdated == true || addedTopics > 0)
+                {
+                    updatedWords++;
+                    await RemoveCachedWordAsync(wordId, cancellationToken);
+                }
+
+                continue;
+            }
 
             var sense = await _wordRepository.CreateNextSenseAsync(
                 wordId,
                 row.WordClass,
                 row.EnglishDefinition,
                 row.VietnameseMeaning,
+                examples,
                 cancellationToken);
             if (sense is null)
             {
@@ -395,13 +487,18 @@ public sealed class WordService : IWordService
 
             await RemoveCachedWordAsync(wordId, cancellationToken);
             importedSenses++;
+            importedExamples += examples.Count;
+            updatedWords++;
         }
 
         return Result<BulkImportResultDto>.Ok(new BulkImportResultDto(
             importedWords,
             importedSenses,
             skipped,
-            errors));
+            errors,
+            updatedWords,
+            importedTopics,
+            importedExamples));
     }
 
     public async Task<Result<bool>> SoftDeleteAsync(
@@ -694,6 +791,32 @@ public sealed class WordService : IWordService
         new[] { "audio/mpeg", "audio/wav", "audio/ogg" },
         StringComparer.OrdinalIgnoreCase);
 
+    private static Result<bool> ValidateCsvFile(IFormFile file)
+    {
+        if (file.Length > MaxCsvFileBytes)
+        {
+            return Result<bool>.Fail("CSV file must be 10MB or smaller.");
+        }
+
+        var extension = Path.GetExtension(file.FileName);
+        if (!string.Equals(extension, ".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            return Result<bool>.Fail("File extension must be .csv.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(file.ContentType)
+            && !AllowedCsvContentTypes.Contains(file.ContentType))
+        {
+            return Result<bool>.Fail("CSV MIME type must be text/csv.");
+        }
+
+        return Result<bool>.Ok(true);
+    }
+
+    private static readonly IReadOnlySet<string> AllowedCsvContentTypes = new HashSet<string>(
+        new[] { "text/csv", "application/csv", "application/vnd.ms-excel", "application/octet-stream" },
+        StringComparer.OrdinalIgnoreCase);
+
     private async Task<Result<WordDetailDto>> SetImageUrlAsync(
         uint wordId,
         string? imageUrl,
@@ -800,11 +923,23 @@ public sealed class WordService : IWordService
             : string.Empty;
     }
 
+    private static string? GetOptionalCell(
+        IReadOnlyList<string> cells,
+        IReadOnlyDictionary<string, int> headerIndexes,
+        string column)
+    {
+        return headerIndexes.ContainsKey(column)
+            ? GetCell(cells, headerIndexes, column)
+            : null;
+    }
+
     private static bool TryValidateImportRow(
         CsvImportRow row,
         int rowNumber,
-        ICollection<BulkImportErrorDto> errors)
+        ICollection<BulkImportErrorDto> errors,
+        out bool? isPhrase)
     {
+        isPhrase = null;
         if (string.IsNullOrWhiteSpace(row.Word))
         {
             errors.Add(new BulkImportErrorDto(rowNumber, CsvWordColumn, "Word is required."));
@@ -854,43 +989,90 @@ public sealed class WordService : IWordService
             return false;
         }
 
+        if (!string.IsNullOrWhiteSpace(row.ImageUrl) && !IsValidImportUrl(row.ImageUrl))
+        {
+            errors.Add(new BulkImportErrorDto(rowNumber, CsvImageUrlColumn, "ImageUrl must be a valid absolute URL."));
+            return false;
+        }
+
+        bool parsedIsPhrase = false;
+        if (!string.IsNullOrWhiteSpace(row.IsPhrase) && !TryParseBool(row.IsPhrase, out parsedIsPhrase))
+        {
+            errors.Add(new BulkImportErrorDto(rowNumber, CsvIsPhraseColumn, "IsPhrase must be true/false, yes/no, or 1/0."));
+            return false;
+        }
+
+        isPhrase = string.IsNullOrWhiteSpace(row.IsPhrase) ? null : parsedIsPhrase;
         return true;
     }
 
-    private static IReadOnlyList<string> ParseCsvLine(string line)
+    private static TextFieldParser CreateCsvParser(Stream stream)
     {
-        var values = new List<string>();
-        var current = new StringBuilder();
-        var inQuotes = false;
-
-        for (var index = 0; index < line.Length; index++)
+        var parser = new TextFieldParser(stream, Encoding.UTF8, detectEncoding: true)
         {
-            var character = line[index];
-            if (character == '"')
-            {
-                if (inQuotes && index + 1 < line.Length && line[index + 1] == '"')
-                {
-                    current.Append('"');
-                    index++;
-                    continue;
-                }
+            TextFieldType = FieldType.Delimited,
+            HasFieldsEnclosedInQuotes = true,
+            TrimWhiteSpace = false,
+        };
+        parser.SetDelimiters(",");
+        return parser;
+    }
 
-                inQuotes = !inQuotes;
-                continue;
-            }
+    private static IReadOnlyList<string> SplitMultiValue(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? Array.Empty<string>()
+            : value
+                .Split(['|', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+    }
 
-            if (character == ',' && !inQuotes)
-            {
-                values.Add(current.ToString());
-                current.Clear();
-                continue;
-            }
-
-            current.Append(character);
+    private static IReadOnlyList<SenseExampleInput> BuildExamples(string? exampleEn, string? exampleVi)
+    {
+        var englishExamples = SplitMultiValue(exampleEn);
+        if (englishExamples.Count == 0)
+        {
+            return Array.Empty<SenseExampleInput>();
         }
 
-        values.Add(current.ToString());
-        return values;
+        var vietnameseExamples = SplitMultiValue(exampleVi);
+        return englishExamples
+            .Select((english, index) => new SenseExampleInput(
+                null,
+                english,
+                index < vietnameseExamples.Count ? vietnameseExamples[index] : null))
+            .ToArray();
+    }
+
+    private static bool TryParseBool(string value, out bool result)
+    {
+        switch (value.Trim().ToLowerInvariant())
+        {
+            case "true":
+            case "1":
+            case "yes":
+            case "y":
+                result = true;
+                return true;
+            case "false":
+            case "0":
+            case "no":
+            case "n":
+                result = false;
+                return true;
+            default:
+                result = false;
+                return false;
+        }
+    }
+
+    private static bool IsValidImportUrl(string value)
+    {
+        return value.Length <= 500
+            && Uri.TryCreate(value, UriKind.Absolute, out var uri)
+            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
     }
 
     private sealed record CsvImportRow(
@@ -900,5 +1082,10 @@ public sealed class WordService : IWordService
         string PhoneticUs,
         string WordClass,
         string EnglishDefinition,
-        string VietnameseMeaning);
+        string VietnameseMeaning,
+        string? IsPhrase,
+        string? TopicNames,
+        string? ExampleEn,
+        string? ExampleVi,
+        string? ImageUrl);
 }
