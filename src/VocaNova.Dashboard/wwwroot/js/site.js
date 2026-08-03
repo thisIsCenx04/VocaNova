@@ -112,6 +112,71 @@
     });
 })();
 
+// Shared toast and confirmation modal used across dashboard pages.
+(function () {
+    'use strict';
+
+    var toast = document.getElementById('global-toast');
+    var toastTimer;
+    window.VocaNovaDashboard = window.VocaNovaDashboard || {};
+    window.VocaNovaDashboard.notify = function (message, success) {
+        if (!toast) { return; }
+        window.clearTimeout(toastTimer);
+        toast.textContent = message || '';
+        toast.className = 'detail-toast ' + (success ? 'toast-ok' : 'toast-err');
+        toast.hidden = false;
+        toastTimer = window.setTimeout(function () { toast.hidden = true; }, 3500);
+    };
+
+    var modal = document.getElementById('global-confirm-modal');
+    var title = document.getElementById('global-confirm-title');
+    var message = document.getElementById('global-confirm-message');
+    var confirmButton = document.getElementById('global-confirm-submit');
+    var pendingForm;
+    var pendingSubmitter;
+    var previousFocus;
+    if (!modal || !confirmButton) { return; }
+
+    function closeModal() {
+        modal.hidden = true;
+        pendingForm = null;
+        pendingSubmitter = null;
+        if (previousFocus) { previousFocus.focus(); }
+        previousFocus = null;
+    }
+
+    document.addEventListener('submit', function (event) {
+        var form = event.target;
+        var submitter = event.submitter;
+        var source = submitter && submitter.hasAttribute('data-confirm-message') ? submitter : form;
+        var confirmMessage = source.getAttribute('data-confirm-message');
+        if (!confirmMessage || form.dataset.confirmed === 'true') { return; }
+        event.preventDefault();
+        pendingForm = form;
+        pendingSubmitter = submitter;
+        previousFocus = submitter || document.activeElement;
+        title.textContent = source.getAttribute('data-confirm-title') || title.textContent;
+        message.textContent = confirmMessage;
+        confirmButton.textContent = source.getAttribute('data-confirm-button') || confirmButton.textContent;
+        confirmButton.classList.toggle('btn-danger-solid', source.getAttribute('data-confirm-danger') === 'true');
+        confirmButton.classList.toggle('btn-primary', source.getAttribute('data-confirm-danger') !== 'true');
+        modal.hidden = false;
+        confirmButton.focus();
+    });
+
+    confirmButton.addEventListener('click', function () {
+        if (!pendingForm) { return; }
+        var form = pendingForm;
+        var submitter = pendingSubmitter;
+        form.dataset.confirmed = 'true';
+        modal.hidden = true;
+        form.requestSubmit(submitter || undefined);
+    });
+    modal.querySelectorAll('[data-global-confirm-close]').forEach(function (button) { button.addEventListener('click', closeModal); });
+    modal.addEventListener('click', function (event) { if (event.target === modal) { closeModal(); } });
+    document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && !modal.hidden) { closeModal(); } });
+})();
+
 // Popup kết quả (thành công/lỗi) — đóng bằng nút OK / click nền / Esc.
 (function () {
     'use strict';

@@ -92,7 +92,7 @@
     form.addEventListener('submit', function (e) {
         e.preventDefault();
         if (!fileInput.files.length) {
-            window.alert(L.msgChoose || 'Please choose a CSV file.');
+            window.VocaNovaDashboard.notify(L.msgChoose || 'Please choose a CSV file.', false);
             return;
         }
         var data = new FormData();
@@ -111,10 +111,10 @@
                 if (data.success && data.result) {
                     renderResult(data.result);
                 } else {
-                    window.alert(data.message || L.msgFailed || 'Import failed.');
+                    window.VocaNovaDashboard.notify(data.message || L.msgFailed || 'Import failed.', false);
                 }
             })
-            .catch(function () { window.alert(L.msgRequestFailed || 'Import request failed.'); })
+            .catch(function () { window.VocaNovaDashboard.notify(L.msgRequestFailed || 'Import request failed.', false); })
             .finally(function () {
                 submitBtn.disabled = false;
                 submitBtn.textContent = submitBtn.dataset.labelIdle || 'Upload & import';

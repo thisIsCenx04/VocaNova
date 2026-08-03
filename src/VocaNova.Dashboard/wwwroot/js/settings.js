@@ -22,12 +22,4 @@
         });
     });
 
-    // Xác nhận trước các hành động không hoàn tác được (reset cấu hình AI grading).
-    document.querySelectorAll("form.js-confirm").forEach(function (form) {
-        form.addEventListener("submit", function (event) {
-            if (!window.confirm(form.getAttribute("data-confirm") || "Are you sure?")) {
-                event.preventDefault();
-            }
-        });
-    });
 })();
