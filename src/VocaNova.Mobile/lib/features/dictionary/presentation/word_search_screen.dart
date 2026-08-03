@@ -8,6 +8,7 @@ import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_state.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_icon.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/word_summary_card.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
@@ -429,9 +430,7 @@ class _DiscoveryView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _SectionHeading(
-                    title: AppLocalizations.of(
-                      context,
-                    )!.dictBrowseByTopicTitle,
+                    title: AppLocalizations.of(context)!.dictBrowseByTopicTitle,
                     action: AppLocalizations.of(context)!.dictSeeAllAction,
                     onAction: () => context.push(AppRoutes.topics),
                   ),
@@ -622,11 +621,7 @@ class _TopicCard extends StatelessWidget {
             children: [
               SizedBox(
                 width: 25,
-                child: Text(
-                  _topicEmoji(topic),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 18, height: 27 / 18),
-                ),
+                child: TopicIcon(icon: topic.icon, name: topic.name, size: 18),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -664,20 +659,6 @@ class _TopicCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _topicEmoji(TopicSummary topic) {
-    final value = '${topic.icon ?? ''} ${topic.name}'.toLowerCase();
-    if (RegExp(r'[^\x00-\x7F]').hasMatch(topic.icon ?? '')) {
-      return topic.icon!;
-    }
-    if (value.contains('academic') || value.contains('education')) return '🎓';
-    if (value.contains('business') || value.contains('work')) return '💼';
-    if (value.contains('technology') || value.contains('computer')) return '💻';
-    if (value.contains('daily') || value.contains('life')) return '🌟';
-    if (value.contains('travel') || value.contains('plane')) return '✈️';
-    if (value.contains('ielts') || value.contains('exam')) return '📝';
-    return '📚';
   }
 }
 

@@ -49,7 +49,10 @@
 
     function renderResult(result) {
         setText('r-words', result.imported_words);
+        setText('r-updated', result.updated_words || 0);
         setText('r-senses', result.imported_senses);
+        setText('r-topics', result.imported_topics || 0);
+        setText('r-examples', result.imported_examples || 0);
         setText('r-skipped', result.skipped);
         var errors = result.errors || [];
         lastErrors = errors;

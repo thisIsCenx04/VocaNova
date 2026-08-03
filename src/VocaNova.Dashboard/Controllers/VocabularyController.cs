@@ -522,6 +522,11 @@ public sealed class VocabularyController : Controller
             return Json(new { success = false, message = "Please choose a CSV file." });
         }
 
+        if (!string.Equals(Path.GetExtension(file.FileName), ".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            return Json(new { success = false, message = "File extension must be .csv." });
+        }
+
         await using var stream = file.OpenReadStream();
         var result = await _apiClient.ImportWordsAsync(
             new FileUpload(stream, file.FileName, string.IsNullOrWhiteSpace(file.ContentType) ? "text/csv" : file.ContentType),
@@ -545,9 +550,9 @@ public sealed class VocabularyController : Controller
     public IActionResult ImportTemplate()
     {
         const string csv =
-            "word,cefr_level,phonetic_uk,phonetic_us,word_class,english_definition,vietnamese_meaning\n" +
-            "run,A1,/rʌn/,/rʌn/,verb,to move fast on foot,chạy\n" +
-            "happy,A2,/ˈhæp.i/,/ˈhæp.i/,adjective,feeling pleasure,vui vẻ\n";
+            "word,cefr_level,phonetic_uk,phonetic_us,word_class,english_definition,vietnamese_meaning,is_phrase,topic_names,example_en,example_vi,image_url\n" +
+            "run,A1,/run-uk/,/run-us/,verb,to move fast on foot,chay,false,Movement|Sports,I run every morning.,Toi chay moi sang.,\n" +
+            "happy,A2,/happy-uk/,/happy-us/,adjective,feeling pleasure,vui ve,false,Emotions,She looks happy today.,Hom nay co ay trong vui.,\n";
         var bytes = System.Text.Encoding.UTF8.GetPreamble()
             .Concat(System.Text.Encoding.UTF8.GetBytes(csv))
             .ToArray();

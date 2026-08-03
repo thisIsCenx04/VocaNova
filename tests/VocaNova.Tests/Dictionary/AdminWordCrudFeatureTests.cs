@@ -146,6 +146,89 @@ public class AdminWordCrudFeatureTests
     }
 
     [Fact]
+    public async Task ImportCsvAsync_Should_Import_Extended_Metadata_Topics_Examples_And_Skip_Duplicate_Senses()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.Topics.AddRange(
+            new Topic { TopicId = 10, TopicName = "Movement", Status = UserStatus.Active },
+            new Topic { TopicId = 11, TopicName = "Emotions", Status = UserStatus.Active });
+        dbContext.Words.Add(new Word
+        {
+            WordId = 1,
+            Word1 = "glide",
+            WordKey = "glide",
+            Status = UserStatus.Active,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            WordSenses =
+            {
+                new WordSense
+                {
+                    SenseId = 10,
+                    WordId = 1,
+                    SenseOrder = 1,
+                    WordClass = "verb",
+                    EnglishDefinition = "move smoothly",
+                    VietnameseMeaning = "luot",
+                },
+            },
+        });
+        await dbContext.SaveChangesAsync();
+        var cache = new FakeWordDetailCache();
+        var service = CreateService(dbContext, cache);
+        var file = CreateCsvFile(
+            """
+            word,cefr_level,phonetic_uk,phonetic_us,word_class,english_definition,vietnamese_meaning,is_phrase,topic_names,example_en,example_vi,image_url
+            glide,B1,/glide-uk/,/glide-us/,verb,move smoothly,luot,true,Movement,The swan glides.,Con thien nga luot.,https://example.com/glide.png
+            spark,A2,/spark-uk/,/spark-us/,noun,a small flash,tia sang,false,Movement|Emotions,The spark faded.|A spark flew,Tia sang tan.|Mot tia lua bay,https://example.com/spark.png
+            """);
+
+        var result = await service.ImportCsvAsync(file);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.ImportedWords.Should().Be(1);
+        result.Value.UpdatedWords.Should().Be(1);
+        result.Value.ImportedSenses.Should().Be(1);
+        result.Value.ImportedTopics.Should().Be(3);
+        result.Value.ImportedExamples.Should().Be(2);
+        result.Value.Skipped.Should().Be(1);
+        result.Value.Errors.Should().BeEmpty();
+
+        var glide = await dbContext.Words
+            .Include(entity => entity.WordTopics)
+            .SingleAsync(entity => entity.WordKey == "glide");
+        glide.CefrLevel.Should().Be(CefrLevel.B1);
+        glide.PhoneticUk.Should().Be("/glide-uk/");
+        glide.PhoneticUs.Should().Be("/glide-us/");
+        glide.ImageUrl.Should().Be("https://example.com/glide.png");
+        glide.IsPhrase.Should().BeTrue();
+        glide.WordTopics.Should().ContainSingle(topic => topic.TopicId == 10);
+
+        var spark = await dbContext.Words
+            .Include(entity => entity.WordTopics)
+            .Include(entity => entity.WordSenses)
+                .ThenInclude(sense => sense.WordExamples)
+            .SingleAsync(entity => entity.WordKey == "spark");
+        spark.WordTopics.Select(topic => topic.TopicId).Should().BeEquivalentTo(new uint[] { 10, 11 });
+        spark.WordSenses.Should().ContainSingle()
+            .Which.WordExamples.Should().HaveCount(2);
+        cache.RemoveCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ImportCsvAsync_Should_Reject_Non_Csv_Files()
+    {
+        await using var dbContext = CreateDbContext();
+        var service = CreateService(dbContext);
+        var file = CreateFormFile("words.txt", "text/plain", 32);
+
+        var result = await service.ImportCsvAsync(file);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be("File extension must be .csv.");
+    }
+
+    [Fact]
     public async Task SoftDeleteAsync_Should_Set_Status_Deleted_And_Invalidate_Cache()
     {
         await using var dbContext = CreateDbContext();

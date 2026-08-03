@@ -8,6 +8,7 @@ import 'package:vocanova_mobile/features/dictionary/application/word_detail_noti
 import 'package:vocanova_mobile/features/dictionary/domain/word_detail.dart';
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_icon.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 enum _SaveDestination { lists, topics }
@@ -104,7 +105,9 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
                   ButtonSegment(
                     value: _SaveDestination.topics,
                     icon: const Icon(Icons.auto_stories_outlined, size: 18),
-                    label: Text(AppLocalizations.of(context)!.dictMyTopicsLabel),
+                    label: Text(
+                      AppLocalizations.of(context)!.dictMyTopicsLabel,
+                    ),
                   ),
                 ],
                 selected: {_destination},
@@ -200,9 +203,7 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
                     : Text(
                         _destination == _SaveDestination.lists
                             ? AppLocalizations.of(context)!.dictSaveToListLabel
-                            : AppLocalizations.of(
-                                context,
-                              )!.dictAddToTopicLabel,
+                            : AppLocalizations.of(context)!.dictAddToTopicLabel,
                       ),
               ),
             ),
@@ -264,9 +265,7 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
   Widget _topicContent() {
     if (_topics.isEmpty) {
       return Center(
-        child: Text(
-          AppLocalizations.of(context)!.dictNoSystemTopicAssignment,
-        ),
+        child: Text(AppLocalizations.of(context)!.dictNoSystemTopicAssignment),
       );
     }
     return ListView.builder(
@@ -279,8 +278,7 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
           key: Key('add-to-topic-${topic.topicId}'),
           icon: topic.containsWord
               ? Icons.check_circle
-              : Icons.auto_stories_outlined,
-          emoji: topic.icon,
+              : topicIconData(topic.icon, topic.name),
           title: topic.localizedName(context),
           subtitle: topic.containsWord
               ? AppLocalizations.of(context)!.dictAlreadyInTopic
@@ -439,14 +437,12 @@ class _DestinationRow extends StatelessWidget {
     required this.subtitle,
     required this.selected,
     required this.onTap,
-    this.emoji,
     this.disabled = false,
     this.alternate = false,
     super.key,
   });
 
   final IconData icon;
-  final String? emoji;
   final String title;
   final String subtitle;
   final bool selected;
@@ -480,15 +476,11 @@ class _DestinationRow extends StatelessWidget {
                       : const Color(0xFFEDE7FF),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: emoji?.trim().isNotEmpty == true
-                    ? Text(emoji!, style: const TextStyle(fontSize: 18))
-                    : Icon(
-                        icon,
-                        color: disabled
-                            ? const Color(0xFF2E9B62)
-                            : AppColors.primary,
-                        size: 17,
-                      ),
+                child: Icon(
+                  icon,
+                  color: disabled ? const Color(0xFF2E9B62) : AppColors.primary,
+                  size: 17,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(

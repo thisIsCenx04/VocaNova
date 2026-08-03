@@ -7,6 +7,7 @@ import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/core/widgets/offline_banner.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_icon.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_state.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
@@ -389,7 +390,8 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
               _choice(
                 key: Key('question-limit-${option ?? 'all'}'),
                 label: option?.toString() ?? l10n.quizConfigLimitAll,
-                selected: !state.useCustomLimit && state.questionLimit == option,
+                selected:
+                    !state.useCustomLimit && state.questionLimit == option,
                 onSelected: () => _notifier.setQuestionLimit(option),
               ),
             _choice(
@@ -495,8 +497,7 @@ class _QuizSourcePicker extends StatelessWidget {
                   id: topic.listId,
                   name: topic.localizedName(context),
                   wordCount: topic.wordCount,
-                  icon: Icons.auto_stories_outlined,
-                  emoji: topic.icon,
+                  icon: topicIconData(topic.icon, topic.name),
                 ),
               )
               .toList(growable: false);
@@ -570,14 +571,12 @@ class _SourceItem {
     required this.name,
     required this.wordCount,
     required this.icon,
-    this.emoji,
   });
 
   final int? id;
   final String name;
   final int wordCount;
   final IconData icon;
-  final String? emoji;
 }
 
 class _SourceTypeButton extends StatelessWidget {
@@ -678,9 +677,7 @@ class _SourceCard extends StatelessWidget {
                   color: const Color(0xFFEDE7FF),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: item.emoji?.trim().isNotEmpty == true
-                    ? Text(item.emoji!, style: const TextStyle(fontSize: 19))
-                    : Icon(item.icon, size: 18, color: AppColors.primary),
+                child: Icon(item.icon, size: 18, color: AppColors.primary),
               ),
               const SizedBox(width: 11),
               Expanded(
@@ -701,7 +698,9 @@ class _SourceCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       item.wordCount == 0
-                          ? AppLocalizations.of(context)!.quizConfigSourceNoWords
+                          ? AppLocalizations.of(
+                              context,
+                            )!.quizConfigSourceNoWords
                           : AppLocalizations.of(
                               context,
                             )!.quizConfigSourceWordCount(item.wordCount),
@@ -876,7 +875,8 @@ class _SummaryBar extends StatelessWidget {
                 ? (state.useCustomLimit
                       ? l10n.quizConfigLimitCustom
                       : l10n.quizConfigLimitAll)
-                : (effectiveLimit?.toString() ?? state.questionLimit.toString()),
+                : (effectiveLimit?.toString() ??
+                      state.questionLimit.toString()),
           ),
         ],
       ),

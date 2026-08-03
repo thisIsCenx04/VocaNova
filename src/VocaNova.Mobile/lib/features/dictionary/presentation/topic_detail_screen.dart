@@ -7,6 +7,7 @@ import 'package:vocanova_mobile/features/dictionary/application/word_search_noti
 import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/add_to_list_sheet.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/topic_icon.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class TopicDetailScreen extends ConsumerStatefulWidget {
@@ -180,9 +181,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            AppLocalizations.of(context)!.dictUnableToRemoveWord,
-          ),
+          content: Text(AppLocalizations.of(context)!.dictUnableToRemoveWord),
         ),
       );
     }
@@ -213,10 +212,7 @@ class _TopicHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      Text(
-        topic.icon?.trim().isNotEmpty == true ? topic.icon! : '📚',
-        style: const TextStyle(fontSize: 42),
-      ),
+      TopicIcon(icon: topic.icon, name: topic.name, size: 42),
       const SizedBox(width: 14),
       Expanded(
         child: Column(
@@ -227,9 +223,7 @@ class _TopicHero extends StatelessWidget {
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             Text(
-              AppLocalizations.of(context)!.dictWordCountLabel(
-                topic.wordCount,
-              ),
+              AppLocalizations.of(context)!.dictWordCountLabel(topic.wordCount),
             ),
           ],
         ),
@@ -327,9 +321,7 @@ class _TopicWordTile extends StatelessWidget {
               : AppLocalizations.of(context)!.dictRemoveFromTopicTooltip,
           onPressed: onRemove ?? onAdd,
           icon: Icon(
-            onRemove == null
-                ? Icons.playlist_add
-                : Icons.remove_circle_outline,
+            onRemove == null ? Icons.playlist_add : Icons.remove_circle_outline,
           ),
         ),
       ),

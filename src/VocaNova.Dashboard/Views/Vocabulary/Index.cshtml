@@ -76,7 +76,13 @@
     <div>
         <h1 class="page-title">@T["Vocabulary Metadata Management"]</h1>
     </div>
-    <a href="/vocabulary/create" class="btn-primary">@T["Add vocabulary"]</a>
+    @if (canManage)
+    {
+        <div class="header-actions">
+            <a href="/vocabulary/import" class="btn-secondary">@T["Import CSV"]</a>
+            <a href="/vocabulary/create" class="btn-primary">@T["Add vocabulary"]</a>
+        </div>
+    }
 </div>
 
 @if (TempData["VocabSuccess"] is string okMsg)

@@ -53,6 +53,23 @@ public interface IWordRepository
         CreateWordRequest wordRequest,
         string wordKey,
         CreateSenseRequest senseRequest,
+        IReadOnlyList<SenseExampleInput>? examples = null,
+        IReadOnlyCollection<uint>? topicIds = null,
+        CancellationToken cancellationToken = default);
+
+    Task<bool?> UpdateMissingImportMetadataAsync(
+        uint wordId,
+        string? cefr,
+        string? phoneticUk,
+        string? phoneticUs,
+        string? imageUrl,
+        bool? isPhrase,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> SenseExistsAsync(
+        uint wordId,
+        string wordClass,
+        string englishDefinition,
         CancellationToken cancellationToken = default);
 
     Task<WordDetailDto?> UpdateMetadataAsync(
@@ -97,6 +114,16 @@ public interface IWordRepository
         string wordClass,
         string englishDefinition,
         string? vietnameseMeaning,
+        IReadOnlyList<SenseExampleInput>? examples = null,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyDictionary<string, uint>> FindActiveTopicIdsByNamesAsync(
+        IReadOnlyCollection<string> topicNames,
+        CancellationToken cancellationToken = default);
+
+    Task<int> AddTopicsToWordAsync(
+        uint wordId,
+        IReadOnlyCollection<uint> topicIds,
         CancellationToken cancellationToken = default);
 
     Task<WordSenseDto?> UpdateSenseAsync(

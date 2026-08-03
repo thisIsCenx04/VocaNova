@@ -2,13 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:riverpod/misc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vocanova_mobile/app/router/app_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
+import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
+import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
+import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/token_storage.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
+import 'package:vocanova_mobile/features/dictionary/application/audio_playback_service.dart';
+import 'package:vocanova_mobile/features/dictionary/application/word_detail_notifier.dart';
+import 'package:vocanova_mobile/features/dictionary/data/word_detail_repository.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/word_detail.dart';
 import 'package:vocanova_mobile/features/home/application/home_topics_provider.dart';
+import 'package:vocanova_mobile/features/lists/application/list_detail_notifier.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
+import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
+import 'package:vocanova_mobile/features/lists/domain/list_word.dart';
 import 'package:vocanova_mobile/features/notifications/application/notifications_notifier.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/wrong_words_notifier.dart';
@@ -92,6 +104,56 @@ void main() {
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('Search'), findsOneWidget);
   });
+
+  testWidgets('list word tap opens word detail without navigator lock', (
+    tester,
+  ) async {
+    final listsRepository = MockListsRepository();
+    final wordRepository = MockWordDetailRepository();
+    final connectivity = MockConnectivityService();
+    final audio = MockAudioPlaybackService();
+
+    when(() => connectivity.isOnline).thenAnswer((_) async => true);
+    when(() => listsRepository.getWords(listId: 3, page: 1)).thenAnswer(
+      (_) async => ListWordsPage(items: [testListWord], page: 1, totalPages: 1),
+    );
+    when(() => wordRepository.getWord(7)).thenAnswer((_) async => testWord);
+    when(
+      () => audio.playPronunciation(
+        word: any(named: 'word'),
+        accent: any(named: 'accent'),
+        audioUrl: any(named: 'audioUrl'),
+      ),
+    ).thenAnswer((_) async {});
+
+    final router = createRouter(
+      accessToken: 'access-token',
+      initialLocation: AppRoutes.listDetail('3'),
+    );
+    await pumpRouter(
+      tester,
+      router,
+      extraOverrides: [
+        listsRepositoryProvider.overrideWithValue(listsRepository),
+        listsLocalStorageProvider.overrideWithValue(
+          LocalStorage.create(preferences: await SharedPreferences.getInstance()),
+        ),
+        wordDetailRepositoryProvider.overrideWithValue(wordRepository),
+        wordDetailLocalStorageProvider.overrideWithValue(
+          LocalStorage.create(preferences: await SharedPreferences.getInstance()),
+        ),
+        connectivityServiceProvider.overrideWithValue(connectivity),
+        audioPlaybackServiceProvider.overrideWithValue(audio),
+      ],
+    );
+
+    await tester.tap(find.text('hello'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(router.state.matchedLocation, AppRoutes.wordDetail('7'));
+    expect(find.byKey(const Key('word-detail-screen')), findsOneWidget);
+  });
 }
 
 GoRouter createRouter({String? accessToken, String? initialLocation}) {
@@ -108,6 +170,7 @@ Future<void> pumpRouter(
   WidgetTester tester,
   GoRouter router, {
   bool settle = true,
+  List<Override> extraOverrides = const [],
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -120,6 +183,7 @@ Future<void> pumpRouter(
         ),
         listsProvider.overrideWith(FakeListsNotifier.new),
         wrongWordsProvider.overrideWith(FakeWrongWordsNotifier.new),
+        ...extraOverrides,
       ],
       child: MaterialApp.router(
         routerConfig: router,
@@ -134,6 +198,14 @@ Future<void> pumpRouter(
     await tester.pump();
   }
 }
+
+class MockListsRepository extends Mock implements ListsRepository {}
+
+class MockWordDetailRepository extends Mock implements WordDetailRepository {}
+
+class MockConnectivityService extends Mock implements ConnectivityService {}
+
+class MockAudioPlaybackService extends Mock implements AudioPlaybackService {}
 
 class TestTokenStorage implements TokenStorage {
   TestTokenStorage({this.accessToken});
@@ -157,3 +229,33 @@ class TestTokenStorage implements TokenStorage {
     this.accessToken = accessToken;
   }
 }
+
+final testListWord = ListWord(
+  wordId: 7,
+  word: 'hello',
+  primaryMeaning: 'xin chao',
+  correctCount: 3,
+  wrongCount: 1,
+  addedAt: DateTime.utc(2026, 6, 15),
+);
+
+const testWord = WordDetail(
+  wordId: 7,
+  word: 'hello',
+  isPhrase: false,
+  senses: [
+    WordSense(
+      senseId: 1,
+      order: 1,
+      wordClass: 'interjection',
+      englishDefinition: 'used as a greeting',
+      vietnameseMeaning: 'xin chao',
+      examples: [],
+      relations: [],
+    ),
+  ],
+  examples: [],
+  relations: [],
+  audio: [],
+  topics: [],
+);
