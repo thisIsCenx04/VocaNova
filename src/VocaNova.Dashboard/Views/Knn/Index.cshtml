@@ -46,7 +46,9 @@
             </dl>
         }
         <p class="panel-muted knn-rebuild-rate-limit">@T["Rate limited to 1 request / 5 minutes."]</p>
-        <form method="post" action="/knn/trigger-rebuild" class="inline-form js-confirm" data-confirm="@T["Trigger a KNN recommendation rebuild now?"]">
+        <form method="post" action="/knn/trigger-rebuild" class="inline-form"
+              data-confirm-title="@T["Trigger rebuild"]" data-confirm-message="@T["Trigger a KNN recommendation rebuild now?"]"
+              data-confirm-button="@T["Trigger rebuild"]">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn-primary btn-sm">@T["Trigger rebuild"]</button>
         </form>

@@ -177,7 +177,9 @@
                     class="btn-sm ai-action-btn ai-action-test">@T["Test connection"]</button>
             <button type="submit" formaction="/settings/ai-grading/reset" formmethod="post" formnovalidate
                     class="btn-sm ai-action-btn ai-action-reset"
-                    onclick="return confirm('@T["Reset AI grading settings to the built-in defaults? The API key is kept."]');">
+                    data-confirm-title="@T["Reset to defaults"]"
+                    data-confirm-message="@T["Reset AI grading settings to the built-in defaults? The API key is kept."]"
+                    data-confirm-button="@T["Reset to defaults"]">
                 @T["Reset to defaults"]
             </button>
         </div>
