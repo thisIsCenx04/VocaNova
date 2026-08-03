@@ -1,7 +1,7 @@
 @using System.Text.Json
 @model VocaNova.Dashboard.Models.Statistics.StatisticsViewModel
 @{
-    ViewData["Title"] = "Statistics";
+    ViewData["Title"] = T["Statistics"];
 
     var demographics = Model.Demographics;
     var demoJson = JsonSerializer.Serialize(new

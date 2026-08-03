@@ -46,8 +46,8 @@
                         if (imagePreview) {
                             imagePreview.innerHTML = '<div class="word-image-review">' +
                                 '<a class="word-image-preview" target="_blank" rel="noopener"><img class="word-image" alt=""></a>' +
-                                '<div class="word-image-review-meta"><span>Image preview</span>' +
-                                '<button type="button" class="btn-icon btn-danger edit-media-delete" data-delete-media="image">Delete</button></div></div>';
+                                '<div class="word-image-review-meta"><span>' + editForm.dataset.labelImagePreview + '</span>' +
+                                '<button type="button" class="btn-icon btn-danger edit-media-delete" data-delete-media="image">' + editForm.dataset.labelDelete + '</button></div></div>';
                             var link = imagePreview.querySelector("a");
                             var image = imagePreview.querySelector("img");
                             link.href = objectUrl;
@@ -59,12 +59,12 @@
                         if (audioPreview) {
                             audioPreview.innerHTML = '<ul class="audio-list"><li class="audio-item">' +
                                 '<span class="badge badge-muted">US</span><audio controls preload="none"></audio>' +
-                                '<button type="button" class="btn-icon btn-danger edit-media-delete" data-delete-media="audio">Delete</button></li></ul>';
+                                '<button type="button" class="btn-icon btn-danger edit-media-delete" data-delete-media="audio">' + editForm.dataset.labelDelete + '</button></li></ul>';
                             audioPreview.querySelector("audio").src = objectUrl;
                             audioPreview.querySelector("[data-delete-media]").dataset.audioId = result.audioId;
                         }
                     }
-                    if (button) { button.textContent = "Replace"; }
+                    if (button) { button.textContent = editForm.dataset.labelReplace; }
                 })
                 .catch(function () { showToast(editForm.dataset.msgRequestFailed, false); })
                 .finally(function () {
@@ -127,10 +127,10 @@
                         showToast(result.message, result.success);
                         if (!result.success) { return; }
                         var preview = document.getElementById(type === "image" ? "edit-image-preview" : "edit-audio-preview");
-                        if (preview) { preview.innerHTML = '<p class="text-muted">' + (type === "image" ? "No image." : "No audio.") + '</p>'; }
+                        if (preview) { preview.innerHTML = '<p class="text-muted">' + (type === "image" ? editForm.dataset.labelNoImage : editForm.dataset.labelNoAudio) + '</p>'; }
                         if (type === "image" && imageUrlInput) { imageUrlInput.value = ""; }
                         var picker = editForm.querySelector('[data-file-picker="' + (type === "image" ? "edit-image-file" : "edit-audio-file") + '"]');
-                        if (picker) { picker.textContent = type === "image" ? "Upload image" : "Upload audio"; }
+                        if (picker) { picker.textContent = type === "image" ? editForm.dataset.labelUploadImage : editForm.dataset.labelUploadAudio; }
                     })
                     .catch(function () { showToast(editForm.dataset.msgRequestFailed, false); });
             });

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using VocaNova.Dashboard.Models.Vocabulary;
 using VocaNova.Dashboard.Services.Api;
+using VocaNova.Dashboard.Services.Localization;
 
 namespace VocaNova.Dashboard.Controllers;
 
@@ -15,10 +16,12 @@ public sealed class VocabularyController : Controller
         new(StringComparer.Ordinal) { "word", "type", "cefr", "phonetic", "status" };
 
     private readonly IVocaNovaApiClient _apiClient;
+    private readonly ITranslator _translator;
 
-    public VocabularyController(IVocaNovaApiClient apiClient)
+    public VocabularyController(IVocaNovaApiClient apiClient, ITranslator translator)
     {
         _apiClient = apiClient;
+        _translator = translator;
     }
 
     [HttpGet("/vocabulary")]
@@ -440,7 +443,7 @@ public sealed class VocabularyController : Controller
     {
         if (file is null || file.Length == 0)
         {
-            return Json(new { success = false, message = "Please choose an audio file." });
+            return Json(new { success = false, message = _translator["Please choose an audio file."] });
         }
 
         await using var stream = file.OpenReadStream();
@@ -459,7 +462,7 @@ public sealed class VocabularyController : Controller
             .OrderByDescending(audio => audio.AudioId)
             .Select(audio => (uint?)audio.AudioId)
             .FirstOrDefault();
-        return Json(new { success = true, message = "Audio uploaded.", audioId });
+        return Json(new { success = true, message = _translator["Audio uploaded."], audioId });
     }
 
     [HttpPost("/vocabulary/{id:uint}/audio/{audioId:uint}/delete")]
@@ -479,7 +482,7 @@ public sealed class VocabularyController : Controller
     {
         if (file is null || file.Length == 0)
         {
-            return Json(new { success = false, message = "Please choose an image file." });
+            return Json(new { success = false, message = _translator["Please choose an image file."] });
         }
 
         await using var stream = file.OpenReadStream();
@@ -493,7 +496,7 @@ public sealed class VocabularyController : Controller
         }
 
         var detail = await _apiClient.GetWordDetailAsync(id, cancellationToken);
-        return Json(new { success = true, message = "Image uploaded.", imageUrl = detail?.ImageUrl });
+        return Json(new { success = true, message = _translator["Image uploaded."], imageUrl = detail?.ImageUrl });
     }
 
     [HttpPost("/vocabulary/{id:uint}/image/delete")]
@@ -519,12 +522,12 @@ public sealed class VocabularyController : Controller
     {
         if (file is null || file.Length == 0)
         {
-            return Json(new { success = false, message = "Please choose a CSV file." });
+            return Json(new { success = false, message = _translator["Please choose a CSV file."] });
         }
 
         if (!string.Equals(Path.GetExtension(file.FileName), ".csv", StringComparison.OrdinalIgnoreCase))
         {
-            return Json(new { success = false, message = "File extension must be .csv." });
+            return Json(new { success = false, message = _translator["File extension must be .csv."] });
         }
 
         await using var stream = file.OpenReadStream();
@@ -540,7 +543,7 @@ public sealed class VocabularyController : Controller
                 400 => result.Message ?? "The CSV file is invalid.",
                 _ => result.Message ?? "Import failed.",
             };
-            return Json(new { success = false, message });
+            return Json(new { success = false, message = _translator[message] });
         }
 
         return Json(new { success = true, result = result.Data });
@@ -564,7 +567,7 @@ public sealed class VocabularyController : Controller
     {
         if (result.IsSuccess)
         {
-            return Json(new { success = true, message = successMessage });
+            return Json(new { success = true, message = _translator[successMessage] });
         }
 
         var message = result.StatusCode switch
@@ -573,7 +576,7 @@ public sealed class VocabularyController : Controller
             404 => "Resource not found.",
             _ => result.Message ?? "The request could not be completed.",
         };
-        return Json(new { success = false, message });
+        return Json(new { success = false, message = _translator[message] });
     }
 
     private void SetActionFeedback(ApiActionResult result, string successMessage, string action)

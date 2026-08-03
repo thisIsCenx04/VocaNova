@@ -103,7 +103,7 @@
         var body = document.getElementById('difficult-body');
         if (!body) { return; }
         if (!list || !list.length) {
-            body.innerHTML = '<tr><td colspan="5" class="empty-row">No quiz data yet.</td></tr>';
+            body.innerHTML = '<tr><td colspan="5" class="empty-row">' + (body.dataset.emptyMessage || 'No quiz data yet.') + '</td></tr>';
             return;
         }
         body.innerHTML = list.map(function (w) {

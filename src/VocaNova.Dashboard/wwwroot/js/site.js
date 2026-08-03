@@ -39,12 +39,16 @@
 
         var form = document.createElement('form');
         form.className = 'page-jump';
-        form.setAttribute('aria-label', 'Go to page');
+        var i18n = document.body.dataset;
+        var pageLabel = i18n.pageLabel || 'Page';
+        var goLabel = i18n.goLabel || 'Go';
+        var rangeMessage = (i18n.pageRangeMessage || 'Please enter a page number from 1 to {0}.').replace('{0}', total);
+        form.setAttribute('aria-label', i18n.goToPageLabel || 'Go to page');
         form.setAttribute('novalidate', 'novalidate');
-        form.innerHTML = '<span class="page-jump-controls"><label>Page <input type="number" min="1" max="' + total
-            + '" placeholder="' + current + '" aria-label="Page number"></label>'
-            + '<button type="submit">Go</button></span>'
-            + '<span class="page-jump-error" role="alert" hidden>Please enter a page number from 1 to ' + total + '.</span>';
+        form.innerHTML = '<span class="page-jump-controls"><label>' + pageLabel + ' <input type="number" min="1" max="' + total
+            + '" placeholder="' + current + '" aria-label="' + (i18n.pageNumberLabel || 'Page number') + '"></label>'
+            + '<button type="submit">' + goLabel + '</button></span>'
+            + '<span class="page-jump-error" role="alert" hidden>' + rangeMessage + '</span>';
 
         pager.appendChild(form);
 
