@@ -1,6 +1,6 @@
 @model VocaNova.Dashboard.Models.Profile.AdminProfileViewModel
 @{
-    ViewData["Title"] = "My Profile";
+    ViewData["Title"] = T["My Profile"];
     var statusActive = !string.Equals(Model.Status, "deleted", StringComparison.OrdinalIgnoreCase)
         && !string.Equals(Model.Status, "locked", StringComparison.OrdinalIgnoreCase);
 }

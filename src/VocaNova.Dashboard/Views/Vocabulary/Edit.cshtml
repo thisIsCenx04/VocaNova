@@ -2,7 +2,7 @@
 @using VocaNova.Dashboard.Models.Vocabulary
 @model WordDetail
 @{
-    ViewData["Title"] = "Update Vocabulary Metadata";
+    ViewData["Title"] = T["Update Vocabulary Metadata"];
     var senses = Model.Senses.OrderBy(s => s.Order).ToList();
     var primaryType = senses.FirstOrDefault()?.WordClass;
     var ukAudio = Model.Audio.FirstOrDefault(a => string.Equals(a.Accent, "uk", StringComparison.OrdinalIgnoreCase))
@@ -30,7 +30,11 @@
       data-msg-image-required="@T["Please choose an image file."]"
       data-msg-audio-required="@T["Please choose an audio file."]"
       data-msg-delete-image="@T["Remove image"]"
-      data-msg-delete-audio="@T["Delete this audio?"]">
+      data-msg-delete-audio="@T["Delete this audio?"]"
+      data-label-image-preview="@T["Image preview"]" data-label-delete="@T["Delete"]"
+      data-label-replace="@T["Replace"]" data-label-no-image="@T["No image."]"
+      data-label-no-audio="@T["No audio."]" data-label-upload-image="@T["Upload image"]"
+      data-label-upload-audio="@T["Upload audio"]">
     @Html.AntiForgeryToken()
     <input type="hidden" name="phoneticUs" value="@Model.PhoneticUs" />
     <input type="hidden" name="imageUrl" id="edit-image-url" value="@Model.ImageUrl" />

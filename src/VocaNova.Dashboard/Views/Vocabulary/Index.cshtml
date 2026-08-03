@@ -2,7 +2,7 @@
 @using VocaNova.Dashboard.Models.Api.Dictionary
 @model VocaNova.Dashboard.Models.Vocabulary.VocabularyListViewModel
 @{
-    ViewData["Title"] = "Vocabulary Metadata Management";
+    ViewData["Title"] = T["Vocabulary Metadata Management"];
     var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
     var canManage = role is "admin" or "super_admin";
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";

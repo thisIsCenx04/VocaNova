@@ -1,7 +1,7 @@
 @using VocaNova.Dashboard.Models.Vocabulary
 @model VocaNova.Dashboard.Models.Topics.TopicDetailViewModel
 @{
-    ViewData["Title"] = "Topic details";
+    ViewData["Title"] = T["Topic details"];
     var pageSizes = new[] { 10, 20, 50, 100 };
     // Bộ lọc dùng chung cho link phân trang và link sort.
     List<string> BaseQuery() {

@@ -1,6 +1,6 @@
 @model VocaNova.Dashboard.Models.Topics.TopicListViewModel
 @{
-    ViewData["Title"] = "Topic Management";
+    ViewData["Title"] = T["Topic Management"];
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
     var pageSizes = new[] { 10, 20, 50, 100 };
 

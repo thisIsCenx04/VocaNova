@@ -32,7 +32,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>
+<body data-page-label="@T["Page"]" data-go-label="@T["Go"]"
+      data-go-to-page-label="@T["Go to page"]" data-page-number-label="@T["Page number"]"
+      data-page-range-message="@T["Please enter a page number from 1 to {0}."]">
     @if (isAuthenticated)
     {
         <div class="app-shell">

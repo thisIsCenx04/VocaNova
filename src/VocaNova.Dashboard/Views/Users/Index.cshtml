@@ -2,7 +2,7 @@
 @using VocaNova.Dashboard.Models.Api.Users
 @model VocaNova.Dashboard.Models.Users.UserListViewModel
 @{
-    ViewData["Title"] = "User Management";
+    ViewData["Title"] = T["User Management"];
     var pageSizes = new[] { 10, 20, 50, 100 };
 
     var actorRole = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;

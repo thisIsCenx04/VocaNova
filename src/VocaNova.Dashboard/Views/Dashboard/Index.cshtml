@@ -1,7 +1,7 @@
 @using System.Text.Json
 @model VocaNova.Dashboard.Models.Dashboard.DashboardOverviewViewModel
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = T["Dashboard"];
     var s = Model.Stats;
 
     var activityJson = JsonSerializer.Serialize(new
@@ -121,7 +121,7 @@
                 <th style="width:120px;">@T["Status"]</th>
             </tr>
         </thead>
-        <tbody id="difficult-body">
+        <tbody id="difficult-body" data-empty-message="@T["No quiz data yet."]">
             @if (Model.DifficultWords.Count == 0)
             {
                 <tr><td colspan="5" class="empty-row">@T["No quiz data yet."]</td></tr>
