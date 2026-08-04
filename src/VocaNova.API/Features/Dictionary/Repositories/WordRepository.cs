@@ -438,6 +438,26 @@ public sealed class WordRepository : IWordRepository
         return true;
     }
 
+    public async Task<IReadOnlyCollection<uint>> GetReferencingUserIdsAsync(
+        uint wordId,
+        CancellationToken cancellationToken = default)
+    {
+        var listUsers = _dbContext.UserListWords
+            .IgnoreQueryFilters()
+            .Where(listWord => listWord.WordId == wordId
+                && listWord.Status == UserStatus.Active)
+            .Select(listWord => listWord.UserId);
+
+        var progressUsers = _dbContext.UserWordProgresses
+            .Where(progress => progress.WordId == wordId)
+            .Select(progress => progress.UserId);
+
+        return await listUsers
+            .Concat(progressUsers)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<WordDetailDto?> SetImageUrlAsync(
         uint wordId,
         string? imageUrl,

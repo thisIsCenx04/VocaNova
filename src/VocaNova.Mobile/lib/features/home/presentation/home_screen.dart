@@ -374,10 +374,11 @@ class _NotificationButton extends ConsumerWidget {
             top: 9,
             right: 8,
             child: Container(
+              key: const Key('notification-unread-dot'),
               width: 8,
               height: 8,
               decoration: const BoxDecoration(
-                color: Color(0xFFFF3D8B),
+                color: Colors.red,
                 shape: BoxShape.circle,
               ),
             ),

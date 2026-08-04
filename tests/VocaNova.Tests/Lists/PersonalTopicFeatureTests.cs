@@ -38,6 +38,23 @@ public sealed class PersonalTopicFeatureTests
     }
 
     [Fact]
+    public async Task GetTopicsAsync_Should_Exclude_SoftDeleted_Words_From_Counts()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedDictionaryAsync(dbContext);
+        await SeedPersonalTopicAsync(dbContext, userId: 1, topicId: 1, listId: 10, wordIds: [1]);
+        var word = await dbContext.Words.SingleAsync(entity => entity.WordId == 1);
+        word.Status = UserStatus.Deleted;
+        await dbContext.SaveChangesAsync();
+        var service = CreateService(dbContext);
+
+        var result = await service.GetTopicsAsync(userId: 1);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Single(topic => topic.TopicId == 1).WordCount.Should().Be(0);
+    }
+
+    [Fact]
     public async Task AddWordAsync_Should_Create_Internal_List_Without_Changing_Schema_Or_Normal_Lists()
     {
         await using var dbContext = CreateDbContext();

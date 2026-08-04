@@ -554,6 +554,11 @@ public class UserListFeatureTests
     private static async Task SeedListsAsync(VocaNovaDbContext dbContext)
     {
         var now = DateTime.UtcNow;
+        dbContext.Words.AddRange(
+            new Word { WordId = 1, Word1 = "one", WordKey = "one", Status = UserStatus.Active, CreatedAt = now, UpdatedAt = now },
+            new Word { WordId = 2, Word1 = "two", WordKey = "two", Status = UserStatus.Active, CreatedAt = now, UpdatedAt = now },
+            new Word { WordId = 3, Word1 = "three", WordKey = "three", Status = UserStatus.Active, CreatedAt = now, UpdatedAt = now },
+            new Word { WordId = 4, Word1 = "four", WordKey = "four", Status = UserStatus.Deleted, CreatedAt = now, UpdatedAt = now });
         dbContext.UserLists.AddRange(
             new UserList
             {
@@ -614,6 +619,15 @@ public class UserListFeatureTests
                 WordId = 3,
                 AddMethod = AddMethod.Manual,
                 Status = UserStatus.Deleted,
+                AddedAt = now,
+            },
+            new UserListWord
+            {
+                UserId = 1,
+                ListId = 1,
+                WordId = 4,
+                AddMethod = AddMethod.Manual,
+                Status = UserStatus.Active,
                 AddedAt = now,
             });
 

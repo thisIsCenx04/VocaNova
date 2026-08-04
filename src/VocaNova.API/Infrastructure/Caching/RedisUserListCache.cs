@@ -90,6 +90,6 @@ public sealed class RedisUserListCache : IUserListCache
             ? "vocanova:"
             : _settings.InstanceName;
 
-        return $"{prefix}user-lists:{userId}";
+        return $"{prefix}user-lists:v2:{userId}";
     }
 }

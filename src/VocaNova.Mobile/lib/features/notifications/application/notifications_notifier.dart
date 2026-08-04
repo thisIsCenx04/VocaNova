@@ -44,6 +44,7 @@ class NotificationsNotifier extends _$NotificationsNotifier {
         unreadCount: unread,
         isLoading: false,
       );
+      ref.invalidate(notificationsUnreadCountProvider);
     } catch (_) {
       final l10n = lookupAppLocalizations(
         AppSettingsNotifier.instance.state.locale,

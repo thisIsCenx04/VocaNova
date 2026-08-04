@@ -8,10 +8,12 @@ import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/core/widgets/offline_banner.dart';
+import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
-/// Chỉ số nhánh (tab) Practice trong bottom navbar.
+/// Chỉ số các nhánh cần làm mới dữ liệu khi mở từ bottom navbar.
+const _listsBranchIndex = 2;
 const _practiceBranchIndex = 3;
 
 class MainShell extends ConsumerWidget {
@@ -44,6 +46,9 @@ class MainShell extends ConsumerWidget {
               index,
               initialLocation: index == navigationShell.currentIndex,
             );
+            if (index == _listsBranchIndex) {
+              ref.read(listsProvider.notifier).load();
+            }
             // Vào lại tab Practice thì tải lại nguồn kiểm tra để số từ luôn
             // khớp với danh sách hiện tại (ví dụ vừa thêm/xóa từ ở nơi khác).
             if (index == _practiceBranchIndex) {
