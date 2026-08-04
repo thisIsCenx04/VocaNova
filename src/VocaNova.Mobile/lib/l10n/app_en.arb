@@ -509,6 +509,7 @@
   "notifMarkAllRead": "Mark all read",
   "notifEmptyMessage": "No notifications yet.",
   "notifRetry": "Retry",
+  "notifClose": "Close",
   "notifJustNow": "Just now",
   "notifMinutesAgo": "{count} min ago",
   "@notifMinutesAgo": {

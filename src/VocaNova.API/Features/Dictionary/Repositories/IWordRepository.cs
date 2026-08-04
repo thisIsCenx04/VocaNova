@@ -83,6 +83,10 @@ public interface IWordRepository
         string status,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<uint>> GetReferencingUserIdsAsync(
+        uint wordId,
+        CancellationToken cancellationToken = default);
+
     Task<WordDetailDto?> SetImageUrlAsync(
         uint wordId,
         string? imageUrl,

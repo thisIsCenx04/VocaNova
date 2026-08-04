@@ -226,6 +226,7 @@ public static class TranslationTable
         ("Manage vocabulary metadata", "Quản lý dữ liệu từ vựng"),
         ("Manage words and their linguistic metadata.", "Quản lý từ vựng và dữ liệu ngôn ngữ liên quan."),
         ("Add vocabulary", "Thêm từ vựng"),
+        ("Import CSV", "Nhập CSV"),
         ("Delete vocabulary", "Xóa từ vựng"),
         ("It will be soft-deleted and can be restored later.", "Mục sẽ được xóa mềm và có thể khôi phục sau."),
         ("Delete '{0}'? It will be soft-deleted.", "Xóa '{0}'? Mục sẽ được xóa mềm."),

@@ -41,9 +41,12 @@ public sealed class PersonalTopicRepository : IPersonalTopicRepository
             {
                 list.ListId,
                 list.ListName,
-                WordCount = list.UserListWords.Count,
+                WordCount = list.UserListWords.Count(listWord =>
+                    listWord.Word.Status == UserStatus.Active),
                 ContainsWord = wordId.HasValue
-                    && list.UserListWords.Any(listWord => listWord.WordId == wordId.Value),
+                    && list.UserListWords.Any(listWord =>
+                        listWord.WordId == wordId.Value
+                        && listWord.Word.Status == UserStatus.Active),
             })
             .ToListAsync(cancellationToken);
 

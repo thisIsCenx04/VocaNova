@@ -36,19 +36,22 @@ public sealed class WordService : IWordService
     private readonly IImageStorage? _imageStorage;
     private readonly IWordSearchCache? _wordSearchCache;
     private readonly IWordDetailCache? _wordDetailCache;
+    private readonly IUserListCache? _userListCache;
 
     public WordService(
         IWordRepository wordRepository,
         IWordSearchCache? wordSearchCache = null,
         IWordDetailCache? wordDetailCache = null,
         IAudioStorage? audioStorage = null,
-        IImageStorage? imageStorage = null)
+        IImageStorage? imageStorage = null,
+        IUserListCache? userListCache = null)
     {
         _wordRepository = wordRepository;
         _audioStorage = audioStorage;
         _imageStorage = imageStorage;
         _wordSearchCache = wordSearchCache;
         _wordDetailCache = wordDetailCache;
+        _userListCache = userListCache;
     }
 
     public async Task<Result<PagedResult<WordSummaryDto>>> SearchAsync(
@@ -677,6 +680,17 @@ public sealed class WordService : IWordService
         if (_wordDetailCache is not null)
         {
             await _wordDetailCache.RemoveAsync(wordId, cancellationToken);
+        }
+
+        if (_userListCache is not null)
+        {
+            var affectedUserIds = await _wordRepository.GetReferencingUserIdsAsync(
+                wordId,
+                cancellationToken);
+            foreach (var userId in affectedUserIds)
+            {
+                await _userListCache.RemoveAsync(userId, cancellationToken);
+            }
         }
 
         return Result<bool>.Ok(true);

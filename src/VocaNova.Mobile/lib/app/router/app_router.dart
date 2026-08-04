@@ -85,12 +85,6 @@ class AppRouter {
                 builder: (_, _) => const WordSearchScreen(),
               ),
               GoRoute(
-                path: AppRoutes.word,
-                builder: (_, state) => WordDetailScreen(
-                  wordId: int.parse(state.pathParameters['id']!),
-                ),
-              ),
-              GoRoute(
                 path: AppRoutes.topics,
                 builder: (_, _) => const TopicsScreen(),
               ),
@@ -155,6 +149,11 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.notifications,
         builder: (_, _) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.word,
+        builder: (_, state) =>
+            WordDetailScreen(wordId: int.parse(state.pathParameters['id']!)),
       ),
       GoRoute(
         path: AppRoutes.list,

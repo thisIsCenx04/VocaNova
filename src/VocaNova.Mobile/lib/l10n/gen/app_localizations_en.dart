@@ -1000,6 +1000,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifRetry => 'Retry';
 
   @override
+  String get notifClose => 'Close';
+
+  @override
   String get notifJustNow => 'Just now';
 
   @override

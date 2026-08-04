@@ -8,6 +8,7 @@ using VocaNova.API.Features.Admin.Validators;
 using VocaNova.API.Features.Dictionary.DTOs;
 using VocaNova.API.Features.Dictionary.Repositories;
 using VocaNova.API.Features.Dictionary.Services;
+using VocaNova.API.Features.Lists.DTOs;
 using VocaNova.API.Infrastructure.Caching;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
@@ -233,14 +234,34 @@ public class AdminWordCrudFeatureTests
     {
         await using var dbContext = CreateDbContext();
         await SeedWordAsync(dbContext, "run", "run");
+        dbContext.UserLists.Add(new UserList
+        {
+            ListId = 10,
+            UserId = 42,
+            ListName = "My words",
+            Status = UserStatus.Active,
+            CreatedAt = DateTime.UtcNow,
+        });
+        dbContext.UserListWords.Add(new UserListWord
+        {
+            UserId = 42,
+            ListId = 10,
+            WordId = 1,
+            AddMethod = AddMethod.Manual,
+            Status = UserStatus.Active,
+            AddedAt = DateTime.UtcNow,
+        });
+        await dbContext.SaveChangesAsync();
         var cache = new FakeWordDetailCache();
-        var service = CreateService(dbContext, cache);
+        var userListCache = new FakeUserListCache();
+        var service = CreateService(dbContext, cache, userListCache: userListCache);
 
         var result = await service.SoftDeleteAsync(1);
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeTrue();
         cache.RemoveCount.Should().Be(1);
+        userListCache.RemovedUserIds.Should().Equal(42);
 
         var word = await dbContext.Words
             .IgnoreQueryFilters()
@@ -593,13 +614,15 @@ public class AdminWordCrudFeatureTests
         VocaNovaDbContext dbContext,
         IWordDetailCache? wordDetailCache = null,
         IAudioStorage? audioStorage = null,
-        IImageStorage? imageStorage = null)
+        IImageStorage? imageStorage = null,
+        IUserListCache? userListCache = null)
     {
         return new WordService(
             new WordRepository(dbContext),
             wordDetailCache: wordDetailCache,
             audioStorage: audioStorage,
-            imageStorage: imageStorage);
+            imageStorage: imageStorage,
+            userListCache: userListCache);
     }
 
     private static IFormFile CreateCsvFile(string content)
@@ -681,6 +704,29 @@ public class AdminWordCrudFeatureTests
         public Task RemoveAsync(uint wordId, CancellationToken cancellationToken = default)
         {
             RemoveCount++;
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeUserListCache : IUserListCache
+    {
+        public List<uint> RemovedUserIds { get; } = [];
+
+        public Task<IReadOnlyCollection<UserListDto>?> GetAsync(
+            uint userId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyCollection<UserListDto>?>(null);
+
+        public Task SetAsync(
+            uint userId,
+            IReadOnlyCollection<UserListDto> lists,
+            CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public Task RemoveAsync(
+            uint userId,
+            CancellationToken cancellationToken = default)
+        {
+            RemovedUserIds.Add(userId);
             return Task.CompletedTask;
         }
     }

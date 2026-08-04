@@ -986,6 +986,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get notifRetry => 'Thử lại';
 
   @override
+  String get notifClose => 'Đóng';
+
+  @override
   String get notifJustNow => 'Vừa xong';
 
   @override

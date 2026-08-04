@@ -101,59 +101,26 @@ void main() {
 
     expect(router.state.matchedLocation, AppRoutes.wordDetail('42'));
     expect(find.byKey(const Key('word-detail-screen')), findsOneWidget);
-    expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Search'), findsOneWidget);
   });
 
-  testWidgets('list word tap opens word detail without navigator lock', (
-    tester,
-  ) async {
-    final listsRepository = MockListsRepository();
-    final wordRepository = MockWordDetailRepository();
-    final connectivity = MockConnectivityService();
-    final audio = MockAudioPlaybackService();
+  testWidgets(
+    'word detail opens from a personal list without navigator key conflict',
+    (tester) async {
+      final router = createRouter(accessToken: 'access-token');
+      await pumpRouter(tester, router);
 
-    when(() => connectivity.isOnline).thenAnswer((_) async => true);
-    when(() => listsRepository.getWords(listId: 3, page: 1)).thenAnswer(
-      (_) async => ListWordsPage(items: [testListWord], page: 1, totalPages: 1),
-    );
-    when(() => wordRepository.getWord(7)).thenAnswer((_) async => testWord);
-    when(
-      () => audio.playPronunciation(
-        word: any(named: 'word'),
-        accent: any(named: 'accent'),
-        audioUrl: any(named: 'audioUrl'),
-      ),
-    ).thenAnswer((_) async {});
+      router.push(AppRoutes.listDetail('3'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      router.push(AppRoutes.wordDetail('42'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
-    final router = createRouter(
-      accessToken: 'access-token',
-      initialLocation: AppRoutes.listDetail('3'),
-    );
-    await pumpRouter(
-      tester,
-      router,
-      extraOverrides: [
-        listsRepositoryProvider.overrideWithValue(listsRepository),
-        listsLocalStorageProvider.overrideWithValue(
-          LocalStorage.create(preferences: await SharedPreferences.getInstance()),
-        ),
-        wordDetailRepositoryProvider.overrideWithValue(wordRepository),
-        wordDetailLocalStorageProvider.overrideWithValue(
-          LocalStorage.create(preferences: await SharedPreferences.getInstance()),
-        ),
-        connectivityServiceProvider.overrideWithValue(connectivity),
-        audioPlaybackServiceProvider.overrideWithValue(audio),
-      ],
-    );
-
-    await tester.tap(find.text('hello'));
-    await tester.pumpAndSettle();
-
-    expect(tester.takeException(), isNull);
-    expect(router.state.matchedLocation, AppRoutes.wordDetail('7'));
-    expect(find.byKey(const Key('word-detail-screen')), findsOneWidget);
-  });
+      expect(tester.takeException(), isNull);
+      expect(router.state.matchedLocation, AppRoutes.wordDetail('42'));
+      expect(find.byKey(const Key('word-detail-screen')), findsOneWidget);
+    },
+  );
 }
 
 GoRouter createRouter({String? accessToken, String? initialLocation}) {
@@ -178,9 +145,7 @@ Future<void> pumpRouter(
         notificationsUnreadCountProvider.overrideWith((ref) async => 0),
         homeTopicsProvider.overrideWith((ref) async => const []),
         authProvider.overrideWith(FakeAuthNotifier.new),
-        progressOverviewProvider.overrideWith(
-          FakeProgressOverviewNotifier.new,
-        ),
+        progressOverviewProvider.overrideWith(FakeProgressOverviewNotifier.new),
         listsProvider.overrideWith(FakeListsNotifier.new),
         wrongWordsProvider.overrideWith(FakeWrongWordsNotifier.new),
         ...extraOverrides,

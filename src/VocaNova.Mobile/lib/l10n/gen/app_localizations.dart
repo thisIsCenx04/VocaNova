@@ -1856,6 +1856,12 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get notifRetry;
 
+  /// No description provided for @notifClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get notifClose;
+
   /// No description provided for @notifJustNow.
   ///
   /// In en, this message translates to:

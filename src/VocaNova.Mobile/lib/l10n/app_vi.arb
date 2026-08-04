@@ -298,6 +298,7 @@
   "notifMarkAllRead": "Đọc tất cả",
   "notifEmptyMessage": "Chưa có thông báo nào.",
   "notifRetry": "Thử lại",
+  "notifClose": "Đóng",
   "notifJustNow": "Vừa xong",
   "notifMinutesAgo": "{count} phút trước",
   "notifHoursAgo": "{count} giờ trước",

@@ -42,10 +42,28 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   Future<void> _open(AppNotification notification) async {
-    await ref
-        .read(notificationsProvider.notifier)
-        .markRead(notification.id);
+    await ref.read(notificationsProvider.notifier).markRead(notification.id);
     if (!mounted) {
+      return;
+    }
+    if (notification.type == 'word_deleted') {
+      final l10n = AppLocalizations.of(context)!;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          key: const Key('word-deleted-notification-dialog'),
+          icon: const Icon(Icons.info_outline, color: AppColors.primary),
+          title: Text(notification.title),
+          content: Text(notification.message),
+          actions: [
+            TextButton(
+              key: const Key('notification-dialog-close'),
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(l10n.notifClose),
+            ),
+          ],
+        ),
+      );
       return;
     }
     if (notification.refType == 'word' && notification.refId != null) {

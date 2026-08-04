@@ -31,7 +31,8 @@ public sealed class UserListRepository : IUserListRepository
             .Select(list => new UserListDto(
                 list.ListId,
                 list.ListName,
-                list.UserListWords.Count,
+                list.UserListWords.Count(listWord =>
+                    listWord.Word.Status == UserStatus.Active),
                 list.CreatedAt))
             .ToListAsync(cancellationToken);
     }
@@ -119,7 +120,8 @@ public sealed class UserListRepository : IUserListRepository
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         var wordCount = await _dbContext.UserListWords.CountAsync(
-            listWord => listWord.ListId == list.ListId,
+            listWord => listWord.ListId == list.ListId
+                && listWord.Word.Status == UserStatus.Active,
             cancellationToken);
 
         return new UserListDto(

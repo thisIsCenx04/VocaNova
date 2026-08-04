@@ -16,6 +16,43 @@ import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 import '../../../support/home_test_overrides.dart';
 
 void main() {
+  testWidgets('home shows a red dot when notifications are unread', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          notificationsUnreadCountProvider.overrideWith((ref) async => 1),
+          homeTopicsProvider.overrideWith((ref) async => const []),
+          authProvider.overrideWith(FakeAuthNotifier.new),
+          progressOverviewProvider.overrideWith(
+            FakeProgressOverviewNotifier.new,
+          ),
+          listsProvider.overrideWith(FakeListsNotifier.new),
+          wrongWordsProvider.overrideWith(FakeWrongWordsNotifier.new),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.dark(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const HomeScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final dot = tester.widget<Container>(
+      find.byKey(const Key('notification-unread-dot')),
+    );
+    final decoration = dot.decoration! as BoxDecoration;
+    expect(decoration.color, Colors.red);
+  });
+
   testWidgets('home renders dark palette, greeting, and quick actions', (
     tester,
   ) async {
