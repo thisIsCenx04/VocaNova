@@ -1,0 +1,211 @@
+@using System.Security.Claims
+@inject VocaNova.Dashboard.Services.Api.IVocaNovaApiClient TopbarApiClient
+@{
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var currentProfile = isAuthenticated ? await TopbarApiClient.GetMyProfileAsync(Context.RequestAborted) : null;
+    var displayName = currentProfile?.DisplayName ?? User.FindFirstValue(ClaimTypes.Name) ?? "Admin";
+    var avatarFallback = string.IsNullOrWhiteSpace(displayName) ? "A" : displayName[..1].ToUpperInvariant();
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
+    var phone = currentProfile?.Phone ?? User.FindFirstValue("phone");
+    var avatarUrl = currentProfile?.AvatarUrl ?? User.FindFirstValue("avatar_url");
+    var isSuperAdmin = string.Equals(role, "super_admin", StringComparison.Ordinal);
+
+    // Theme đọc từ cookie để render server-side (không nhấp nháy). Mặc định light; đổi ở trang Settings.
+    var theme = Context.Request.Cookies["VocaNova.Dashboard.Theme"] == "dark" ? "dark" : "light";
+
+    var path = Context.Request.Path.Value?.ToLowerInvariant() ?? "/";
+    string NavActive(string prefix) =>
+        (prefix == "/" ? path == "/" || path.StartsWith("/dashboard") : path.StartsWith(prefix))
+            ? "sidebar-link active"
+            : "sidebar-link";
+}
+<!DOCTYPE html>
+<html lang="@T.Language" data-theme="@theme">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · VocaNova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body data-page-label="@T["Page"]" data-go-label="@T["Go"]"
+      data-go-to-page-label="@T["Go to page"]" data-page-number-label="@T["Page number"]"
+      data-page-range-message="@T["Please enter a page number from 1 to {0}."]">
+    @if (isAuthenticated)
+    {
+        <div class="app-shell">
+            <input class="sidebar-toggle" type="checkbox" id="sidebar-toggle" aria-label="@T["Toggle navigation"]" />
+            <label class="sidebar-scrim" for="sidebar-toggle" aria-hidden="true"></label>
+            <aside class="sidebar" aria-label="@T["Primary navigation"]">
+                <a class="sidebar-brand" asp-controller="Dashboard" asp-action="Index" aria-label="@T["Dashboard"]">
+                    <img class="brand-logo" src="~/img/logo.png" alt="" />
+                    <span class="brand-word">VocaNova</span>
+                </a>
+
+                <nav class="sidebar-nav">
+                    <a class="@NavActive("/")" asp-controller="Dashboard" asp-action="Index">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z" /></svg>
+                        <span>@T["Dashboard"]</span>
+                    </a>
+                    <a class="@NavActive("/vocabulary")" href="/vocabulary">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h10a4 4 0 0 1 4 4v12H8a3 3 0 0 1-3-3V4Zm3 14h9V8a2 2 0 0 0-2-2H7v11a1 1 0 0 0 1 1Zm1-9h6v2H9V9Zm0 4h5v2H9v-2Z" /></svg>
+                        <span>@T["Vocabulary"]</span>
+                    </a>
+                    <a class="@NavActive("/topics")" href="/topics">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v4H4V5Zm0 6h7v8H4v-8Zm9 0h7v8h-7v-8Z" /></svg>
+                        <span>@T["Topics"]</span>
+                    </a>
+                    <a class="@NavActive("/statistics")" href="/statistics">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V8h3v12H5Zm6 0V4h3v16h-3Zm6 0v-9h3v9h-3Z" /></svg>
+                        <span>@T["Statistics"]</span>
+                    </a>
+                    <a class="@NavActive("/users")" href="/users">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-8 9a8 8 0 1 1 16 0H4Z" /></svg>
+                        <span>@T["Users"]</span>
+                    </a>
+                    @{
+                        var knnOpen = path.StartsWith("/knn");
+                        var knnLinks = new (string Slug, string Label)[]
+                        {
+                            ("age-ranges", "Age Ranges"),
+                            ("regions", "Regions"),
+                            ("occupations", "Occupations"),
+                            ("education-levels", "Education Levels"),
+                            ("learning-purposes", "Learning Purposes"),
+                        };
+                    }
+                    <input type="checkbox" id="knn-toggle" class="sidebar-group-check" checked="@knnOpen" />
+                    <a href="/knn" class="sidebar-link sidebar-group-toggle@(knnOpen ? " active" : "")"
+                       aria-expanded="@(knnOpen ? "true" : "false")" aria-controls="knn-subnav">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm12 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM12 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm-4.7-11.3 3.3 3.3 1.4-1.4-3.3-3.3-1.4 1.4Zm9.4 0-3.3 3.3 1.4 1.4 3.3-3.3-1.4-1.4Z" /></svg>
+                        <span>@T["KNN Management"]</span>
+                        <svg class="sidebar-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z" /></svg>
+                    </a>
+                    <div class="sidebar-subnav" id="knn-subnav">
+                        @foreach (var (slug, label) in knnLinks)
+                        {
+                            var subActive = path.StartsWith($"/knn/{slug}") ? "sidebar-sublink active" : "sidebar-sublink";
+                            <a class="@subActive" href="/knn/@slug">@T[label]</a>
+                        }
+                    </div>
+                    @if (isSuperAdmin)
+                    {
+                        <a class="@NavActive("/admin-accounts")" href="/admin-accounts">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm-7 9a7 7 0 0 1 14 0H5Zm15-9h2v3h-2v2h-3v-2h-2v-3h2v-2h3v2Z" /></svg>
+                            <span>@T["Admin Accounts"]</span>
+                        </a>
+                        <a class="@NavActive("/roles")" href="/roles">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5.1 3.4 9.8 8 11 4.6-1.2 8-5.9 8-11V5l-8-3Zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 12c-1.8-.6-3.4-1.8-4.5-3.4.9-1.1 2.5-1.6 4.5-1.6s3.6.5 4.5 1.6A9.2 9.2 0 0 1 12 19Z" /></svg>
+                            <span>@T["Role Management"]</span>
+                        </a>
+                    }
+                    <a class="@NavActive("/settings")" href="/settings">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm8.9 4 1.9 1.5-1.9 3.3-2.3-.7a7.7 7.7 0 0 1-1.6.9l-.3 2.5h-3.8l-.3-2.5a7.7 7.7 0 0 1-1.6-.9l-2.3.7L3 13.5 4.9 12 3 10.5l1.9-3.3 2.3.7c.5-.4 1-.7 1.6-.9l.3-2.5h3.8l.3 2.5c.6.2 1.1.5 1.6.9l2.3-.7L22.8 10.5 20.9 12Z" /></svg>
+                        <span>@T["Settings"]</span>
+                    </a>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <form asp-controller="Auth" asp-action="Logout" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="sidebar-link sidebar-logout">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4h10v16H10v-2h8V6h-8V4Zm1 4 5 4-5 4v-3H4v-2h7V8Z" /></svg>
+                            <span>@T["Logout"]</span>
+                        </button>
+                    </form>
+                </div>
+            </aside>
+
+            <div class="content-shell">
+                <header class="topbar">
+                    <label class="icon-button menu-button" for="sidebar-toggle" aria-label="@T["Toggle navigation"]">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4V6Zm0 5h16v2H4v-2Zm0 5h16v2H4v-2Z" /></svg>
+                    </label>
+
+                    <div class="account-summary">
+                        <a class="account-link" href="/profile" title="@T["My Profile"]">
+                            @if (!string.IsNullOrWhiteSpace(avatarUrl))
+                            {
+                                <img src="@avatarUrl" alt="" />
+                            }
+                            else
+                            {
+                                <span class="account-avatar">@avatarFallback</span>
+                            }
+                            <div>
+                                <span class="account-name">@displayName</span>
+                                <span class="account-role">@(string.IsNullOrWhiteSpace(phone) ? role.Replace("_", " ") : phone)</span>
+                            </div>
+                        </a>
+                    </div>
+                </header>
+
+                <main class="main-content" role="main">
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
+    }
+    else
+    {
+        <main class="auth-shell" role="main">
+            @RenderBody()
+        </main>
+    }
+
+    @{
+        var toastErr = TempData["UserError"] as string;
+        var toastOk = TempData["UserSuccess"] as string;
+        var toastMsg = toastErr ?? toastOk;
+    }
+    @if (toastMsg is not null)
+    {
+        <div class="modal-overlay" id="result-modal">
+            <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="result-title">
+                <div class="modal-icon @(toastErr is not null ? "err" : "ok")">
+                    @if (toastErr is not null)
+                    {
+                        <svg viewBox="0 0 24 24"><path d="M12 2 1 21h22L12 2Zm0 6 6.5 11h-13L12 8Zm-1 4v3h2v-3h-2Zm0 4v2h2v-2h-2Z" fill="currentColor"/></svg>
+                    }
+                    else
+                    {
+                        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1.2 14.2-3.5-3.5 1.4-1.4 2.1 2.1 4.9-4.9 1.4 1.4-6.3 6.3Z" fill="currentColor"/></svg>
+                    }
+                </div>
+                <h3 class="modal-title" id="result-title">@(toastErr is not null ? T["Failed"] : T["Success"])</h3>
+                <p class="modal-text">@T[toastMsg]</p>
+                <div class="modal-actions">
+                    <button type="button" class="btn-primary" id="result-ok">OK</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (isAuthenticated)
+    {
+        <div id="global-toast" class="detail-toast" role="status" aria-live="polite" hidden></div>
+        <div class="modal-overlay" id="global-confirm-modal" hidden>
+            <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="global-confirm-title" aria-describedby="global-confirm-message">
+                <div class="modal-icon err" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 15h-2v-2h2v2Zm0-4h-2V7h2v6Z"/></svg>
+                </div>
+                <h3 class="modal-title" id="global-confirm-title">@T["Are you sure?"]</h3>
+                <p class="modal-text" id="global-confirm-message"></p>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" data-global-confirm-close>@T["Cancel"]</button>
+                    <button type="button" class="btn-primary" id="global-confirm-submit">@T["Confirm"]</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

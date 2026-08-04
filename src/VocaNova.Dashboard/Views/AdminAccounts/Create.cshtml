@@ -1,0 +1,59 @@
+@model VocaNova.Dashboard.Models.AdminAccounts.CreateAdminAccountViewModel
+@{
+    ViewData["Title"] = T["Create Admin Account"];
+}
+
+<div class="admin-account-editor-shell">
+<a class="btn-primary page-back-button" href="/admin-accounts">@T["Back"]</a>
+
+<div class="page-header">
+    <h1 class="page-title">@T["Create Admin Account"]</h1>
+</div>
+
+<form method="post" action="/admin-accounts/create" class="panel admin-account-form">
+    @Html.AntiForgeryToken()
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger validation-summary">
+            <ul>
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(value => value.Errors))
+                {
+                    <li>@T[error.ErrorMessage]</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <div class="form-grid-2">
+        <div class="form-group">
+            <label asp-for="FullName">@T["Full name"] <span class="req">*</span></label>
+            <input asp-for="FullName" class="form-control" autocomplete="name" autofocus />
+        </div>
+        <div class="form-group">
+            <label asp-for="Email">@T["Email"] <span class="req">*</span></label>
+            <input asp-for="Email" class="form-control" type="email" autocomplete="email" />
+        </div>
+        <div class="form-group">
+            <label asp-for="Phone">@T["Phone"] <span class="req">*</span></label>
+            <input asp-for="Phone" class="form-control" inputmode="tel" autocomplete="tel" placeholder="0xxxxxxxxx" />
+        </div>
+        <div class="form-group">
+            <label asp-for="Password">@T["Temporary password"] <span class="req">*</span></label>
+            <input asp-for="Password" class="form-control" autocomplete="new-password" />
+            <small class="form-help">@T["At least 8 characters with uppercase, lowercase and a number."]</small>
+        </div>
+        <div class="form-group">
+            <label asp-for="Status">@T["Initial status"]</label>
+            <select asp-for="Status" class="form-control">
+                <option value="active">@T["Active"]</option>
+                <option value="locked">@T["Locked"]</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="admin-account-form-actions">
+        <a href="/admin-accounts" class="btn-secondary">@T["Cancel"]</a>
+        <button type="submit" class="btn-primary">@T["Create Admin"]</button>
+    </div>
+</form>
+</div>

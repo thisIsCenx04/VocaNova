@@ -1,0 +1,233 @@
+@model VocaNova.Dashboard.Models.Topics.TopicListViewModel
+@{
+    ViewData["Title"] = T["Topic Management"];
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var pageSizes = new[] { 10, 20, 50, 100 };
+
+    string StatusBadge(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
+
+    // Bộ lọc dùng chung cho link phân trang và link sort, để bấm cái này không mất cái kia.
+    List<string> BaseQuery()
+    {
+        var query = new List<string>();
+        if (!string.IsNullOrWhiteSpace(Model.Q)) query.Add($"q={Uri.EscapeDataString(Model.Q)}");
+        if (!string.IsNullOrWhiteSpace(Model.Status)) query.Add($"status={Uri.EscapeDataString(Model.Status)}");
+        if (Model.IncludeDeleted) query.Add("includeDeleted=true");
+        query.Add($"pageSize={Model.PageSize}");
+        return query;
+    }
+
+    string PageUrl(int page)
+    {
+        var query = BaseQuery();
+        if (!string.IsNullOrWhiteSpace(Model.SortBy)) query.Add($"sortBy={Model.SortBy}");
+        if (!string.IsNullOrWhiteSpace(Model.SortDirection)) query.Add($"sortDirection={Model.SortDirection}");
+        query.Add($"page={page}");
+        return $"/topics?{string.Join("&", query)}";
+    }
+
+    // Đang sort tăng theo cột đó thì đảo sang giảm, còn lại thì tăng. Reset về trang 1.
+    string SortUrl(string column)
+    {
+        var direction = Model.SortBy == column && Model.SortDirection == "asc" ? "desc" : "asc";
+        var query = BaseQuery();
+        query.Add("page=1");
+        query.Add($"sortBy={column}");
+        query.Add($"sortDirection={direction}");
+        return $"/topics?{string.Join("&", query)}";
+    }
+
+    string SortIcon(string column) => Model.SortBy != column
+        ? "bi bi-arrow-down-up th-sort-idle"
+        : (Model.SortDirection == "desc" ? "bi bi-caret-down-fill" : "bi bi-caret-up-fill");
+
+    string TopicIconClass(string? icon) => !string.IsNullOrWhiteSpace(icon)
+        && icon.StartsWith("bi bi-", StringComparison.Ordinal)
+        && icon.Length <= 20
+            ? icon
+            : "bi bi-book";
+}
+
+<div class="page-header page-header-row">
+    <div>
+        <h1 class="page-title">@T["Topic Management"]</h1>
+    </div>
+    <a href="/topics/create" class="btn-primary">@T["Add topic"]</a>
+</div>
+
+@if (TempData["TopicSuccess"] is string okMsg)
+{
+    <div class="alert alert-success">@T[okMsg]</div>
+}
+@if (TempData["TopicError"] is string errMsg)
+{
+    <div class="alert alert-danger">@T[errMsg]</div>
+}
+
+<form method="get" action="/topics" class="filter-bar">
+    <input type="text" name="q" value="@Model.Q" class="form-control" placeholder="@T["Search by topic name..."]" />
+    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+    <select name="status" class="form-control">
+        <option value="">@T["All status"]</option>
+        <option value="active" selected="@(Model.Status == "active")">@T["Active"]</option>
+        <option value="deleted" selected="@(Model.Status == "deleted")">@T["Deleted"]</option>
+    </select>
+    <label class="checkbox-inline">
+        <input type="checkbox" name="includeDeleted" value="true" checked="@Model.IncludeDeleted" />
+        @T["Show deleted"]
+    </label>
+    <button type="submit" class="btn-primary">@T["Filter"]</button>
+    <a href="/topics" class="btn-secondary">@T["Reset"]</a>
+</form>
+
+<div class="panel table-panel">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width:80px;">
+                    <a class="th-sort @(Model.SortBy == "id" ? "active" : "")" href="@SortUrl("id")">
+                        @T["Topic ID"] <i class="@SortIcon("id")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th>
+                    <a class="th-sort @(Model.SortBy == "name" ? "active" : "")" href="@SortUrl("name")">
+                        @T["Topic"] <i class="@SortIcon("name")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th style="width:100px;">
+                    <a class="th-sort @(Model.SortBy == "words" ? "active" : "")" href="@SortUrl("words")">
+                        @T["Words"] <i class="@SortIcon("words")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th style="width:110px;">
+                    <a class="th-sort @(Model.SortBy == "status" ? "active" : "")" href="@SortUrl("status")">
+                        @T["Status"] <i class="@SortIcon("status")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th style="width:130px;" class="col-actions">@T["Action"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="5" class="empty-row">@T["No topics found."]</td></tr>
+            }
+            else
+            {
+                foreach (var topic in Model.Items)
+                {
+                    <tr>
+                        <td><span class="rank-pill">#@topic.TopicId</span></td>
+                        <td>
+                            <div class="topic-cell">
+                                <span class="topic-avatar" aria-hidden="true"><i class="@TopicIconClass(topic.Icon)"></i></span>
+                                <div class="user-cell-text">
+                                    <span class="word-text">@topic.TopicName</span>
+                                    <span class="user-role-sub">@(string.IsNullOrWhiteSpace(topic.TopicNameVi) ? T["No Vietnamese name"] : topic.TopicNameVi)</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>@topic.WordCount</td>
+                        <td><span class="@StatusBadge(topic.Status)">@(topic.Status == "active" ? T["Active"] : topic.Status == "deleted" ? T["Deleted"] : T[topic.Status])</span></td>
+                        <td class="col-actions">
+                            <div class="action-icons">
+                                <a class="icon-link" href="/topics/@topic.TopicId" title="@T["View details"]" aria-label="@T["View details"]">
+                                    <svg viewBox="0 0 24 24"><path d="M12 5c-5 0-8.5 4.5-9.5 7 1 2.5 4.5 7 9.5 7s8.5-4.5 9.5-7c-1-2.5-4.5-7-9.5-7Zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
+                                </a>
+                                @if (topic.Status != "deleted")
+                                {
+                                    <a class="icon-link" href="/topics/@topic.TopicId/edit" title="@T["Edit"]" aria-label="@T["Edit"]">
+                                        <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></svg>
+                                    </a>
+                                    <button type="button" class="icon-link danger js-topic-delete"
+                                            data-id="@topic.TopicId" data-name="@topic.TopicName"
+                                            title="@T["Delete"]" aria-label="@T["Delete"]">
+                                        <svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Z"/></svg>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <form method="post" action="/topics/@topic.TopicId/restore" class="inline-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button type="submit" class="icon-link ok" title="@T["Restore"]" aria-label="@T["Restore"]">
+                                            <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8Z"/></svg>
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="table-foot-bar">
+    <form method="get" action="/topics" class="page-size-form">
+        @if (!string.IsNullOrWhiteSpace(Model.Q)) { <input type="hidden" name="q" value="@Model.Q" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.Status)) { <input type="hidden" name="status" value="@Model.Status" /> }
+        @if (Model.IncludeDeleted) { <input type="hidden" name="includeDeleted" value="true" /> }
+        <label class="page-size-control">
+            <span>@T["Items per page"]</span>
+            <select name="pageSize" class="form-control" data-page-size-select aria-label="@T["Items per page"]">
+                @foreach (var size in pageSizes)
+                {
+                    <option value="@size" selected="@(Model.PageSize == size)">@size</option>
+                }
+            </select>
+        </label>
+    </form>
+    @if (Model.TotalPages > 1)
+    {
+        var winStart = Math.Max(1, Model.Page - 2);
+        var winEnd = Math.Min(Model.TotalPages, winStart + 4);
+        winStart = Math.Max(1, winEnd - 4);
+        <nav class="pager" aria-label="@T["Pagination"]" data-page="@Model.Page" data-total-pages="@Model.TotalPages">
+            @if (Model.HasPrevious)
+            {
+                <a class="pager-link" href="@PageUrl(Model.Page - 1)">&lsaquo; @T["Prev"]</a>
+            }
+            else
+            {
+                <span class="pager-link disabled">&lsaquo; @T["Prev"]</span>
+            }
+            @for (var p = winStart; p <= winEnd; p++)
+            {
+                <a class="pager-link @(p == Model.Page ? "active" : "")" href="@PageUrl(p)">@p</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="pager-link" href="@PageUrl(Model.Page + 1)">@T["Next"] &rsaquo;</a>
+            }
+            else
+            {
+                <span class="pager-link disabled">@T["Next"] &rsaquo;</span>
+            }
+        </nav>
+    }
+</div>
+
+<div class="modal-overlay" id="topic-delete-modal" hidden
+     data-message="@T["Delete {0}? The topic will be soft-deleted and can be restored later."]">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="topic-delete-title">
+        <div class="modal-icon err">
+            <svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Z"/></svg>
+        </div>
+        <h3 class="modal-title" id="topic-delete-title">@T["Delete topic"]</h3>
+        <p class="modal-text" id="topic-delete-text"></p>
+        <div class="modal-actions">
+            <button type="button" class="btn-secondary" data-close-modal>@T["Cancel"]</button>
+            <form method="post" id="topic-delete-form" class="inline-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                <button type="submit" class="btn-danger-solid">@T["Delete"]</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/topics.js" asp-append-version="true"></script>
+}

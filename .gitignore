@@ -1,0 +1,87 @@
+# Build output
+bin/
+obj/
+out/
+.build-check/
+.build-check-2/
+TestResults/
+coverage/
+*.trx
+*.coverage
+*.coveragexml
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# .NET
+project.lock.json
+project.assets.json
+*.nuget.props
+*.nuget.targets
+artifacts/
+PublishProfiles/
+
+# Local configuration and secrets
+appsettings.Local.json
+appsettings.*.local.json
+*.Development.local.json
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+flutter_export_environment.sh
+*.iml
+android/.gradle/
+android/app/debug/
+android/app/profile/
+android/app/release/
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Runner/GeneratedPluginRegistrant.*
+macos/Flutter/GeneratedPluginRegistrant.*
+linux/flutter/generated_plugin_registrant.*
+windows/flutter/generated_plugin_registrant.*
+
+# Mobile signing files
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+
+
+VocaNova_Feature_Breakdown.md
+VocaNova_Activity_History.md
+input.txt
+
+# Figma working files (contains a read-only token — never commit)
+.figma-tmp/
+docs/*
+.artifacts-test/

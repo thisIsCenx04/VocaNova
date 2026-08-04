@@ -1,0 +1,111 @@
+@model VocaNova.Dashboard.Models.Knn.KnnOverviewViewModel
+@{
+    ViewData["Title"] = T["KNN Management"];
+    var rb = Model.RebuildStatus;
+    var vector = Model.Vector;
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+}
+
+<div class="page-header">
+    <h1 class="page-title">@T["KNN Management"]</h1>
+</div>
+
+@if (TempData["KnnSuccess"] is string okMsg)
+{
+    <div class="alert alert-success">@T[okMsg]</div>
+}
+@if (TempData["KnnError"] is string errMsg)
+{
+    <div class="alert alert-danger">@T[errMsg]</div>
+}
+
+<div class="knn-cards">
+    @foreach (var lookup in Model.Lookups)
+    {
+        <a class="knn-card" href="/knn/@lookup.Slug">
+            <span class="knn-card-title">@T[lookup.Title]</span>
+            <span class="knn-card-desc">@T[lookup.Description]</span>
+        </a>
+    }
+</div>
+
+<div class="knn-overview-grid">
+    <section class="panel knn-rebuild-panel">
+        <div class="panel-head"><h2 class="panel-title">@T["Recommendation rebuild"]</h2></div>
+        @if (rb is null)
+        {
+            <p class="text-muted">@T["Rebuild status unavailable."]</p>
+        }
+        else
+        {
+            <dl class="detail-list">
+                <dt>@T["Last rebuilt"]</dt>
+                <dd>@(rb.LastRebuildAt?.ToString("yyyy-MM-dd HH:mm") ?? "Never")</dd>
+                <dt>@T["Running"]</dt>
+                <dd>@(rb.IsRunning ? "Yes" : "No")</dd>
+            </dl>
+        }
+        <p class="panel-muted knn-rebuild-rate-limit">@T["Rate limited to 1 request / 5 minutes."]</p>
+        <form method="post" action="/knn/trigger-rebuild" class="inline-form"
+              data-confirm-title="@T["Trigger rebuild"]" data-confirm-message="@T["Trigger a KNN recommendation rebuild now?"]"
+              data-confirm-button="@T["Trigger rebuild"]">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn-primary btn-sm">@T["Trigger rebuild"]</button>
+        </form>
+    </section>
+
+    @if (vector is not null)
+    {
+    <section class="panel knn-vector-panel">
+        <div class="panel-head">
+            <h2 class="panel-title">@T["Profile vector weights"]</h2>
+            @if (vector.IsOverridden)
+            {
+                <span class="badge badge-warning">@T["Overridden"]</span>
+            }
+        </div>
+        <form id="knn-weights-form" method="post" action="/knn/vector-weights" class="knn-weights-form">
+            @Html.AntiForgeryToken()
+            <div class="knn-weights-grid">
+                @foreach (var field in Model.WeightFields)
+                {
+                    <label class="form-field">
+                        <span>@T[field.Label]</span>
+                        <input type="number" name="@field.Name" value="@field.Value.ToString(inv)"
+                               step="0.1" min="0" max="10" required class="form-control" />
+                    </label>
+                }
+            </div>
+        </form>
+
+        <div class="knn-vector-actions">
+            <form method="post" action="/knn/vector-weights/reset" class="inline-form js-knn-reset-confirm"
+                  data-confirm="@T["Reset vector weights to the deployment configuration?"]">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-secondary btn-sm">@T["Reset to defaults"]</button>
+            </form>
+            <button type="submit" form="knn-weights-form" class="btn-primary btn-sm">@T["Save weights"]</button>
+        </div>
+    </section>
+    }
+
+</div>
+
+<div class="modal-overlay" id="knn-reset-modal" data-knn-modal hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="knn-reset-title"
+         aria-describedby="knn-reset-message">
+        <div class="modal-icon err">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10h-2a8 8 0 1 1-2.34-5.66L14 10h8V2l-2.93 2.93A9.96 9.96 0 0 0 12 2Z"/></svg>
+        </div>
+        <h3 class="modal-title" id="knn-reset-title">@T["Reset to defaults"]</h3>
+        <p class="modal-text" id="knn-reset-message">@T["Reset vector weights to the deployment configuration?"]</p>
+        <div class="modal-actions">
+            <button type="button" class="btn-secondary" data-close-knn-modal>@T["Cancel"]</button>
+            <button type="button" class="btn-danger-solid" id="knn-reset-confirm">@T["Reset to defaults"]</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/knn.js" asp-append-version="true"></script>
+}

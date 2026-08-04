@@ -1,0 +1,157 @@
+@using System.Text.Json
+@model VocaNova.Dashboard.Models.Dashboard.DashboardOverviewViewModel
+@{
+    ViewData["Title"] = T["Dashboard"];
+    var s = Model.Stats;
+
+    var activityJson = JsonSerializer.Serialize(new
+    {
+        granularity = Model.Activity?.Granularity ?? "daily",
+        labels = Model.Activity?.Points.Select(p => p.Period).ToArray() ?? Array.Empty<string>(),
+        sessions = Model.Activity?.Points.Select(p => p.SessionsCount).ToArray() ?? Array.Empty<int>(),
+        accuracy = Model.Activity?.Points.Select(p => p.Accuracy).ToArray() ?? Array.Empty<double>(),
+    });
+    var masteryJson = JsonSerializer.Serialize(new
+    {
+        labels = Model.Mastery?.Levels.Select(l => $"Level {l.Level}").ToArray() ?? Array.Empty<string>(),
+        values = Model.Mastery?.Levels.Select(l => l.WordCount).ToArray() ?? Array.Empty<int>(),
+        total = Model.Mastery?.TotalWordsInProgress ?? 0,
+    });
+
+    string SevBadge(string sev) => sev switch
+    {
+        "critical" => "badge badge-danger",
+        "warning" => "badge badge-warning",
+        _ => "badge badge-success",
+    };
+}
+
+<div class="page-header">
+    <h1 class="page-title">@T["Dashboard"]</h1>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card">
+        <span class="stat-icon tone-violet">
+            <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-8 9a8 8 0 1 1 16 0H4Z"/></svg>
+        </span>
+        <div class="stat-main">
+            <span class="stat-label">@T["Total users"]</span>
+            <span class="stat-value" id="stat-users">@(s?.TotalUsers.ToString("N0") ?? "—")</span>
+            <span class="stat-sub">@T["All registered learners"]</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon tone-cyan">
+            <svg viewBox="0 0 24 24"><path d="M5 4h10a4 4 0 0 1 4 4v12H8a3 3 0 0 1-3-3V4Zm3 14h9V8a2 2 0 0 0-2-2H7v11a1 1 0 0 0 1 1Z"/></svg>
+        </span>
+        <div class="stat-main">
+            <span class="stat-label">@T["Vocabulary"]</span>
+            <span class="stat-value" id="stat-words">@(s?.TotalWords.ToString("N0") ?? "—")</span>
+            <span class="stat-sub">@T["Words in the dictionary"]</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon tone-green">
+            <svg viewBox="0 0 24 24"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm3 9 2.5 2.5L16 9l-1.4-1.4-3.1 3.1-1.1-1.1L8 12Z"/></svg>
+        </span>
+        <div class="stat-main">
+            <span class="stat-label">@T["Sessions today"]</span>
+            <span class="stat-value" id="stat-sessions">@(s?.SessionsToday.ToString("N0") ?? "—")</span>
+            <span class="stat-sub">@T["Completed quiz sessions"]</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon tone-amber">
+            <svg viewBox="0 0 24 24"><path d="M5 3h14l-1 9a6 6 0 0 1-5 5.9V20h3v2H8v-2h3v-2.1A6 6 0 0 1 6 12L5 3Z"/></svg>
+        </span>
+        <div class="stat-main">
+            <span class="stat-label">@T["Success rate"]</span>
+            <span class="stat-value" id="stat-accuracy">@(s is null ? "—" : s.AvgAccuracy7d.ToString("0.#") + "%")</span>
+            <span class="stat-sub">@T["7-day average accuracy"]</span>
+        </div>
+    </div>
+</div>
+
+<div class="chart-grid">
+    <section class="panel chart-panel">
+        <div class="panel-head">
+            <div>
+                <h2 class="panel-title">@T["Learning progress analytics"]</h2>
+                <p class="chart-subtitle">@T["Sessions and accuracy over time"]</p>
+            </div>
+            <div class="chart-toolbar">
+                <select id="granularity" class="form-control granularity-select">
+                    <option value="daily">@T["Daily · 30 days"]</option>
+                    <option value="weekly">@T["Weekly · 12 weeks"]</option>
+                    <option value="monthly">@T["Monthly · 6 months"]</option>
+                </select>
+            </div>
+        </div>
+        <div class="chart-legend">
+            <span><span class="legend-dot" style="background:#6c5ce7"></span> @T["Sessions"]</span>
+            <span><span class="legend-dot" style="background:#22b8d6"></span> @T["Accuracy %"]</span>
+        </div>
+        <div class="chart-box"><canvas id="activity-chart" height="120" data-label-sessions="@T["Sessions"]" data-label-accuracy="@T["Accuracy %"]"></canvas></div>
+    </section>
+
+    <section class="panel chart-panel">
+        <div class="panel-head">
+            <div>
+                <h2 class="panel-title">@T["Mastery distribution"]</h2>
+                <p class="chart-subtitle" id="mastery-total"></p>
+            </div>
+        </div>
+        <div class="chart-box chart-box-pie"><canvas id="mastery-chart" height="120"></canvas></div>
+    </section>
+</div>
+
+<section class="panel table-panel" style="margin-top:16px;">
+    <div class="panel-head" style="padding:20px 22px 0;">
+        <h2 class="panel-title">@T["Most difficult words"]</h2>
+        <a class="panel-hint" href="/statistics">@T["View all →"]</a>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width:64px;">@T["Rank"]</th>
+                <th>@T["Vocabulary"]</th>
+                <th style="width:90px;">@T["Attempts"]</th>
+                <th style="width:220px;">@T["Failure rate"]</th>
+                <th style="width:120px;">@T["Status"]</th>
+            </tr>
+        </thead>
+        <tbody id="difficult-body" data-empty-message="@T["No quiz data yet."]">
+            @if (Model.DifficultWords.Count == 0)
+            {
+                <tr><td colspan="5" class="empty-row">@T["No quiz data yet."]</td></tr>
+            }
+            else
+            {
+                foreach (var w in Model.DifficultWords)
+                {
+                    <tr>
+                        <td><span class="rank-pill">#@w.Rank</span></td>
+                        <td class="word-text">@w.Word</td>
+                        <td>@w.Attempts</td>
+                        <td>
+                            <div class="rate-cell">
+                                <div class="rate-bar"><div class="rate-fill sev-@w.Severity" style="width:@(w.FailureRate)%"></div></div>
+                                <span class="rate-pct">@w.FailureRate%</span>
+                            </div>
+                        </td>
+                        <td><span class="@SevBadge(w.Severity)">@w.StatusLabel</span></td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</section>
+
+<script id="activity-data" type="application/json">@Html.Raw(activityJson)</script>
+<script id="mastery-data" type="application/json">@Html.Raw(masteryJson)</script>
+
+@section Scripts {
+    <script src="~/lib/chart/chart.umd.min.js"></script>
+    <script src="~/js/dashboard-overview.js" asp-append-version="true"></script>
+}

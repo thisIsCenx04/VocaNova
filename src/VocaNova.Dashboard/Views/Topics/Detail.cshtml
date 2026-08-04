@@ -1,0 +1,182 @@
+@using VocaNova.Dashboard.Models.Vocabulary
+@model VocaNova.Dashboard.Models.Topics.TopicDetailViewModel
+@{
+    ViewData["Title"] = T["Topic details"];
+    var pageSizes = new[] { 10, 20, 50, 100 };
+    // Bộ lọc dùng chung cho link phân trang và link sort.
+    List<string> BaseQuery() {
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(Model.Q)) qs.Add($"q={Uri.EscapeDataString(Model.Q)}");
+        if (!string.IsNullOrWhiteSpace(Model.Cefr)) qs.Add($"cefr={Uri.EscapeDataString(Model.Cefr)}");
+        if (!string.IsNullOrWhiteSpace(Model.WordType)) qs.Add($"wordType={Uri.EscapeDataString(Model.WordType)}");
+        if (!string.IsNullOrWhiteSpace(Model.Status)) qs.Add($"status={Uri.EscapeDataString(Model.Status)}");
+        if (Model.IncludeDeleted) qs.Add("includeDeleted=true");
+        qs.Add($"limit={Model.Limit}");
+        return qs;
+    }
+
+    string Url(int page) {
+        var qs = BaseQuery();
+        if (!string.IsNullOrWhiteSpace(Model.SortBy)) qs.Add($"sortBy={Model.SortBy}");
+        if (!string.IsNullOrWhiteSpace(Model.SortDirection)) qs.Add($"sortDirection={Model.SortDirection}");
+        qs.Add($"page={page}");
+        return $"/topics/{Model.Topic.TopicId}?{string.Join("&", qs)}";
+    }
+
+    string SortUrl(string column) {
+        var direction = Model.SortBy == column && Model.SortDirection == "asc" ? "desc" : "asc";
+        var qs = BaseQuery();
+        qs.Add("page=1");
+        qs.Add($"sortBy={column}");
+        qs.Add($"sortDirection={direction}");
+        return $"/topics/{Model.Topic.TopicId}?{string.Join("&", qs)}";
+    }
+
+    string SortIcon(string column) => Model.SortBy != column
+        ? "bi bi-arrow-down-up th-sort-idle"
+        : (Model.SortDirection == "desc" ? "bi bi-caret-down-fill" : "bi bi-caret-up-fill");
+
+    string Badge(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
+
+    string TopicIconClass(string? icon) => !string.IsNullOrWhiteSpace(icon)
+        && icon.StartsWith("bi bi-", StringComparison.Ordinal)
+        && icon.Length <= 20
+            ? icon
+            : "bi bi-book";
+}
+
+<div class="page-header page-header-row">
+    <div>
+        <a href="/topics" class="btn-primary page-back-button">@T["Back"]</a>
+        <h1 class="page-title">@T["Topic Details"]</h1>
+    </div>
+    @if (Model.Topic.Status != "deleted")
+    {
+        <a href="/topics/@Model.Topic.TopicId/edit" class="btn-primary">@T["Edit topic"]</a>
+    }
+</div>
+
+@if (TempData["TopicSuccess"] is string successMessage) { <div class="alert alert-success">@T[successMessage]</div> }
+@if (TempData["TopicError"] is string topicError) { <div class="alert alert-danger">@T[topicError]</div> }
+
+<section class="panel topic-summary-panel">
+    <div class="topic-summary-icon" aria-hidden="true"><i class="@TopicIconClass(Model.Topic.Icon)"></i></div>
+    <div class="topic-summary-main">
+        <span class="info-label">@T["Topic"] #@Model.Topic.TopicId</span>
+        <h2 class="topic-summary-name">@Model.Topic.TopicName</h2>
+        <p class="topic-summary-sub">@(Model.Topic.TopicNameVi ?? T["No Vietnamese name"])</p>
+    </div>
+    <span class="@Badge(Model.Topic.Status)">@(Model.Topic.Status == "active" ? T["Active"] : Model.Topic.Status == "deleted" ? T["Deleted"] : T[Model.Topic.Status])</span>
+</section>
+
+<section class="panel topic-create-panel topic-detail-word-panel">
+<div class="panel-head"><h2 class="panel-title">@T["Vocabulary"]</h2></div>
+
+<div class="topic-keyword-launch">
+    <button type="button" id="topic-add-word-toggle" class="btn-primary topic-add-word-toggle"
+            aria-expanded="@(Model.IsAddingWord ? "true" : "false")" aria-controls="topic-add-word-panel">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span>@T["Add word"]</span>
+    </button>
+</div>
+
+<div class="topic-add-word-panel" id="topic-add-word-panel" hidden="@(!Model.IsAddingWord)">
+    <form method="post" action="/topics/@Model.Topic.TopicId/words" id="topic-add-word-form" class="topic-keyword-entry"
+          data-select-error="@T["Please select an existing vocabulary word from the suggestions."]">
+        @Html.AntiForgeryToken()
+        <div class="topic-keyword-autocomplete">
+            <input id="topic-add-word-input" class="form-control" type="search" autocomplete="off"
+                   placeholder="@T["Search for vocabulary..."]" role="combobox" aria-autocomplete="list"
+                   aria-expanded="false" aria-controls="topic-add-word-suggestions" />
+            <input id="topic-add-word-id" type="hidden" name="wordIds" />
+            <div id="topic-add-word-suggestions" class="topic-word-suggestions" role="listbox" hidden></div>
+        </div>
+        <button type="submit" class="btn-primary">@T["Add to Topic"]</button>
+        <button type="button" id="topic-add-word-cancel" class="btn-secondary">@T["Cancel adding word"]</button>
+    </form>
+    <p id="topic-add-word-error" class="field-validation-error topic-keyword-error" role="alert"></p>
+</div>
+
+<form method="get" action="/topics/@Model.Topic.TopicId" class="filter-bar">
+    <input type="text" name="q" value="@Model.Q" class="form-control" placeholder="@T["Search for vocabulary..."]" />
+    <input type="hidden" name="limit" value="@Model.Limit" />
+    <select name="cefr" class="form-control"><option value="">@T["CEFR Level"]</option>
+        @foreach (var level in VocabularyListViewModel.CefrLevels) { <option value="@level" selected="@(Model.Cefr == level)">@level</option> }
+    </select>
+    <select name="wordType" class="form-control"><option value="">@T["Word Type"]</option>
+        @foreach (var type in VocabularyListViewModel.WordTypes) { var typeLabel = char.ToUpper(type[0]) + type[1..]; <option value="@type" selected="@(Model.WordType == type)">@T[typeLabel]</option> }
+    </select>
+    <select name="status" class="form-control">
+        <option value="">@T["Any status"]</option><option value="active" selected="@(Model.Status == "active")">@T["Active"]</option><option value="deleted" selected="@(Model.Status == "deleted")">@T["Deleted"]</option>
+    </select>
+    <label class="checkbox-inline"><input type="checkbox" name="includeDeleted" value="true" checked="@Model.IncludeDeleted" /> @T["Show deleted"]</label>
+    <button type="submit" class="btn-primary">@T["Filter"]</button>
+    <a href="/topics/@Model.Topic.TopicId" class="btn-secondary">@T["Reset"]</a>
+</form>
+
+<div class="table-panel topic-word-table-panel"><table class="data-table">
+    <thead><tr>
+        <th><a class="th-sort @(Model.SortBy == "word" ? "active" : "")" href="@SortUrl("word")">@T["Vocabulary"] <i class="@SortIcon("word")" aria-hidden="true"></i></a></th>
+        <th style="width:130px;"><a class="th-sort @(Model.SortBy == "type" ? "active" : "")" href="@SortUrl("type")">@T["Word Type"] <i class="@SortIcon("type")" aria-hidden="true"></i></a></th>
+        <th style="width:80px;"><a class="th-sort @(Model.SortBy == "cefr" ? "active" : "")" href="@SortUrl("cefr")">@T["Level"] <i class="@SortIcon("cefr")" aria-hidden="true"></i></a></th>
+        <th style="width:150px;"><a class="th-sort @(Model.SortBy == "phonetic" ? "active" : "")" href="@SortUrl("phonetic")">@T["Phonetics"] <i class="@SortIcon("phonetic")" aria-hidden="true"></i></a></th>
+        <th style="width:110px;"><a class="th-sort @(Model.SortBy == "status" ? "active" : "")" href="@SortUrl("status")">@T["Status"] <i class="@SortIcon("status")" aria-hidden="true"></i></a></th>
+        <th style="width:80px;" class="col-actions">@T["Action"]</th>
+    </tr></thead>
+    <tbody>
+    @if (Model.Items.Count == 0) { <tr><td colspan="6" class="empty-row">@T["No words found."]</td></tr> }
+    @foreach (var item in Model.Items) {
+        <tr>
+            <td><a class="vocab-word" href="/vocabulary/@item.WordId">@item.Word</a></td>
+            <td>@(string.IsNullOrWhiteSpace(item.WordType) ? "—" : T[char.ToUpper(item.WordType[0]) + item.WordType[1..]])</td>
+            <td>@(item.Cefr ?? "—")</td>
+            <td>@(item.Phonetic ?? "—")</td>
+            <td><span class="@Badge(item.Status)">@(item.Status == "active" ? T["Active"] : item.Status == "deleted" ? T["Deleted"] : T[item.Status])</span></td>
+            <td class="col-actions">
+                <div class="action-icons">
+                    <a class="icon-link" href="/vocabulary/@item.WordId" title="@T["View details"]" aria-label="@T["View details"]">
+                        <svg viewBox="0 0 24 24"><path d="M12 5c-5 0-8.5 4.5-9.5 7 1 2.5 4.5 7 9.5 7s8.5-4.5 9.5-7c-1-2.5-4.5-7-9.5-7Zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
+                    </a>
+                </div>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table></div>
+
+<div class="table-foot-bar">
+<form method="get" action="/topics/@Model.Topic.TopicId" class="page-size-form">
+    @if (!string.IsNullOrWhiteSpace(Model.Q)) { <input type="hidden" name="q" value="@Model.Q" /> }
+    @if (!string.IsNullOrWhiteSpace(Model.Cefr)) { <input type="hidden" name="cefr" value="@Model.Cefr" /> }
+    @if (!string.IsNullOrWhiteSpace(Model.WordType)) { <input type="hidden" name="wordType" value="@Model.WordType" /> }
+    @if (!string.IsNullOrWhiteSpace(Model.Status)) { <input type="hidden" name="status" value="@Model.Status" /> }
+    @if (Model.IncludeDeleted) { <input type="hidden" name="includeDeleted" value="true" /> }
+    @if (!string.IsNullOrWhiteSpace(Model.SortBy)) { <input type="hidden" name="sortBy" value="@Model.SortBy" /> }
+    @if (!string.IsNullOrWhiteSpace(Model.SortDirection)) { <input type="hidden" name="sortDirection" value="@Model.SortDirection" /> }
+    <label class="page-size-control">
+        <span>@T["Items per page"]</span>
+        <select name="limit" class="form-control" data-page-size-select aria-label="@T["Items per page"]">
+            @foreach (var size in pageSizes)
+            {
+                <option value="@size" selected="@(Model.Limit == size)">@size</option>
+            }
+        </select>
+    </label>
+</form>
+@if (Model.TotalPages > 1) {
+    var winStart = Math.Max(1, Model.Page - 2);
+    var winEnd = Math.Min(Model.TotalPages, winStart + 4);
+    winStart = Math.Max(1, winEnd - 4);
+<nav class="pager" data-page="@Model.Page" data-total-pages="@Model.TotalPages">
+    @if (Model.HasPrevious) { <a class="pager-link" href="@Url(Model.Page - 1)">&lsaquo; @T["Prev"]</a> }
+    else { <span class="pager-link disabled">&lsaquo; @T["Prev"]</span> }
+    @for (var p = winStart; p <= winEnd; p++) { <a class="pager-link @(p == Model.Page ? "active" : "")" href="@Url(p)">@p</a> }
+    @if (Model.HasNext) { <a class="pager-link" href="@Url(Model.Page + 1)">@T["Next"] &rsaquo;</a> }
+    else { <span class="pager-link disabled">@T["Next"] &rsaquo;</span> }
+</nav> }
+</div>
+</section>
+
+@section Scripts {
+    <script src="~/js/topic-detail.js" asp-append-version="true"></script>
+}

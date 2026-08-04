@@ -1,0 +1,74 @@
+using System.Text.Json;
+using FluentAssertions;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
+using VocaNova.API.Middleware;
+
+namespace VocaNova.Tests.Shared;
+
+public class ExceptionMiddlewareTests
+{
+    [Fact]
+    public async Task InvokeAsync_Should_Return_500_Response_Without_Exception_Details_In_Production()
+    {
+        var context = new DefaultHttpContext();
+        var responseBody = new MemoryStream();
+        context.Response.Body = responseBody;
+
+        var middleware = new ExceptionMiddleware(
+            _ => throw new InvalidOperationException("Sensitive database failure."),
+            NullLogger<ExceptionMiddleware>.Instance,
+            new FakeHostEnvironment(Environments.Production));
+
+        await middleware.InvokeAsync(context);
+
+        responseBody.Position = 0;
+        using var json = await JsonDocument.ParseAsync(responseBody);
+        var root = json.RootElement;
+
+        context.Response.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+        context.Response.ContentType.Should().Be("application/json");
+        root.GetProperty("success").GetBoolean().Should().BeFalse();
+        root.GetProperty("message").GetString().Should().Be("An unexpected error occurred.");
+        root.ToString().Should().NotContain("Sensitive database failure.");
+        root.ToString().Should().NotContain("InvalidOperationException");
+    }
+
+    [Fact]
+    public async Task InvokeAsync_Should_Expose_Exception_Details_In_Development()
+    {
+        var context = new DefaultHttpContext();
+        var responseBody = new MemoryStream();
+        context.Response.Body = responseBody;
+
+        var middleware = new ExceptionMiddleware(
+            _ => throw new InvalidOperationException("Sensitive database failure."),
+            NullLogger<ExceptionMiddleware>.Instance,
+            new FakeHostEnvironment(Environments.Development));
+
+        await middleware.InvokeAsync(context);
+
+        responseBody.Position = 0;
+        using var json = await JsonDocument.ParseAsync(responseBody);
+        var root = json.RootElement;
+
+        context.Response.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+        root.ToString().Should().Contain("InvalidOperationException");
+        root.ToString().Should().Contain("Sensitive database failure.");
+    }
+
+    private sealed class FakeHostEnvironment : IHostEnvironment
+    {
+        public FakeHostEnvironment(string environmentName)
+        {
+            EnvironmentName = environmentName;
+        }
+
+        public string EnvironmentName { get; set; }
+        public string ApplicationName { get; set; } = "VocaNova.Tests";
+        public string ContentRootPath { get; set; } = string.Empty;
+        public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; } =
+            new Microsoft.Extensions.FileProviders.NullFileProvider();
+    }
+}

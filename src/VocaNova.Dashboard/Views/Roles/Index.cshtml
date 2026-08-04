@@ -1,0 +1,115 @@
+@model VocaNova.Dashboard.Models.Roles.RoleManagementViewModel
+@{
+    ViewData["Title"] = T["Role Management"];
+
+    string SortUrl(string column)
+    {
+        var direction = Model.SortBy == column && Model.SortDirection == "asc" ? "desc" : "asc";
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(Model.Search)) qs.Add($"search={Uri.EscapeDataString(Model.Search)}");
+        if (!string.IsNullOrWhiteSpace(Model.Type)) qs.Add($"type={Model.Type}");
+        qs.Add($"sortBy={column}");
+        qs.Add($"sortDirection={direction}");
+        return "/roles?" + string.Join("&", qs);
+    }
+
+    string SortIcon(string column) => Model.SortBy != column
+        ? "bi bi-arrow-down-up th-sort-idle"
+        : (Model.SortDirection == "desc" ? "bi bi-caret-down-fill" : "bi bi-caret-up-fill");
+}
+
+<div class="page-header admin-accounts-header">
+    <div>
+        <h1 class="page-title">@T["Role Management"]</h1>
+    </div>
+    <div class="role-header-actions">
+        <a class="btn-primary" href="/roles/create">@T["Add Role"]</a>
+    </div>
+</div>
+
+@if (TempData["RoleSuccess"] is string success) { <div class="alert alert-success">@T[success]</div> }
+@if (TempData["RoleError"] is string error) { <div class="alert alert-danger">@T[error]</div> }
+@if (Model.RolesUnavailable)
+{
+    <div class="alert alert-danger">@T["Unable to load roles. Make sure the API has been restarted and is available."]</div>
+}
+
+<form method="get" action="/roles" class="filter-bar">
+    <input type="text" name="search" value="@Model.Search" class="form-control"
+           placeholder="@T["Search by role name..."]" />
+    <select name="type" class="form-control select-arrow">
+        <option value="">@T["All role types"]</option>
+        <option value="system" selected="@(Model.Type == "system")">@T["System roles"]</option>
+        <option value="custom" selected="@(Model.Type == "custom")">@T["Custom roles"]</option>
+    </select>
+    <button type="submit" class="btn-primary">@T["Filter"]</button>
+    <a href="/roles" class="btn-secondary">@T["Reset"]</a>
+</form>
+
+<div class="panel table-panel" style="margin-bottom:24px">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>
+                    <a class="th-sort @(Model.SortBy == "id" ? "active" : "")" href="@SortUrl("id")">
+                        @T["ID"] <i class="@SortIcon("id")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th>
+                    <a class="th-sort @(Model.SortBy == "name" ? "active" : "")" href="@SortUrl("name")">
+                        @T["Role"] <i class="@SortIcon("name")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th class="col-actions">@T["Actions"]</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Roles.Count == 0)
+        {
+            <tr><td colspan="3" class="empty-row">@T["No roles found."]</td></tr>
+        }
+        else
+        {
+            foreach (var role in Model.Roles)
+            {
+                var isSystem = role.RoleName is "user" or "admin" or "super_admin";
+                <tr>
+                    <td>@role.RoleId</td>
+                    <td><strong>@role.RoleName</strong></td>
+                    <td class="col-actions">
+                        <div class="action-icons">
+                            @if (isSystem)
+                            {
+                                <button class="icon-link" type="button" disabled
+                                        title="@T["System role names cannot be changed."]" aria-label="@T["Edit"]">
+                                    <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></svg>
+                                </button>
+                                <button class="icon-link danger" type="button" disabled
+                                        title="@T["System roles cannot be deleted."]" aria-label="@T["Delete"]">
+                                    <svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Z"/></svg>
+                                </button>
+                            }
+                            else
+                            {
+                                <a class="icon-link" href="/roles/@role.RoleId/edit"
+                                   title="@T["Edit"]" aria-label="@T["Edit"]">
+                                    <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></svg>
+                                </a>
+                                <form method="post" action="/roles/@role.RoleId/delete" class="inline-form"
+                                      data-confirm-title="@T["Delete"]" data-confirm-message="@T["Delete this role?"]"
+                                      data-confirm-button="@T["Delete"]" data-confirm-danger="true">
+                                    @Html.AntiForgeryToken()
+                                    <button class="icon-link danger" type="submit"
+                                            title="@T["Delete"]" aria-label="@T["Delete"]">
+                                        <svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Z"/></svg>
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>

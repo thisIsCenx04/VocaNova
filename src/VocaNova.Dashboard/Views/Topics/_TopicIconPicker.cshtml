@@ -1,0 +1,134 @@
+@model string
+@{
+    const string DefaultIcon = "bi bi-book";
+    var currentIcon = !string.IsNullOrWhiteSpace(Model)
+        && Model.StartsWith("bi bi-", StringComparison.Ordinal)
+        && Model.Length <= 20
+            ? Model
+            : DefaultIcon;
+
+    // Lưu thẳng Bootstrap Icon class để icon nhất quán ở form, danh sách và trang chi tiết.
+    var groups = new (string Key, string Label, string Tab, (string Icon, string Keywords)[] Icons)[]
+    {
+        ("learning", "Learning", "bi bi-book",
+        [
+            ("bi bi-book", "book study library"), ("bi bi-book-half", "open book read reading"),
+            ("bi bi-pencil", "pencil write writing"), ("bi bi-mortarboard", "graduation school university"),
+            ("bi bi-lightbulb", "idea learn memory"), ("bi bi-translate", "language translate alphabet"),
+            ("bi bi-journal", "journal note exam"), ("bi bi-chat-dots", "speaking chat pronunciation"),
+        ]),
+        ("daily", "Daily life", "bi bi-house",
+        [
+            ("bi bi-house", "home house"), ("bi bi-cup-hot", "food drink cafe"),
+            ("bi bi-cart", "shopping cart supermarket"), ("bi bi-bag", "clothes shopping bag"),
+            ("bi bi-clock", "time clock daily"), ("bi bi-telephone", "phone call telephone"),
+            ("bi bi-envelope", "email mail letter"), ("bi bi-people", "family people friends"),
+        ]),
+        ("work", "Work", "bi bi-briefcase",
+        [
+            ("bi bi-briefcase", "work business job"), ("bi bi-building", "office company building"),
+            ("bi bi-laptop", "computer laptop technology"), ("bi bi-bar-chart", "chart report statistics"),
+            ("bi bi-graph-up", "growth increase sales"), ("bi bi-cash", "money finance salary"),
+            ("bi bi-calendar", "calendar meeting schedule"), ("bi bi-tools", "tools engineering industry"),
+        ]),
+        ("travel", "Travel", "bi bi-airplane",
+        [
+            ("bi bi-airplane", "plane flight airport travel"), ("bi bi-globe", "world global country"),
+            ("bi bi-map", "map direction navigation"), ("bi bi-car-front", "car drive road"),
+            ("bi bi-train-front", "train railway station"), ("bi bi-suitcase", "luggage suitcase baggage"),
+            ("bi bi-signpost", "signpost direction route"), ("bi bi-compass", "compass explore journey"),
+        ]),
+        ("nature", "Nature", "bi bi-tree",
+        [
+            ("bi bi-tree", "tree forest plant"), ("bi bi-flower1", "flower blossom spring"),
+            ("bi bi-cloud-sun", "weather cloud sun"), ("bi bi-water", "sea ocean wave water"),
+            ("bi bi-fire", "fire flame heat"), ("bi bi-moon", "moon night sky"),
+            ("bi bi-sun", "sun sunny day"), ("bi bi-snow", "snow winter cold"),
+        ]),
+        ("culture", "Culture", "bi bi-palette",
+        [
+            ("bi bi-palette", "art paint drawing"), ("bi bi-music-note", "music song sound"),
+            ("bi bi-film", "film movie cinema"), ("bi bi-camera", "photo camera picture"),
+            ("bi bi-controller", "game gaming controller"), ("bi bi-newspaper", "news newspaper press"),
+            ("bi bi-trophy", "sport award trophy"), ("bi bi-stars", "festival celebration stars"),
+        ]),
+        ("health", "Health", "bi bi-heart-pulse",
+        [
+            ("bi bi-heart-pulse", "heart health medical"), ("bi bi-capsule", "medicine pill drug"),
+            ("bi bi-hospital", "hospital clinic doctor"), ("bi bi-activity", "exercise activity fitness"),
+            ("bi bi-bandaid", "bandage injury first aid"), ("bi bi-heart", "heart care wellness"),
+        ]),
+    };
+}
+
+<div class="topic-icon-picker" data-topic-icon-picker>
+    <button type="button" class="topic-icon-trigger" data-topic-icon-trigger
+            aria-haspopup="dialog" aria-labelledby="topic-icon-label">
+        <i class="topic-icon-preview @currentIcon" data-topic-icon-preview aria-hidden="true"></i>
+        <span class="topic-icon-code" data-topic-icon-code>@currentIcon</span>
+        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+    </button>
+    <input type="hidden" name="Icon" value="@currentIcon" data-topic-icon-input />
+</div>
+
+<div class="modal-overlay" id="topic-icon-modal" data-topic-icon-modal
+     data-invalid-icon="@T["Please enter a valid Bootstrap icon class, for example: bi bi-book."]"
+     role="dialog" aria-modal="true"
+     aria-labelledby="topic-icon-modal-title" hidden>
+    <div class="modal-card topic-icon-modal-card">
+        <div class="topic-icon-modal-head">
+            <h3 class="modal-title" id="topic-icon-modal-title">@T["Choose an icon"]</h3>
+            <button type="button" class="topic-icon-close" data-topic-icon-close
+                    aria-label="@T["Close"]">&times;</button>
+        </div>
+
+        <input type="search" class="form-control topic-icon-search" data-topic-icon-search
+               placeholder="@T["Search icons..."]" autocomplete="off" aria-label="@T["Search icons..."]" />
+
+        <div class="topic-icon-tabs" role="tablist">
+            @foreach (var group in groups)
+            {
+                <button type="button" class="topic-icon-tab" data-topic-icon-tab="@group.Key"
+                        role="tab" title="@T[group.Label]" aria-label="@T[group.Label]">
+                    <i class="@group.Tab" aria-hidden="true"></i>
+                </button>
+            }
+        </div>
+
+        <div class="topic-icon-scroll" data-topic-icon-scroll>
+            @foreach (var group in groups)
+            {
+                <section class="topic-icon-group" data-topic-icon-group="@group.Key">
+                    <span class="topic-icon-group-label">@T[group.Label]</span>
+                    <div class="topic-icon-grid">
+                        @foreach (var (icon, keywords) in group.Icons)
+                        {
+                            <button type="button" class="topic-icon-option @(icon == currentIcon ? "is-selected" : "")"
+                                    data-topic-icon-option="@icon" data-keywords="@keywords @icon"
+                                    title="@icon" aria-label="@icon">
+                                <i class="@icon" aria-hidden="true"></i>
+                            </button>
+                        }
+                    </div>
+                </section>
+            }
+            <p class="topic-icon-empty is-hidden" data-topic-icon-empty>@T["No icons match your search."]</p>
+        </div>
+
+        <div class="topic-icon-custom">
+            <label for="topic-icon-custom-code">@T["Bootstrap icon class"]</label>
+            <div class="topic-icon-custom-row">
+                <input id="topic-icon-custom-code" type="text" class="form-control" maxlength="20"
+                       data-topic-icon-custom placeholder="bi bi-book" autocomplete="off" />
+                <button type="button" class="btn-secondary btn-sm" data-topic-icon-apply>@T["Apply"]</button>
+            </div>
+            <small>@T["Example: bi bi-book"]</small>
+            <p class="field-validation-error topic-icon-custom-error" data-topic-icon-error role="alert"></p>
+        </div>
+
+        <div class="topic-icon-modal-foot">
+            <button type="button" class="btn-secondary btn-sm" data-topic-icon-clear>@T["Clear"]</button>
+            <button type="button" class="btn-secondary btn-sm" data-topic-icon-close>@T["Close"]</button>
+        </div>
+    </div>
+</div>

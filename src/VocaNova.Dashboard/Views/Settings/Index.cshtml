@@ -1,0 +1,198 @@
+@{
+    ViewData["Title"] = T["Setting"];
+    var theme = (ViewData["Theme"] as string) ?? "light";
+    var language = (ViewData["Language"] as string) ?? "vi";
+    var ai = ViewData["AiGrading"] as VocaNova.Dashboard.Models.Api.Settings.AiGradingConfig;
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+}
+
+<div class="page-header">
+    <h1 class="page-title">@T["Setting"]</h1>
+</div>
+
+@if (TempData["SettingsSaved"] is string saved)
+{
+    <div class="alert alert-success">@T[saved]</div>
+}
+
+<form method="post" action="/settings" id="settings-form" class="settings-form">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="theme" id="theme-input" value="@theme" />
+    <input type="hidden" name="language" id="language-input" value="@language" />
+
+    <section class="settings-panel">
+        <header class="settings-panel-head">
+            <h2 class="settings-panel-title">@T["Appearance"]</h2>
+            <p class="settings-panel-sub">@T["Select your preferred viewing experience."]</p>
+        </header>
+
+        <div class="appearance-grid">
+            <button type="button" class="appearance-card js-theme @(theme == "light" ? "is-selected" : "")" data-theme="light">
+                <span class="appearance-icon icon-light">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 4V2m0 20v-2m8-8h2M2 12h2m13.66-5.66 1.41-1.41M4.93 19.07l1.41-1.41m0-11.32L4.93 4.93m14.14 14.14-1.41-1.41M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="appearance-text">
+                    <span class="appearance-title">@T["Light Mode"]</span>
+                </span>
+                <span class="radio-dot" aria-hidden="true"></span>
+            </button>
+
+            <button type="button" class="appearance-card js-theme @(theme == "dark" ? "is-selected" : "")" data-theme="dark">
+                <span class="appearance-icon icon-dark">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="appearance-text">
+                    <span class="appearance-title">@T["Dark Mode"]</span>
+                </span>
+                <span class="radio-dot" aria-hidden="true"></span>
+            </button>
+        </div>
+    </section>
+
+    <section class="settings-panel">
+        <header class="settings-panel-head">
+            <h2 class="settings-panel-title">@T["Language"]</h2>
+            <p class="settings-panel-sub">@T["Choose the primary language for the administrative console."]</p>
+        </header>
+
+        <div class="language-list">
+            <button type="button" class="language-row js-language @(language == "vi" ? "is-selected" : "")" data-language="vi">
+                <span class="language-icon">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </span>
+                <span class="language-text">
+                    <span class="language-title">@T["Vietnamese"]</span>
+                </span>
+                <span class="radio-dot" aria-hidden="true"></span>
+            </button>
+
+            <button type="button" class="language-row js-language @(language == "en" ? "is-selected" : "")" data-language="en">
+                <span class="language-icon">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </span>
+                <span class="language-text">
+                    <span class="language-title">@T["English"]</span>
+                </span>
+                <span class="radio-dot" aria-hidden="true"></span>
+            </button>
+        </div>
+    </section>
+
+@if (TempData["AiGradingSaved"] is string aiSaved)
+{
+    <div class="alert alert-success">@T[aiSaved]</div>
+}
+@if (TempData["AiGradingError"] is string aiError)
+{
+    <div class="alert alert-danger">@T[aiError]</div>
+}
+
+<section class="settings-panel ai-settings-panel">
+    <header class="settings-panel-head">
+        <h2 class="settings-panel-title">@T["AI grading"]</h2>
+        <p class="settings-panel-sub">@T["Provider, model and credentials used to grade free-text quiz answers."]</p>
+    </header>
+
+    @if (ai is null)
+    {
+        <p class="text-muted">@T["AI grading configuration is unavailable."]</p>
+    }
+    else
+    {
+        <input type="hidden" name="save_ai" value="true" />
+        <div class="ai-grading-grid">
+                <label class="form-field">
+                    <span>@T["Provider"]</span>
+                    <select name="provider" class="form-control">
+                        @foreach (var provider in ai.SupportedProviders)
+                        {
+                            <option value="@provider" selected="@(provider == ai.Provider)">@provider</option>
+                        }
+                    </select>
+                    <small>@T["Only providers with a working client can be selected."]</small>
+                </label>
+
+                <label class="form-field">
+                    <span>@T["Model"]</span>
+                    <input type="text" name="model" value="@ai.Model" class="form-control" maxlength="100" />
+                    <small>@T["Primary model used for grading."]</small>
+                </label>
+
+                <label class="form-field">
+                    <span>@T["Endpoint"]</span>
+                    <input type="url" name="endpoint" value="@ai.Endpoint" class="form-control" />
+                </label>
+
+                <label class="form-field">
+                    <span>@T["Fallback models"]</span>
+                    <input type="text" name="fallback_models" value="@string.Join(", ", ai.FallbackModels)"
+                           class="form-control" placeholder="model-a, model-b" />
+                    <small>@T["Comma separated. Tried in order when the primary model is unavailable."]</small>
+                </label>
+
+                <label class="form-field">
+                    <span>@T["API key"]</span>
+                    <input type="password" name="api_key" class="form-control" autocomplete="new-password"
+                           placeholder="@(ai.HasApiKey ? ai.ApiKeyHint : T["No API key configured"])" />
+                    <small>
+                        @if (ai.HasApiKey)
+                        {
+                            @T["A key is configured. Leave blank to keep it; type a new one to replace it."]
+                        }
+                        else
+                        {
+                            @T["No key is configured — grading falls back to exact matching until one is set."]
+                        }
+                    </small>
+                </label>
+
+                <label class="form-field">
+                    <span>@T["Pass threshold"]</span>
+                    <input type="number" name="pass_threshold" value="@ai.PassThreshold.ToString(inv)"
+                           step="0.05" min="0" max="1" class="form-control" />
+                    <small>@T["Score at or above which an answer counts as correct."]</small>
+                </label>
+
+                <label class="form-field">
+                    <span>@T["Max attempts"]</span>
+                    <input type="number" name="max_attempts" value="@ai.MaxAttempts"
+                           step="1" min="1" max="4" class="form-control" />
+                </label>
+
+                <label class="form-field">
+                    <span>@T["Retry base delay (ms)"]</span>
+                    <input type="number" name="retry_base_delay_ms" value="@ai.RetryBaseDelayMs"
+                           step="50" min="0" max="5000" class="form-control" />
+                </label>
+
+                <label class="form-field">
+                    <span>@T["Attempt timeout (s)"]</span>
+                    <input type="number" name="attempt_timeout_seconds" value="@ai.AttemptTimeoutSeconds"
+                           step="1" min="1" max="15" class="form-control" />
+                </label>
+        </div>
+
+        <div class="settings-actions ai-settings-actions">
+            <button type="submit" formaction="/settings/ai-grading/test" formmethod="post" formnovalidate
+                    class="btn-sm ai-action-btn ai-action-test">@T["Test connection"]</button>
+            <button type="submit" formaction="/settings/ai-grading/reset" formmethod="post" formnovalidate
+                    class="btn-sm ai-action-btn ai-action-reset"
+                    data-confirm-title="@T["Reset to defaults"]"
+                    data-confirm-message="@T["Reset AI grading settings to the built-in defaults? The API key is kept."]"
+                    data-confirm-button="@T["Reset to defaults"]">
+                @T["Reset to defaults"]
+            </button>
+        </div>
+
+    }
+</section>
+
+<div class="settings-actions settings-page-actions">
+    <a href="/settings" class="btn-secondary">@T["Cancel"]</a>
+    <button type="submit" class="btn-primary">@T["Save Changes"]</button>
+</div>
+</form>
+
+@section Scripts {
+    <script src="~/js/settings.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,317 @@
+@using VocaNova.Dashboard.Models.Knn
+@model KnnLookupViewModel
+@{
+    var managementTitle = $"{Model.Title} Management";
+    var itemTitle = Model.Slug switch
+    {
+        "age-ranges" => "Age Range",
+        "regions" => "Region",
+        "occupations" => "Occupation",
+        "education-levels" => "Education Level",
+        "learning-purposes" => "Learning Purpose",
+        _ => Model.Title.TrimEnd('s'),
+    };
+    ViewData["Title"] = T[managementTitle];
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var colSpan = Model.Columns.Count + 3;
+    var pageSizes = new[] { 10, 20, 50, 100 };
+
+    string StatusBadge(string status) => status == "deleted" ? "badge badge-danger" : "badge badge-success";
+
+    // Bộ lọc dùng chung cho link phân trang và link sort.
+    List<string> BaseQuery()
+    {
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(Model.Q)) qs.Add($"q={Uri.EscapeDataString(Model.Q)}");
+        if (!string.IsNullOrWhiteSpace(Model.Status)) qs.Add($"status={Model.Status}");
+        if (Model.IncludeDeleted) qs.Add("includeDeleted=true");
+        qs.Add($"limit={Model.PageSize}");
+        return qs;
+    }
+
+    string PageUrl(int page)
+    {
+        var qs = BaseQuery();
+        if (!string.IsNullOrWhiteSpace(Model.SortBy)) qs.Add($"sortBy={Model.SortBy}");
+        if (!string.IsNullOrWhiteSpace(Model.SortDirection)) qs.Add($"sortDirection={Model.SortDirection}");
+        qs.Add($"page={page}");
+        return $"/knn/{Model.Slug}?" + string.Join("&", qs);
+    }
+
+    string SortUrl(string column)
+    {
+        var direction = Model.SortBy == column && Model.SortDirection == "asc" ? "desc" : "asc";
+        var qs = BaseQuery();
+        qs.Add("page=1");
+        qs.Add($"sortBy={column}");
+        qs.Add($"sortDirection={direction}");
+        return $"/knn/{Model.Slug}?" + string.Join("&", qs);
+    }
+
+    string SortIcon(string column) => Model.SortBy != column
+        ? "bi bi-arrow-down-up th-sort-idle"
+        : (Model.SortDirection == "desc" ? "bi bi-caret-down-fill" : "bi bi-caret-up-fill");
+}
+
+@functions {
+    string InputType(KnnFieldDef field) => field.Type == "number" ? "number" : "text";
+}
+
+<div class="page-header page-header-row">
+    <div>
+        <a class="btn-primary page-back-button" href="/knn">@T["Back"]</a>
+        <h1 class="page-title">@T[managementTitle]</h1>
+    </div>
+    <button type="button" class="btn-primary" data-open-knn-modal="knn-create-modal"
+            aria-haspopup="dialog" aria-controls="knn-create-modal">
+        @T["Add item"]
+    </button>
+</div>
+
+@if (TempData["KnnSuccess"] is string okMsg)
+{
+    <div class="alert alert-success">@T[okMsg]</div>
+}
+@if (TempData["KnnError"] is string errMsg)
+{
+    <div class="alert alert-danger">@T[errMsg]</div>
+}
+
+<form method="get" action="/knn/@Model.Slug" class="filter-bar">
+    <input type="text" name="q" value="@Model.Q" class="form-control" placeholder="@T["Search by name..."]" />
+    <input type="hidden" name="limit" value="@Model.PageSize" />
+    <select name="status" class="form-control">
+        <option value="">@T["All status"]</option>
+        <option value="active" selected="@(Model.Status == "active")">@T["Active"]</option>
+        <option value="deleted" selected="@(Model.Status == "deleted")">@T["Deleted"]</option>
+    </select>
+    <label class="checkbox-inline">
+        <input type="checkbox" name="includeDeleted" value="true" checked="@Model.IncludeDeleted" />
+        @T["Show deleted"]
+    </label>
+    <button type="submit" class="btn-primary">@T["Filter"]</button>
+    <a href="/knn/@Model.Slug" class="btn-secondary">@T["Reset"]</a>
+</form>
+
+<div class="panel table-panel">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width:80px;">
+                    <a class="th-sort @(Model.SortBy == "id" ? "active" : "")" href="@SortUrl("id")">
+                        @T["Item ID"] <i class="@SortIcon("id")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                @foreach (var column in Model.Columns)
+                {
+                    <th>
+                        @if (column.SortKey is null)
+                        {
+                            @T[column.Label]
+                        }
+                        else
+                        {
+                            <a class="th-sort @(Model.SortBy == column.SortKey ? "active" : "")" href="@SortUrl(column.SortKey)">
+                                @T[column.Label] <i class="@SortIcon(column.SortKey)" aria-hidden="true"></i>
+                            </a>
+                        }
+                    </th>
+                }
+                <th style="width:110px;">
+                    <a class="th-sort @(Model.SortBy == "status" ? "active" : "")" href="@SortUrl("status")">
+                        @T["Status"] <i class="@SortIcon("status")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th style="width:110px;" class="col-actions">@T["Action"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Rows.Count == 0)
+            {
+                <tr><td colspan="@colSpan" class="empty-row">@T["No items found."]</td></tr>
+            }
+            else
+            {
+                foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td><span class="rank-pill">#@row.Id</span></td>
+                        @foreach (var cell in row.Cells)
+                        {
+                            <td>@(string.IsNullOrWhiteSpace(cell) ? "—" : cell)</td>
+                        }
+                        <td><span class="@StatusBadge(row.Status)">@T[row.Status switch { "active" => "Active", "deleted" => "Deleted", _ => row.Status }]</span></td>
+                        <td class="col-actions">
+                            <div class="action-icons">
+                                @if (row.Status != "deleted")
+                                {
+                                    <button type="button" class="icon-link" data-open-knn-modal="knn-edit-modal-@row.Id"
+                                            aria-haspopup="dialog" aria-controls="knn-edit-modal-@row.Id"
+                                            title="@T["Edit"]" aria-label="@T["Edit"]">
+                                        <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></svg>
+                                    </button>
+                                    <button type="button" class="icon-link danger js-knn-delete" data-id="@row.Id"
+                                            data-name="@(row.Cells.FirstOrDefault() ?? $"item #{row.Id}")"
+                                            title="@T["Delete"]" aria-label="@T["Delete"]">
+                                        <svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Z"/></svg>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <form method="post" action="/knn/@Model.Slug/restore" class="inline-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@row.Id" />
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button type="submit" class="icon-link ok" title="@T["Restore"]" aria-label="@T["Restore"]">
+                                            <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8Z"/></svg>
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="table-foot-bar">
+    <form method="get" action="/knn/@Model.Slug" class="page-size-form">
+        @if (!string.IsNullOrWhiteSpace(Model.Q)) { <input type="hidden" name="q" value="@Model.Q" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.Status)) { <input type="hidden" name="status" value="@Model.Status" /> }
+        @if (Model.IncludeDeleted) { <input type="hidden" name="includeDeleted" value="true" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.SortBy)) { <input type="hidden" name="sortBy" value="@Model.SortBy" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.SortDirection)) { <input type="hidden" name="sortDirection" value="@Model.SortDirection" /> }
+        <label class="page-size-control">
+            <span>@T["Items per page"]</span>
+            <select name="limit" class="form-control" data-page-size-select aria-label="@T["Items per page"]">
+                @foreach (var size in pageSizes)
+                {
+                    <option value="@size" selected="@(Model.PageSize == size)">@size</option>
+                }
+            </select>
+        </label>
+    </form>
+    @if (Model.TotalPages > 1)
+    {
+        var winStart = Math.Max(1, Model.Page - 2);
+        var winEnd = Math.Min(Model.TotalPages, winStart + 4);
+        winStart = Math.Max(1, winEnd - 4);
+        <nav class="pager" aria-label="@T["Pagination"]" data-page="@Model.Page" data-total-pages="@Model.TotalPages">
+            @if (Model.HasPrevious)
+            {
+                <a class="pager-link" href="@PageUrl(Model.Page - 1)">&lsaquo; @T["Prev"]</a>
+            }
+            else
+            {
+                <span class="pager-link disabled">&lsaquo; @T["Prev"]</span>
+            }
+            @for (var p = winStart; p <= winEnd; p++)
+            {
+                <a class="pager-link @(p == Model.Page ? "active" : "")" href="@PageUrl(p)">@p</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="pager-link" href="@PageUrl(Model.Page + 1)">@T["Next"] &rsaquo;</a>
+            }
+            else
+            {
+                <span class="pager-link disabled">@T["Next"] &rsaquo;</span>
+            }
+        </nav>
+    }
+</div>
+
+<div class="modal-overlay" id="knn-create-modal" data-knn-modal hidden>
+    <div class="modal-card management-modal-card" role="dialog" aria-modal="true" aria-labelledby="knn-create-title">
+        <div class="management-modal-head">
+            <div class="management-modal-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"/></svg>
+            </div>
+            <div>
+                <h3 class="modal-title" id="knn-create-title">@T["Add"] @T[itemTitle]</h3>
+                <p class="modal-text">@T["Enter the lookup information, then save the new item."]</p>
+            </div>
+        </div>
+        <form method="post" action="/knn/@Model.Slug/save" class="management-modal-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="0" />
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+            <div class="management-modal-fields">
+                @foreach (var field in Model.AddFields)
+                {
+                    <label class="form-field">
+                        <span>@field.Label@(field.Required ? " *" : "")</span>
+                        <input type="@InputType(field)" name="@field.Name" value="@field.Value" class="form-control"
+                               placeholder="@field.Label" required="@(field.Required ? "required" : null)" />
+                    </label>
+                }
+            </div>
+            <div class="modal-actions management-modal-actions">
+                <button type="button" class="btn-secondary" data-close-knn-modal>@T["Cancel"]</button>
+                <button type="submit" class="btn-primary">@T["Save"]</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@foreach (var row in Model.Rows.Where(item => item.Status != "deleted"))
+{
+    <div class="modal-overlay" id="knn-edit-modal-@row.Id" data-knn-modal hidden>
+        <div class="modal-card management-modal-card" role="dialog" aria-modal="true" aria-labelledby="knn-edit-title-@row.Id">
+            <div class="management-modal-head">
+                <div class="management-modal-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></svg>
+                </div>
+                <div>
+                    <h3 class="modal-title" id="knn-edit-title-@row.Id">@T["Edit"] @T[itemTitle]</h3>
+                    <p class="modal-text">@T["Update the lookup information and save your changes."]</p>
+                </div>
+            </div>
+            <form method="post" action="/knn/@Model.Slug/save" class="management-modal-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@row.Id" />
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                <div class="management-modal-fields">
+                    @foreach (var field in row.Fields)
+                    {
+                        <label class="form-field">
+                            <span>@field.Label@(field.Required ? " *" : "")</span>
+                            <input type="@InputType(field)" name="@field.Name" value="@field.Value" class="form-control"
+                                   placeholder="@field.Label" required="@(field.Required ? "required" : null)" />
+                        </label>
+                    }
+                </div>
+                <div class="modal-actions management-modal-actions">
+                    <button type="button" class="btn-secondary" data-close-knn-modal>@T["Cancel"]</button>
+                    <button type="submit" class="btn-primary">@T["Save changes"]</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+<div class="modal-overlay" id="knn-delete-modal" data-knn-modal hidden
+     data-message="@T["Delete {0}? This item can be restored later."]">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="knn-delete-title">
+        <div class="modal-icon err">
+            <svg viewBox="0 0 24 24"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Z"/></svg>
+        </div>
+        <h3 class="modal-title" id="knn-delete-title">@T["Delete item"]</h3>
+        <p class="modal-text" id="knn-delete-text"></p>
+        <div class="modal-actions">
+            <button type="button" class="btn-secondary" data-close-knn-modal>@T["Cancel"]</button>
+            <form method="post" action="/knn/@Model.Slug/delete" id="knn-delete-form" class="inline-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="knn-delete-id" />
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                <button type="submit" class="btn-danger-solid">@T["Delete"]</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/knn.js" asp-append-version="true"></script>
+}

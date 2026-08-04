@@ -1,0 +1,45 @@
+# VocaNova Mobile
+
+Flutter client for the VocaNova vocabulary learning system.
+
+## Run Locally
+
+```powershell
+flutter pub get
+flutter run
+```
+
+The default API URL is `http://10.0.2.2:5013` for the Android Studio emulator.
+For Genymotion, override it with `http://10.0.3.2:5013`. For a physical device,
+use the development machine's LAN address:
+
+```powershell
+flutter run --dart-define=API_BASE_URL=http://192.168.1.10:5013
+```
+
+Google sign-in needs the web OAuth client ID used by the API to verify ID
+tokens:
+
+```powershell
+flutter run --dart-define=GOOGLE_SERVER_CLIENT_ID=your-web-client-id
+```
+
+Create an Android OAuth client in Google Cloud with application ID
+`com.vocanova.vocanova_mobile` and the SHA-1 fingerprints of every signing key
+(debug and release). Add the same web client ID to the API configuration:
+
+```text
+GoogleAuth__ClientIds__0=your-web-client-id
+```
+
+For iOS, also add `GoogleService-Info.plist` to `ios/Runner` in Xcode and add
+its `REVERSED_CLIENT_ID` as a URL scheme. Never commit OAuth secrets or local
+Google configuration files.
+
+## Verify
+
+```powershell
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze
+flutter test
+```

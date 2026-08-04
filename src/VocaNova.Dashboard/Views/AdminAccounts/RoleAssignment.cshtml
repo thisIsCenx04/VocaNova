@@ -1,0 +1,129 @@
+@model VocaNova.Dashboard.Models.AdminAccounts.AccountRoleAssignmentViewModel
+@{
+    ViewData["Title"] = T["Assign Account Roles"];
+    var returnUrl = $"{ViewContext.HttpContext.Request.Path}{ViewContext.HttpContext.Request.QueryString}";
+    var pageStart = Model.TotalItems == 0 ? 0 : (Model.Page - 1) * Model.Limit + 1;
+    var pageEnd = pageStart == 0 ? 0 : pageStart + Model.Items.Count - 1;
+
+    string PageUrl(int page)
+    {
+        var values = new List<string> { $"role={Model.Role}", $"page={page}" };
+        if (!string.IsNullOrWhiteSpace(Model.Search))
+            values.Add($"search={Uri.EscapeDataString(Model.Search)}");
+        return "/admin-accounts/role-assignment?" + string.Join("&", values);
+    }
+}
+
+<div class="admin-account-editor-shell">
+    <a class="btn-primary page-back-button" href="/admin-accounts">@T["Back"]</a>
+
+    <div class="page-header admin-accounts-header">
+        <div>
+            <h1 class="page-title">@T["Assign Account Roles"]</h1>
+        </div>
+    </div>
+
+    @if (TempData["AdminAccountSuccess"] is string success)
+    {
+        <div class="alert alert-success">@T[success]</div>
+    }
+    @if (TempData["AdminAccountError"] is string error)
+    {
+        <div class="alert alert-danger">@T[error]</div>
+    }
+
+    <form method="get" action="/admin-accounts/role-assignment" class="filter-bar">
+        <input type="text" name="search" value="@Model.Search" class="form-control"
+               placeholder="@T["Search by name, email or phone..."]" />
+        <select name="role" class="form-control select-arrow">
+            <option value="user" selected="@(Model.Role == "user")">@T["User accounts"]</option>
+            <option value="admin" selected="@(Model.Role == "admin")">@T["Administrator accounts"]</option>
+        </select>
+        <button type="submit" class="btn-primary">@T["Filter"]</button>
+        <a href="/admin-accounts/role-assignment" class="btn-secondary">@T["Reset"]</a>
+    </form>
+
+    <div class="panel table-panel">
+        <table class="data-table admin-account-table">
+            <thead>
+                <tr>
+                    <th>@T["ID"]</th>
+                    <th>@T["Account"]</th>
+                    <th>@T["Email"]</th>
+                    <th>@T["Phone"]</th>
+                    <th>@T["Current role"]</th>
+                    <th class="col-actions">@T["Actions"]</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="6" class="empty-row">@T["No matching accounts found."]</td></tr>
+            }
+            else
+            {
+                foreach (var account in Model.Items)
+                {
+                    var targetRole = account.Role == "admin" ? "user" : "admin";
+                    var actionLabel = targetRole == "admin"
+                        ? T["Promote to administrator"]
+                        : T["Change to user"];
+                    var confirmTitle = targetRole == "admin"
+                        ? T["Promote account"]
+                        : T["Change administrator to user"];
+                    var confirmMessage = targetRole == "admin"
+                        ? T["This account will receive administrator access to the dashboard."]
+                        : T["This account will lose administrator access to the dashboard."];
+                    <tr>
+                        <td>@account.UserId</td>
+                        <td>
+                            <div class="user-cell">
+                                <span class="user-avatar user-avatar-fallback">
+                                    @(string.IsNullOrWhiteSpace(account.DisplayName) ? "?" : account.DisplayName[..1].ToUpperInvariant())
+                                </span>
+                                <strong>@account.DisplayName</strong>
+                            </div>
+                        </td>
+                        <td>@(account.GoogleEmail ?? "—")</td>
+                        <td>@(account.Phone ?? "—")</td>
+                        <td><span class="badge @(account.Role == "admin" ? "badge-warning" : "badge-muted")">@T[account.Role == "admin" ? "Admin" : "User"]</span></td>
+                        <td class="col-actions">
+                            <form method="post" action="/admin-accounts/@account.UserId/role" class="inline-form"
+                                  data-admin-confirm
+                                  data-confirm-title="@confirmTitle"
+                                  data-confirm-message="@confirmMessage"
+                                  data-confirm-button="@actionLabel">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="role" value="@targetRole" />
+                                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                <button type="submit" class="btn-secondary">@actionLabel</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-foot-bar">
+        <span class="pager-info">@T["Showing"] @pageStart @T["to"] @pageEnd @T["of"] @Model.TotalItems @T["entries"]</span>
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="pager" aria-label="@T["Pagination"]">
+                <a class="pager-link @(!Model.HasPrevious ? "disabled" : "")" href="@PageUrl(Model.Page - 1)">← @T["Prev"]</a>
+                @for (var pageNumber = Math.Max(1, Model.Page - 2); pageNumber <= Math.Min(Model.TotalPages, Model.Page + 2); pageNumber++)
+                {
+                    <a class="pager-link @(pageNumber == Model.Page ? "active" : "")" href="@PageUrl(pageNumber)">@pageNumber</a>
+                }
+                <a class="pager-link @(!Model.HasNext ? "disabled" : "")" href="@PageUrl(Model.Page + 1)">@T["Next"] →</a>
+            </nav>
+        }
+    </div>
+</div>
+
+<partial name="_ActionConfirmModal" />
+
+@section Scripts {
+    <script src="~/js/admin-account-actions.js" asp-append-version="true"></script>
+}

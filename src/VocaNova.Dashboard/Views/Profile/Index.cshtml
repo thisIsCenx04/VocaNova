@@ -1,0 +1,79 @@
+@model VocaNova.Dashboard.Models.Profile.AdminProfileViewModel
+@{
+    ViewData["Title"] = T["My Profile"];
+    var statusActive = !string.Equals(Model.Status, "deleted", StringComparison.OrdinalIgnoreCase)
+        && !string.Equals(Model.Status, "locked", StringComparison.OrdinalIgnoreCase);
+}
+
+<div class="page-header">
+    <h1 class="page-title">@T["My Profile"]</h1>
+</div>
+
+<div class="profile-grid">
+    <!-- Identity card -->
+    <aside class="panel profile-identity">
+        @if (!string.IsNullOrWhiteSpace(Model.AvatarUrl))
+        {
+            <img class="profile-avatar" src="@Model.AvatarUrl" alt="@Model.DisplayName" />
+        }
+        else
+        {
+            <span class="profile-avatar profile-avatar-fallback">@Model.Initial</span>
+        }
+
+        <h2 class="profile-name">@Model.DisplayName</h2>
+        <div class="profile-badges">
+            <span class="badge badge-muted">@Model.Role.Replace("_", " ")</span>
+            <span class="badge @(statusActive ? "badge-success" : "badge-danger")">@(statusActive ? T["Active"] : T[Model.Status])</span>
+        </div>
+
+        <dl class="profile-meta">
+            <div class="profile-meta-row"><dt>@T["User ID"]</dt><dd>@Model.UserId</dd></div>
+            <div class="profile-meta-row"><dt>@T["Phone number"]</dt><dd>@Model.MaskedPhone</dd></div>
+        </dl>
+
+        <!-- Avatar upload -->
+        <form method="post" action="/profile/avatar" enctype="multipart/form-data" class="profile-avatar-form">
+            @Html.AntiForgeryToken()
+            <label class="profile-file-label">@T["Change avatar"]</label>
+            <input type="file" name="file" accept="image/png,image/jpeg,image/webp" class="form-control" required />
+            <button type="submit" class="btn-secondary btn-sm">@T["Upload avatar"]</button>
+        </form>
+    </aside>
+
+    <!-- Account settings -->
+    <div class="profile-main">
+        <section class="panel profile-settings">
+            <div class="panel-head"><h2 class="panel-title">@T["Edit profile"]</h2></div>
+            <form method="post" action="/profile" class="profile-form">
+                @Html.AntiForgeryToken()
+                <div class="form-group">
+                    <label for="displayName">@T["Display name"]</label>
+                    <input id="displayName" name="displayName" class="form-control" value="@Model.DisplayName" maxlength="150" required />
+                </div>
+
+                <div class="profile-form-divider" role="separator"></div>
+                <div class="profile-form-section">
+                    <h3>@T["Change password"]</h3>
+                    <p>@T["Leave these fields blank if you do not want to change your password."]</p>
+                </div>
+                <div class="form-group">
+                    <label for="currentPassword">@T["Current password"]</label>
+                    <input id="currentPassword" name="currentPassword" type="password" class="form-control" autocomplete="current-password" />
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">@T["New password"]</label>
+                    <input id="newPassword" name="newPassword" type="password" class="form-control" minlength="8" autocomplete="new-password" />
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">@T["Confirm new password"]</label>
+                    <input id="confirmPassword" name="confirmPassword" type="password" class="form-control" minlength="8" autocomplete="new-password" />
+                </div>
+                <p class="profile-hint">@T["At least 8 characters, including uppercase, lowercase and a digit."]</p>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">@T["Save changes"]</button>
+                </div>
+            </form>
+        </section>
+    </div>
+</div>

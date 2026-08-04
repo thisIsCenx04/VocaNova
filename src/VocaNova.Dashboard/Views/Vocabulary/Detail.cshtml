@@ -1,0 +1,246 @@
+@using System.Security.Claims
+@using System.Text.RegularExpressions
+@using System.Text.Encodings.Web
+@using VocaNova.Dashboard.Models.Api.Dictionary
+@model WordDetail
+@{
+    ViewData["Title"] = Model.Word;
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
+    var canManage = role is "admin" or "super_admin";
+
+    var allRelations = Model.Relations
+        .Concat(Model.Senses.SelectMany(s => s.Relations))
+        .ToList();
+
+    var usAudio = Model.Audio.FirstOrDefault(a => string.Equals(a.Accent, "us", StringComparison.OrdinalIgnoreCase));
+
+    // Tô đậm từ mục tiêu trong câu ví dụ (encode trước rồi mới bọc <span> để tránh injection).
+    string Highlight(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return string.Empty;
+        var enc = HtmlEncoder.Default;
+        var encoded = enc.Encode(text);
+        var needle = enc.Encode(Model.Word);
+        if (string.IsNullOrWhiteSpace(needle)) return encoded;
+        return Regex.Replace(encoded, Regex.Escape(needle),
+            m => $"<span class=\"vd-hl\">{m.Value}</span>", RegexOptions.IgnoreCase);
+    }
+}
+
+@Html.AntiForgeryToken()
+<div id="detail-root" data-word-id="@Model.WordId"
+     data-msg-request-failed="@T["Request failed."]" data-msg-confirm="@T["Are you sure?"]"
+     data-msg-image-required="@T["Please choose an image file."]"
+     data-msg-audio-required="@T["Please choose an audio file."]">
+
+    <div class="page-header page-header-row">
+        <div>
+            <a class="btn-primary page-back-button" href="/vocabulary">@T["Back"]</a>
+            <h1 class="page-title">@T["Vocabulary details"]</h1>
+        </div>
+        <div class="header-actions">
+            @if (canManage)
+            {
+                <a href="/vocabulary/@Model.WordId/edit" class="btn-primary">@T["Edit vocabulary"]</a>
+            }
+        </div>
+    </div>
+
+    <div class="vd-top-grid">
+        <section class="vd-word-card">
+            @if (!string.IsNullOrWhiteSpace(Model.Cefr))
+            {
+                <span class="vd-cefr">CEFR @Model.Cefr</span>
+            }
+            <h2 class="vd-word">@Model.Word</h2>
+
+            <div class="vd-phonetics">
+                @if (!string.IsNullOrWhiteSpace(Model.PhoneticUk))
+                {
+                    <span class="vd-phon">
+                        <span class="vd-phon-label">UK</span> @Model.PhoneticUk
+                    </span>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.PhoneticUs))
+                {
+                    <span class="vd-phon">
+                        <span class="vd-phon-label">US</span> @Model.PhoneticUs
+                        @if (usAudio is not null)
+                        {
+                            <button type="button" class="vd-audio-btn" data-audio="@usAudio.Url" aria-label="@T["Play"]">
+                                <svg viewBox="0 0 24 24" width="15" height="15"><path d="M5 9v6h4l5 5V4L9 9H5Zm11.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Z" fill="currentColor"/></svg>
+                            </button>
+                        }
+                    </span>
+                }
+            </div>
+
+            @if (Model.Topics.Count > 0)
+            {
+                <div class="vd-chips">
+                    @foreach (var topic in Model.Topics)
+                    {
+                        <span class="vd-chip">@topic.Name</span>
+                    }
+                </div>
+            }
+        </section>
+
+    </div>
+
+    <section class="vd-meanings">
+        <header class="vd-meanings-head">
+            <span class="create-section-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18"><path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 8h5M9 12h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </span>
+            <h2 class="create-section-title">@T["Meaning & Examples"]</h2>
+        </header>
+
+        @if (Model.Senses.Count == 0)
+        {
+            <p class="text-muted">@T["No meanings yet."]</p>
+        }
+        else
+        {
+            @foreach (var sense in Model.Senses.OrderBy(s => s.Order))
+            {
+                <div class="vd-sense">
+                    <div class="vd-sense-title">
+                        <span class="vd-sense-badge">@T[char.ToUpper(sense.WordClass[0]) + sense.WordClass[1..]]</span>
+                        <strong>@T["Meaning"] @sense.Order</strong>
+                    </div>
+
+                    <div class="vd-sense-grid">
+                        <div class="vd-def-box">
+                            <span class="vd-def-label">@T["English Meaning"]</span>
+                            <p>@sense.EnglishDefinition</p>
+                        </div>
+                        <div class="vd-def-box">
+                            <span class="vd-def-label">@T["Vietnamese Translation"]</span>
+                            <p>@(string.IsNullOrWhiteSpace(sense.VietnameseMeaning) ? "—" : sense.VietnameseMeaning)</p>
+                        </div>
+                    </div>
+
+                    @if (sense.Examples.Count > 0)
+                    {
+                        <div class="vd-examples-panel">
+                            <p class="illustrative-label">@T["ILLUSTRATIVE EXAMPLES"]</p>
+                            <div class="vd-examples">
+                            @foreach (var ex in sense.Examples.OrderBy(e => e.Order))
+                            {
+                                <div class="vd-example">
+                                    <p class="vd-ex-en"><span class="vd-quote">&ldquo;</span>@Html.Raw(Highlight(ex.ExampleEn))</p>
+                                    @if (!string.IsNullOrWhiteSpace(ex.ExampleVi))
+                                    {
+                                        <p class="vd-ex-vi">@ex.ExampleVi</p>
+                                    }
+                                </div>
+                            }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </section>
+
+    @if (allRelations.Count > 0)
+    {
+        <section class="panel vd-extra">
+            <div class="panel-head"><h2 class="panel-title">@T["Relations"]</h2></div>
+            <table class="data-table">
+                <thead><tr><th>@T["Type"]</th><th>@T["Related word"]</th><th>@T["Linked"]</th><th>@T["Quiz"]</th></tr></thead>
+                <tbody>
+                    @foreach (var rel in allRelations)
+                    {
+                        <tr>
+                            <td><span class="badge badge-muted">@rel.RelationType</span></td>
+                            <td>@rel.RelatedWord</td>
+                            <td>@(rel.LinkedWordId is null ? "—" : T["yes"])</td>
+                            <td>@(rel.IsQuizEligible ? "✓" : "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </section>
+    }
+
+    @if (canManage)
+    {
+        <div class="vd-manage-grid">
+            <section class="panel vd-extra">
+                <div class="panel-head"><h2 class="panel-title">@T["Image"]</h2></div>
+                @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+                {
+                    <div class="word-image-review">
+                        <a class="word-image-preview" href="@Model.ImageUrl" target="_blank" rel="noopener"
+                           title="@T["Open full image"]">
+                            <img class="word-image" src="@Model.ImageUrl" alt="@Model.Word" loading="lazy" />
+                        </a>
+                        <div class="word-image-review-meta">
+                            <span>@T["Image preview"]</span>
+                            <form class="inline-form js-confirm" data-confirm="@T["Remove image"]"
+                                  data-ajax="/vocabulary/@Model.WordId/image/delete">
+                                <button type="submit" class="btn-icon btn-danger">@T["Delete"]</button>
+                            </form>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">@T["No image."]</p>
+                }
+                <form class="upload-form" id="image-upload-form" novalidate>
+                    <input type="file" name="file" accept="image/png,image/jpeg,image/webp" class="form-control" required />
+                    <button type="submit" class="btn-secondary btn-sm">@T["Upload image"]</button>
+                </form>
+            </section>
+
+            <section class="panel vd-extra">
+                <div class="panel-head"><h2 class="panel-title">@T["Audio"]</h2></div>
+                @if (usAudio is null)
+                {
+                    <p class="text-muted">@T["No audio."]</p>
+                }
+                else
+                {
+                    <ul class="audio-list">
+                            <li class="audio-item">
+                                <span class="badge badge-muted">US</span>
+                                <audio controls preload="none" src="@usAudio.Url"></audio>
+                                <form class="inline-form js-confirm" data-confirm="@T["Delete this audio?"]"
+                                      data-ajax="/vocabulary/@Model.WordId/audio/@usAudio.AudioId/delete">
+                                    <button type="submit" class="btn-icon btn-danger">@T["Delete"]</button>
+                                </form>
+                            </li>
+                    </ul>
+                }
+                <form class="upload-form" id="audio-upload-form" novalidate>
+                    <input type="file" name="file" accept="audio/mpeg,audio/wav,audio/ogg" class="form-control" required />
+                    <button type="submit" class="btn-secondary btn-sm">@(usAudio is null ? T["Upload audio"] : T["Replace"])</button>
+                </form>
+            </section>
+        </div>
+    }
+
+    <div id="detail-toast" class="detail-toast" hidden></div>
+
+    <div class="confirm-modal" id="detail-delete-modal" hidden>
+        <div class="confirm-overlay" data-close></div>
+        <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="detail-delete-title">
+            <span class="confirm-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="26" height="26"><path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Zm4 0v8h2v-8h-2Z" fill="currentColor"/></svg>
+            </span>
+            <h3 class="confirm-title" id="detail-delete-title">@T["Are you sure?"]</h3>
+            <p class="confirm-note" id="detail-delete-message"></p>
+            <div class="confirm-actions">
+                <button type="button" class="btn-secondary" data-close>@T["Cancel"]</button>
+                <button type="button" class="btn-danger-solid" id="detail-delete-confirm">@T["Delete"]</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/vocabulary-detail.js" asp-append-version="true"></script>
+}

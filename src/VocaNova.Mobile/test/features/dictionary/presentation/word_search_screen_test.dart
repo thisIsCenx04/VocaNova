@@ -1,0 +1,191 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:vocanova_mobile/core/storage/local_storage.dart';
+import 'package:vocanova_mobile/core/storage/storage_keys.dart';
+import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
+import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
+import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
+import 'package:vocanova_mobile/features/dictionary/data/word_search_repository.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/word_search_screen.dart';
+import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
+
+void main() {
+  late MockWordSearchRepository repository;
+  late MockConnectivityService connectivity;
+  late MockLocalStorage storage;
+
+  setUp(() {
+    repository = MockWordSearchRepository();
+    connectivity = MockConnectivityService();
+    storage = MockLocalStorage();
+    when(() => connectivity.isOnline).thenAnswer((_) async => true);
+    when(() => storage.get<String>(any())).thenAnswer((_) async => null);
+    when(() => storage.set<String>(any(), any())).thenAnswer((_) async {});
+    when(() => storage.remove(any())).thenAnswer((_) async {});
+    when(() => repository.getTopics()).thenAnswer(
+      (_) async => const [
+        TopicSummary(
+          topicId: 2,
+          name: 'Travel',
+          nameVi: 'Du lịch',
+          wordCount: 4,
+        ),
+      ],
+    );
+  });
+
+  testWidgets('search bar stays visible and renders topics from API', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await pumpSearch(tester, repository, connectivity, storage);
+
+    expect(find.byKey(const Key('word-search-field')), findsOneWidget);
+    expect(find.text('Search for a word...'), findsOneWidget);
+    expect(find.text('Recent'), findsOneWidget);
+    expect(find.text('Browse by topic'), findsOneWidget);
+    expect(find.text('Travel'), findsOneWidget);
+    expect(find.text('4 words'), findsOneWidget);
+    expect(find.text('Your recent searches will appear here.'), findsOneWidget);
+    expect(find.byKey(const Key('cefr-all')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('topic card browses words and exposes API-backed filters', (
+    tester,
+  ) async {
+    final response = Completer<List<WordSummary>>();
+    when(
+      () => repository.search(query: '', cefr: null, topicId: 2),
+    ).thenAnswer((_) => response.future);
+    await pumpSearch(tester, repository, connectivity, storage);
+
+    await tester.tap(find.byKey(const Key('browse-topic-2')));
+    await tester.pump();
+
+    expect(find.byKey(const Key('search-loading-skeleton')), findsOneWidget);
+    expect(find.byKey(const Key('cefr-all')), findsOneWidget);
+    expect(find.byKey(const Key('topic-2')), findsOneWidget);
+
+    response.complete(const [
+      WordSummary(
+        wordId: 4,
+        word: 'journey',
+        phonetic: '/ˈdʒɜːni/',
+        cefr: 'A2',
+        primaryMeaning: 'an act of travelling',
+      ),
+    ]);
+    await tester.pump();
+
+    expect(find.text('journey'), findsOneWidget);
+    verify(
+      () => repository.search(query: '', cefr: null, topicId: 2),
+    ).called(1);
+  });
+
+  testWidgets('recent history can be reused and cleared', (tester) async {
+    when(
+      () => storage.get<String>(StorageKeys.searchHistoryJson),
+    ).thenAnswer((_) async => jsonEncode(['eloquent', 'ephemeral']));
+    when(
+      () => repository.search(query: 'eloquent', cefr: null, topicId: null),
+    ).thenAnswer((_) async => const []);
+    await pumpSearch(tester, repository, connectivity, storage);
+
+    expect(find.text('eloquent'), findsOneWidget);
+    expect(find.text('ephemeral'), findsOneWidget);
+    expect(find.byKey(const Key('clear-search-history')), findsOneWidget);
+
+    await tester.tap(find.text('eloquent'));
+    await tester.pump();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('word-search-field')))
+          .controller
+          ?.text,
+      'eloquent',
+    );
+
+    await tester.tap(find.byKey(const Key('clear-word-search')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('clear-search-history')));
+    await tester.pump();
+
+    expect(find.text('eloquent'), findsNothing);
+    expect(find.text('Your recent searches will appear here.'), findsOneWidget);
+    verify(() => storage.remove(StorageKeys.searchHistoryJson)).called(1);
+  });
+
+  testWidgets('debounced search shows skeleton then word summary card', (
+    tester,
+  ) async {
+    final response = Completer<List<WordSummary>>();
+    when(
+      () => repository.search(query: 'hel', cefr: null, topicId: null),
+    ).thenAnswer((_) => response.future);
+    await pumpSearch(tester, repository, connectivity, storage);
+
+    await tester.enterText(find.byKey(const Key('word-search-field')), 'hel');
+    await tester.pump(const Duration(milliseconds: 301));
+
+    expect(find.byKey(const Key('word-search-field')), findsOneWidget);
+    expect(find.byKey(const Key('search-loading-skeleton')), findsOneWidget);
+
+    response.complete(const [
+      WordSummary(
+        wordId: 1,
+        word: 'hello',
+        phonetic: '/həˈləʊ/',
+        cefr: 'A1',
+        primaryMeaning: 'xin chào',
+      ),
+    ]);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('hello'), findsOneWidget);
+    expect(find.text('/həˈləʊ/'), findsOneWidget);
+    expect(find.text('A1'), findsWidgets);
+    expect(find.text('xin chào'), findsOneWidget);
+  });
+}
+
+Future<void> pumpSearch(
+  WidgetTester tester,
+  WordSearchRepository repository,
+  ConnectivityService connectivity,
+  LocalStorage storage,
+) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        wordSearchRepositoryProvider.overrideWithValue(repository),
+        connectivityServiceProvider.overrideWithValue(connectivity),
+        searchLocalStorageProvider.overrideWithValue(storage),
+      ],
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const WordSearchScreen(),
+      ),
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 100));
+}
+
+class MockWordSearchRepository extends Mock implements WordSearchRepository {}
+
+class MockConnectivityService extends Mock implements ConnectivityService {}
+
+class MockLocalStorage extends Mock implements LocalStorage {}

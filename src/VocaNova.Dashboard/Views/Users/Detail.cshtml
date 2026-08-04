@@ -1,0 +1,236 @@
+@using System.Security.Claims
+@using VocaNova.Dashboard.Models.Api.Users
+@model VocaNova.Dashboard.Models.Users.UserDetailViewModel
+@{
+    ViewData["Title"] = T["User Details"];
+    var d = Model.Detail;
+    var lp = d.LearningProfile;
+
+    var actorRole = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
+    // Admin chỉ khóa/mở user thường; chỉ super_admin mới thao tác trên admin; super_admin không bị khóa.
+    var canManageStatus = d.Role == "admin" ? actorRole == "super_admin"
+        : d.Role == "user" && actorRole is "admin" or "super_admin";
+
+    string StatusBadge(string status) => status switch
+    {
+        "active" => "badge badge-success",
+        "locked" => "badge badge-warning",
+        "deleted" => "badge badge-danger",
+        _ => "badge badge-muted",
+    };
+}
+
+<div class="page-header page-header-row">
+    <div>
+        <a class="btn-primary page-back-button" href="/users">@T["Back"]</a>
+        <h1 class="page-title">@T["User Details"]</h1>
+    </div>
+    <div class="header-actions">
+        @if (canManageStatus && d.Status == "active")
+        {
+            <button type="button" class="btn-warning" data-open-disable>@T["Disable account"]</button>
+        }
+        else if (canManageStatus)
+        {
+            <form method="post" action="/users/@d.UserId/restore" class="inline-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="/users/@d.UserId" />
+                <button type="submit" class="btn-primary">@T["Enable account"]</button>
+            </form>
+        }
+    </div>
+</div>
+
+<div class="user-detail-grid">
+    <!-- LEFT: identity + account/security -->
+    <div class="detail-col user-detail-side">
+        <section class="panel profile-card">
+            <div class="profile-image-wrap">
+                @if (!string.IsNullOrWhiteSpace(d.AvatarUrl))
+                {
+                    <img class="profile-avatar" id="user-avatar-preview" src="@d.AvatarUrl" alt="@d.DisplayName" />
+                }
+                else
+                {
+                    <button class="profile-image-add" type="button" title="@T["No image available"]" disabled>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h3l1.4-2h7.2L17 5h3a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"/></svg>
+                        <span>@T["Add image"]</span>
+                    </button>
+                }
+                <span class="profile-online" aria-label="@T["Active"]"></span>
+            </div>
+            <h2 class="profile-name">@d.DisplayName</h2>
+            <p class="profile-uid">UID-@d.UserId.ToString("D4")</p>
+            <div class="profile-badges">
+                <span class="@StatusBadge(d.Status)">@T[d.Status switch { "active" => "Active", "locked" => "Locked", "deleted" => "Deleted", _ => d.Status }]</span>
+                <span class="badge badge-premium">@T[d.Role switch { "super_admin" => "Super admin", "admin" => "Admin", "user" => "User", "guest" => "Guest", _ => d.Role.Replace("_", " ") }]</span>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head"><h2 class="panel-title">@T["Account & Security"]</h2></div>
+            <dl class="detail-list compact">
+                <dt>@T["Username"]</dt><dd>@(d.Username ?? "—")</dd>
+                <dt>@T["Phone number"]</dt><dd>@(d.Phone ?? "—")</dd>
+                <dt>@T["Google email"]</dt><dd>@(d.GoogleEmail ?? "—")</dd>
+                <dt>@T["Last logged in"]</dt><dd>@(d.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? T["Never"])</dd>
+                <dt>@T["Account created"]</dt><dd>@d.CreatedAt.ToString("yyyy-MM-dd")</dd>
+            </dl>
+        </section>
+    </div>
+
+    <!-- RIGHT: academic record + objective + topics -->
+    <div class="detail-col user-detail-main">
+        <section class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title">@T["Academic record"]</h2>
+                <span class="panel-hint">@T["Updated"] @d.UpdatedAt.ToString("dd/MM/yyyy")</span>
+            </div>
+            @if (lp is null)
+            {
+                <p class="text-muted">@T["This user has not completed onboarding."]</p>
+            }
+            else
+            {
+                <div class="info-grid">
+                    <div class="info-item"><span class="info-icon info-icon-purple">◫</span><span><span class="info-label">@T["Age"]</span><span class="info-value">@(lp.AgeRangeName ?? "—")</span></span></div>
+                    <div class="info-item"><span class="info-icon info-icon-blue">●</span><span><span class="info-label">@T["Area"]</span><span class="info-value">@(lp.RegionName ?? "—")</span></span></div>
+                    <div class="info-item"><span class="info-icon info-icon-orange">▣</span><span><span class="info-label">@T["Job"]</span><span class="info-value">@(lp.OccupationName ?? "—")</span></span></div>
+                    <div class="info-item"><span class="info-icon info-icon-red">◇</span><span><span class="info-label">@T["Educational level"]</span><span class="info-value">@(lp.EducationLevelName ?? "—")</span></span></div>
+                </div>
+
+                <div class="objective-box">
+                    <span class="objective-icon">⚑</span>
+                    <span><span class="info-label">@T["Learning objective"]</span>
+                    <p class="objective-text">@(string.IsNullOrWhiteSpace(lp.LearningPurposeName) ? T["Not set"] : lp.LearningPurposeName)</p></span>
+                </div>
+            }
+        </section>
+
+        <section class="panel">
+            <div class="panel-head"><h2 class="panel-title">@T["Topic of interest"]</h2></div>
+            @{
+                var selected = Model.Topics?.Selected ?? new List<AdminTopicChip>();
+                var suggested = Model.Topics?.Suggested ?? new List<AdminTopicChip>();
+            }
+            <div class="topic-block">
+                <span class="info-label">@T["Selected topics"]</span>
+                <div class="chip-list">
+                    @if (selected.Count == 0)
+                    {
+                        <span class="text-muted">@T["None"]</span>
+                    }
+                    else
+                    {
+                        foreach (var t in selected)
+                        {
+                            <span class="chip chip-selected">@t.Name</span>
+                        }
+                    }
+                </div>
+            </div>
+            <div class="topic-block">
+                <span class="info-label">@T["System suggestion (AI-based)"]</span>
+                <div class="chip-list">
+                    @if (suggested.Count == 0)
+                    {
+                        <span class="text-muted">@T["No suggestions yet"]</span>
+                    }
+                    else
+                    {
+                        foreach (var t in suggested)
+                        {
+                            <span class="chip chip-suggested">@t.Name</span>
+                        }
+                    }
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Activity: test history + audit log -->
+<div class="tabs" id="user-tabs" style="margin-top:16px;">
+    <div class="tab-bar" role="tablist">
+        <button type="button" class="tab-btn active" data-tab="history">@T["Test history"]</button>
+        <button type="button" class="tab-btn" data-tab="activity">@T["Activity log"]</button>
+    </div>
+
+    <div class="tab-panel active" data-tab="history">
+        <div class="panel table-panel">
+            <table class="data-table">
+                <thead><tr><th>@T["Session"]</th><th>@T["Mode"]</th><th>@T["Questions"]</th><th>@T["Accuracy"]</th><th>@T["Status"]</th><th>@T["Started"]</th></tr></thead>
+                <tbody>
+                    @if (Model.TestHistory.Items.Count == 0)
+                    {
+                        <tr><td colspan="6" class="empty-row">@T["No test sessions."]</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var sn in Model.TestHistory.Items)
+                        {
+                            <tr>
+                                <td>#@sn.SessionId</td>
+                                <td>@sn.Mode</td>
+                                <td>@sn.CorrectCount/@sn.QuestionCount</td>
+                                <td>@sn.Accuracy.ToString("0.#")%</td>
+                                <td><span class="badge badge-muted">@T[sn.Status switch { "completed" => "Completed", "in_progress" => "In progress", "cancelled" => "Cancelled", _ => sn.Status }]</span></td>
+                                <td>@sn.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="tab-panel" data-tab="activity">
+        <div class="panel table-panel">
+            <table class="data-table">
+                <thead><tr><th>@T["Action"]</th><th>@T["Entity"]</th><th>@T["Entity ID"]</th><th>@T["IP"]</th><th>@T["When"]</th></tr></thead>
+                <tbody>
+                    @if (Model.AuditLogs.Items.Count == 0)
+                    {
+                        <tr><td colspan="5" class="empty-row">@T["No activity logged."]</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var log in Model.AuditLogs.Items)
+                        {
+                            <tr>
+                                <td><span class="badge badge-muted">@log.Action</span></td>
+                                <td>@log.EntityType</td>
+                                <td>@(log.EntityId?.ToString() ?? "—")</td>
+                                <td>@(log.IpAddress ?? "—")</td>
+                                <td>@log.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if (d.Status == "active")
+{
+    <div class="modal-overlay" id="disable-modal" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="disable-title">
+            <div class="modal-icon"><svg viewBox="0 0 24 24"><path d="M12 2 1 21h22L12 2Zm0 6 6.5 11h-13L12 8Zm-1 4v3h2v-3h-2Zm0 4v2h2v-2h-2Z"/></svg></div>
+            <h3 class="modal-title" id="disable-title">@T["Disable user account"]</h3>
+            <p class="modal-text">@T["Are you sure you want to disable"] <strong>@d.DisplayName</strong>? @T["This limits the user's access to the system. You can restore it later."]</p>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" data-close-disable>@T["Cancel"]</button>
+                <form method="post" action="/users/@d.UserId/deactivate" class="inline-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnUrl" value="/users/@d.UserId" />
+                    <button type="submit" class="btn-warning">@T["Disable"]</button>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script src="~/js/users.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,256 @@
+@using System.Security.Claims
+@using VocaNova.Dashboard.Models.Api.Users
+@model VocaNova.Dashboard.Models.Users.UserListViewModel
+@{
+    ViewData["Title"] = T["User Management"];
+    var pageSizes = new[] { 10, 20, 50, 100 };
+
+    var actorRole = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
+    // Admin chỉ khóa/mở user thường; chỉ super_admin mới thao tác trên admin; super_admin không bị khóa.
+    bool CanManageStatus(string? targetRole) =>
+        targetRole == "admin" ? actorRole == "super_admin"
+        : targetRole == "user" && actorRole is "admin" or "super_admin";
+
+    // Bộ lọc dùng chung cho link phân trang và link sort.
+    List<string> BaseQuery()
+    {
+        var qs = new List<string>();
+        if (!string.IsNullOrWhiteSpace(Model.Search)) qs.Add($"search={Uri.EscapeDataString(Model.Search)}");
+        if (!string.IsNullOrWhiteSpace(Model.Status)) qs.Add($"status={Model.Status}");
+        if (!string.IsNullOrWhiteSpace(Model.Role)) qs.Add($"role={Model.Role}");
+        if (Model.IncludeDeleted) qs.Add("includeDeleted=true");
+        qs.Add($"limit={Model.Limit}");
+        return qs;
+    }
+
+    string PageUrl(int page)
+    {
+        var qs = BaseQuery();
+        if (!string.IsNullOrWhiteSpace(Model.SortBy)) qs.Add($"sortBy={Model.SortBy}");
+        if (!string.IsNullOrWhiteSpace(Model.SortDirection)) qs.Add($"sortDirection={Model.SortDirection}");
+        qs.Add($"page={page}");
+        return "/users?" + string.Join("&", qs);
+    }
+
+    string SortUrl(string column)
+    {
+        var direction = Model.SortBy == column && Model.SortDirection == "asc" ? "desc" : "asc";
+        var qs = BaseQuery();
+        qs.Add("page=1");
+        qs.Add($"sortBy={column}");
+        qs.Add($"sortDirection={direction}");
+        return "/users?" + string.Join("&", qs);
+    }
+
+    string SortIcon(string column) => Model.SortBy != column
+        ? "bi bi-arrow-down-up th-sort-idle"
+        : (Model.SortDirection == "desc" ? "bi bi-caret-down-fill" : "bi bi-caret-up-fill");
+
+    string StatusBadge(string status) => status switch
+    {
+        "active" => "badge badge-success",
+        "locked" => "badge badge-warning",
+        "deleted" => "badge badge-danger",
+        _ => "badge badge-muted",
+    };
+}
+
+<div class="page-header">
+    <h1 class="page-title">@T["User Management"]</h1>
+</div>
+
+
+<form method="get" action="/users" class="filter-bar">
+    <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="@T["Search by name, email or phone..."]" />
+    <input type="hidden" name="limit" value="@Model.Limit" />
+    <select name="status" class="form-control">
+        <option value="">@T["All status"]</option>
+        @foreach (var s in VocaNova.Dashboard.Models.Users.UserListViewModel.Statuses)
+        {
+            var statusLabel = char.ToUpper(s[0]) + s[1..];
+            <option value="@s" selected="@(Model.Status == s)">@T[statusLabel]</option>
+        }
+    </select>
+    <select name="role" class="form-control">
+        <option value="">@T["All roles"]</option>
+        @foreach (var (value, label) in VocaNova.Dashboard.Models.Users.UserListViewModel.Roles)
+        {
+            <option value="@value" selected="@(Model.Role == value)">@T[label]</option>
+        }
+    </select>
+    <label class="checkbox-inline">
+        <input type="checkbox" name="includeDeleted" value="true" checked="@Model.IncludeDeleted" />
+        @T["Show deleted"]
+    </label>
+    <button type="submit" class="btn-primary">@T["Filter"]</button>
+    <a href="/users" class="btn-secondary">@T["Reset"]</a>
+</form>
+
+<div class="panel table-panel">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width:70px;">
+                    <a class="th-sort @(Model.SortBy == "id" ? "active" : "")" href="@SortUrl("id")">
+                        @T["User ID"] <i class="@SortIcon("id")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th>
+                    <a class="th-sort @(Model.SortBy == "name" ? "active" : "")" href="@SortUrl("name")">
+                        @T["Name"] <i class="@SortIcon("name")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th>
+                    <a class="th-sort @(Model.SortBy == "email" ? "active" : "")" href="@SortUrl("email")">
+                        @T["Email"] <i class="@SortIcon("email")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th style="width:110px;">
+                    <a class="th-sort @(Model.SortBy == "status" ? "active" : "")" href="@SortUrl("status")">
+                        @T["Status"] <i class="@SortIcon("status")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th style="width:140px;">
+                    <a class="th-sort @(Model.SortBy == "phone" ? "active" : "")" href="@SortUrl("phone")">
+                        @T["Phone"] <i class="@SortIcon("phone")" aria-hidden="true"></i>
+                    </a>
+                </th>
+                <th style="width:80px;" class="col-actions">@T["Action"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="6" class="empty-row">@T["No users found."]</td></tr>
+            }
+            else
+            {
+                foreach (var user in Model.Items)
+                {
+                    <tr>
+                        <td><span class="rank-pill">#@user.UserId</span></td>
+                        <td>
+                            <div class="user-cell">
+                                @if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
+                                {
+                                    <img class="user-avatar" src="@user.AvatarUrl" alt="" />
+                                }
+                                else
+                                {
+                                    <span class="user-avatar user-avatar-fallback">@(string.IsNullOrWhiteSpace(user.DisplayName) ? "?" : user.DisplayName[..1].ToUpperInvariant())</span>
+                                }
+                                <div class="user-cell-text">
+                                    <span class="word-text">@user.DisplayName</span>
+                                    <span class="user-role-sub">@T[user.Role switch { "super_admin" => "Super admin", "admin" => "Admin", "user" => "User", "guest" => "Guest", _ => user.Role.Replace("_", " ") }]</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>@(string.IsNullOrWhiteSpace(user.GoogleEmail) ? "—" : user.GoogleEmail)</td>
+                        <td><span class="@StatusBadge(user.Status)">@T[user.Status switch { "active" => "Active", "locked" => "Locked", "deleted" => "Deleted", _ => user.Status }]</span></td>
+                        <td>@(user.Phone ?? "—")</td>
+                        <td class="col-actions">
+                            <div class="action-icons">
+                                <a class="icon-link" href="/users/@user.UserId" title="@T["View details"]" aria-label="@T["View details"]">
+                                    <svg viewBox="0 0 24 24"><path d="M12 5c-5 0-8.5 4.5-9.5 7 1 2.5 4.5 7 9.5 7s8.5-4.5 9.5-7c-1-2.5-4.5-7-9.5-7Zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
+                                </a>
+                                @if (CanManageStatus(user.Role))
+                                {
+                                    if (user.Status == "active")
+                                    {
+                                        <button type="button" class="icon-link warn js-disable"
+                                                data-id="@user.UserId" data-name="@user.DisplayName"
+                                                title="@T["Disable account"]" aria-label="@T["Disable account"]">
+                                            <svg viewBox="0 0 24 24"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Zm-3 8V6a3 3 0 0 1 6 0v3H9Zm3 4a1.5 1.5 0 0 1 1 2.6V19h-2v-3.4A1.5 1.5 0 0 1 12 13Z"/></svg>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="icon-link ok js-restore"
+                                                data-id="@user.UserId" data-name="@user.DisplayName"
+                                                title="@T["Enable account"]" aria-label="@T["Enable account"]">
+                                            <svg viewBox="0 0 24 24"><path d="M12 1a5 5 0 0 0-5 5h2a3 3 0 0 1 6 0v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5Z"/></svg>
+                                        </button>
+                                    }
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="table-foot-bar">
+    <form method="get" action="/users" class="page-size-form">
+        @if (!string.IsNullOrWhiteSpace(Model.Search)) { <input type="hidden" name="search" value="@Model.Search" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.Status)) { <input type="hidden" name="status" value="@Model.Status" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.Role)) { <input type="hidden" name="role" value="@Model.Role" /> }
+        @if (Model.IncludeDeleted) { <input type="hidden" name="includeDeleted" value="true" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.SortBy)) { <input type="hidden" name="sortBy" value="@Model.SortBy" /> }
+        @if (!string.IsNullOrWhiteSpace(Model.SortDirection)) { <input type="hidden" name="sortDirection" value="@Model.SortDirection" /> }
+        <label class="page-size-control">
+            <span>@T["Items per page"]</span>
+            <select name="limit" class="form-control" data-page-size-select aria-label="@T["Items per page"]">
+                @foreach (var size in pageSizes)
+                {
+                    <option value="@size" selected="@(Model.Limit == size)">@size</option>
+                }
+            </select>
+        </label>
+    </form>
+    @if (Model.TotalPages > 1)
+    {
+        var winStart = Math.Max(1, Model.Page - 2);
+        var winEnd = Math.Min(Model.TotalPages, winStart + 4);
+        winStart = Math.Max(1, winEnd - 4);
+        <nav class="pager" aria-label="@T["Pagination"]" data-page="@Model.Page" data-total-pages="@Model.TotalPages">
+            @if (Model.HasPrevious)
+            {
+                <a class="pager-link" href="@PageUrl(Model.Page - 1)">‹ @T["Prev"]</a>
+            }
+            else
+            {
+                <span class="pager-link disabled">‹ @T["Prev"]</span>
+            }
+            @for (var p = winStart; p <= winEnd; p++)
+            {
+                <a class="pager-link @(p == Model.Page ? "active" : "")" href="@PageUrl(p)">@p</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="pager-link" href="@PageUrl(Model.Page + 1)">@T["Next"] ›</a>
+            }
+            else
+            {
+                <span class="pager-link disabled">@T["Next"] ›</span>
+            }
+        </nav>
+    }
+</div>
+
+<div class="modal-overlay" id="user-modal" hidden
+     data-disable-title="@T["Disable user account"]"
+     data-disable-text="@T["Are you sure you want to disable {0}? This limits the user's access to the system. You can restore it later."]"
+     data-disable-confirm="@T["Disable"]"
+     data-restore-title="@T["Restore user account"]"
+     data-restore-text="@T["Restore {0} back to active? The user will regain access."]"
+     data-restore-confirm="@T["Restore"]">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="um-title">
+        <div class="modal-icon" id="um-icon"><svg viewBox="0 0 24 24"><path d="M12 2 1 21h22L12 2Zm-1 6h2v7h-2V8Zm0 9h2v2h-2v-2Z"/></svg></div>
+        <h3 class="modal-title" id="um-title">@T["Disable user account"]</h3>
+        <p class="modal-text" id="um-text"></p>
+        <div class="modal-actions">
+            <button type="button" class="btn-secondary" data-close-modal>@T["Cancel"]</button>
+            <form method="post" id="um-form" class="inline-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
+                <button type="submit" class="btn-warning" id="um-confirm">@T["Disable"]</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/users-list.js" asp-append-version="true"></script>
+}

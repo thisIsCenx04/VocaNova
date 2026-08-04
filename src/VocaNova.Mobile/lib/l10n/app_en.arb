@@ -1,0 +1,860 @@
+{
+  "@@locale": "en",
+  "appTitle": "VocaNova",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "navHome": "Home",
+  "navSearch": "Search",
+  "navLists": "Lists",
+  "navPractice": "Practice",
+  "navProfile": "Profile",
+  "commonOfflineBanner": "You're offline",
+  "authBackButton": "Back",
+  "authOrDivider": "or",
+  "authContinueWithGoogle": "Continue with Google",
+  "authGenericError": "Something went wrong. Please try again.",
+  "authPhoneRequired": "Please enter your phone number.",
+  "authPhoneInvalid": "Invalid Vietnamese phone number.",
+  "authPasswordRequired": "Please enter your password.",
+  "authPasswordTooShort": "Password must be at least 8 characters.",
+  "authPasswordComplexity": "Password needs an uppercase letter, a lowercase letter, and a digit.",
+  "authDisplayNameRequired": "Please enter a display name.",
+  "authDisplayNameTooShort": "Display name must be at least 2 characters.",
+  "authDisplayNameTooLong": "Display name must not exceed 150 characters.",
+  "authConfirmPasswordRequired": "Please confirm your password.",
+  "authConfirmPasswordMismatch": "Passwords do not match.",
+  "authForgotTitleReset": "Reset password",
+  "authForgotTitleVerify": "Verify your code",
+  "authForgotTitleCreate": "Create password",
+  "authForgotSubtitlePhone": "Enter your phone number and we'll send a code to reset your password.",
+  "authForgotSubtitleOtp": "Enter the 6-digit code sent to {phone}.",
+  "@authForgotSubtitleOtp": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "authForgotSubtitlePassword": "Create a new password for your account.",
+  "authStepProgress": "Step {current}/{total}",
+  "@authStepProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "authEmailOrPhoneLabel": "Email or phone number",
+  "authSendResetCodeButton": "Send reset code",
+  "authOtpMaxAttemptsReached": "You've entered the wrong OTP more than 5 times. Please resend the code.",
+  "authOtpVerifiedOnSave": "The OTP code will be checked when you save the new password.",
+  "authResendCode": "Resend code",
+  "authResendInSeconds": "Resend in {seconds}s",
+  "@authResendInSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "authChangePhoneNumber": "Change phone number",
+  "authNewPasswordLabel": "New password",
+  "authConfirmNewPasswordLabel": "Confirm new password",
+  "authSaveNewPasswordButton": "Save new password",
+  "authEnterOtpAgain": "Enter OTP again",
+  "authShowPassword": "Show password",
+  "authHidePassword": "Hide password",
+  "authOtpResentMessage": "OTP code resent.",
+  "authPasswordChangedMessage": "Password changed.",
+  "authSignInTitle": "Sign in",
+  "authSignInSubtitle": "Welcome to VocaNova",
+  "authPhoneNumberLabel": "Phone number",
+  "authPasswordLabel": "Password",
+  "authForgotPasswordLink": "Forgot password?",
+  "authNewHerePrefix": "New here? ",
+  "authCreateAccountTitle": "Create account",
+  "authVerifyPhoneTitle": "Verify your phone number",
+  "authOtpSubtitle": "Enter the 6-digit code sent to\n{phone}",
+  "@authOtpSubtitle": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "authVerifyButton": "Verify",
+  "authAttemptsRemaining": "You have {count} attempts remaining.",
+  "@authAttemptsRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "authDidntReceiveCodePrefix": "Didn't receive it? ",
+  "authOtpVerifiedSuccessMessage": "OTP verified successfully.",
+  "authRegistrationDataMissing": "Missing registration data.",
+  "authStartLearningSubtitle": "Start learning today",
+  "authFullNameLabel": "Full name",
+  "authPasswordHintMinChars": "At least 8 characters",
+  "authConfirmPasswordLabel": "Confirm password",
+  "authRepeatPasswordHint": "Repeat your password",
+  "authAlreadyHaveAccountPrefix": "Already have an account? ",
+  "authLearningProfileSectionTitle": "Personalize learning suggestions (optional)",
+  "authLearningProfileSectionSubtitle": "Help VocaNova suggest topics and vocabulary that fit you from day one.",
+  "authRegionLabel": "Region",
+  "authOccupationLabel": "Occupation",
+  "authEducationLevelLabel": "Education level",
+  "authDateOfBirthLabel": "Date of birth",
+  "authSelectDateOfBirth": "Select date of birth",
+  "authOnboardingTitle": "Learning setup",
+  "authSkipAction": "Skip",
+  "authOnboardingGoalHeadline": "What's your vocabulary learning goal?",
+  "authOnboardingTopicsHeadline": "Which topics are you interested in?",
+  "authOnboardingGoalSubtitle": "VocaNova will prioritize content based on this goal.",
+  "authOnboardingTopicsSubtitle": "Choose at least one topic to get vocabulary suggestions that fit you.",
+  "authOnboardingFinishButton": "Finish",
+  "authOnboardingContinueButton": "Continue",
+  "authCatalogLoadError": "Couldn't load the catalog. Please try again.",
+  "authRetryButton": "Retry",
+  "authLearningProfileSaveFailed": "Couldn't save your learning setup.",
+  "authLearningProfileSaveFailedRetry": "Couldn't save your learning setup. Please try again.",
+  "authApiResponseInvalid": "The API response data is invalid.",
+  "authGoogleTokenMissing": "Google did not return a valid sign-in token.",
+  "authGoogleClientIdMissing": "Google Sign-In is not configured. Run Flutter with --dart-define=GOOGLE_SERVER_CLIENT_ID=YOUR_WEB_CLIENT_ID.",
+  "authGoogleClientConfigurationError": "Google Sign-In configuration is invalid. Check the Android package name, signing SHA-1, and Web client ID.",
+  "authGoogleProviderConfigurationError": "Google Play services or the Google provider is unavailable or incorrectly configured on this device.",
+  "authGoogleUiUnavailable": "Google could not open the account selection screen. Please reopen the app and try again.",
+  "authGoogleInterrupted": "Google Sign-In was interrupted. Please try again.",
+  "authGoogleCanceled": "Google Sign-In was canceled. If you selected an account before seeing this message, check the Android package name, SHA-1, and Web client ID.",
+  "authGoogleUnknownError": "Google Sign-In failed: {details}",
+  "@authGoogleUnknownError": {
+    "placeholders": {
+      "details": { "type": "String" }
+    }
+  },
+  "dictBackTooltip": "Back",
+  "dictSearchHint": "Search for a word...",
+  "dictClearSearchTooltip": "Clear search",
+  "dictAllLevelsLabel": "All levels",
+  "dictAllTopicsLabel": "All topics",
+  "dictSearchOfflineBanner": "Offline — searching cached words and recent history only.",
+  "dictRecentSectionTitle": "Recent",
+  "dictClearAction": "Clear",
+  "dictBrowseByTopicTitle": "Browse by topic",
+  "dictSeeAllAction": "See all",
+  "dictRecentSearchesEmpty": "Your recent searches will appear here.",
+  "dictWordCountLabel": "{count} words",
+  "@dictWordCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dictNoMatchingCachedWords": "No matching cached words",
+  "dictNoMatchingWords": "No matching words found",
+  "dictReconnectHint": "Reconnect to search the full dictionary.",
+  "dictAdjustFiltersHint": "Try another spelling or adjust the filters.",
+  "dictTopicsTitle": "Topics",
+  "dictSearchTopicsHint": "Search topics...",
+  "dictNoPersonalTopicsMatch": "No personal topics match your search.",
+  "dictNoSystemTopics": "No system topics found.",
+  "dictSystemLibraryLabel": "System library",
+  "dictMyTopicsLabel": "My topics",
+  "dictPersonalModeNote": "Only words you saved appear here, ready for practice.",
+  "dictSystemModeNote": "Browse all words organized by the VocaNova team.",
+  "dictPersonalWordCount": "{count} personal words",
+  "@dictPersonalWordCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dictSystemWordCount": "{count} system words",
+  "@dictSystemWordCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dictUnableToLoadTopics": "Unable to load topics.",
+  "dictTryAgain": "Try again",
+  "dictCategoryAll": "All",
+  "dictCategoryEducation": "Education",
+  "dictCategoryWork": "Work",
+  "dictCategoryTravel": "Travel",
+  "dictCategoryDailyLife": "Daily life",
+  "dictMyTopicTitle": "My {name}",
+  "@dictMyTopicTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dictTopicFallbackName": "topic",
+  "dictTopicDetailFallbackTitle": "Topic detail",
+  "dictUnableToLoadWordsRetry": "Unable to load words. Try again",
+  "dictPracticeSavedWords": "Practice my saved words",
+  "dictNoWordsInCategory": "No words in this category.",
+  "dictRemovedFromTopic": "Removed from your topic.",
+  "dictUnableToRemoveWord": "Unable to remove this word.",
+  "dictAddToListTooltip": "Add to list",
+  "dictRemoveFromTopicTooltip": "Remove from my topic",
+  "dictStatMastered": "Mastered",
+  "dictStatLearning": "Learning",
+  "dictStatNew": "New",
+  "dictStatAvgMastery": "Avg mastery",
+  "dictWordNotFound": "Word not found.",
+  "dictDefinitionLabel": "Definition",
+  "dictVietnameseMeaningLabel": "Vietnamese",
+  "dictUnableToPlayAudio": "Unable to play audio.",
+  "dictWordCopied": "Word copied to clipboard.",
+  "dictShareTooltip": "Share",
+  "dictSavedTooltip": "Saved",
+  "dictSaveWordTooltip": "Save word",
+  "dictExampleLabel": "Example",
+  "dictSynonymsLabel": "Synonyms",
+  "dictAntonymsLabel": "Antonyms",
+  "dictPracticeLabel": "Practice",
+  "dictWordDetailOfflineBanner": "Offline — showing saved word details.",
+  "dictAddToListSheetSubtitle": "Choose a personal list or build a quiz-ready topic.",
+  "dictMyListsLabel": "My lists",
+  "dictNewListLabel": "New list",
+  "dictNoteOptionalLabel": "Note (optional)",
+  "dictAddNoteHint": "Add a note...",
+  "dictSaveToListLabel": "Save to list",
+  "dictAddToTopicLabel": "Add to topic",
+  "dictCreateListPrompt": "Create a list to save this word.",
+  "dictNoSystemTopicAssignment": "This word has no system topic assignment.",
+  "dictAlreadyInTopic": "Already in your topic",
+  "dictUnableToLoadDestinations": "Unable to load your save destinations.",
+  "dictListNameHint": "List name",
+  "dictCancelLabel": "Cancel",
+  "dictCreateLabel": "Create",
+  "dictUnableToCreateList": "Unable to create the list.",
+  "dictAddedToDestination": "Added to {name}.",
+  "@dictAddedToDestination": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dictUnableToSaveWord": "Unable to save this word.",
+  "dictNoSavedWordDataError": "No saved word data available.",
+  "dictWordDetailLoadError": "Unable to load word details.",
+  "dictSearchRefreshError": "Unable to load new data. Showing saved words.",
+  "listsTitle": "My Word Lists",
+  "listsCreateDialogTitle": "Create list",
+  "listsRenameDialogTitle": "Rename list",
+  "listsMyListsSection": "My lists",
+  "listsPersonalTopicsSection": "Personal topics",
+  "listsNameFieldHint": "List name",
+  "listsCancel": "Cancel",
+  "listsCreateAction": "Create",
+  "listsSaveAction": "Save",
+  "listsRenameAction": "Rename",
+  "listsDeleteAction": "Delete",
+  "listsDeleteConfirmTitle": "Delete list?",
+  "listsDeleteConfirmBody": "The list \"{name}\" will be deleted.",
+  "@listsDeleteConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "listsNameRequiredError": "Please enter a list name.",
+  "listsNameMaxLengthError": "List name can be at most 100 characters.",
+  "listsWordCount": "{count} words",
+  "@listsWordCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "listsCreatedOnLabel": "Created on {date}",
+  "@listsCreatedOnLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "listsOfflineBanner": "You're offline. Showing saved lists.",
+  "listsEmptyState": "You don't have any word lists yet.\nTap + to create your first list.",
+  "listsDetailTitleFallback": "List details",
+  "listsAddWordAction": "Add word",
+  "listsDetailEmpty": "This list doesn't have any words yet.",
+  "listsRemoveWordConfirmTitle": "Remove word?",
+  "listsRemoveWordConfirmBody": "Remove \"{word}\" from the list?",
+  "@listsRemoveWordConfirmBody": {
+    "placeholders": {
+      "word": {
+        "type": "String"
+      }
+    }
+  },
+  "listsLoadTopicsError": "Unable to load topics.",
+  "listsAddRandomDialogTitle": "Add random words",
+  "listsByTopicOption": "By topic",
+  "listsSynonymOption": "Synonyms",
+  "listsAntonymOption": "Antonyms",
+  "listsCountFieldLabel": "Count (1-50)",
+  "listsAddAction": "Add",
+  "listsAddRandomAction": "Add random",
+  "listsStartQuizAction": "Start quiz",
+  "listsCorrectCount": "Correct: {count}",
+  "@listsCorrectCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "listsWrongCount": "Wrong: {count}",
+  "@listsWrongCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "listsNoteLabel": "Note: {note}",
+  "@listsNoteLabel": {
+    "placeholders": {
+      "note": {
+        "type": "String"
+      }
+    }
+  },
+  "listsDetailOfflineBanner": "You're offline. Showing saved words.",
+  "listsSearchWordHint": "Search for an English word",
+  "listsLoadListsError": "Unable to load word lists.",
+  "listsCreateError": "Unable to create list. The name may already exist.",
+  "listsRenameError": "Unable to rename list.",
+  "listsDeleteError": "Unable to delete list.",
+  "listsOfflineMutateError": "An internet connection is required to change lists.",
+  "listsLoadWordsError": "Unable to load words in this list.",
+  "listsLoadMoreWordsError": "Unable to load more words.",
+  "listsAddWordError": "Unable to add word to the list.",
+  "listsAddRandomError": "Unable to add random words.",
+  "listsRemoveWordError": "Unable to remove word from the list.",
+  "progressOverviewTitle": "Learning Progress",
+  "progressChartsTooltip": "Detailed charts",
+  "progressStreakDaysLabel": "{days} days in a row",
+  "@progressStreakDaysLabel": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "progressLongestStreakLabel": "Record: {days} days",
+  "@progressLongestStreakLabel": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "progressAccuracy7DaysLabel": "7-day accuracy",
+  "progressCorrectAnswersLabel": "{correct}/{total} correct",
+  "@progressCorrectAnswersLabel": {
+    "placeholders": {
+      "correct": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "progressWordsInProgressLabel": "Words in progress",
+  "progressMasteredWordsLabel": "Mastered words",
+  "progressSessionsThisMonthLabel": "Quizzes this month",
+  "progressOfflineBanner": "You're offline. Showing saved progress data.",
+  "progressNoDataMessage": "No progress data yet.",
+  "progressRetry": "Retry",
+  "progressChartsTitle": "Progress charts",
+  "progressGranularityDaily": "Daily",
+  "progressGranularityWeekly": "Weekly",
+  "progressGranularityMonthly": "Monthly",
+  "progressSessionsCountLabel": "Number of sessions",
+  "progressMasteryLevelLabel": "Mastery level",
+  "progressTop10WeakestWordsLabel": "10 weakest words",
+  "progressNoWeakestWords": "No weak words to review yet.",
+  "progressMasteryLevelShort": "Lv.{level}",
+  "@progressMasteryLevelShort": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "progressWordStatsLabel": "Correct {correct} · Wrong {wrong}",
+  "@progressWordStatsLabel": {
+    "placeholders": {
+      "correct": {
+        "type": "int"
+      },
+      "wrong": {
+        "type": "int"
+      }
+    }
+  },
+  "progressNoCachedDataError": "No saved progress data.",
+  "progressLoadOverviewError": "Couldn't load progress overview.",
+  "progressLoadChartsError": "Couldn't load progress charts.",
+  "progressChangeGranularityError": "Couldn't change the chart's time range.",
+  "homeWelcomeBack": "Welcome back",
+  "homeGreetingName": "Hi, {name}",
+  "@homeGreetingName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "homeGreetingMorning": "Good morning",
+  "homeGreetingAfternoon": "Good afternoon",
+  "homeGreetingEvening": "Good evening",
+  "homeSeeAll": "See all",
+  "homeSearchHint": "Search a word...",
+  "homeDailyGoalLabel": "DAILY GOAL",
+  "homeGoalProgress": "{mastered} / {total} words",
+  "@homeGoalProgress": {
+    "placeholders": {
+      "mastered": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "homeMasteredSoFar": "mastered so far",
+  "homeStreakActive": "Keep your {days}-day streak",
+  "@homeStreakActive": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "homeStreakInactive": "Start a streak today",
+  "homeWordOfTheDayLabel": "WORD OF THE DAY",
+  "homeLearnThisWord": "Learn this word",
+  "homeDailyWordLoading": "Loading…",
+  "homeDailyWordUnavailable": "Unavailable",
+  "homeDailyWordChoosing": "Choosing a word from your dictionary…",
+  "homeDailyWordLoadError": "Could not load today’s word. Pull down to retry.",
+  "homePronunciationPlayTooltip": "Play pronunciation",
+  "homePronunciationPlayError": "Unable to play pronunciation.",
+  "homeStatWords": "Words",
+  "homeStatAccuracy": "Accuracy",
+  "homeStatMastered": "Mastered",
+  "homeContinueLabel": "CONTINUE",
+  "homeWordCount": "{count,plural, =1{{count} word} other{{count} words}}",
+  "@homeWordCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeQuickActionsTitle": "Quick actions",
+  "homeActionQuiz": "Quiz",
+  "homeActionReview": "Review",
+  "homeActionTopics": "Topics",
+  "homeTopicsForYouTitle": "Topics for you",
+  "homeTopicsForYouEmpty": "Your next collection is taking shape",
+  "homeExploreTopics": "Explore topics",
+  "homeTopicWordCount": "{count,plural, =1{{count} word} other{{count} words}}",
+  "@homeTopicWordCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeWordsToReviewLabel": "{count} words to review",
+  "@homeWordsToReviewLabel": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "homeTapToReviewMistakes": "Tap to review your mistakes",
+  "homeMyListsTitle": "My lists",
+  "homeCreateFirstList": "Create your first list to start learning",
+  "homeWeekdayMonShort": "M",
+  "homeWeekdayTueShort": "T",
+  "homeWeekdayWedShort": "W",
+  "homeWeekdayThuShort": "T",
+  "homeWeekdayFriShort": "F",
+  "homeWeekdaySatShort": "S",
+  "homeWeekdaySunShort": "S",
+  "notifTitle": "Notifications",
+  "notifMarkAllRead": "Mark all read",
+  "notifEmptyMessage": "No notifications yet.",
+  "notifRetry": "Retry",
+  "notifClose": "Close",
+  "notifJustNow": "Just now",
+  "notifMinutesAgo": "{count} min ago",
+  "@notifMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notifHoursAgo": "{count} hr ago",
+  "@notifHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notifDaysAgo": "{count} days ago",
+  "@notifDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notifLoadError": "Couldn't load notifications.",
+  "quizConfigTitle": "Quiz setup",
+  "quizConfigScopeSection": "Word scope",
+  "quizConfigScopeAll": "All",
+  "quizConfigScopeFromDate": "From date",
+  "quizConfigScopeToDate": "To date",
+  "quizConfigScopeDateRange": "Date range",
+  "quizConfigScopeWrongWords": "Recently wrong words",
+  "quizConfigDateFrom": "Start date",
+  "quizConfigDateTo": "End date",
+  "quizConfigSourceSection": "Quiz source",
+  "quizConfigModeSection": "Mode",
+  "quizConfigQuestionTypeSection": "Question type",
+  "quizConfigAnswerMethodSection": "Answer method",
+  "quizConfigWordOrderSection": "Order",
+  "quizConfigQuestionLimitSection": "Question count",
+  "quizConfigNeedConnection": "Internet connection required",
+  "quizConfigStartButton": "Start",
+  "quizConfigQuestionTypeWordToMeaning": "Word → meaning",
+  "quizConfigQuestionTypeMeaningToWord": "Meaning → word",
+  "quizConfigQuestionTypeDescToWord": "Description → word",
+  "quizAnswerMultipleChoice": "Multiple choice",
+  "quizAnswerTyping": "Typing",
+  "quizAnswerAiTyping": "AI typing",
+  "quizConfigOrderRandom": "Random",
+  "quizConfigOrderNewest": "Newest",
+  "quizConfigOrderOldest": "Oldest",
+  "quizConfigOrderByDifficulty": "By difficulty",
+  "quizModeStandard": "Standard",
+  "quizModeTimed": "Timed",
+  "quizModeChallenge": "Challenge",
+  "quizModeElimination": "Elimination",
+  "quizConfigModeStandardSubtitle": "At your own pace",
+  "quizConfigModeTimedSubtitle": "Race against the clock",
+  "quizConfigModeChallengeSubtitle": "Lives and correct streaks",
+  "quizConfigModeEliminationSubtitle": "One mistake ends it",
+  "quizConfigTimeLimitLabel": "Time limit (seconds)",
+  "quizConfigLivesLabel": "Lives",
+  "quizConfigLimitAll": "All",
+  "quizConfigLimitCustom": "Custom",
+  "quizConfigCustomLimitLabel": "Desired question count",
+  "quizConfigCustomLimitHelper": "Source has {wordCount} words · a higher value will be capped at {wordCount}",
+  "@quizConfigCustomLimitHelper": {
+    "placeholders": {
+      "wordCount": {
+        "type": "int"
+      }
+    }
+  },
+  "quizConfigCustomLimitHelperEmpty": "Enter the desired question count",
+  "quizConfigSourceMyList": "My lists",
+  "quizConfigSourcePersonalTopic": "Personal topics",
+  "quizConfigSourceHintList": "Choose one of your word lists.",
+  "quizConfigSourceHintTopic": "Choose a topic containing your saved words.",
+  "quizConfigSourceNoWords": "No words to quiz yet",
+  "quizConfigSourceWordCount": "{count} words",
+  "@quizConfigSourceWordCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "quizConfigEmptyTopicHint": "Save some words to a personal topic before taking a quiz.",
+  "quizConfigEmptyListHint": "Create a list and add words before taking a quiz.",
+  "quizConfigSummaryMode": "Mode",
+  "quizConfigSummaryAnswer": "Answer",
+  "quizConfigSummaryCount": "Questions",
+  "quizConfigLoadSourcesError": "Could not load quiz sources.",
+  "quizConfigValidateNoSource": "Please choose a list or personal topic to quiz on.",
+  "quizConfigValidateNoQuestionCount": "Please enter the number of questions.",
+  "quizConfigValidateQuestionCountPositive": "The number of questions must be greater than 0.",
+  "quizConfigValidateDateFromRequired": "Please choose a start date.",
+  "quizConfigValidateDateToRequired": "Please choose an end date.",
+  "quizConfigValidateDateOrder": "The start date must be before or equal to the end date.",
+  "quizConfigValidateTimedPositive": "Timed mode needs a time limit greater than 0.",
+  "quizConfigValidateEliminationPositive": "Elimination mode needs more than 0 lives.",
+  "quizConfigCreateSessionError": "Could not create the quiz. Please check the word count.",
+  "quizSessionTitle": "Quiz",
+  "quizSessionAbandonTooltip": "Quit quiz",
+  "quizSessionQuestionNumber": "Question {number}",
+  "@quizSessionQuestionNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "quizSessionFinishing": "Finishing...",
+  "quizSessionViewResult": "View result",
+  "quizSessionNext": "Next",
+  "quizSessionAbandonDialogTitle": "Quit the quiz?",
+  "quizSessionAbandonDialogContent": "Your current progress will be ended and saved.",
+  "quizSessionAbandonCancel": "Keep going",
+  "quizSessionAbandonConfirm": "Quit",
+  "quizSessionProgressLabel": "Question {current}/{total}",
+  "@quizSessionProgressLabel": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "quizSessionUnavailableMessage": "Could not restore the running quiz. Please start a new one.",
+  "quizSessionCreateNew": "Create a quiz",
+  "quizTypingLabelAi": "Type your answer",
+  "quizTypingLabelDefault": "Type the answer",
+  "quizTypingHelperAi": "AI will grade how accurate your meaning is.",
+  "quizTypingHelperDefault": "Case and trailing punctuation don't matter.",
+  "quizTypingAiEvaluating": "AI is grading...",
+  "quizTypingSubmit": "Submit answer",
+  "quizTypingEmptyAnswer": "Please enter an answer.",
+  "quizTypingCorrect": "Correct",
+  "quizTypingIncorrect": "Not quite right",
+  "quizTypingExpectedAnswer": "Answer: {answer}",
+  "@quizTypingExpectedAnswer": {
+    "placeholders": {
+      "answer": {
+        "type": "String"
+      }
+    }
+  },
+  "quizTypingAiScore": "AI score: {score}%",
+  "@quizTypingAiScore": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "quizTypingAiSuggestion": "Suggestion: {suggestion}",
+  "@quizTypingAiSuggestion": {
+    "placeholders": {
+      "suggestion": {
+        "type": "String"
+      }
+    }
+  },
+  "quizSessionSubmitError": "Could not submit the answer. Please try again.",
+  "quizSessionFinishError": "Could not finish the quiz. Please try again.",
+  "quizResultHeadlineGreat": "Excellent!",
+  "quizResultHeadlineGood": "Well done!",
+  "quizResultHeadlineTryAgain": "Keep practicing!",
+  "quizResultSummary": "{correct}/{total} correct · {duration}",
+  "@quizResultSummary": {
+    "placeholders": {
+      "correct": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "quizResultAccuracyLabel": "accuracy",
+  "quizResultCorrectLabel": "Correct",
+  "quizResultWrongLabel": "Wrong",
+  "quizResultBestStreakLabel": "Best streak",
+  "quizResultListTitle": "RESULTS",
+  "quizResultYourAnswerLabel": "You answered",
+  "quizResultNoAnswer": "No answer",
+  "quizResultAnswerLabel": "Answer",
+  "quizResultReviewWrongButton": "Review wrong words",
+  "quizResultRetryButton": "Retry",
+  "quizResultDoneButton": "Done",
+  "quizResultLoadError": "Could not load the quiz result.",
+  "quizResultRetryLoadButton": "Try again",
+  "quizResultInvalidSession": "Invalid quiz session code.",
+  "quizWrongWordsTitle": "Wrong words",
+  "quizWrongWordsRetryButton": "Retest",
+  "quizWrongWordsEmpty": "You don't have any words in your wrong list yet.",
+  "quizWrongWordsNoMeaning": "No meaning yet",
+  "quizWrongWordsStats": "Correct: {correct} · Wrong: {wrong}",
+  "@quizWrongWordsStats": {
+    "placeholders": {
+      "correct": {
+        "type": "int"
+      },
+      "wrong": {
+        "type": "int"
+      }
+    }
+  },
+  "quizWrongWordsMasteryLevel": "Lv.{level}",
+  "@quizWrongWordsMasteryLevel": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "quizWrongWordsLoadError": "Could not load the wrong words list.",
+  "quizWrongWordsLoadMoreError": "Could not load more wrong words.",
+  "quizWrongWordsRemoveError": "Could not remove the word from the wrong list.",
+  "settingsSectionAppearance": "APPEARANCE",
+  "settingsDarkMode": "Dark mode",
+  "settingsDarkModeSubtitle": "Switch to dark theme",
+  "settingsFollowSystemTheme": "Follow system theme",
+  "settingsSectionLanguage": "LANGUAGE",
+  "settingsAppLanguage": "App language",
+  "settingsSectionNotifications": "NOTIFICATIONS",
+  "settingsDailyReminder": "Daily reminder",
+  "settingsDailyReminderSubtitle": "Remind me to study each day",
+  "settingsStreakAlert": "Streak alert",
+  "settingsStreakAlertSubtitle": "Warn before streak breaks",
+  "settingsReviewDue": "Review due",
+  "settingsReviewDueSubtitle": "Words ready for spaced review",
+  "settingsSectionAudio": "AUDIO",
+  "settingsAutoPlayPronunciation": "Auto-play pronunciation",
+  "settingsAutoPlayPronunciationSubtitle": "Play when viewing a word",
+  "settingsSoundEffects": "Sound effects",
+  "settingsSoundEffectsSubtitle": "Quiz sounds and feedback",
+  "settingsSectionAccount": "ACCOUNT",
+  "settingsPrivacyPolicy": "Privacy policy",
+  "settingsDeleteAccount": "Delete account",
+  "settingsVersionLabel": "VocaNova v{version}",
+  "@settingsVersionLabel": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsPrivacyPolicyBody": "VocaNova stores only the account and learning data needed to provide vocabulary practice, progress tracking, and synchronization. Your credentials are protected and are never displayed in the app.",
+  "settingsBackToProfile": "Profile",
+  "settingsTitle": "Settings",
+  "settingsDeleteAccountDialogTitle": "Delete account?",
+  "settingsDeleteAccountDialogBody": "This action permanently removes your profile and learning data. It cannot be undone.",
+  "settingsCancel": "Cancel",
+  "settingsContinue": "Continue",
+  "settingsDeleteAccountFailed": "Unable to delete the account. Please try again.",
+  "settingsDone": "Done",
+  "profileSectionLearning": "LEARNING",
+  "profileMyVocabulary": "My vocabulary",
+  "profileMyVocabularySubtitle": "248 words collected",
+  "profileStatistics": "Statistics",
+  "profileStatisticsSubtitle": "Progress & analytics",
+  "profileTestHistory": "Test history",
+  "profileTestHistorySubtitle": "Past practice sessions",
+  "profileLearningGoals": "Learning goals",
+  "profileLearningGoalsSubtitle": "B2 → C1 target",
+  "profileSectionAccount": "ACCOUNT",
+  "profilePersonalInformation": "Personal information",
+  "profilePersonalInformationSubtitle": "Name, avatar, phone",
+  "profileNotifications": "Notifications",
+  "profileDailyRemindersOn": "Daily reminders on",
+  "profileDailyRemindersOff": "Daily reminders off",
+  "profileLanguage": "Language",
+  "profileLanguageEnglish": "English",
+  "profileLanguageVietnamese": "Vietnamese",
+  "profileTheme": "Theme",
+  "profileThemeDark": "Dark mode",
+  "profileThemeLight": "Light mode",
+  "profileThemeSystem": "System default",
+  "profileSectionApp": "APP",
+  "profileSettingsMenuTitle": "Settings",
+  "profileSettingsMenuSubtitle": "Audio, storage, sync",
+  "profilePrivacyData": "Privacy & data",
+  "profilePrivacyDataSubtitle": "Manage your data",
+  "profilePrivacyDataBody": "VocaNova stores your profile and learning progress so your vocabulary can stay synchronized across sessions.",
+  "profileHelpFeedback": "Help & feedback",
+  "profileHelpFeedbackSubtitle": "FAQs and support",
+  "profileHelpFeedbackBody": "Need a hand? Share the issue, the screen you were using, and the steps that caused it with the VocaNova support team.",
+  "profileSignOut": "Sign out",
+  "profileVersionLabel": "VocaNova v1.0.0 · SEP490_19",
+  "profileUploadAvatarFailed": "Unable to upload avatar.",
+  "profileUpdateSuccess": "Profile updated successfully.",
+  "profileUpdateFailed": "Unable to update profile.",
+  "profilePasswordChangeSuccess": "Password changed successfully.",
+  "profilePasswordChangeFailed": "Unable to change password.",
+  "profileDone": "Done",
+  "profileSignOutConfirmTitle": "Sign out?",
+  "profileSignOutConfirmBody": "You will need to sign in again to keep learning.",
+  "profileCancel": "Cancel",
+  "profilePhoneNotLinked": "Phone not linked",
+  "profileLevelB2": "B2 level",
+  "profileStreakLabel": "{days}-day streak",
+  "@profileStreakLabel": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "profileEditAction": "Edit",
+  "profileStatWords": "Words",
+  "profileStatAccuracy": "Accuracy",
+  "profileStatStreak": "Streak",
+  "profileStatBadges": "Badges",
+  "profileEditSubtitle": "Update your profile details.",
+  "profileFieldPicture": "Profile picture",
+  "profileChooseAvatar": "Choose an avatar",
+  "profileFieldFullName": "Full name",
+  "profileNameHint": "Nguyen Van An",
+  "profileNameTooShort": "Name must contain at least 2 characters",
+  "profileFieldPhoneNumber": "Phone number",
+  "profilePhoneNotLinkedShort": "Not linked",
+  "profileChangePassword": "Change password",
+  "profileSaveChanges": "Save changes",
+  "profileAvatarOpening": "Opening...",
+  "profileChooseFromDevice": "Choose from device",
+  "profileAvatarHint": "JPG, PNG or WebP · Max 5MB",
+  "profileAvatarTooLarge": "Avatar must be 5MB or smaller.",
+  "profilePhotoLibraryError": "Unable to open the photo library.",
+  "profileChangePasswordSubtitle": "Use at least 8 characters with upper, lower and a number.",
+  "profileFieldCurrentPassword": "Current password",
+  "profileCurrentPasswordHint": "Enter current password",
+  "profileFieldNewPassword": "New password",
+  "profileNewPasswordHint": "At least 8 characters",
+  "profileFieldConfirmPassword": "Confirm new password",
+  "profileConfirmPasswordHint": "Repeat your password",
+  "profileUpdatePassword": "Update password",
+  "profileClose": "Close",
+  "profileHidePassword": "Hide password",
+  "profileShowPassword": "Show password",
+  "profileTryAgain": "Try again"
+}
