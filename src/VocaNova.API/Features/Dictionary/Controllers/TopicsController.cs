@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VocaNova.API.Common.Extensions;
-using VocaNova.API.Features.Dictionary.DTOs;
-using VocaNova.API.Features.Dictionary.Services;
+using VocaNova.API.Features.Dictionary.BLL.Models;
+using VocaNova.API.Features.Dictionary.BLL.Services;
+using VocaNova.API.Common.Responses;
+using VocaNova.API.Features.Dictionary.Contracts.Requests;
+using VocaNova.API.Features.Dictionary.Mappings;
 
 namespace VocaNova.API.Features.Dictionary.Controllers;
 
@@ -11,9 +13,9 @@ namespace VocaNova.API.Features.Dictionary.Controllers;
 [Route("api/topics")]
 public sealed class TopicsController : ControllerBase
 {
-    private readonly ITopicService _topicService;
+    private readonly ITopicReadService _topicService;
 
-    public TopicsController(ITopicService topicService)
+    public TopicsController(ITopicReadService topicService)
     {
         _topicService = topicService;
     }
@@ -22,26 +24,37 @@ public sealed class TopicsController : ControllerBase
     public async Task<IActionResult> GetTopics(CancellationToken cancellationToken)
     {
         var result = await _topicService.GetTopicsAsync(cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Topics loaded successfully.");
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "Topics loaded successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpGet("{id:uint}/words")]
     public async Task<IActionResult> GetWords(
         [FromRoute] uint id,
-        [FromQuery] TopicWordsQuery query,
+        [FromQuery] TopicWordsRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _topicService.GetWordsAsync(id, query, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
+        var result = await _topicService.GetWordsAsync(
+            id,
+            request.ToBusinessQuery(),
+            cancellationToken);
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "Topic words loaded successfully."))
+            : ErrorResponse(result);
+    }
 
-        return this.OkResult(result.Value!, "Topic words loaded successfully.");
+    private ObjectResult ErrorResponse<T>(DictionaryResult<T> result)
+    {
+        var statusCode = result.ErrorKind == DictionaryErrorKind.NotFound
+            ? StatusCodes.Status404NotFound
+            : StatusCodes.Status400BadRequest;
+        return StatusCode(
+            statusCode,
+            ApiResponseFormatter.Error(result.Error!, new[] { result.Error! }));
     }
 }

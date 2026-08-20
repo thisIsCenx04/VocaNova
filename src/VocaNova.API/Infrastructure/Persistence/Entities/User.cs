@@ -43,4 +43,3 @@ public partial class User
 
     public virtual ICollection<UserWordProgress> UserWordProgresses { get; set; } = new List<UserWordProgress>();
 }
-

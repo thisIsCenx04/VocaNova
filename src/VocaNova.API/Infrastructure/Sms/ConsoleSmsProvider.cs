@@ -1,6 +1,8 @@
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+
 namespace VocaNova.API.Infrastructure.Sms;
 
-public sealed class ConsoleSmsProvider : ISmsProvider
+public sealed class ConsoleSmsProvider : ISmsSender
 {
     private readonly ILogger<ConsoleSmsProvider> _logger;
 

@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VocaNova.API.Common.Extensions;
+using VocaNova.API.Features.Notifications.BLL.Services;
 using VocaNova.API.Common.Responses;
-using VocaNova.API.Common.Results;
-using VocaNova.API.Features.Notifications.DTOs;
-using VocaNova.API.Features.Notifications.Services;
+using VocaNova.API.Features.Notifications.Contracts.Requests;
+using VocaNova.API.Features.Notifications.Mappings;
 
 namespace VocaNova.API.Features.Notifications.Controllers;
 
@@ -20,25 +19,32 @@ public sealed class NotificationsController : ControllerBase
         _notificationService = notificationService;
     }
 
-    // Notifications are derived on read; read/unread state and "mark read" are handled on the
-    // client (per-device), so there is no write endpoint here.
     [HttpGet]
     public async Task<IActionResult> List(
-        [FromQuery] NotificationListQuery query,
+        [FromQuery] NotificationListRequest request,
         CancellationToken cancellationToken)
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<PagedResult<NotificationDto>>.Unauthorized("Unauthorized."));
+            return Unauthorized(ApiResponseFormatter.Error(
+                "Unauthorized.",
+                new[] { "Unauthorized." }));
         }
 
-        var result = await _notificationService.ListAsync(userId, query, cancellationToken);
+        var result = await _notificationService.ListAsync(
+            userId,
+            request.ToBusinessQuery(),
+            cancellationToken);
         if (!result.IsSuccess)
         {
-            return this.ErrorResult(result);
+            return BadRequest(ApiResponseFormatter.Error(
+                result.Error!,
+                new[] { result.Error! }));
         }
 
-        return Ok(ApiResponseFormatter.Paged(result.Value!, "Notifications loaded successfully."));
+        return Ok(ApiResponseFormatter.Paged(
+            result.Value!.ToResponse(),
+            "Notifications loaded successfully."));
     }
 
     private bool TryGetCurrentUserId(out uint userId)

@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using VocaNova.API.Common.Constants;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
 
 namespace VocaNova.API.Infrastructure.Otp;
 

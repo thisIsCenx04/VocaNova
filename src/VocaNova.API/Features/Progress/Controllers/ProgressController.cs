@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VocaNova.API.Common.Extensions;
-using VocaNova.API.Common.Results;
-using VocaNova.API.Features.Progress.DTOs;
-using VocaNova.API.Features.Progress.Services;
+using VocaNova.API.Features.Progress.BLL.Models;
+using VocaNova.API.Features.Progress.BLL.Services;
+using VocaNova.API.Common.Responses;
+using VocaNova.API.Features.Progress.Contracts.Requests;
+using VocaNova.API.Features.Progress.Mappings;
 
 namespace VocaNova.API.Features.Progress.Controllers;
 
@@ -28,38 +29,36 @@ public sealed class ProgressController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<ProgressSummaryDto>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
         var result = await _progressSummaryService.GetSummaryAsync(userId, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Progress summary loaded successfully.");
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "Progress summary loaded successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpGet("chart")]
     public async Task<IActionResult> GetChart(
-        [FromQuery] string? granularity,
+        [FromQuery] ProgressChartRequest request,
         CancellationToken cancellationToken)
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<ProgressChartDto>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
         var result = await _progressAnalyticsService.GetChartAsync(
             userId,
-            granularity,
+            request.ToBusinessQuery(),
             cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Progress chart loaded successfully.");
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "Progress chart loaded successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpGet("mastery-breakdown")]
@@ -67,40 +66,38 @@ public sealed class ProgressController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<IReadOnlyCollection<MasteryBreakdownDto>>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
         var result = await _progressAnalyticsService.GetMasteryBreakdownAsync(
             userId,
             cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Mastery breakdown loaded successfully.");
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "Mastery breakdown loaded successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpGet("weakest-words")]
     public async Task<IActionResult> GetWeakestWords(
-        [FromQuery] int? limit,
+        [FromQuery] WeakestWordsRequest request,
         CancellationToken cancellationToken)
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<IReadOnlyCollection<ProgressWeakestWordDto>>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
         var result = await _progressAnalyticsService.GetWeakestWordsAsync(
             userId,
-            limit,
+            request.ToBusinessQuery(),
             cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Weakest words loaded successfully.");
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "Weakest words loaded successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpGet("words/{wordId:uint}")]
@@ -110,19 +107,37 @@ public sealed class ProgressController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<WordProgressDetailDto>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
         var result = await _progressAnalyticsService.GetWordProgressAsync(
             userId,
             wordId,
             cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "Word progress loaded successfully."))
+            : ErrorResponse(result);
+    }
 
-        return this.OkResult(result.Value!, "Word progress loaded successfully.");
+    private ObjectResult UnauthorizedResponse() =>
+        StatusCode(
+            StatusCodes.Status401Unauthorized,
+            ApiResponseFormatter.Error("Unauthorized.", new[] { "Unauthorized." }));
+
+    private ObjectResult ErrorResponse<T>(ProgressResult<T> result)
+    {
+        var statusCode = result.ErrorKind switch
+        {
+            ProgressErrorKind.Unauthorized => StatusCodes.Status401Unauthorized,
+            ProgressErrorKind.NotFound => StatusCodes.Status404NotFound,
+            _ => StatusCodes.Status400BadRequest,
+        };
+
+        return StatusCode(
+            statusCode,
+            ApiResponseFormatter.Error(result.Error!, new[] { result.Error! }));
     }
 
     private bool TryGetCurrentUserId(out uint userId)

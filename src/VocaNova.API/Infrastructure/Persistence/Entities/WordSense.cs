@@ -23,6 +23,11 @@ public partial class WordSense
 
     public string? VietnameseMeaning { get; set; }
 
+    /// <summary>
+    /// active/deleted
+    /// </summary>
+    public string Status { get; set; } = "active";
+
     public virtual ICollection<TestAnswer> TestAnswers { get; set; } = new List<TestAnswer>();
 
     public virtual Word Word { get; set; } = null!;

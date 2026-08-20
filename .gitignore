@@ -83,5 +83,10 @@ input.txt
 
 # Figma working files (contains a read-only token — never commit)
 .figma-tmp/
-docs/*
 .artifacts-test/
+PROJECT_STRUCTURE_3_LAYER.md
+
+# User requested ignores
+AGENTS.md
+PROMPT.EXAMPLE.md
+docs/

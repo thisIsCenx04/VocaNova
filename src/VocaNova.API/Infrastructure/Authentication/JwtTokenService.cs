@@ -4,10 +4,12 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using VocaNova.API.Features.Auth.BLL.Models;
+using AuthJwtTokenService = VocaNova.API.Features.Auth.BLL.Abstractions.IJwtTokenService;
 
 namespace VocaNova.API.Infrastructure.Authentication;
 
-public sealed class JwtTokenService : IJwtTokenService
+public sealed class JwtTokenService : AuthJwtTokenService
 {
     private readonly JwtSettings _jwtSettings;
     private readonly JwtSecurityTokenHandler _tokenHandler = new()
@@ -54,7 +56,7 @@ public sealed class JwtTokenService : IJwtTokenService
         return Guid.NewGuid().ToString("D");
     }
 
-    public ClaimsPrincipal? ValidateAccessToken(string token)
+    public AuthPrincipal? ValidateAccessToken(string token)
     {
         if (string.IsNullOrWhiteSpace(token))
         {
@@ -75,7 +77,9 @@ public sealed class JwtTokenService : IJwtTokenService
             }
 
             JwtClaimsPrincipalHelper.AddUserIdClaimFromSubject(principal);
-            return principal;
+            return uint.TryParse(principal.FindFirst("user_id")?.Value, out var userId)
+                ? new AuthPrincipal(userId, principal.FindFirst("role")?.Value, principal)
+                : null;
         }
         catch (SecurityTokenException)
         {

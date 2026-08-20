@@ -90,7 +90,7 @@ public partial class VocaNovaDbContext : DbContext
         // Soft-delete filters:
         // Only tables with a DB-backed soft-delete column are filtered here.
         // Current schema uses status == 'deleted' for:
-        // UserList, UserListWord, Topic, Word, WordAudioAsset.
+        // UserList, UserListWord, Topic, Word, WordSense, WordAudioAsset.
         modelBuilder.Entity<UserList>()
             .HasQueryFilter(entity => entity.Status != UserStatus.Deleted);
 
@@ -103,10 +103,12 @@ public partial class VocaNovaDbContext : DbContext
         modelBuilder.Entity<Word>()
             .HasQueryFilter(entity => entity.Status != UserStatus.Deleted);
 
+        modelBuilder.Entity<WordSense>()
+            .HasQueryFilter(entity => entity.Status != UserStatus.Deleted);
+
         modelBuilder.Entity<WordAudioAsset>()
             .HasQueryFilter(entity => entity.Status != AudioStatus.Deleted);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
-

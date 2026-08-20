@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VocaNova.API.Common.Extensions;
 using VocaNova.API.Common.Responses;
-using VocaNova.API.Features.Admin.DTOs;
-using VocaNova.API.Features.Admin.Services;
+using VocaNova.API.Features.Admin.Contracts.Requests;
+using VocaNova.API.Features.Admin.Contracts.Responses;
+using VocaNova.API.Features.Admin.Mappings;
+using VocaNova.API.Features.Admin.BLL.Abstractions;
 using VocaNova.API.Infrastructure.Authentication;
 using VocaNova.API.Infrastructure.Auditing;
 
@@ -26,16 +28,23 @@ public sealed class AdminUsersController : ControllerBase
 
     [HttpGet]
     public async Task<IActionResult> GetUsers(
-        [FromQuery] AdminUserQuery query,
+        [FromQuery] AdminUserQueryRequest query,
         CancellationToken cancellationToken)
     {
-        var result = await _adminUserService.GetUsersAsync(query, cancellationToken);
+        var bllQuery = new VocaNova.API.Features.Admin.BLL.Models.AdminUserQuery(query.Page, query.Limit, query.Status, query.Search, query.IncludeDeleted, query.Role, query.SortBy, query.SortDirection);
+        var result = await _adminUserService.GetUsersAsync(bllQuery, cancellationToken);
         if (!result.IsSuccess)
         {
             return this.ErrorResult(result);
         }
 
-        return Ok(ApiResponseFormatter.Paged(result.Value!, "Users loaded successfully."));
+        var mappedPagedResult = new VocaNova.API.Common.Results.PagedResult<AdminUserSummaryResponse>(
+            result.Value!.Items.Select(x => x.ToResponse()).ToArray(),
+            result.Value.Page,
+            result.Value.Limit,
+            result.Value.TotalItems);
+
+        return Ok(ApiResponseFormatter.Paged(mappedPagedResult, "Users loaded successfully."));
     }
 
     [HttpGet("{id:uint}")]
@@ -45,7 +54,7 @@ public sealed class AdminUsersController : ControllerBase
     {
         var result = await _adminUserService.GetUserDetailAsync(id, cancellationToken);
         return result.IsSuccess
-            ? this.OkResult(result.Value!, "User loaded successfully.")
+            ? this.OkResult(result.Value!.ToResponse(), "User loaded successfully.")
             : this.ErrorResult(result);
     }
 
@@ -62,7 +71,13 @@ public sealed class AdminUsersController : ControllerBase
             return this.ErrorResult(result);
         }
 
-        return Ok(ApiResponseFormatter.Paged(result.Value!, "User test history loaded successfully."));
+        var mappedPagedResult = new VocaNova.API.Common.Results.PagedResult<AdminUserTestSessionResponse>(
+            result.Value!.Items.Select(x => x.ToResponse()).ToArray(),
+            result.Value.Page,
+            result.Value.Limit,
+            result.Value.TotalItems);
+
+        return Ok(ApiResponseFormatter.Paged(mappedPagedResult, "User test history loaded successfully."));
     }
 
     [HttpGet("{id:uint}/topics")]
@@ -72,7 +87,7 @@ public sealed class AdminUsersController : ControllerBase
     {
         var result = await _adminUserService.GetUserTopicsAsync(id, cancellationToken);
         return result.IsSuccess
-            ? this.OkResult(result.Value!, "User topics loaded successfully.")
+            ? this.OkResult(result.Value!.ToResponse(), "User topics loaded successfully.")
             : this.ErrorResult(result);
     }
 

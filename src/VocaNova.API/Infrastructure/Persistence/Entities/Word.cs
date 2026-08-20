@@ -70,4 +70,3 @@ public partial class Word
 
     public virtual ICollection<WordTopic> WordTopics { get; set; } = new List<WordTopic>();
 }
-

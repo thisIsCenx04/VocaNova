@@ -21,4 +21,3 @@ public partial class Region
 
     public virtual ICollection<UserLearningProfile> UserLearningProfiles { get; set; } = new List<UserLearningProfile>();
 }
-

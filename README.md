@@ -1,96 +1,67 @@
 # VocaNova
 
-VocaNova is a vocabulary learning and testing system for SEP490. The repository contains:
+VocaNova is a vocabulary-learning and testing system with one ASP.NET Core backend, an MVC administration dashboard, and a Flutter mobile client.
 
-- `src/VocaNova.API`: ASP.NET Core Web API.
-- `src/VocaNova.Dashboard`: ASP.NET Core MVC dashboard.
-- `src/VocaNova.Mobile`: Flutter mobile application.
-- `tests/VocaNova.Tests`: xUnit test project.
+| Application | Role |
+|---|---|
+| `src/VocaNova.API` | ASP.NET Core 8 Web API and backend modular monolith. |
+| `src/VocaNova.Dashboard` | ASP.NET Core 8 MVC Presentation client that calls the API over HTTP(S). |
+| `src/VocaNova.Mobile` | Flutter Presentation client using Riverpod and Dio. |
+| `tests/VocaNova.Tests` | xUnit tests for API and Dashboard; Flutter tests are in the Mobile package. |
 
-## Prerequisites
+## Architecture status
 
-- .NET SDK 8.0 or newer.
-- MySQL Server 8.x for the main database. MySQL Workbench can be used to create/manage the local connection.
-- Redis for cache and rate-limit related features.
-- Flutter 3.38 or newer for the mobile application.
+**CURRENT:** The API is in an incremental architecture transition: Notifications, Progress, all Dictionary and Lists/personal-topic endpoints, Quiz/AI grading, and KNN/runtime configuration use corrected feature-first Presentation/BLL/DAL slices under `Features/<Feature>`. Auth and Admin/SuperAdmin remain in older mixed feature folders alongside shared `Infrastructure`. EF Core 8 uses MySQL/Pomelo and database-first scaffolding; Dictionary senses now have active/deleted soft-delete state. Dashboard and Mobile maintain their own API wire models. The Docker foundation still defines PostgreSQL, Redis, API, and Dashboard containers, but the PostgreSQL service is unused by API EF persistence and no longer matches the accepted target.
 
-## Local Setup
+**TARGET:** VocaNova remains a modular monolith and adopts a system-level three-layer architecture. Each API `Features/<Feature>` folder owns its Presentation Contracts/controllers/mappings, framework-neutral BLL models/services/ports, and feature-specific DAL repositories/mappings. Repository interfaces belong to BLL; shared EF/Redis/authentication/storage/provider infrastructure stays consolidated outside feature folders. MySQL 8, Pomelo, and database-first synchronization through `scripts/scaffold-mysql.ps1` remain the long-term relational stack and workflow. Docker Compose will run exactly `mysql`, `redis`, `api`, and `dashboard`; Flutter remains outside Docker.
 
-1. Restore packages:
+## Current technology stack
 
-   ```bash
-   dotnet restore
-   ```
+- .NET 8, ASP.NET Core Web API/MVC, EF Core 8, Pomelo MySQL provider
+- MySQL 8, Redis/StackExchange.Redis
+- JWT and Google authentication, Cloudinary, Gemini, SpeedSMS
+- Flutter/Dart, Riverpod, Dio, go_router, secure storage, shared preferences
+- xUnit, Moq, FluentAssertions, EF Core InMemory, Flutter test
 
-2. Create a local `.env` file from the example:
+## Current quick start
 
-   ```bash
-   cp .env.example .env
-   ```
-
-3. Update local configuration:
-
-   In the repository root `.env`:
-
-   - `MYSQL_CONNECTION_STRING`
-   - `MYSQL_SERVER_VERSION`
-   - `JwtSettings:SecretKey`
-   - `Redis:Configuration`
-   - `AiGrading:*`
-
-   Example MySQL Server connection:
-
-   ```dotenv
-   MYSQL_CONNECTION_STRING=Server=127.0.0.1;Port=3306;Database=vocanova;User=root;Password=YOUR_MYSQL_PASSWORD;
-   MYSQL_SERVER_VERSION=8.0.0-mysql
-   ```
-
-   Use `MYSQL_SERVER_VERSION=auto` if you want Pomelo EF Core to detect the server version from the configured database connection.
-
-4. Build the solution:
-
-   ```bash
-   dotnet build
-   ```
-
-5. Run the API:
-
-   ```bash
-   dotnet run --project src/VocaNova.API
-   ```
-
-6. Run the dashboard:
-
-   ```bash
-   dotnet run --project src/VocaNova.Dashboard
-   ```
-
-7. Run tests:
-
-   ```bash
-   dotnet test
-   ```
-
-8. Run the mobile application:
-
-   ```powershell
-   cd src/VocaNova.Mobile
-   flutter pub get
-   flutter run
-   ```
-
-## Database Scaffold
-
-The database is MySQL Server. Connection details are read from the repository root `.env` file, which is ignored by Git.
-
-Run the scaffold script after MySQL Server is running and the `vocanova` schema exists:
+Prerequisites are .NET SDK 8, MySQL 8 with an existing compatible `vocanova` schema, Redis, and Flutter for Mobile.
 
 ```powershell
-.\scripts\scaffold-mysql.ps1
+Copy-Item .env.example .env
+dotnet restore VocaNova.sln
+dotnet build VocaNova.sln
+dotnet test VocaNova.sln
 ```
 
-## Git Workflow
+Then run the API and Dashboard in separate terminals:
 
-- Feature branches follow `feature/{module}/{feature-name}`.
-- Commits follow Conventional Commits, for example `feat(setup): add solution structure`.
-- Pull requests target `dev`.
+```powershell
+dotnet run --project src/VocaNova.API
+dotnet run --project src/VocaNova.Dashboard
+```
+
+Configure the placeholder values in the uncommitted `.env`; see `docs/DEVELOPMENT.md`. Run Mobile separately:
+
+```powershell
+Set-Location src/VocaNova.Mobile
+flutter pub get
+flutter run
+```
+
+The current schema synchronization command is `scripts/scaffold-mysql.ps1`. It is database-first and destructive to scaffolded source; use it only for an explicitly reviewed current-schema task.
+
+The CURRENT Compose file still provisions an unused PostgreSQL service and is not the accepted target full-stack environment. Until a separately authorized Docker change replaces it with MySQL and wires the API to `mysql:3306`, use the host-based MySQL quick start above. Dashboard-to-API container routing remains targeted at `http://api:8080`.
+
+## Documentation
+
+- `AGENTS.md`: authoritative contributor/agent rules
+- `docs/ARCHITECTURE.md`: current and target architecture
+- `docs/PROJECT_STRUCTURE.md`: verified current and accepted target trees
+- `docs/SERVICE_CATALOG.md`: current routes and feature ownership
+- `docs/DATABASE.md`: current and target MySQL/Pomelo database-first persistence
+- `docs/COMMUNICATION.md`: client, database, cache, provider, and Docker boundaries
+- `docs/DECISIONS.md`: accepted and superseded architecture decisions
+- `docs/REFACTOR_PLAN.md`: incremental migration plan
+- `docs/DEVELOPMENT.md`: host setup, database scaffolding, and current/target Docker status
+- `docs/CONVENTIONS.md` and `docs/WORKFLOW.md`: naming and delivery rules

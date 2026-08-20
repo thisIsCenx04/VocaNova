@@ -1,4 +1,5 @@
 using System.Text;
+using VocaNova.API.Common.Abstractions.Configuration;
 
 namespace VocaNova.API.Infrastructure.Configuration;
 

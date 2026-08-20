@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
 using VocaNova.API.Common.Constants;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
 
 namespace VocaNova.API.Infrastructure.Authentication;
 
@@ -24,7 +25,7 @@ public static class JwtAuthenticationExtensions
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.Configure<GoogleAuthSettings>(configuration.GetSection(GoogleAuthSettings.SectionName));
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
-        services.AddSingleton<IGoogleTokenVerifier, GoogleTokenVerifier>();
+        services.AddSingleton<IGoogleIdentityProvider, GoogleTokenVerifier>();
 
         services
             .AddAuthentication(options =>
