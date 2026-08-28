@@ -4,6 +4,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Options;
 using VocaNova.API.Features.AiGrading.BLL.Models;
 using VocaNova.API.Features.AiGrading.BLL.Services;
+using VocaNova.API.Features.AiGrading.BLL.Services.IServices;
 
 namespace VocaNova.API.Infrastructure.ExternalServices.Gemini;
 

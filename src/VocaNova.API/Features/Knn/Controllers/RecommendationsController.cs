@@ -5,6 +5,7 @@ using VocaNova.API.Features.Knn.BLL.Models;
 using VocaNova.API.Features.Knn.BLL.Services;
 using VocaNova.API.Features.Knn.Contracts.Requests;
 using VocaNova.API.Features.Knn.Mappings;
+using VocaNova.API.Features.Knn.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Knn.Controllers;
 

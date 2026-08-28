@@ -5,6 +5,7 @@ using VocaNova.API.Common.Results;
 using VocaNova.API.Features.SuperAdmin.BLL.Abstractions;
 using VocaNova.API.Features.SuperAdmin.BLL.Models;
 using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.SuperAdmin.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.SuperAdmin.BLL.Services;
 

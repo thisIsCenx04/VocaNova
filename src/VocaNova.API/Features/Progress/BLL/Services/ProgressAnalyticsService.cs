@@ -1,5 +1,6 @@
 using VocaNova.API.Features.Progress.BLL.Abstractions;
 using VocaNova.API.Features.Progress.BLL.Models;
+using VocaNova.API.Features.Progress.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Progress.BLL.Services;
 

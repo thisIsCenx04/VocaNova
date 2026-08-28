@@ -132,7 +132,7 @@ VocaNova/
 |   |   |       |-- Controllers/
 |   |   |       |-- Contracts/{Requests,Responses}/
 |   |   |       |-- Mappings/
-|   |   |       |-- BLL/{Abstractions,Models,Services}/
+|   |   |       |-- BLL/{Models,Services}/
 |   |   |       `-- DAL/{Repositories,Mappings}/
 |   |   |-- Infrastructure/
 |   |   |   |-- Persistence/{Configurations,Entities,Transactions}/
@@ -166,11 +166,12 @@ Features/<Feature>/
 |   `-- Responses/
 |-- Mappings/                    # Contract <-> BLL model
 |-- BLL/
-|   |-- Abstractions/            # repository/cache/provider ports owned by BLL
 |   |-- Models/                  # commands, queries, results/errors, business models
-|   `-- Services/
+|   `-- Services/                # service implementations
+|       `-- IServices/           # service interfaces
 `-- DAL/
-    |-- Repositories/            # implementations only
+    |-- Repositories/            # repository implementations
+    |   `-- Interfaces/          # repository interfaces
     `-- Mappings/                # BLL model <-> persistence representation
 ```
 

@@ -7,6 +7,7 @@ using VocaNova.API.Features.Dictionary.Contracts.Requests;
 using VocaNova.API.Features.Dictionary.Mappings;
 using VocaNova.API.Infrastructure.Authentication;
 using VocaNova.API.Infrastructure.Auditing;
+using VocaNova.API.Features.Dictionary.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Dictionary.Controllers;
 

@@ -25,7 +25,8 @@ public sealed class FeatureFirstLayoutArchitectureTests
         var apiRoot = Path.Combine(FindRepositoryRoot(), "src", "VocaNova.API");
         foreach (var feature in new[]
                  {
-                     "Notifications", "Progress", "Dictionary", "Lists", "Quiz", "AiGrading",
+                     "Admin", "AiGrading", "Auth", "Dictionary", "Knn", "Lists",
+                     "Notifications", "Progress", "Quiz", "SuperAdmin",
                  })
         {
             var featureRoot = Path.Combine(apiRoot, "Features", feature);
@@ -33,16 +34,18 @@ public sealed class FeatureFirstLayoutArchitectureTests
             Directory.Exists(Path.Combine(featureRoot, "Contracts", "Requests")).Should().BeTrue();
             Directory.Exists(Path.Combine(featureRoot, "Contracts", "Responses")).Should().BeTrue();
             Directory.Exists(Path.Combine(featureRoot, "Mappings")).Should().BeTrue();
-            Directory.Exists(Path.Combine(featureRoot, "BLL", "Abstractions")).Should().BeTrue();
             Directory.Exists(Path.Combine(featureRoot, "BLL", "Models")).Should().BeTrue();
             Directory.Exists(Path.Combine(featureRoot, "BLL", "Services")).Should().BeTrue();
+            Directory.Exists(Path.Combine(featureRoot, "BLL", "Services", "IServices")).Should().BeTrue();
             Directory.Exists(Path.Combine(featureRoot, "DAL", "Repositories")).Should().BeTrue();
+            Directory.Exists(Path.Combine(featureRoot, "DAL", "Repositories", "Interfaces")).Should().BeTrue();
             Directory.Exists(Path.Combine(featureRoot, "DAL", "Mappings")).Should().BeTrue();
+            Directory.Exists(Path.Combine(featureRoot, "DTOs")).Should().BeFalse();
             Directory.EnumerateFiles(
                     Path.Combine(featureRoot, "DAL", "Repositories"),
                     "I*Repository.cs",
                     SearchOption.TopDirectoryOnly)
-                .Should().BeEmpty("repository interfaces are owned by the feature BLL");
+                .Should().BeEmpty("repository interfaces live under DAL/Repositories/Interfaces in the documented physical layout");
         }
     }
 

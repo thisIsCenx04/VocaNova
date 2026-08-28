@@ -7,6 +7,7 @@ using VocaNova.API.Features.SuperAdmin.Contracts.Responses;
 using VocaNova.API.Features.SuperAdmin.Mappings;
 using VocaNova.API.Features.SuperAdmin.BLL.Abstractions;
 using VocaNova.API.Infrastructure.Authentication;
+using VocaNova.API.Features.SuperAdmin.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.SuperAdmin.Controllers;
 

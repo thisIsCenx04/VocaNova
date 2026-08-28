@@ -1,5 +1,6 @@
 using VocaNova.API.Features.Quiz.BLL.Abstractions;
 using VocaNova.API.Features.Quiz.BLL.Models;
+using VocaNova.API.Features.Quiz.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Quiz.BLL.Services;
 

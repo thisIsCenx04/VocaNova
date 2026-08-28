@@ -8,6 +8,7 @@ using VocaNova.API.Features.Admin.Mappings;
 using VocaNova.API.Features.Admin.BLL.Abstractions;
 using VocaNova.API.Infrastructure.Authentication;
 using VocaNova.API.Infrastructure.Auditing;
+using VocaNova.API.Features.Admin.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Admin.Controllers;
 

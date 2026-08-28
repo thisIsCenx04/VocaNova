@@ -14,6 +14,7 @@ using VocaNova.API.Features.Auth.BLL.Services;
 using VocaNova.API.Features.Auth.DAL.Repositories;
 using VocaNova.API.Features.Dictionary.BLL.Abstractions;
 using VocaNova.API.Features.Dictionary.BLL.Services;
+using VocaNova.API.Features.Dictionary.BLL.Services.IServices;
 using VocaNova.API.Features.Dictionary.DAL.Repositories;
 using VocaNova.API.Features.Knn.BLL.Abstractions;
 using VocaNova.API.Features.Knn.BLL.Models;
@@ -30,6 +31,7 @@ using VocaNova.API.Features.Progress.BLL.Services;
 using VocaNova.API.Features.Progress.DAL.Repositories;
 using VocaNova.API.Features.Quiz.BLL.Abstractions;
 using VocaNova.API.Features.Quiz.BLL.Services;
+using VocaNova.API.Features.Quiz.BLL.Services.IServices;
 using VocaNova.API.Features.Quiz.DAL.Repositories;
 using VocaNova.API.Features.SuperAdmin.BLL.Abstractions;
 using VocaNova.API.Features.SuperAdmin.BLL.Services;
@@ -57,6 +59,14 @@ using DictionaryRedisWordSearchCache = VocaNova.API.Infrastructure.Caching.Dicti
 using DictionaryTopicCache = VocaNova.API.Features.Dictionary.BLL.Abstractions.ITopicCache;
 using DictionaryWordDetailCache = VocaNova.API.Features.Dictionary.BLL.Abstractions.IWordDetailCache;
 using DictionaryWordSearchCache = VocaNova.API.Features.Dictionary.BLL.Abstractions.IWordSearchCache;
+using VocaNova.API.Features.Notifications.BLL.Services.IServices;
+using VocaNova.API.Features.Knn.BLL.Services.IServices;
+using VocaNova.API.Features.Lists.BLL.Services.IServices;
+using VocaNova.API.Features.Progress.BLL.Services.IServices;
+using VocaNova.API.Features.SuperAdmin.BLL.Services.IServices;
+using VocaNova.API.Features.Admin.BLL.Services.IServices;
+using VocaNova.API.Features.Auth.BLL.Services.IServices;
+using VocaNova.API.Features.AiGrading.BLL.Services.IServices;
 
 namespace VocaNova.API.DependencyInjection;
 

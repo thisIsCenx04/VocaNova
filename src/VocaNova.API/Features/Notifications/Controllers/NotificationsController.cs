@@ -4,6 +4,7 @@ using VocaNova.API.Features.Notifications.BLL.Services;
 using VocaNova.API.Common.Responses;
 using VocaNova.API.Features.Notifications.Contracts.Requests;
 using VocaNova.API.Features.Notifications.Mappings;
+using VocaNova.API.Features.Notifications.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Notifications.Controllers;
 

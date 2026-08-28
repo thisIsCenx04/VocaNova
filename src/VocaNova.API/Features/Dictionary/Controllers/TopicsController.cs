@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VocaNova.API.Features.Dictionary.BLL.Models;
 using VocaNova.API.Features.Dictionary.BLL.Services;
+using VocaNova.API.Features.Dictionary.BLL.Services.IServices;
 using VocaNova.API.Common.Responses;
 using VocaNova.API.Features.Dictionary.Contracts.Requests;
 using VocaNova.API.Features.Dictionary.Mappings;

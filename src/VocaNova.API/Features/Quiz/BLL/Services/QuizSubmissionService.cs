@@ -3,6 +3,8 @@ using VocaNova.API.Features.AiGrading.BLL.Services;
 using VocaNova.API.Features.Progress.BLL.Abstractions;
 using VocaNova.API.Features.Quiz.BLL.Abstractions;
 using VocaNova.API.Features.Quiz.BLL.Models;
+using VocaNova.API.Features.Quiz.BLL.Services.IServices;
+using VocaNova.API.Features.AiGrading.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Quiz.BLL.Services;
 

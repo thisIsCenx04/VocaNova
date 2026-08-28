@@ -8,6 +8,7 @@ using VocaNova.API.Features.AiGrading.Contracts.Requests;
 using VocaNova.API.Features.AiGrading.Mappings;
 using VocaNova.API.Infrastructure.Auditing;
 using VocaNova.API.Infrastructure.Authentication;
+using VocaNova.API.Features.AiGrading.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.AiGrading.Controllers;
 

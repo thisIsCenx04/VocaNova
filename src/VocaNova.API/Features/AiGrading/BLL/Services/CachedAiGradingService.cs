@@ -3,6 +3,7 @@ using VocaNova.API.Common.Extensions;
 using VocaNova.API.Common.Security;
 using VocaNova.API.Features.AiGrading.BLL.Abstractions;
 using VocaNova.API.Features.AiGrading.BLL.Models;
+using VocaNova.API.Features.AiGrading.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.AiGrading.BLL.Services;
 

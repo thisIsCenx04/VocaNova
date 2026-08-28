@@ -2,7 +2,7 @@ using Microsoft.Extensions.Options;
 using VocaNova.API.Common.Constants;
 using VocaNova.API.Features.Knn.BLL.Models;
 using VocaNova.API.Features.Knn.BLL.Abstractions;
-using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Knn.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Knn.BLL.Services;
 

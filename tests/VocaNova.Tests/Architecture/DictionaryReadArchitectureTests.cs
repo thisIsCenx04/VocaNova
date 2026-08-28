@@ -41,7 +41,7 @@ public class DictionaryReadArchitectureTests
     }
 
     [Fact]
-    public void Bll_Read_Services_Should_Depend_Only_On_Bll_Owned_Ports()
+    public void Bll_Read_Services_Should_Depend_On_Repository_Interfaces()
     {
         typeof(WordReadService).GetConstructors().Single().GetParameters()
             .Select(parameter => parameter.ParameterType)
@@ -58,13 +58,45 @@ public class DictionaryReadArchitectureTests
     }
 
     [Fact]
-    public void Dal_Implementations_Should_Implement_Bll_Owned_Ports()
+    public void Dal_Implementations_Should_Implement_Repository_Interfaces()
     {
         typeof(WordReadRepository).Should().Implement<IWordReadRepository>();
         typeof(TopicReadRepository).Should().Implement<ITopicReadRepository>();
         typeof(RedisWordSearchCache).Should().Implement<IWordSearchCache>();
         typeof(RedisWordDetailCache).Should().Implement<IWordDetailCache>();
         typeof(RedisTopicCache).Should().Implement<ITopicCache>();
+    }
+
+    [Fact]
+    public void Public_Read_Side_Should_Use_Documented_Feature_First_Physical_Layout()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var dictionaryRoot = Path.Combine(
+            repositoryRoot,
+            "src",
+            "VocaNova.API",
+            "Features",
+            "Dictionary");
+
+        Directory.Exists(Path.Combine(dictionaryRoot, "Controllers")).Should().BeTrue();
+        Directory.Exists(Path.Combine(dictionaryRoot, "Contracts", "Requests")).Should().BeTrue();
+        Directory.Exists(Path.Combine(dictionaryRoot, "Contracts", "Responses")).Should().BeTrue();
+        Directory.Exists(Path.Combine(dictionaryRoot, "Mappings")).Should().BeTrue();
+        Directory.Exists(Path.Combine(dictionaryRoot, "BLL", "Models")).Should().BeTrue();
+        Directory.Exists(Path.Combine(dictionaryRoot, "BLL", "Services")).Should().BeTrue();
+        Directory.Exists(Path.Combine(dictionaryRoot, "BLL", "Services", "IServices")).Should().BeTrue();
+        Directory.Exists(Path.Combine(dictionaryRoot, "DAL", "Repositories")).Should().BeTrue();
+        Directory.Exists(Path.Combine(dictionaryRoot, "DAL", "Repositories", "Interfaces")).Should().BeTrue();
+        Directory.Exists(Path.Combine(dictionaryRoot, "DAL", "Mappings")).Should().BeTrue();
+
+        Directory.Exists(Path.Combine(dictionaryRoot, "DTOs")).Should().BeFalse();
+
+        typeof(IWordReadService).Namespace.Should().EndWith(".Features.Dictionary.BLL.Services.IServices");
+        typeof(ITopicReadService).Namespace.Should().EndWith(".Features.Dictionary.BLL.Services.IServices");
+        typeof(IWordReadRepository).Namespace.Should().EndWith(".Features.Dictionary.BLL.Abstractions");
+        typeof(ITopicReadRepository).Namespace.Should().EndWith(".Features.Dictionary.BLL.Abstractions");
+        typeof(WordReadRepository).Namespace.Should().EndWith(".Features.Dictionary.DAL.Repositories");
+        typeof(TopicReadRepository).Namespace.Should().EndWith(".Features.Dictionary.DAL.Repositories");
     }
 
     [Fact]

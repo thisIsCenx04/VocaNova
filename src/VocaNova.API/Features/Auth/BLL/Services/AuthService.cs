@@ -5,6 +5,7 @@ using VocaNova.API.Common.Extensions;
 using VocaNova.API.Features.Auth.BLL.Abstractions;
 using VocaNova.API.Features.Auth.BLL.Models;
 using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Auth.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Auth.BLL.Services;
 

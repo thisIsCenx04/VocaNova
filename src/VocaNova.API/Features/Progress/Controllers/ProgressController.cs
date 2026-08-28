@@ -5,6 +5,7 @@ using VocaNova.API.Features.Progress.BLL.Services;
 using VocaNova.API.Common.Responses;
 using VocaNova.API.Features.Progress.Contracts.Requests;
 using VocaNova.API.Features.Progress.Mappings;
+using VocaNova.API.Features.Progress.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Progress.Controllers;
 

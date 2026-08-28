@@ -42,6 +42,32 @@ public sealed class QuizArchitectureTests
     }
 
     [Fact]
+    public void Quiz_Should_Use_Documented_Feature_First_Physical_Layout()
+    {
+        var root = FindRepositoryRoot();
+        var featureRoot = Path.Combine(root, "src", "VocaNova.API", "Features", "Quiz");
+
+        Directory.Exists(Path.Combine(featureRoot, "Controllers")).Should().BeTrue();
+        Directory.Exists(Path.Combine(featureRoot, "Contracts", "Requests")).Should().BeTrue();
+        Directory.Exists(Path.Combine(featureRoot, "Contracts", "Responses")).Should().BeTrue();
+        Directory.Exists(Path.Combine(featureRoot, "Mappings")).Should().BeTrue();
+        Directory.Exists(Path.Combine(featureRoot, "BLL", "Models")).Should().BeTrue();
+        Directory.Exists(Path.Combine(featureRoot, "BLL", "Services", "IServices")).Should().BeTrue();
+        Directory.Exists(Path.Combine(featureRoot, "DAL", "Repositories", "Interfaces")).Should().BeTrue();
+        Directory.Exists(Path.Combine(featureRoot, "DAL", "Mappings")).Should().BeTrue();
+        Directory.Exists(Path.Combine(featureRoot, "DTOs")).Should().BeFalse();
+
+        typeof(IQuizSessionService).Namespace.Should()
+            .EndWith(".Features.Quiz.BLL.Services.IServices");
+        typeof(IQuizSubmissionService).Namespace.Should()
+            .EndWith(".Features.Quiz.BLL.Services.IServices");
+        typeof(IQuizSessionRepository).Namespace.Should()
+            .EndWith(".Features.Quiz.BLL.Abstractions");
+        typeof(QuizSessionRepository).Namespace.Should()
+            .EndWith(".Features.Quiz.DAL.Repositories");
+    }
+
+    [Fact]
     public void Bll_Source_Should_Not_Reference_Http_Ef_Dal_Or_Infrastructure()
     {
         AssertBllBoundary("Quiz");

@@ -1,6 +1,7 @@
 using VocaNova.API.Common.Constants;
 using VocaNova.API.Features.Dictionary.BLL.Abstractions;
 using VocaNova.API.Features.Dictionary.BLL.Models;
+using VocaNova.API.Features.Dictionary.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Dictionary.BLL.Services;
 

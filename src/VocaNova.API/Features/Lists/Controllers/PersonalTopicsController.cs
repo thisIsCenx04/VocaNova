@@ -5,6 +5,7 @@ using VocaNova.API.Features.Lists.BLL.Services;
 using VocaNova.API.Common.Responses;
 using VocaNova.API.Features.Lists.Contracts.Requests;
 using VocaNova.API.Features.Lists.Mappings;
+using VocaNova.API.Features.Lists.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Lists.Controllers;
 

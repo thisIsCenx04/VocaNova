@@ -1,6 +1,7 @@
 using VocaNova.API.Features.Notifications.BLL.Abstractions;
 using VocaNova.API.Common.Models;
 using VocaNova.API.Features.Notifications.BLL.Models;
+using VocaNova.API.Features.Notifications.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Notifications.BLL.Services;
 

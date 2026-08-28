@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using VocaNova.API.Features.Knn.BLL.Models;
 using VocaNova.API.Features.Knn.BLL.Services;
+using VocaNova.API.Features.Knn.BLL.Services.IServices;
 
 namespace VocaNova.API.Infrastructure.HostedServices;
 

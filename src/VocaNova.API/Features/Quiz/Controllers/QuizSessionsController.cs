@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using VocaNova.API.Common.Responses;
 using VocaNova.API.Features.Quiz.BLL.Models;
 using VocaNova.API.Features.Quiz.BLL.Services;
+using VocaNova.API.Features.Quiz.BLL.Services.IServices;
 using VocaNova.API.Features.Quiz.Contracts.Requests;
 using VocaNova.API.Features.Quiz.Mappings;
 

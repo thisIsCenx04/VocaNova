@@ -8,6 +8,7 @@ using VocaNova.API.Features.Auth.BLL.Models;
 using VocaNova.API.Features.Auth.BLL.Services;
 using VocaNova.API.Features.Auth.Contracts.Requests;
 using VocaNova.API.Features.Auth.Mappings;
+using VocaNova.API.Features.Auth.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Auth.Controllers;
 
