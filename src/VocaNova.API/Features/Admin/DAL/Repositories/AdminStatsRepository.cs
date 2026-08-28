@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Extensions;
 using VocaNova.API.Common.Results;
+using VocaNova.API.Features.Admin.BLL.Abstractions;
 using VocaNova.API.Features.Admin.BLL.Models;
 using VocaNova.API.Infrastructure.Persistence;
 
-namespace VocaNova.API.Features.Admin.Repositories;
+namespace VocaNova.API.Features.Admin.DAL.Repositories;
 
 public sealed class AdminStatsRepository : IAdminStatsRepository
 {

@@ -1,12 +1,25 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Progress.DTOs;
-using VocaNova.API.Features.Progress.Repositories;
-using VocaNova.API.Features.Progress.Services;
-using VocaNova.API.Infrastructure.Caching;
+using VocaNova.API.Features.Progress.Contracts.Responses;
+using VocaNova.API.Features.Progress.BLL.Models;
+using VocaNova.API.Features.Progress.BLL.Abstractions;
+using VocaNova.API.Features.Progress.DAL.Repositories;
+using VocaNova.API.Features.Progress.BLL.Services;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Lists.BLL.Abstractions;
+using VocaNova.API.Features.Progress.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Infrastructure.Caching.Dictionary;
+using VocaNova.API.Infrastructure.Caching.Knn;
+using VocaNova.API.Infrastructure.Caching.Lists;
+using VocaNova.API.Infrastructure.Caching.Progress;
+using VocaNova.API.Infrastructure.Caching.Quiz;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
+using UserWordProgressEntity = VocaNova.API.Infrastructure.Persistence.Entities.UserWordProgress;
 
 namespace VocaNova.Tests.Progress;
 
@@ -190,13 +203,13 @@ public class ProgressSummaryFeatureTests
         };
     }
 
-    private static UserWordProgress CreateProgress(
+    private static UserWordProgressEntity CreateProgress(
         uint progressId,
         uint wordId,
         int masteryLevel,
         DateTime now)
     {
-        return new UserWordProgress
+        return new UserWordProgressEntity
         {
             ProgressId = progressId,
             UserId = 1,

@@ -26,6 +26,17 @@ public sealed class ListResult<T>
 
     public ListErrorKind? ErrorKind { get; }
 
+    public int StatusCode =>
+        ErrorKind switch
+        {
+            ListErrorKind.Unauthorized => 401,
+            ListErrorKind.NotFound => 404,
+            ListErrorKind.Forbidden => 403,
+            ListErrorKind.Conflict => 409,
+            null => 200,
+            _ => 400,
+        };
+
     public static ListResult<T> Success(T value) => new(value, null, null);
 
     public static ListResult<T> ValidationFailure(string error) =>

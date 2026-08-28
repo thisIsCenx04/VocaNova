@@ -1,7 +1,8 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using VocaNova.API.Features.Quiz.Repositories;
-using VocaNova.API.Features.Quiz.Services;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.DAL.Repositories;
+using VocaNova.API.Features.Quiz.BLL.Services;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -81,7 +82,7 @@ public class SrsServiceTests
     public async Task UpdateProgressAsync_Should_Not_Lower_EaseFactor_Below_OnePointThree()
     {
         await using var dbContext = CreateDbContext();
-        dbContext.UserWordProgresses.Add(new UserWordProgress
+        dbContext.UserWordProgresses.Add(new EntityUserWordProgress
         {
             ProgressId = 1,
             UserId = 1,

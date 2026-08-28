@@ -3,8 +3,10 @@ using System.Text;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using VocaNova.API.Features.AiGrading;
-using VocaNova.API.Features.AiGrading.Services;
+using VocaNova.API.Features.AiGrading.BLL.Models;
+using VocaNova.API.Infrastructure.ExternalServices.Gemini;
+using VocaNova.API.Features.AiGrading.BLL.Services;
+using VocaNova.API.Infrastructure.ExternalServices.Gemini;
 
 namespace VocaNova.Tests.AiGrading;
 

@@ -1,9 +1,12 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Lists.DTOs;
-using VocaNova.API.Features.Lists.Repositories;
-using VocaNova.API.Features.Lists.Services;
+using VocaNova.API.Features.Lists.Contracts.Requests;
+using VocaNova.API.Features.Lists.Contracts.Responses;
+using VocaNova.API.Features.Lists.BLL.Models;
+using VocaNova.API.Features.Lists.BLL.Abstractions;
+using VocaNova.API.Features.Lists.DAL.Repositories;
+using VocaNova.API.Features.Lists.BLL.Services;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -192,7 +195,7 @@ public sealed class PersonalTopicFeatureTests
                 UpdatedAt = now,
                 WordSenses =
                 {
-                    new WordSense
+                    new EntityWordSense
                     {
                         SenseId = 1,
                         WordId = 1,
@@ -213,10 +216,10 @@ public sealed class PersonalTopicFeatureTests
                 UpdatedAt = now,
             });
         dbContext.WordTopics.AddRange(
-            new WordTopic { WordId = 1, TopicId = 1 },
-            new WordTopic { WordId = 1, TopicId = 2 },
-            new WordTopic { WordId = 2, TopicId = 1 },
-            new WordTopic { WordId = 2, TopicId = 3 });
+            new EntityWordTopic { WordId = 1, TopicId = 1 },
+            new EntityWordTopic { WordId = 1, TopicId = 2 },
+            new EntityWordTopic { WordId = 2, TopicId = 1 },
+            new EntityWordTopic { WordId = 2, TopicId = 3 });
         await dbContext.SaveChangesAsync();
     }
 

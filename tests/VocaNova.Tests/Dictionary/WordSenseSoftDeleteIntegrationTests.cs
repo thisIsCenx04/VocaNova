@@ -22,11 +22,11 @@ public sealed class WordSenseSoftDeleteIntegrationTests
         metadata.DefaultValue.Should().Be("active");
         metadata.Comment.Should().Be("active/deleted");
         metadata.IndexCount.Should().Be(1);
-        dbContext.Model.FindEntityType(typeof(WordSense))!.GetQueryFilter().Should().NotBeNull();
+        dbContext.Model.FindEntityType(typeof(EntityWordSense))!.GetQueryFilter().Should().NotBeNull();
         await using var transaction = await dbContext.Database.BeginTransactionAsync();
 
         var suffix = Guid.NewGuid().ToString("N")[..12];
-        var word = new Word
+        var word = new EntityWord
         {
             Word1 = $"unit-{suffix}",
             WordKey = $"unit-{suffix}",
@@ -34,14 +34,14 @@ public sealed class WordSenseSoftDeleteIntegrationTests
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
         };
-        word.WordSenses.Add(new WordSense
+        word.WordSenses.Add(new EntityWordSense
         {
             SenseOrder = 1,
             WordClass = "noun",
             EnglishDefinition = "sense to delete",
             Status = UserStatus.Active,
         });
-        word.WordSenses.Add(new WordSense
+        word.WordSenses.Add(new EntityWordSense
         {
             SenseOrder = 2,
             WordClass = "noun",

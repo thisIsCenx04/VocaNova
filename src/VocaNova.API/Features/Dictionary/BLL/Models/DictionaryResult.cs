@@ -24,6 +24,15 @@ public sealed class DictionaryResult<T>
 
     public DictionaryErrorKind? ErrorKind { get; }
 
+    public int StatusCode =>
+        ErrorKind switch
+        {
+            DictionaryErrorKind.NotFound => 404,
+            DictionaryErrorKind.Conflict => 409,
+            null => 200,
+            _ => 400,
+        };
+
     public static DictionaryResult<T> Success(T value) => new(value, null, null);
 
     public static DictionaryResult<T> ValidationFailure(string error) =>

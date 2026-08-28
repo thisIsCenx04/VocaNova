@@ -2,13 +2,28 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Knn;
-using VocaNova.API.Features.Knn.DTOs;
-using VocaNova.API.Features.Knn.Repositories;
-using VocaNova.API.Features.Knn.Services;
-using VocaNova.API.Infrastructure.Caching;
+using VocaNova.API.Features.Knn.BLL.Models;
+using VocaNova.API.Features.Knn.Contracts.Requests;
+using VocaNova.API.Features.Knn.Contracts.Responses;
+using VocaNova.API.Features.Knn.BLL.Models;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Knn.DAL.Repositories;
+using VocaNova.API.Features.Knn.BLL.Services;
+using VocaNova.API.Infrastructure.HostedServices;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Lists.BLL.Abstractions;
+using VocaNova.API.Features.Progress.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Infrastructure.Caching.Dictionary;
+using VocaNova.API.Infrastructure.Caching.Knn;
+using VocaNova.API.Infrastructure.Caching.Lists;
+using VocaNova.API.Infrastructure.Caching.Progress;
+using VocaNova.API.Infrastructure.Caching.Quiz;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
+using UserWordProgressEntity = VocaNova.API.Infrastructure.Persistence.Entities.UserWordProgress;
 
 namespace VocaNova.Tests.Knn;
 
@@ -66,7 +81,7 @@ public class KnnLearningRecommendationTests
         result.Value!.Single().Score.Should().BeApproximately(1.0, 0.0001);
         cache.SetCount.Should().Be(1);
         cache.StoredRecommendations!.Select(word => word.WordId).Should().Equal(202u);
-        cache.LastTtl.Should().Be(TimeSpan.FromHours(24));
+        cache.LastTtl.Should().Be(TimeSpan.FromHours(1));
     }
 
     [Fact]
@@ -134,7 +149,7 @@ public class KnnLearningRecommendationTests
     {
         await using var dbContext = CreateDbContext();
         dbContext.Words.Add(CreateWord(301, "fresh-word", "B2", "/fresh/", "https://example.com/fresh.png"));
-        dbContext.WordSenses.Add(new WordSense
+        dbContext.WordSenses.Add(new EntityWordSense
         {
             SenseId = 301,
             WordId = 301,
@@ -222,9 +237,9 @@ public class KnnLearningRecommendationTests
             CreateWord(2, "word-2"),
             CreateWord(3, "word-3"));
         dbContext.WordTopics.AddRange(
-            new WordTopic { WordId = 1, TopicId = 100 },
-            new WordTopic { WordId = 2, TopicId = 100 },
-            new WordTopic { WordId = 3, TopicId = 101 });
+            new EntityWordTopic { WordId = 1, TopicId = 100 },
+            new EntityWordTopic { WordId = 2, TopicId = 100 },
+            new EntityWordTopic { WordId = 3, TopicId = 101 });
         dbContext.TestSessions.AddRange(CreateSession(1, 1), CreateSession(2, 1));
         dbContext.TestAnswers.AddRange(
             CreateAnswer(1, 1, 1, true),
@@ -247,7 +262,7 @@ public class KnnLearningRecommendationTests
             CreateWord(4, "business-neighbor"),
             CreateWord(201, "owned-word", "A2", "/owned/", null),
             CreateWord(202, "recommended-word", "B1", "/recommended/", "https://example.com/recommended.png"));
-        dbContext.WordSenses.Add(new WordSense
+        dbContext.WordSenses.Add(new EntityWordSense
         {
             SenseId = 202,
             WordId = 202,
@@ -257,10 +272,10 @@ public class KnnLearningRecommendationTests
             VietnameseMeaning = "recommended meaning",
         });
         dbContext.WordTopics.AddRange(
-            new WordTopic { WordId = 1, TopicId = 100 },
-            new WordTopic { WordId = 2, TopicId = 101 },
-            new WordTopic { WordId = 3, TopicId = 100 },
-            new WordTopic { WordId = 4, TopicId = 101 });
+            new EntityWordTopic { WordId = 1, TopicId = 100 },
+            new EntityWordTopic { WordId = 2, TopicId = 101 },
+            new EntityWordTopic { WordId = 3, TopicId = 100 },
+            new EntityWordTopic { WordId = 4, TopicId = 101 });
 
         dbContext.TestSessions.AddRange(
             CreateSession(1, 1),
@@ -320,9 +335,9 @@ public class KnnLearningRecommendationTests
             CreateWord(402, "neighbor-business-word", "B1", "/business/", null),
             CreateWord(403, "stranger-travel-word", "B2", "/stranger/", null));
         dbContext.WordTopics.AddRange(
-            new WordTopic { WordId = 401, TopicId = 100 },
-            new WordTopic { WordId = 402, TopicId = 101 },
-            new WordTopic { WordId = 403, TopicId = 100 });
+            new EntityWordTopic { WordId = 401, TopicId = 100 },
+            new EntityWordTopic { WordId = 402, TopicId = 101 },
+            new EntityWordTopic { WordId = 403, TopicId = 100 });
         dbContext.UserListWords.AddRange(
             CreateListWord(2, 401),
             CreateListWord(2, 402),
@@ -451,13 +466,13 @@ public class KnnLearningRecommendationTests
         };
     }
 
-    private static UserWordProgress CreateProgress(
+    private static UserWordProgressEntity CreateProgress(
         uint progressId,
         uint userId,
         uint wordId,
         int masteryLevel)
     {
-        return new UserWordProgress
+        return new UserWordProgressEntity
         {
             ProgressId = progressId,
             UserId = userId,

@@ -1,8 +1,7 @@
 using VocaNova.API.Common.Results;
 using VocaNova.API.Features.Admin.BLL.Models;
-using VocaNova.API.Infrastructure.Persistence.Entities;
 
-namespace VocaNova.API.Features.Admin.Repositories;
+namespace VocaNova.API.Features.Admin.BLL.Abstractions;
 
 public interface IAdminUserRepository
 {
@@ -28,8 +27,14 @@ public interface IAdminUserRepository
         int limit,
         CancellationToken cancellationToken = default);
 
-    Task<User?> FindUserForStatusUpdateAsync(
+    Task<AdminUserStatusTarget?> GetStatusTargetAsync(
         uint userId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> StageStatusAsync(
+        uint userId,
+        string status,
+        DateTime updatedAt,
         CancellationToken cancellationToken = default);
 
     Task<int> RevokeActiveRefreshTokensAsync(

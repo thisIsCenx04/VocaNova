@@ -70,3 +70,8 @@ public sealed record AdminUserLearningProfileModel(
     string? EducationLevelName,
     uint? LearningPurposeId,
     string? LearningPurposeName);
+
+public sealed record AdminUserStatusTarget(
+    uint UserId,
+    string Status,
+    string? RoleName);

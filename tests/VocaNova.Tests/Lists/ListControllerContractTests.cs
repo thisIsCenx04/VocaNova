@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using VocaNova.API.Common.Models;
+using BusinessListWordsQuery = VocaNova.API.Features.Lists.BLL.Models.ListWordsQuery;
 using ListsController = VocaNova.API.Features.Lists.Controllers.ListsController;
 using PersonalTopicsController = VocaNova.API.Features.Lists.Controllers.PersonalTopicsController;
 
@@ -40,7 +41,7 @@ public class ListControllerContractTests
         service.Setup(item => item.GetWordsAsync(
                 7,
                 3,
-                new ListWordsQuery(2, 10),
+                new BusinessListWordsQuery(2, 10),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(ListResult<PagedCollection<ListWord>>.Success(
                 new PagedCollection<ListWord>(
@@ -77,7 +78,7 @@ public class ListControllerContractTests
         service.Setup(item => item.GetWordsAsync(
                 7,
                 9,
-                It.IsAny<ListWordsQuery>(),
+                It.IsAny<BusinessListWordsQuery>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(ListResult<PagedCollection<ListWord>>.Forbidden(
                 "You do not have access to this list."));
@@ -95,7 +96,7 @@ public class ListControllerContractTests
         service.Setup(item => item.GetWordsAsync(
                 7,
                 9,
-                It.IsAny<ListWordsQuery>(),
+                It.IsAny<BusinessListWordsQuery>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(ListResult<PagedCollection<ListWord>>.NotFound("List not found."));
         var controller = CreateListsController(service.Object, "7");

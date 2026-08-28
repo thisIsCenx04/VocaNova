@@ -5,10 +5,13 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Options;
 using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Security;
-using VocaNova.API.Features.Auth.DTOs;
-using VocaNova.API.Features.Auth.Repositories;
-using VocaNova.API.Features.Auth.Services;
-using VocaNova.API.Features.Auth.Validators;
+using VocaNova.API.Features.Auth.Contracts.Requests;
+using VocaNova.API.Features.Auth.Contracts.Responses;
+using VocaNova.API.Features.Auth.BLL.Models;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Auth.DAL.Repositories;
+using VocaNova.API.Features.Auth.BLL.Services;
+using VocaNova.API.Features.Auth.Contracts.Requests;
 using VocaNova.API.Infrastructure.Authentication;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
@@ -156,12 +159,7 @@ public class GoogleLoginFeatureTests
 
     private static AuthService CreateAuthService(VocaNovaDbContext dbContext, GoogleUserInfo? googleUser)
     {
-        return new AuthService(
-            dbContext,
-            new AuthRepository(dbContext),
-            CreateJwtTokenService(),
-            new FakeGoogleTokenVerifier(googleUser),
-            Options.Create(CreateJwtSettings()));
+        return AuthTestFactory.CreateService(dbContext, googleIdentityProvider: new FakeGoogleTokenVerifier(googleUser));
     }
 
     private static JwtTokenService CreateJwtTokenService()
@@ -212,7 +210,7 @@ public class GoogleLoginFeatureTests
                 GoogleEmail = googleEmail,
                 UpdatedAt = DateTime.UtcNow,
             },
-            UserProfile = new UserProfile
+            UserProfile = new EntityUserProfile
             {
                 UserId = 100,
                 FullName = "Existing Google User",

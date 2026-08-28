@@ -13,15 +13,29 @@ using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Responses;
 using VocaNova.API.Common.Results;
 using VocaNova.API.Features.Admin.Controllers;
-using VocaNova.API.Features.Admin.DTOs;
-using VocaNova.API.Features.Admin.Repositories;
-using VocaNova.API.Features.Admin.Services;
-using VocaNova.API.Features.Admin.Validators;
-using VocaNova.API.Features.Knn;
-using VocaNova.API.Features.Knn.DTOs;
-using VocaNova.API.Features.Knn.Repositories;
-using VocaNova.API.Features.Knn.Services;
-using VocaNova.API.Infrastructure.Caching;
+using VocaNova.API.Features.Admin.Contracts.Responses;
+using VocaNova.API.Features.Admin.BLL.Models;
+using VocaNova.API.Features.Admin.DAL.Repositories;
+using VocaNova.API.Features.Admin.BLL.Abstractions;
+using VocaNova.API.Features.Admin.BLL.Services;
+using VocaNova.API.Features.Admin.Contracts.Requests;
+using VocaNova.API.Features.Knn.Contracts.Requests;
+using VocaNova.API.Features.Knn.Contracts.Responses;
+using VocaNova.API.Features.Knn.BLL.Models;
+using VocaNova.API.Features.Knn.DAL.Repositories;
+using VocaNova.API.Features.Knn.BLL.Services;
+using VocaNova.API.Infrastructure.HostedServices;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Lists.BLL.Abstractions;
+using VocaNova.API.Features.Progress.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Infrastructure.Caching.Dictionary;
+using VocaNova.API.Infrastructure.Caching.Knn;
+using VocaNova.API.Infrastructure.Caching.Lists;
+using VocaNova.API.Infrastructure.Caching.Progress;
+using VocaNova.API.Infrastructure.Caching.Quiz;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 using VocaNova.Tests.Support;
@@ -42,7 +56,8 @@ public class AdminKnnFeatureTests
         var cache = new FakeKnnTopicRecommendationCache();
         var service = CreateService(dbContext, cache);
 
-        var result = await service.CreateAgeRangeAsync(new CreateAgeRangeRequest(" 18-24 ", 18, 24, 1));
+        var result = await service.CreateAgeRangeAsync(
+            new CreateAgeRangeRequest(" 18-24 ", 18, 24, 1).ToBusinessCommand());
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Name.Should().Be("18-24");
@@ -65,7 +80,8 @@ public class AdminKnnFeatureTests
         await dbContext.SaveChangesAsync();
         var service = CreateService(dbContext);
 
-        var result = await service.CreateAgeRangeAsync(new CreateAgeRangeRequest("18-24", 18, 24, 2));
+        var result = await service.CreateAgeRangeAsync(
+            new CreateAgeRangeRequest("18-24", 18, 24, 2).ToBusinessCommand());
 
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(StatusCodes.Status409Conflict);
@@ -82,8 +98,12 @@ public class AdminKnnFeatureTests
         await dbContext.SaveChangesAsync();
         var service = CreateService(dbContext);
 
-        var selfParent = await service.UpdateRegionAsync(1, new UpdateRegionRequest("Vietnam", "VN", 1));
-        var cycle = await service.UpdateRegionAsync(1, new UpdateRegionRequest("Vietnam", "VN", 2));
+        var selfParent = await service.UpdateRegionAsync(
+            1,
+            new UpdateRegionRequest("Vietnam", "VN", 1).ToBusinessCommand());
+        var cycle = await service.UpdateRegionAsync(
+            1,
+            new UpdateRegionRequest("Vietnam", "VN", 2).ToBusinessCommand());
 
         selfParent.IsSuccess.Should().BeFalse();
         selfParent.Error.Should().Be("Region cannot be its own parent.");
@@ -148,8 +168,8 @@ public class AdminKnnFeatureTests
         var invalidRegion = regionValidator.TestValidate(new CreateRegionRequest("Vietnam", "vietnam-code-too-long", null));
         invalidRegion.ShouldHaveValidationErrorFor(request => request.Code);
 
-        var queryValidator = new KnnLookupQueryValidator();
-        var invalidQuery = queryValidator.TestValidate(new KnnLookupQuery(Page: 0, Limit: 101, Status: "archived"));
+        var queryValidator = new KnnLookupRequestValidator();
+        var invalidQuery = queryValidator.TestValidate(new KnnLookupRequest(Page: 0, Limit: 101, Status: "archived"));
         invalidQuery.ShouldHaveValidationErrorFor(query => query.Page);
         invalidQuery.ShouldHaveValidationErrorFor(query => query.Limit);
         invalidQuery.ShouldHaveValidationErrorFor(query => query.Status);
@@ -248,7 +268,7 @@ public class AdminKnnFeatureTests
 
         var config = reset.Should().BeOfType<OkObjectResult>().Subject
             .Value.Should().BeOfType<ApiResponse<KnnConfigDto>>().Subject.Data!;
-        config.Vector.Weights.Should().Be(KnnRuntimeConfigService.ToDto(new KnnVectorOptions()));
+        config.Vector.Weights.Should().BeEquivalentTo(KnnRuntimeConfigService.ToDto(new KnnVectorOptions()));
 
         // Defaults are written out explicitly rather than left absent, so .env stays readable.
         var defaults = new KnnVectorOptions();
@@ -344,13 +364,13 @@ public class AdminKnnFeatureTests
             .ReturnsAsync(new[] { 1u, 2u, 3u });
         learningService
             .Setup(service => service.GenerateWordRecommendationsAsync(1, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<IReadOnlyCollection<WordRecommendationItem>>.Ok(Array.Empty<WordRecommendationItem>()));
+            .ReturnsAsync(KnnOperationResult<IReadOnlyCollection<WordRecommendationItem>>.Success(Array.Empty<WordRecommendationItem>()));
         learningService
             .Setup(service => service.GenerateWordRecommendationsAsync(2, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("failed user"));
         learningService
             .Setup(service => service.GenerateWordRecommendationsAsync(3, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<IReadOnlyCollection<WordRecommendationItem>>.Ok(Array.Empty<WordRecommendationItem>()));
+            .ReturnsAsync(KnnOperationResult<IReadOnlyCollection<WordRecommendationItem>>.Success(Array.Empty<WordRecommendationItem>()));
 
         await rebuildService.RebuildAllAsync();
 

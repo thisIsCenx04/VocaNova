@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using VocaNova.API.Common.Models;
 using VocaNova.API.Common.Constants;
+using VocaNova.API.Infrastructure.Persistence.Entities;
+using UserWordProgressEntity = VocaNova.API.Infrastructure.Persistence.Entities.UserWordProgress;
 
 namespace VocaNova.Tests.Notifications;
 
@@ -227,7 +229,7 @@ public class NotificationFeatureTests
             UpdatedAt = updatedAt,
         };
 
-    private static UserWordProgress CreateProgress(
+    private static UserWordProgressEntity CreateProgress(
         uint progressId,
         uint userId,
         uint wordId,

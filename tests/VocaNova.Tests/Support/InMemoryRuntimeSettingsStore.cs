@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using VocaNova.API.Common.Abstractions.Configuration;
 using VocaNova.API.Infrastructure.Configuration;
 
 namespace VocaNova.Tests.Support;

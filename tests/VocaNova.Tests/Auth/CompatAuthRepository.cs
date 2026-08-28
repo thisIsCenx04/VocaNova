@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using VocaNova.API.Infrastructure.Persistence;
+using VocaNova.API.Infrastructure.Persistence.Entities;
 
 namespace VocaNova.API.Features.Auth.DAL.Repositories;
 
@@ -48,12 +50,12 @@ internal sealed class AuthRepository
     public async Task<User> CreateUserAsync(
         User user,
         UserAuth userAuth,
-        UserProfile userProfile,
+        EntityUserProfile entityUserProfile,
         UserLearningProfile? userLearningProfile,
         CancellationToken cancellationToken = default)
     {
         user.UserAuth = userAuth;
-        user.UserProfile = userProfile;
+        user.UserProfile = entityUserProfile;
         user.UserLearningProfile = userLearningProfile;
         _dbContext.Users.Add(user);
         await _dbContext.SaveChangesAsync(cancellationToken);

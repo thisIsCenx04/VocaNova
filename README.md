@@ -11,9 +11,9 @@ VocaNova is a vocabulary-learning and testing system with one ASP.NET Core backe
 
 ## Architecture status
 
-**CURRENT:** The API is in an incremental architecture transition: Notifications, Progress, all Dictionary and Lists/personal-topic endpoints, Quiz/AI grading, and KNN/runtime configuration use corrected feature-first Presentation/BLL/DAL slices under `Features/<Feature>`. Auth and Admin/SuperAdmin remain in older mixed feature folders alongside shared `Infrastructure`. EF Core 8 uses MySQL/Pomelo and database-first scaffolding; Dictionary senses now have active/deleted soft-delete state. Dashboard and Mobile maintain their own API wire models. The Docker foundation still defines PostgreSQL, Redis, API, and Dashboard containers, but the PostgreSQL service is unused by API EF persistence and no longer matches the accepted target.
+**CURRENT:** The API is in an incremental architecture transition: Notifications, Progress, all Dictionary and Lists/personal-topic endpoints, Quiz/AI grading, KNN/runtime configuration, Auth, and Admin/SuperAdmin use corrected feature-first Presentation/BLL/DAL slices under `Features/<Feature>`, with feature BLL/DAL registrations grouped through `AddBLL()` and `AddDAL(configuration)`. EF Core 8 uses MySQL/Pomelo and database-first scaffolding; Dictionary senses now have active/deleted soft-delete state. Dashboard and Mobile maintain their own API wire models. Some Auth/Dictionary/Lists test compatibility helpers remain local to the test project. The Docker foundation defines MySQL, Redis, API, and Dashboard containers aligned with the accepted relational target.
 
-**TARGET:** VocaNova remains a modular monolith and adopts a system-level three-layer architecture. Each API `Features/<Feature>` folder owns its Presentation Contracts/controllers/mappings, framework-neutral BLL models/services/ports, and feature-specific DAL repositories/mappings. Repository interfaces belong to BLL; shared EF/Redis/authentication/storage/provider infrastructure stays consolidated outside feature folders. MySQL 8, Pomelo, and database-first synchronization through `scripts/scaffold-mysql.ps1` remain the long-term relational stack and workflow. Docker Compose will run exactly `mysql`, `redis`, `api`, and `dashboard`; Flutter remains outside Docker.
+**TARGET:** VocaNova remains a modular monolith and adopts a system-level three-layer architecture. Each API `Features/<Feature>` folder owns its Presentation Contracts/controllers/mappings, framework-neutral BLL models/services/ports, and feature-specific DAL repositories/mappings. Repository interfaces belong to BLL; shared EF/Redis/authentication/storage/provider infrastructure stays consolidated outside feature folders. MySQL 8, Pomelo, and database-first synchronization through `scripts/scaffold-mysql.ps1` remain the long-term relational stack and workflow. Docker Compose uses exactly `mysql`, `redis`, `api`, and `dashboard`; Flutter remains outside Docker.
 
 ## Current technology stack
 
@@ -51,7 +51,7 @@ flutter run
 
 The current schema synchronization command is `scripts/scaffold-mysql.ps1`. It is database-first and destructive to scaffolded source; use it only for an explicitly reviewed current-schema task.
 
-The CURRENT Compose file still provisions an unused PostgreSQL service and is not the accepted target full-stack environment. Until a separately authorized Docker change replaces it with MySQL and wires the API to `mysql:3306`, use the host-based MySQL quick start above. Dashboard-to-API container routing remains targeted at `http://api:8080`.
+The CURRENT Compose file provisions MySQL, Redis, API, and Dashboard. The API container is wired to `mysql:3306` through `MYSQL_CONNECTION_STRING`, and Dashboard-to-API container routing remains `http://api:8080`. Because the project is database-first and has no migrations, the MySQL container creates the database name only; load an existing compatible schema before using database-backed endpoints.
 
 ## Documentation
 

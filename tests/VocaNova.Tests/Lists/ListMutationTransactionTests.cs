@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
+using VocaNova.API.Infrastructure.Persistence.Entities;
 
 namespace VocaNova.Tests.Lists;
 
@@ -97,7 +98,7 @@ public sealed class ListMutationTransactionTests
             Status = UserStatus.Active,
         });
         dbContext.Words.Add(NewWord(1, "walk", now));
-        dbContext.WordTopics.Add(new WordTopic { TopicId = 7, WordId = 1 });
+        dbContext.WordTopics.Add(new EntityWordTopic { TopicId = 7, WordId = 1 });
         await dbContext.SaveChangesAsync();
     }
 

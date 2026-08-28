@@ -1,10 +1,24 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Quiz.DTOs;
-using VocaNova.API.Features.Quiz.Repositories;
-using VocaNova.API.Features.Quiz.Services;
-using VocaNova.API.Infrastructure.Caching;
+using VocaNova.API.Features.Quiz.Contracts.Requests;
+using VocaNova.API.Features.Quiz.Contracts.Responses;
+using VocaNova.API.Features.Quiz.BLL.Models;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.DAL.Repositories;
+using VocaNova.API.Features.Quiz.BLL.Services;
+using VocaNova.API.Features.Quiz.Mappings;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Lists.BLL.Abstractions;
+using VocaNova.API.Features.Progress.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Infrastructure.Caching.Dictionary;
+using VocaNova.API.Infrastructure.Caching.Knn;
+using VocaNova.API.Infrastructure.Caching.Lists;
+using VocaNova.API.Infrastructure.Caching.Progress;
+using VocaNova.API.Infrastructure.Caching.Quiz;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -22,7 +36,7 @@ public class QuizSubmitAnswerFeatureTests
         var result = await service.SubmitAnswerAsync(
             1,
             100,
-            new SubmitAnswerRequest(4, "bay"));
+            new SubmitAnswerRequest(4, "bay").ToBusinessCommand());
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.IsCorrect.Should().BeTrue();
@@ -60,7 +74,7 @@ public class QuizSubmitAnswerFeatureTests
         var result = await service.SubmitAnswerAsync(
             1,
             100,
-            new SubmitAnswerRequest(4, " BAY!!! "));
+            new SubmitAnswerRequest(4, " BAY!!! ").ToBusinessCommand());
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.IsCorrect.Should().BeTrue();
@@ -76,7 +90,7 @@ public class QuizSubmitAnswerFeatureTests
         var result = await service.SubmitAnswerAsync(
             1,
             100,
-            new SubmitAnswerRequest(4, "wrong"));
+            new SubmitAnswerRequest(4, "wrong").ToBusinessCommand());
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.IsCorrect.Should().BeFalse();
@@ -106,7 +120,7 @@ public class QuizSubmitAnswerFeatureTests
         var result = await service.SubmitAnswerAsync(
             1,
             100,
-            new SubmitAnswerRequest(4, "bay"));
+            new SubmitAnswerRequest(4, "bay").ToBusinessCommand());
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.IsCorrect.Should().BeTrue();
@@ -127,14 +141,14 @@ public class QuizSubmitAnswerFeatureTests
         var first = await service.SubmitAnswerAsync(
             1,
             100,
-            new SubmitAnswerRequest(4, "bay"));
+            new SubmitAnswerRequest(4, "bay").ToBusinessCommand());
         first.IsSuccess.Should().BeTrue();
         first.Value!.NextQuestion.Should().NotBeNull();
 
         var second = await service.SubmitAnswerAsync(
             1,
             100,
-            new SubmitAnswerRequest(first.Value.NextQuestion!.WordId, "anything"));
+            new SubmitAnswerRequest(first.Value.NextQuestion!.WordId, "anything").ToBusinessCommand());
         second.IsSuccess.Should().BeTrue();
         // Two answers reach the session's question_count, so the quiz ends here.
         second.Value!.NextQuestion.Should().BeNull();
@@ -153,7 +167,7 @@ public class QuizSubmitAnswerFeatureTests
         var result = await service.SubmitAnswerAsync(
             1,
             100,
-            new SubmitAnswerRequest(4, "bay"));
+            new SubmitAnswerRequest(4, "bay").ToBusinessCommand());
 
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(409);
@@ -169,12 +183,12 @@ public class QuizSubmitAnswerFeatureTests
         var cache = new FakeQuizPoolCache();
         var service = CreateService(dbContext, cache);
 
-        var first = await service.SubmitAnswerAsync(1, 100, new SubmitAnswerRequest(4, "bay"));
+        var first = await service.SubmitAnswerAsync(1, 100, new SubmitAnswerRequest(4, "bay").ToBusinessCommand());
         first.IsSuccess.Should().BeTrue();
         cache.SetCount.Should().Be(1, "tập từ được dựng và cache ở lần nộp đầu");
         cache.HitCount.Should().Be(0);
 
-        var second = await service.SubmitAnswerAsync(1, 100, new SubmitAnswerRequest(3, "nhay"));
+        var second = await service.SubmitAnswerAsync(1, 100, new SubmitAnswerRequest(3, "nhay").ToBusinessCommand());
 
         second.IsSuccess.Should().BeTrue();
         cache.HitCount.Should().Be(1, "lần nộp sau đọc lại từ cache");
@@ -189,7 +203,7 @@ public class QuizSubmitAnswerFeatureTests
         var cache = new FakeQuizPoolCache();
         var service = CreateService(dbContext, cache);
 
-        var result = await service.SubmitAnswerAsync(1, 100, new SubmitAnswerRequest(4, "bay"));
+        var result = await service.SubmitAnswerAsync(1, 100, new SubmitAnswerRequest(4, "bay").ToBusinessCommand());
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.NextQuestion.Should().BeNull("phiên chỉ có một câu");
@@ -220,8 +234,8 @@ public class QuizSubmitAnswerFeatureTests
             },
             new StubAiGradingService(),
             new SrsService(new SrsRepository(dbContext)),
-            progressSummaryCache: null,
-            quizPoolCache: quizPoolCache);
+            progressCache: null,
+            poolCache: quizPoolCache);
     }
 
     /// <summary>
@@ -359,7 +373,7 @@ public class QuizSubmitAnswerFeatureTests
             UpdatedAt = addedAt,
             WordSenses =
             {
-                new WordSense
+                new EntityWordSense
                 {
                     SenseId = wordId,
                     WordId = wordId,
@@ -371,7 +385,7 @@ public class QuizSubmitAnswerFeatureTests
             },
             WordTopics =
             {
-                new WordTopic
+                new EntityWordTopic
                 {
                     WordId = wordId,
                     TopicId = 7,

@@ -59,7 +59,7 @@ public sealed class AiGradingDashboardCompatibilityTests
         configuration.IsStoredInEnvFile.Should().BeTrue();
         updated.IsSuccess.Should().BeTrue();
         reset.IsSuccess.Should().BeTrue();
-        connection.Should().Be(new AiGradingConnectionTest(true, "primary", 12, "Connected."));
+        connection.Should().Be(new VocaNova.Dashboard.Models.Api.Settings.AiGradingConnectionTest(true, "primary", 12, "Connected."));
         handler.PendingCount.Should().Be(0);
     }
 

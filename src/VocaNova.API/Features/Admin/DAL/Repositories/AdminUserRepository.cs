@@ -2,11 +2,12 @@ using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Extensions;
 using VocaNova.API.Common.Results;
+using VocaNova.API.Features.Admin.BLL.Abstractions;
 using VocaNova.API.Features.Admin.BLL.Models;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
-namespace VocaNova.API.Features.Admin.Repositories;
+namespace VocaNova.API.Features.Admin.DAL.Repositories;
 
 public sealed class AdminUserRepository : IAdminUserRepository
 {
@@ -174,14 +175,39 @@ public sealed class AdminUserRepository : IAdminUserRepository
             .ToPagedResultAsync(page, limit, cancellationToken);
     }
 
-    public Task<User?> FindUserForStatusUpdateAsync(
+    public Task<AdminUserStatusTarget?> GetStatusTargetAsync(
         uint userId,
         CancellationToken cancellationToken = default)
     {
         return _dbContext.Users
             .IgnoreQueryFilters()
-            .Include(entity => entity.Role)
+            .AsNoTracking()
+            .Where(entity => entity.UserId == userId)
+            .Select(entity => new AdminUserStatusTarget(
+                entity.UserId,
+                entity.Status,
+                entity.Role == null ? null : entity.Role.RoleName))
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<bool> StageStatusAsync(
+        uint userId,
+        string status,
+        DateTime updatedAt,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await _dbContext.Users
+            .IgnoreQueryFilters()
             .SingleOrDefaultAsync(entity => entity.UserId == userId, cancellationToken);
+
+        if (user is null)
+        {
+            return false;
+        }
+
+        user.Status = status;
+        user.UpdatedAt = updatedAt;
+        return true;
     }
 
     public async Task<int> RevokeActiveRefreshTokensAsync(

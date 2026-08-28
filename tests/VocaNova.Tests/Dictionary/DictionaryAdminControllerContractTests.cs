@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using VocaNova.API.Common.Models;
+using BusinessAdminWordQuery = VocaNova.API.Features.Dictionary.BLL.Models.AdminWordQuery;
 
 namespace VocaNova.Tests.Dictionary;
 
@@ -14,7 +15,7 @@ public sealed class DictionaryAdminControllerContractTests
     {
         var service = new Mock<IWordAdminService>();
         service.Setup(instance => instance.SearchAsync(
-                new AdminWordQuery("run", "A1", 3, "verb", "active", false, 2, 10, "word", "asc"),
+                new BusinessAdminWordQuery("run", "A1", 3, "verb", "active", false, 2, 10, "word", "asc"),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(DictionaryResult<PagedCollection<AdminWordListItem>>.Success(
                 new PagedCollection<AdminWordListItem>(

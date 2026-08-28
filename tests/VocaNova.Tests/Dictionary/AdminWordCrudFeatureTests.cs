@@ -4,15 +4,34 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Admin.Validators;
-using VocaNova.API.Features.Dictionary.DTOs;
-using VocaNova.API.Features.Dictionary.Repositories;
-using VocaNova.API.Features.Dictionary.Services;
-using VocaNova.API.Features.Lists.DTOs;
-using VocaNova.API.Infrastructure.Caching;
+using VocaNova.API.Features.Admin.Contracts.Requests;
+using VocaNova.API.Features.Dictionary.Contracts.Requests;
+using VocaNova.API.Features.Dictionary.Contracts.Responses;
+using VocaNova.API.Features.Dictionary.BLL.Models;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.DAL.Repositories;
+using VocaNova.API.Features.Dictionary.BLL.Services;
+using VocaNova.API.Features.Lists.Contracts.Requests;
+using VocaNova.API.Features.Lists.Contracts.Responses;
+using VocaNova.API.Features.Lists.BLL.Models;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Lists.BLL.Abstractions;
+using VocaNova.API.Features.Progress.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Infrastructure.Caching.Dictionary;
+using VocaNova.API.Infrastructure.Caching.Knn;
+using VocaNova.API.Infrastructure.Caching.Lists;
+using VocaNova.API.Infrastructure.Caching.Progress;
+using VocaNova.API.Infrastructure.Caching.Quiz;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
 using VocaNova.API.Infrastructure.Storage;
+using DictionaryStoredMedia = VocaNova.API.Features.Dictionary.BLL.Models.StoredMedia;
+using DictionaryUploadedContent = VocaNova.API.Features.Dictionary.BLL.Models.UploadedContent;
 
 namespace VocaNova.Tests.Dictionary;
 
@@ -163,7 +182,7 @@ public class AdminWordCrudFeatureTests
             UpdatedAt = DateTime.UtcNow,
             WordSenses =
             {
-                new WordSense
+                new EntityWordSense
                 {
                     SenseId = 10,
                     WordId = 1,
@@ -298,11 +317,7 @@ public class AdminWordCrudFeatureTests
         var service = CreateService(dbContext, cache, audioStorage);
         var file = CreateAudioFile("run.mp3", "audio/mpeg", 1024);
 
-        var result = await service.UploadAudioAsync(1, new UploadWordAudioRequest
-        {
-            Accent = " UK ",
-            File = file,
-        });
+        var result = await service.UploadAudioAsync(1, " UK ", ToUploadedContent(file));
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Accent.Should().Be(AudioAccent.Uk);
@@ -330,16 +345,14 @@ public class AdminWordCrudFeatureTests
         var audioStorage = new FakeAudioStorage("https://cdn.example.com/audio.mp3");
         var service = CreateService(dbContext, audioStorage: audioStorage);
 
-        var invalidMime = await service.UploadAudioAsync(1, new UploadWordAudioRequest
-        {
-            Accent = "uk",
-            File = CreateAudioFile("run.txt", "text/plain", 1024),
-        });
-        var tooLarge = await service.UploadAudioAsync(1, new UploadWordAudioRequest
-        {
-            Accent = "uk",
-            File = CreateAudioFile("run.mp3", "audio/mpeg", (5 * 1024 * 1024) + 1),
-        });
+        var invalidMime = await service.UploadAudioAsync(
+            1,
+            "uk",
+            ToUploadedContent(CreateAudioFile("run.txt", "text/plain", 1024)));
+        var tooLarge = await service.UploadAudioAsync(
+            1,
+            "uk",
+            ToUploadedContent(CreateAudioFile("run.mp3", "audio/mpeg", (5 * 1024 * 1024) + 1)));
 
         invalidMime.IsSuccess.Should().BeFalse();
         invalidMime.Error.Should().Be("Audio MIME type must be one of: audio/mpeg, audio/wav, audio/ogg.");
@@ -386,7 +399,7 @@ public class AdminWordCrudFeatureTests
     {
         var timestamp = new DateTime(2026, 6, 15, 8, 9, 10, DateTimeKind.Utc);
 
-        var key = CloudinaryAudioStorage.BuildPublicId(42, AudioAccent.Us, "../hello world!.mp3", timestamp);
+        var key = CloudinaryWordAudioStorage.BuildPublicId(42, AudioAccent.Us, "../hello world!.mp3", timestamp);
 
         key.Should().Be("vocanova/words/audio/42/us/20260615080910-hello-world");
     }
@@ -401,7 +414,7 @@ public class AdminWordCrudFeatureTests
         var service = CreateService(dbContext, cache, imageStorage: imageStorage);
         var file = CreateFormFile("run.png", "image/png", 1024);
 
-        var result = await service.UploadImageAsync(1, new UploadWordImageRequest { File = file });
+        var result = await service.UploadImageAsync(1, ToUploadedContent(file));
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.ImageUrl.Should().Be("https://res.cloudinary.com/demo/image/upload/v1/vocanova/words/1/run.png");
@@ -421,14 +434,12 @@ public class AdminWordCrudFeatureTests
         var imageStorage = new FakeImageStorage("https://res.cloudinary.com/demo/image/upload/run.png");
         var service = CreateService(dbContext, imageStorage: imageStorage);
 
-        var invalidMime = await service.UploadImageAsync(1, new UploadWordImageRequest
-        {
-            File = CreateFormFile("run.gif", "image/gif", 1024),
-        });
-        var tooLarge = await service.UploadImageAsync(1, new UploadWordImageRequest
-        {
-            File = CreateFormFile("run.png", "image/png", (5 * 1024 * 1024) + 1),
-        });
+        var invalidMime = await service.UploadImageAsync(
+            1,
+            ToUploadedContent(CreateFormFile("run.gif", "image/gif", 1024)));
+        var tooLarge = await service.UploadImageAsync(
+            1,
+            ToUploadedContent(CreateFormFile("run.png", "image/png", (5 * 1024 * 1024) + 1)));
 
         invalidMime.IsSuccess.Should().BeFalse();
         invalidMime.Error.Should().Be("Image MIME type must be one of: image/jpeg, image/png, image/webp.");
@@ -464,7 +475,7 @@ public class AdminWordCrudFeatureTests
     {
         var timestamp = new DateTime(2026, 6, 15, 8, 9, 10, DateTimeKind.Utc);
 
-        var publicId = CloudinaryImageStorage.BuildPublicId(42, "../hello world!.png", timestamp, "vocanova/words");
+        var publicId = CloudinaryWordImageStorage.BuildPublicId(42, "../hello world!.png", timestamp, "vocanova/words");
 
         publicId.Should().Be("vocanova/words/42/20260615080910-hello-world");
     }
@@ -527,7 +538,7 @@ public class AdminWordCrudFeatureTests
             1,
             new CreateSenseRequest(1, "verb", "move quickly", "chay", new[]
             {
-                new SenseExampleInput(null, "I run fast.", "Tôi chạy nhanh."),
+                new SenseExampleRequest(null, "I run fast.", "Tôi chạy nhanh."),
             }));
 
         result.IsSuccess.Should().BeTrue();
@@ -548,8 +559,8 @@ public class AdminWordCrudFeatureTests
         await SeedWordAsync(dbContext, "run", "run");
         await SeedSenseAsync(dbContext);
         dbContext.WordExamples.AddRange(
-            new WordExample { ExampleId = 100, WordId = 1, SenseId = 10, ExampleEn = "old one", ExampleVi = "cũ", OrderIndex = 0 },
-            new WordExample { ExampleId = 101, WordId = 1, SenseId = 10, ExampleEn = "keep me", ExampleVi = "giữ", OrderIndex = 1 });
+            new EntityWordExample { ExampleId = 100, WordId = 1, SenseId = 10, ExampleEn = "old one", ExampleVi = "cũ", OrderIndex = 0 },
+            new EntityWordExample { ExampleId = 101, WordId = 1, SenseId = 10, ExampleEn = "keep me", ExampleVi = "giữ", OrderIndex = 1 });
         await dbContext.SaveChangesAsync();
         var service = CreateService(dbContext);
 
@@ -558,8 +569,8 @@ public class AdminWordCrudFeatureTests
             10,
             new UpdateSenseRequest(1, "verb", "move quickly", "chay", new[]
             {
-                new SenseExampleInput(100, "updated one", "mới"),   // sửa ví dụ sẵn có
-                new SenseExampleInput(null, "brand new", "thêm"),   // thêm ví dụ mới
+                new SenseExampleRequest(100, "updated one", "mới"),   // sửa ví dụ sẵn có
+                new SenseExampleRequest(null, "brand new", "thêm"),   // thêm ví dụ mới
             }));
 
         result.IsSuccess.Should().BeTrue();
@@ -572,20 +583,25 @@ public class AdminWordCrudFeatureTests
     }
 
     [Fact]
-    public async Task SoftDeleteSenseAsync_Should_Return_400_When_Schema_Does_Not_Support_Soft_Delete()
+    public async Task SoftDeleteSenseAsync_Should_Set_Status_Deleted_And_Invalidate_Cache()
     {
         await using var dbContext = CreateDbContext();
         await SeedWordAsync(dbContext, "run", "run");
         await SeedSenseAsync(dbContext);
-        var service = CreateService(dbContext);
+        var cache = new FakeWordDetailCache();
+        var service = CreateService(dbContext, cache);
 
         var result = await service.SoftDeleteSenseAsync(1, 10);
 
-        result.IsSuccess.Should().BeFalse();
-        result.StatusCode.Should().Be(400);
-        result.Error.Should().Be("Sense soft delete is not supported by current database schema.");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeTrue();
+        cache.RemoveCount.Should().Be(1);
 
-        (await dbContext.WordSenses.CountAsync()).Should().Be(1);
+        (await dbContext.WordSenses.CountAsync()).Should().Be(0);
+        var sense = await dbContext.WordSenses
+            .IgnoreQueryFilters()
+            .SingleAsync(entity => entity.SenseId == 10);
+        sense.Status.Should().Be(UserStatus.Deleted);
     }
 
     [Fact]
@@ -614,7 +630,7 @@ public class AdminWordCrudFeatureTests
         VocaNovaDbContext dbContext,
         IWordDetailCache? wordDetailCache = null,
         IAudioStorage? audioStorage = null,
-        IImageStorage? imageStorage = null,
+        IWordImageStorage? imageStorage = null,
         IUserListCache? userListCache = null)
     {
         return new WordService(
@@ -652,6 +668,9 @@ public class AdminWordCrudFeatureTests
         };
     }
 
+    private static DictionaryUploadedContent ToUploadedContent(IFormFile file) =>
+        new(file.FileName, file.ContentType, file.Length, file.OpenReadStream());
+
     private static async Task SeedWordAsync(
         VocaNovaDbContext dbContext,
         string word,
@@ -674,7 +693,7 @@ public class AdminWordCrudFeatureTests
 
     private static async Task SeedSenseAsync(VocaNovaDbContext dbContext)
     {
-        dbContext.WordSenses.Add(new WordSense
+        dbContext.WordSenses.Add(new EntityWordSense
         {
             SenseId = 10,
             WordId = 1,
@@ -746,22 +765,21 @@ public class AdminWordCrudFeatureTests
 
         public string? LastAccent { get; private set; }
 
-        public Task<AudioStorageResult> UploadAsync(
-            uint wordId,
-            string accent,
-            IFormFile file,
+        public Task<DictionaryStoredMedia> UploadAsync(
+            DictionaryUploadedContent content,
+            string? accent,
             CancellationToken cancellationToken = default)
         {
             UploadCount++;
-            LastWordId = wordId;
+            LastWordId = content.OwnerId;
             LastAccent = accent;
-            return Task.FromResult(new AudioStorageResult(
-                $"words/{wordId}/audio/{accent}/{file.FileName}",
+            return Task.FromResult(new DictionaryStoredMedia(
+                $"words/{content.OwnerId}/audio/{accent}/{content.FileName}",
                 _url));
         }
     }
 
-    private sealed class FakeImageStorage : IImageStorage
+    private sealed class FakeImageStorage : IWordImageStorage
     {
         private readonly string _url;
 
@@ -774,15 +792,13 @@ public class AdminWordCrudFeatureTests
 
         public uint LastWordId { get; private set; }
 
-        public Task<ImageStorageResult> UploadAsync(
-            uint wordId,
-            IFormFile file,
-            string? folder = null,
+        public Task<DictionaryStoredMedia> UploadAsync(
+            DictionaryUploadedContent content,
             CancellationToken cancellationToken = default)
         {
             UploadCount++;
-            LastWordId = wordId;
-            return Task.FromResult(new ImageStorageResult($"vocanova/words/{wordId}/{file.FileName}", _url));
+            LastWordId = content.OwnerId;
+            return Task.FromResult(new DictionaryStoredMedia($"vocanova/words/{content.OwnerId}/{content.FileName}", _url));
         }
     }
 }

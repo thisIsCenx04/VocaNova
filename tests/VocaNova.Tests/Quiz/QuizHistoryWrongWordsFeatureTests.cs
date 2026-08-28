@@ -1,9 +1,12 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Quiz.DTOs;
-using VocaNova.API.Features.Quiz.Repositories;
-using VocaNova.API.Features.Quiz.Services;
+using VocaNova.API.Features.Quiz.Contracts.Requests;
+using VocaNova.API.Features.Quiz.Contracts.Responses;
+using VocaNova.API.Features.Quiz.BLL.Models;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.DAL.Repositories;
+using VocaNova.API.Features.Quiz.BLL.Services;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -18,7 +21,7 @@ public class QuizHistoryWrongWordsFeatureTests
         await SeedHistoryAndWrongWordsAsync(dbContext);
         var service = CreateService(dbContext);
 
-        var result = await service.GetHistoryAsync(1, new QuizHistoryQuery { Page = 1, Limit = 10 });
+        var result = await service.GetHistoryAsync(1, new QuizHistoryQuery(1, 10));
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Items.Select(item => item.SessionId).Should().Equal(2u, 1u);
@@ -32,7 +35,7 @@ public class QuizHistoryWrongWordsFeatureTests
         await SeedHistoryAndWrongWordsAsync(dbContext);
         var service = CreateService(dbContext);
 
-        var result = await service.GetWrongWordsAsync(1, new WrongWordsQuery { Page = 1, Limit = 10 });
+        var result = await service.GetWrongWordsAsync(1, new WrongWordsQuery(1, 10));
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Items.Select(item => item.WordId).Should().Equal(2u, 1u);
@@ -155,7 +158,7 @@ public class QuizHistoryWrongWordsFeatureTests
             UpdatedAt = now,
             WordSenses =
             {
-                new WordSense
+                new EntityWordSense
                 {
                     SenseId = wordId,
                     WordId = wordId,
@@ -167,7 +170,7 @@ public class QuizHistoryWrongWordsFeatureTests
             },
         });
 
-        dbContext.UserWordProgresses.Add(new UserWordProgress
+        dbContext.UserWordProgresses.Add(new EntityUserWordProgress
         {
             ProgressId = wordId,
             UserId = userId,

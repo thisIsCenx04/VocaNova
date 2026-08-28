@@ -2,10 +2,23 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Results;
-using VocaNova.API.Features.Dictionary.DTOs;
-using VocaNova.API.Features.Dictionary.Repositories;
-using VocaNova.API.Features.Dictionary.Services;
-using VocaNova.API.Infrastructure.Caching;
+using VocaNova.API.Features.Dictionary.Contracts.Requests;
+using VocaNova.API.Features.Dictionary.Contracts.Responses;
+using VocaNova.API.Features.Dictionary.BLL.Models;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.DAL.Repositories;
+using VocaNova.API.Features.Dictionary.BLL.Services;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Lists.BLL.Abstractions;
+using VocaNova.API.Features.Progress.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Infrastructure.Caching.Dictionary;
+using VocaNova.API.Infrastructure.Caching.Knn;
+using VocaNova.API.Infrastructure.Caching.Lists;
+using VocaNova.API.Infrastructure.Caching.Progress;
+using VocaNova.API.Infrastructure.Caching.Quiz;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -70,7 +83,7 @@ public class WordSearchFeatureTests
     public async Task SearchAsync_Should_Return_Cached_Result_When_Available()
     {
         await using var dbContext = CreateDbContext();
-        var cachedResult = new PagedResult<WordSummaryDto>(
+        var cachedResult = new PagedCollection<WordSummaryDto>(
             new[] { new WordSummaryDto(10, "cached", null, null, null, null) },
             1,
             20,
@@ -136,7 +149,7 @@ public class WordSearchFeatureTests
                 UpdatedAt = DateTime.UtcNow,
                 WordSenses =
                 {
-                    new WordSense
+                    new EntityWordSense
                     {
                         SenseId = 1,
                         WordId = 1,
@@ -145,7 +158,7 @@ public class WordSearchFeatureTests
                         EnglishDefinition = "move quickly",
                         VietnameseMeaning = "chay nhanh",
                     },
-                    new WordSense
+                    new EntityWordSense
                     {
                         SenseId = 2,
                         WordId = 1,
@@ -157,7 +170,7 @@ public class WordSearchFeatureTests
                 },
                 WordTopics =
                 {
-                    new WordTopic
+                    new EntityWordTopic
                     {
                         WordId = 1,
                         TopicId = 1,
@@ -176,7 +189,7 @@ public class WordSearchFeatureTests
                 UpdatedAt = DateTime.UtcNow,
                 WordSenses =
                 {
-                    new WordSense
+                    new EntityWordSense
                     {
                         SenseId = 3,
                         WordId = 2,
@@ -188,7 +201,7 @@ public class WordSearchFeatureTests
                 },
                 WordTopics =
                 {
-                    new WordTopic
+                    new EntityWordTopic
                     {
                         WordId = 2,
                         TopicId = 2,
@@ -221,9 +234,9 @@ public class WordSearchFeatureTests
 
     private sealed class FakeWordSearchCache : IWordSearchCache
     {
-        private readonly PagedResult<WordSummaryDto>? _cachedResult;
+        private readonly PagedCollection<WordSummaryDto>? _cachedResult;
 
-        public FakeWordSearchCache(PagedResult<WordSummaryDto>? cachedResult)
+        public FakeWordSearchCache(PagedCollection<WordSummaryDto>? cachedResult)
         {
             _cachedResult = cachedResult;
         }
@@ -232,7 +245,7 @@ public class WordSearchFeatureTests
 
         public int SetCount { get; private set; }
 
-        public Task<PagedResult<WordSummaryDto>?> GetAsync(
+        public Task<PagedCollection<WordSummaryDto>?> GetAsync(
             string cacheKey,
             CancellationToken cancellationToken = default)
         {
@@ -242,7 +255,7 @@ public class WordSearchFeatureTests
 
         public Task SetAsync(
             string cacheKey,
-            PagedResult<WordSummaryDto> result,
+            PagedCollection<WordSummaryDto> result,
             CancellationToken cancellationToken = default)
         {
             SetCount++;

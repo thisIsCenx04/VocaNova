@@ -1,13 +1,19 @@
 using FluentAssertions;
 using FluentValidation.TestHelper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Security;
-using VocaNova.API.Features.SuperAdmin.DTOs;
-using VocaNova.API.Features.SuperAdmin.Services;
-using VocaNova.API.Features.SuperAdmin.Validators;
+using VocaNova.API.Features.SuperAdmin.Contracts.Requests;
+using VocaNova.API.Features.SuperAdmin.Contracts.Responses;
+using VocaNova.API.Features.SuperAdmin.BLL.Models;
+using VocaNova.API.Features.SuperAdmin.BLL.Abstractions;
+using VocaNova.API.Features.SuperAdmin.BLL.Services;
+using VocaNova.API.Features.SuperAdmin.DAL.Repositories;
+using VocaNova.API.Features.SuperAdmin.Mappings;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
+using VocaNova.API.Infrastructure.Persistence.Transactions;
 
 namespace VocaNova.Tests.SuperAdmin;
 
@@ -18,10 +24,10 @@ public sealed class SuperAdminAccountFeatureTests
     {
         await using var dbContext = CreateDbContext();
         await SeedRolesAndUsersAsync(dbContext);
-        var service = new SuperAdminAccountService(dbContext);
+        var service = CreateService(dbContext);
 
         var result = await service.CreateAsync(new CreateAdminAccountRequest(
-            "New Admin", "NEW.ADMIN@EXAMPLE.COM", "0934567890", "Strong123"));
+            "New Admin", "NEW.ADMIN@EXAMPLE.COM", "0934567890", "Strong123").ToModel());
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Role.Should().Be(UserRole.Admin);
@@ -43,12 +49,12 @@ public sealed class SuperAdminAccountFeatureTests
     {
         await using var dbContext = CreateDbContext();
         await SeedRolesAndUsersAsync(dbContext);
-        var service = new SuperAdminAccountService(dbContext);
+        var service = CreateService(dbContext);
 
         var duplicatePhone = await service.CreateAsync(new CreateAdminAccountRequest(
-            "New Admin", "unique@example.com", "0912345678", "Strong123"));
+            "New Admin", "unique@example.com", "0912345678", "Strong123").ToModel());
         var duplicateEmail = await service.CreateAsync(new CreateAdminAccountRequest(
-            "New Admin", "ADMIN@EXAMPLE.COM", "0934567890", "Strong123"));
+            "New Admin", "ADMIN@EXAMPLE.COM", "0934567890", "Strong123").ToModel());
 
         duplicatePhone.StatusCode.Should().Be(409);
         duplicatePhone.Error.Should().Be("Phone already exists.");
@@ -61,7 +67,7 @@ public sealed class SuperAdminAccountFeatureTests
     {
         await using var dbContext = CreateDbContext();
         await SeedRolesAndUsersAsync(dbContext);
-        var service = new SuperAdminAccountService(dbContext);
+        var service = CreateService(dbContext);
 
         var result = await service.GetAccountsAsync(new AdminAccountQuery());
 
@@ -78,7 +84,7 @@ public sealed class SuperAdminAccountFeatureTests
         var deletedAdmin = await dbContext.Users.SingleAsync(user => user.UserId == 2);
         deletedAdmin.Status = UserStatus.Deleted;
         await dbContext.SaveChangesAsync();
-        var service = new SuperAdminAccountService(dbContext);
+        var service = CreateService(dbContext);
 
         var hidden = await service.GetAccountsAsync(new AdminAccountQuery());
         var included = await service.GetAccountsAsync(new AdminAccountQuery(IncludeDeleted: true));
@@ -94,7 +100,7 @@ public sealed class SuperAdminAccountFeatureTests
     {
         await using var dbContext = CreateDbContext();
         await SeedRolesAndUsersAsync(dbContext);
-        var service = new SuperAdminAccountService(dbContext);
+        var service = CreateService(dbContext);
 
         var lockResult = await service.LockAsync(targetId);
         var deleteResult = await service.DeleteAsync(targetId);
@@ -119,7 +125,7 @@ public sealed class SuperAdminAccountFeatureTests
             ExpiresAt = DateTime.UtcNow.AddDays(1),
         });
         await dbContext.SaveChangesAsync();
-        var service = new SuperAdminAccountService(dbContext);
+        var service = CreateService(dbContext);
 
         var locked = await service.LockAsync(2);
         var unlocked = await service.UnlockAsync(2);
@@ -144,10 +150,10 @@ public sealed class SuperAdminAccountFeatureTests
             ExpiresAt = DateTime.UtcNow.AddDays(1),
         });
         await dbContext.SaveChangesAsync();
-        var service = new SuperAdminAccountService(dbContext);
+        var service = CreateService(dbContext);
 
         var result = await service.UpdateAsync(2, new UpdateAdminAccountRequest(
-            "Updated Admin", "updated@example.com", "0976543210", "Updated123"));
+            "Updated Admin", "updated@example.com", "0976543210", "Updated123").ToModel());
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.FullName.Should().Be("Updated Admin");
@@ -170,7 +176,7 @@ public sealed class SuperAdminAccountFeatureTests
             ExpiresAt = DateTime.UtcNow.AddDays(1),
         });
         await dbContext.SaveChangesAsync();
-        var service = new SuperAdminAccountService(dbContext);
+        var service = CreateService(dbContext);
 
         var result = await service.DeleteAsync(2);
 
@@ -202,9 +208,15 @@ public sealed class SuperAdminAccountFeatureTests
     {
         var options = new DbContextOptionsBuilder<VocaNovaDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
         return new VocaNovaDbContext(options);
     }
+
+    private static SuperAdminAccountService CreateService(VocaNovaDbContext dbContext) =>
+        new(
+            new SuperAdminAccountRepository(dbContext),
+            new EfApplicationTransactionManager(dbContext));
 
     private static async Task SeedRolesAndUsersAsync(VocaNovaDbContext dbContext)
     {
@@ -243,7 +255,7 @@ public sealed class SuperAdminAccountFeatureTests
                 IsPhoneVerified = true,
                 UpdatedAt = now,
             },
-            UserProfile = new UserProfile
+            UserProfile = new EntityUserProfile
             {
                 UserId = userId,
                 FullName = fullName,

@@ -1,6 +1,8 @@
 using FluentAssertions;
-using VocaNova.API.Features.Auth.DTOs;
-using VocaNova.API.Features.Auth.Validators;
+using VocaNova.API.Features.Auth.Contracts.Requests;
+using VocaNova.API.Features.Auth.Contracts.Responses;
+using VocaNova.API.Features.Auth.BLL.Models;
+using VocaNova.API.Features.Auth.Contracts.Requests;
 
 namespace VocaNova.Tests.Auth;
 

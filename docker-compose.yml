@@ -1,20 +1,22 @@
 services:
-  postgres:
-    image: postgres:16-alpine
+  mysql:
+    image: mysql:8.0
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-vocanova}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the local .env file}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-vocanova}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in the local .env file}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
       interval: 5s
       timeout: 5s
       retries: 10
-      start_period: 10s
+      start_period: 30s
     restart: unless-stopped
 
   redis:
@@ -39,13 +41,13 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      # Reserved for the PostgreSQL EF transition. The current API still reads MYSQL_CONNECTION_STRING.
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-vocanova};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the local .env file}
+      MYSQL_CONNECTION_STRING: Server=mysql;Port=3306;Database=${MYSQL_DATABASE:-vocanova};User=root;Password=${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in the local .env file};
+      MYSQL_SERVER_VERSION: ${MYSQL_SERVER_VERSION:-8.0.0-mysql}
       Redis__Configuration: redis:6379
     ports:
       - "${API_PORT:-5013}:8080"
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -79,4 +81,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  postgres_data:
+  mysql_data:

@@ -1,7 +1,7 @@
 using VocaNova.API.Common.Results;
 using VocaNova.API.Features.Admin.BLL.Models;
 
-namespace VocaNova.API.Features.Admin.Repositories;
+namespace VocaNova.API.Features.Admin.BLL.Abstractions;
 
 public interface IAdminStatsRepository
 {

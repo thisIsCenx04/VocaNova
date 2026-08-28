@@ -24,6 +24,15 @@ public sealed class ProgressResult<T>
 
     public ProgressErrorKind? ErrorKind { get; }
 
+    public int StatusCode =>
+        ErrorKind switch
+        {
+            ProgressErrorKind.Unauthorized => 401,
+            ProgressErrorKind.NotFound => 404,
+            null => 200,
+            _ => 400,
+        };
+
     public static ProgressResult<T> Success(T value) => new(value, null, null);
 
     public static ProgressResult<T> ValidationFailure(string error) =>

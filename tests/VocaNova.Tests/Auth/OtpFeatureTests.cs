@@ -4,15 +4,22 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Options;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Auth.DTOs;
-using VocaNova.API.Features.Auth.Repositories;
-using VocaNova.API.Features.Auth.Services;
-using VocaNova.API.Features.Auth.Validators;
+using VocaNova.API.Features.Auth.Contracts.Requests;
+using VocaNova.API.Features.Auth.Contracts.Responses;
+using VocaNova.API.Features.Auth.BLL.Models;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Auth.DAL.Repositories;
+using VocaNova.API.Features.Auth.BLL.Services;
+using VocaNova.API.Features.Auth.Contracts.Requests;
 using VocaNova.API.Infrastructure.Authentication;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
 using VocaNova.API.Infrastructure.Otp;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
 using VocaNova.API.Infrastructure.RateLimiting;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
 using VocaNova.API.Infrastructure.Sms;
 
 namespace VocaNova.Tests.Auth;
@@ -158,15 +165,7 @@ public class OtpFeatureTests
         VocaNovaDbContext dbContext,
         ISmsProvider? smsProvider = null)
     {
-        return new AuthService(
-            dbContext,
-            new AuthRepository(dbContext),
-            CreateJwtTokenService(),
-            new FakeGoogleTokenVerifier(),
-            Options.Create(CreateJwtSettings()),
-            otpCodeGenerator: new FixedOtpCodeGenerator(),
-            smsProvider: smsProvider ?? new FakeSmsProvider(),
-            rateLimitSettings: Options.Create(new RateLimitSettings()));
+        return AuthTestFactory.CreateService(dbContext, googleIdentityProvider: new FakeGoogleTokenVerifier(), otpCodeGenerator: new FixedOtpCodeGenerator(), smsSender: smsProvider ?? new FakeSmsProvider());
     }
 
     private static JwtTokenService CreateJwtTokenService()

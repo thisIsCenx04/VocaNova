@@ -2,11 +2,24 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Results;
-using VocaNova.API.Features.Admin.Validators;
-using VocaNova.API.Features.Dictionary.DTOs;
-using VocaNova.API.Features.Dictionary.Repositories;
-using VocaNova.API.Features.Dictionary.Services;
-using VocaNova.API.Infrastructure.Caching;
+using VocaNova.API.Features.Admin.Contracts.Requests;
+using VocaNova.API.Features.Dictionary.Contracts.Requests;
+using VocaNova.API.Features.Dictionary.Contracts.Responses;
+using VocaNova.API.Features.Dictionary.BLL.Models;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.DAL.Repositories;
+using VocaNova.API.Features.Dictionary.BLL.Services;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Lists.BLL.Abstractions;
+using VocaNova.API.Features.Progress.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Infrastructure.Caching.Dictionary;
+using VocaNova.API.Infrastructure.Caching.Knn;
+using VocaNova.API.Infrastructure.Caching.Lists;
+using VocaNova.API.Infrastructure.Caching.Progress;
+using VocaNova.API.Infrastructure.Caching.Quiz;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -129,7 +142,7 @@ public class TopicFeatureTests
     {
         await using var dbContext = CreateDbContext();
         await SeedTopicsAsync(dbContext);
-        var cachedWords = new PagedResult<WordSummaryDto>(
+        var cachedWords = new PagedCollection<WordSummaryDto>(
             new[] { new WordSummaryDto(99, "cached", null, null, null, null) },
             1,
             20,
@@ -396,7 +409,7 @@ public class TopicFeatureTests
                 UpdatedAt = DateTime.UtcNow,
                 WordSenses =
                 {
-                    new WordSense
+                    new EntityWordSense
                     {
                         SenseId = 1,
                         WordId = 1,
@@ -429,17 +442,17 @@ public class TopicFeatureTests
             });
 
         dbContext.WordTopics.AddRange(
-            new WordTopic
+            new EntityWordTopic
             {
                 WordId = 1,
                 TopicId = 1,
             },
-            new WordTopic
+            new EntityWordTopic
             {
                 WordId = 2,
                 TopicId = 1,
             },
-            new WordTopic
+            new EntityWordTopic
             {
                 WordId = 3,
                 TopicId = 2,
@@ -451,11 +464,11 @@ public class TopicFeatureTests
     private sealed class FakeTopicCache : ITopicCache
     {
         private readonly IReadOnlyCollection<TopicSummaryDto>? _cachedTopics;
-        private readonly PagedResult<WordSummaryDto>? _cachedTopicWords;
+        private readonly PagedCollection<WordSummaryDto>? _cachedTopicWords;
 
         public FakeTopicCache(
             IReadOnlyCollection<TopicSummaryDto>? cachedTopics = null,
-            PagedResult<WordSummaryDto>? cachedTopicWords = null)
+            PagedCollection<WordSummaryDto>? cachedTopicWords = null)
         {
             _cachedTopics = cachedTopics;
             _cachedTopicWords = cachedTopicWords;
@@ -486,7 +499,7 @@ public class TopicFeatureTests
             return Task.CompletedTask;
         }
 
-        public Task<PagedResult<WordSummaryDto>?> GetTopicWordsAsync(
+        public Task<PagedCollection<WordSummaryDto>?> GetTopicWordsAsync(
             uint topicId,
             int page,
             int limit,
@@ -500,7 +513,7 @@ public class TopicFeatureTests
             uint topicId,
             int page,
             int limit,
-            PagedResult<WordSummaryDto> words,
+            PagedCollection<WordSummaryDto> words,
             CancellationToken cancellationToken = default)
         {
             SetTopicWordsCount++;

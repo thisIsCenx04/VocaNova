@@ -26,6 +26,17 @@ public sealed class KnnOperationResult<T>
 
     public KnnErrorKind? ErrorKind { get; }
 
+    public int StatusCode =>
+        ErrorKind switch
+        {
+            KnnErrorKind.Unauthorized => 401,
+            KnnErrorKind.NotFound => 404,
+            KnnErrorKind.Conflict => 409,
+            KnnErrorKind.TooManyRequests => 429,
+            null => 200,
+            _ => 400,
+        };
+
     public static KnnOperationResult<T> Success(T value) => new(value, null, null);
 
     public static KnnOperationResult<T> ValidationFailure(string error) =>

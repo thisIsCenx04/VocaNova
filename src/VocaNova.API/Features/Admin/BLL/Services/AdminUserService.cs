@@ -2,7 +2,6 @@ using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Results;
 using VocaNova.API.Features.Admin.BLL.Abstractions;
 using VocaNova.API.Features.Admin.BLL.Models;
-using VocaNova.API.Features.Admin.Repositories;
 using VocaNova.API.Features.Auth.BLL.Abstractions;
 
 namespace VocaNova.API.Features.Admin.BLL.Services;
@@ -125,13 +124,13 @@ public sealed class AdminUserService : IAdminUserService
         string actorRole,
         CancellationToken cancellationToken = default)
     {
-        var user = await _repository.FindUserForStatusUpdateAsync(userId, cancellationToken);
+        var user = await _repository.GetStatusTargetAsync(userId, cancellationToken);
         if (user is null || user.Status == UserStatus.Deleted)
         {
             return Result<bool>.NotFound("User not found.");
         }
 
-        var guard = EnsureCanManageStatus(actorRole, user.Role?.RoleName);
+        var guard = EnsureCanManageStatus(actorRole, user.RoleName);
         if (guard is not null)
         {
             return guard;
@@ -140,8 +139,11 @@ public sealed class AdminUserService : IAdminUserService
         // "Disable" = khóa tài khoản (limit access): vẫn hiển thị trong danh sách với status 'locked',
         // không xóa/ẩn. Vẫn thu hồi refresh token để chặn truy cập ngay.
         var now = DateTime.UtcNow;
-        user.Status = UserStatus.Locked;
-        user.UpdatedAt = now;
+        if (!await _repository.StageStatusAsync(userId, UserStatus.Locked, now, cancellationToken))
+        {
+            return Result<bool>.NotFound("User not found.");
+        }
+
         await _repository.RevokeActiveRefreshTokensAsync(userId, now, cancellationToken);
         await _repository.SaveChangesAsync(cancellationToken);
         await RemoveCachedProfileAsync(userId, cancellationToken);
@@ -154,13 +156,13 @@ public sealed class AdminUserService : IAdminUserService
         string actorRole,
         CancellationToken cancellationToken = default)
     {
-        var user = await _repository.FindUserForStatusUpdateAsync(userId, cancellationToken);
+        var user = await _repository.GetStatusTargetAsync(userId, cancellationToken);
         if (user is null)
         {
             return Result<bool>.NotFound("User not found.");
         }
 
-        var guard = EnsureCanManageStatus(actorRole, user.Role?.RoleName);
+        var guard = EnsureCanManageStatus(actorRole, user.RoleName);
         if (guard is not null)
         {
             return guard;
@@ -172,8 +174,11 @@ public sealed class AdminUserService : IAdminUserService
             return Result<bool>.Conflict("User is already active.");
         }
 
-        user.Status = UserStatus.Active;
-        user.UpdatedAt = DateTime.UtcNow;
+        if (!await _repository.StageStatusAsync(userId, UserStatus.Active, DateTime.UtcNow, cancellationToken))
+        {
+            return Result<bool>.NotFound("User not found.");
+        }
+
         await _repository.SaveChangesAsync(cancellationToken);
         await RemoveCachedProfileAsync(userId, cancellationToken);
 

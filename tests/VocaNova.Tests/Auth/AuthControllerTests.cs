@@ -7,8 +7,12 @@ using System.Security.Claims;
 using VocaNova.API.Common.Responses;
 using VocaNova.API.Common.Results;
 using VocaNova.API.Features.Auth.Controllers;
-using VocaNova.API.Features.Auth.DTOs;
-using VocaNova.API.Features.Auth.Services;
+using VocaNova.API.Features.Auth.Contracts.Requests;
+using VocaNova.API.Features.Auth.Contracts.Responses;
+using VocaNova.API.Features.Auth.BLL.Models;
+using VocaNova.API.Features.Auth.BLL.Services;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
 using VocaNova.API.Infrastructure.RateLimiting;
 
 namespace VocaNova.Tests.Auth;
@@ -81,7 +85,7 @@ public class AuthControllerTests
         var controller = CreateController(
             authService,
             new InMemoryAuthRateLimiter(),
-            new RateLimitSettings
+            new AuthRateLimitOptions
             {
                 LoginPerMinutePerIp = 10,
                 OtpPerMinutePerIp = 1,
@@ -131,7 +135,7 @@ public class AuthControllerTests
         var controller = CreateController(
             authService,
             new InMemoryAuthRateLimiter(),
-            new RateLimitSettings
+            new AuthRateLimitOptions
             {
                 LoginPerMinutePerIp = 10,
                 OtpPerMinutePerIp = 1,
@@ -176,9 +180,9 @@ public class AuthControllerTests
     [Fact]
     public async Task GetMe_Should_Return_200_When_UserId_Claim_Is_Present()
     {
-        var profile = new UserProfileDto(1, "0912345678", "Nguyen Van A", null, "user", "active", null);
+        var profile = new UserProfile(1, "0912345678", "Nguyen Van A", null, "user", "active", null);
         var controller = CreateController(new StubAuthService(
-            profileResult: Result<UserProfileDto>.Ok(profile)));
+            profileResult: Result<UserProfile>.Ok(profile)));
         controller.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(
             new[] { new Claim("user_id", "1") },
             "Test"));
@@ -187,7 +191,7 @@ public class AuthControllerTests
 
         var objectResult = result.Should().BeOfType<OkObjectResult>().Subject;
         objectResult.StatusCode.Should().Be(StatusCodes.Status200OK);
-        objectResult.Value.Should().BeAssignableTo<ApiResponse<UserProfileDto>>();
+        objectResult.Value.Should().BeAssignableTo<ApiResponse<UserProfileResponse>>();
     }
 
     [Fact]
@@ -196,7 +200,7 @@ public class AuthControllerTests
         var controller = CreateController(
             new StubAuthService(),
             new InMemoryAuthRateLimiter(),
-            new RateLimitSettings
+            new AuthRateLimitOptions
             {
                 LoginPerMinutePerIp = 10,
                 OtpPerMinutePerIp = 1,
@@ -220,7 +224,7 @@ public class AuthControllerTests
     [Fact]
     public void RateLimitSettings_Should_Keep_Defaults_When_Config_Binds_Zero_Values()
     {
-        var settings = new RateLimitSettings
+        var settings = new AuthRateLimitOptions
         {
             OtpPerMinutePerPhone = 0,
             OtpPerMinutePerIp = 0,
@@ -237,12 +241,12 @@ public class AuthControllerTests
     private static AuthController CreateController(
         IAuthService authService,
         IAuthRateLimiter? authRateLimiter = null,
-        RateLimitSettings? rateLimitSettings = null)
+        AuthRateLimitOptions? rateLimitSettings = null)
     {
         return new AuthController(
             authService,
             authRateLimiter,
-            Options.Create(rateLimitSettings ?? new RateLimitSettings()))
+            Options.Create(rateLimitSettings ?? new AuthRateLimitOptions()))
         {
             ControllerContext = new ControllerContext
             {
@@ -253,149 +257,178 @@ public class AuthControllerTests
 
     private sealed class StubAuthService : IAuthService
     {
-        private readonly Result<TokenResponse> _result;
-        private readonly Result<UserProfileDto> _profileResult;
-        private readonly Result<bool> _logoutResult;
+        private readonly AuthOperationResult<AuthTokenPair> _result;
+        private readonly AuthOperationResult<UserProfile> _profileResult;
+        private readonly AuthOperationResult<bool> _logoutResult;
 
         public StubAuthService(
             Result<TokenResponse>? result = null,
-            Result<UserProfileDto>? profileResult = null,
+            Result<UserProfile>? profileResult = null,
             Result<bool>? logoutResult = null)
         {
-            _result = result ?? Result<TokenResponse>.Ok(new TokenResponse("access-token", "refresh-token", 900));
-            _profileResult = profileResult ?? Result<UserProfileDto>.Ok(
-                new UserProfileDto(1, "0912345678", "Nguyen Van A", null, "user", "active", null));
-            _logoutResult = logoutResult ?? Result<bool>.Ok(true);
+            _result = ConvertToken(result ?? Result<TokenResponse>.Ok(new TokenResponse("access-token", "refresh-token", 900)));
+            _profileResult = ConvertResult(
+                profileResult ?? Result<UserProfile>.Ok(new UserProfile(1, "0912345678", "Nguyen Van A", null, "user", "active", null)));
+            _logoutResult = ConvertResult(logoutResult ?? Result<bool>.Ok(true));
         }
 
         public int LoginCallCount { get; private set; }
 
         public int GoogleLoginCallCount { get; private set; }
 
-        public Task<Result<TokenResponse>> RegisterAsync(
-            RegisterRequest request,
-            string? deviceInfo = null,
-            string? ipAddress = null,
+        public Task<AuthOperationResult<AuthTokenPair>> RegisterAsync(
+            RegisterCommand command,
+            SignInContext signInContext,
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_result);
         }
 
-        public Task<Result<TokenResponse>> LoginAsync(
-            LoginRequest request,
-            string? deviceInfo = null,
-            string? ipAddress = null,
+        public Task<AuthOperationResult<AuthTokenPair>> LoginAsync(
+            LoginCommand command,
+            SignInContext signInContext,
             CancellationToken cancellationToken = default)
         {
             LoginCallCount++;
             return Task.FromResult(_result);
         }
 
-        public Task<Result<TokenResponse>> GoogleLoginAsync(
-            GoogleLoginRequest request,
-            string? deviceInfo = null,
-            string? ipAddress = null,
+        public Task<AuthOperationResult<AuthTokenPair>> GoogleLoginAsync(
+            GoogleLoginCommand command,
+            SignInContext signInContext,
             CancellationToken cancellationToken = default)
         {
             GoogleLoginCallCount++;
             return Task.FromResult(_result);
         }
 
-        public Task<Result<TokenResponse>> RefreshTokenAsync(
-            RefreshTokenRequest request,
-            string? deviceInfo = null,
-            string? ipAddress = null,
+        public Task<AuthOperationResult<AuthTokenPair>> RefreshTokenAsync(
+            RefreshTokenCommand command,
+            SignInContext signInContext,
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_result);
         }
 
-        public Task<Result<bool>> LogoutAsync(
-            RefreshTokenRequest request,
+        public Task<AuthOperationResult<bool>> LogoutAsync(
+            RefreshTokenCommand command,
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_logoutResult);
         }
 
-        public Task<Result<UserProfileDto>> GetProfileAsync(
+        public Task<AuthOperationResult<UserProfile>> GetProfileAsync(
             uint userId,
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_profileResult);
         }
 
-        public Task<Result<UserProfileDto>> UpdateProfileAsync(
+        public Task<AuthOperationResult<UserProfile>> UpdateProfileAsync(
             uint userId,
-            UpdateUserProfileRequest request,
+            UpdateProfileCommand command,
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_profileResult);
         }
 
-        public Task<Result<UserProfileDto>> UploadAvatarAsync(
+        public Task<AuthOperationResult<UserProfile>> UploadAvatarAsync(
             uint userId,
-            UploadAvatarRequest request,
+            UploadAvatarCommand command,
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_profileResult);
         }
 
-        public Task<Result<UserProfileDto>> UpdateLearningProfileAsync(
+        public Task<AuthOperationResult<UserProfile>> UpdateLearningProfileAsync(
             uint userId,
-            UpdateLearningProfileRequest request,
+            UpdateLearningProfileCommand command,
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_profileResult);
         }
 
-        public Task<Result<OtpSendResponse>> SendOtpAsync(
-            OtpSendRequest request,
+        public Task<AuthOperationResult<OtpSendResult>> SendOtpAsync(
+            OtpSendCommand command,
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Result<OtpSendResponse>.Ok(new OtpSendResponse(300)));
+            return Task.FromResult(AuthOperationResult<OtpSendResult>.Success(new OtpSendResult(300)));
         }
 
-        public Task<Result<OtpVerifyResponse>> VerifyOtpAsync(
-            OtpVerifyRequest request,
+        public Task<AuthOperationResult<OtpVerificationResult>> VerifyOtpAsync(
+            OtpVerifyCommand command,
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Result<OtpVerifyResponse>.Ok(new OtpVerifyResponse(true)));
+            return Task.FromResult(AuthOperationResult<OtpVerificationResult>.Success(new OtpVerificationResult(true)));
         }
 
-        public Task<Result<OtpSendResponse>> ForgotPasswordAsync(
-            ForgotPasswordRequest request,
+        public Task<AuthOperationResult<OtpSendResult>> ForgotPasswordAsync(
+            ForgotPasswordCommand command,
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Result<OtpSendResponse>.Ok(new OtpSendResponse(300)));
+            return Task.FromResult(AuthOperationResult<OtpSendResult>.Success(new OtpSendResult(300)));
         }
 
-        public Task<Result<OtpVerifyResponse>> VerifyResetOtpAsync(
-            OtpVerifyRequest request,
+        public Task<AuthOperationResult<OtpVerificationResult>> VerifyResetOtpAsync(
+            OtpVerifyCommand command,
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Result<OtpVerifyResponse>.Ok(new OtpVerifyResponse(true)));
+            return Task.FromResult(AuthOperationResult<OtpVerificationResult>.Success(new OtpVerificationResult(true)));
         }
 
-        public Task<Result<bool>> ResetPasswordAsync(
-            ResetPasswordRequest request,
+        public Task<AuthOperationResult<bool>> ResetPasswordAsync(
+            ResetPasswordCommand command,
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Result<bool>.Ok(true));
+            return Task.FromResult(AuthOperationResult<bool>.Success(true));
         }
 
-        public Task<Result<bool>> ChangePasswordAsync(
+        public Task<AuthOperationResult<bool>> ChangePasswordAsync(
             uint userId,
-            ChangePasswordRequest request,
+            ChangePasswordCommand command,
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Result<bool>.Ok(true));
+            return Task.FromResult(AuthOperationResult<bool>.Success(true));
         }
 
-        public Task<Result<bool>> DeleteAccountAsync(
+        public Task<AuthOperationResult<bool>> DeleteAccountAsync(
             uint userId,
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Result<bool>.Ok(true));
+            return Task.FromResult(AuthOperationResult<bool>.Success(true));
+        }
+
+        private static AuthOperationResult<AuthTokenPair> ConvertToken(Result<TokenResponse> result)
+        {
+            if (!result.IsSuccess)
+            {
+                return ConvertFailure<AuthTokenPair>(result.StatusCode, result.Error);
+            }
+
+            var value = result.Value!;
+            return AuthOperationResult<AuthTokenPair>.Success(
+                new AuthTokenPair(value.AccessToken, value.RefreshToken, value.ExpiresIn, value.TokenType));
+        }
+
+        private static AuthOperationResult<T> ConvertResult<T>(Result<T> result)
+        {
+            return result.IsSuccess
+                ? AuthOperationResult<T>.Success(result.Value!)
+                : ConvertFailure<T>(result.StatusCode, result.Error);
+        }
+
+        private static AuthOperationResult<T> ConvertFailure<T>(int statusCode, string? failure)
+        {
+            var error = failure ?? "Request failed.";
+            return statusCode switch
+            {
+                StatusCodes.Status401Unauthorized => AuthOperationResult<T>.Unauthorized(error),
+                StatusCodes.Status403Forbidden => AuthOperationResult<T>.Forbidden(error),
+                StatusCodes.Status404NotFound => AuthOperationResult<T>.NotFound(error),
+                StatusCodes.Status409Conflict => AuthOperationResult<T>.Conflict(error),
+                StatusCodes.Status429TooManyRequests => AuthOperationResult<T>.TooManyRequests(error),
+                _ => AuthOperationResult<T>.ValidationFailure(error),
+            };
         }
     }
 }

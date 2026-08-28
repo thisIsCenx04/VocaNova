@@ -1,10 +1,12 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Progress.Repositories;
-using VocaNova.API.Features.Progress.Services;
+using VocaNova.API.Features.Progress.BLL.Abstractions;
+using VocaNova.API.Features.Progress.DAL.Repositories;
+using VocaNova.API.Features.Progress.BLL.Services;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
+using UserWordProgressEntity = VocaNova.API.Infrastructure.Persistence.Entities.UserWordProgress;
 
 namespace VocaNova.Tests.Progress;
 
@@ -18,7 +20,7 @@ public class ProgressAnalyticsFeatureTests
         await SeedAnalyticsAsync(dbContext, today);
         var service = CreateService(dbContext);
 
-        var result = await service.GetChartAsync(1, "daily");
+        var result = await service.GetChartAsync(1, new ProgressChartQuery("daily"));
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Granularity.Should().Be("daily");
@@ -45,7 +47,7 @@ public class ProgressAnalyticsFeatureTests
         await SeedAnalyticsAsync(dbContext, today);
         var service = CreateService(dbContext);
 
-        var result = await service.GetChartAsync(1, granularity);
+        var result = await service.GetChartAsync(1, new ProgressChartQuery(granularity));
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Granularity.Should().Be(granularity);
@@ -59,7 +61,7 @@ public class ProgressAnalyticsFeatureTests
         await using var dbContext = CreateDbContext();
         var service = CreateService(dbContext);
 
-        var result = await service.GetChartAsync(1, "yearly");
+        var result = await service.GetChartAsync(1, new ProgressChartQuery("yearly"));
 
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(400);
@@ -92,7 +94,7 @@ public class ProgressAnalyticsFeatureTests
         await SeedAnalyticsAsync(dbContext, today);
         var service = CreateService(dbContext);
 
-        var result = await service.GetWeakestWordsAsync(1, 2);
+        var result = await service.GetWeakestWordsAsync(1, new WeakestWordsQuery(2));
 
         result.IsSuccess.Should().BeTrue();
         var weakestWords = result.Value!;
@@ -108,7 +110,7 @@ public class ProgressAnalyticsFeatureTests
         await using var dbContext = CreateDbContext();
         var service = CreateService(dbContext);
 
-        var result = await service.GetWeakestWordsAsync(1, 0);
+        var result = await service.GetWeakestWordsAsync(1, new WeakestWordsQuery(0));
 
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(400);
@@ -248,7 +250,7 @@ public class ProgressAnalyticsFeatureTests
             UpdatedAt = now,
             WordSenses =
             {
-                new WordSense
+                new EntityWordSense
                 {
                     SenseId = wordId,
                     WordId = wordId,
@@ -307,7 +309,7 @@ public class ProgressAnalyticsFeatureTests
         };
     }
 
-    private static UserWordProgress CreateProgress(
+    private static UserWordProgressEntity CreateProgress(
         uint progressId,
         uint userId,
         uint wordId,
@@ -318,7 +320,7 @@ public class ProgressAnalyticsFeatureTests
         int mastery,
         DateTime now)
     {
-        return new UserWordProgress
+        return new UserWordProgressEntity
         {
             ProgressId = progressId,
             UserId = userId,

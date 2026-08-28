@@ -1,10 +1,14 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Quiz.DTOs;
-using VocaNova.API.Features.Quiz.Repositories;
-using VocaNova.API.Features.Quiz.Services;
-using VocaNova.API.Features.Quiz.Validators;
+using VocaNova.API.Features.Quiz.Contracts.Requests;
+using VocaNova.API.Features.Quiz.Contracts.Responses;
+using VocaNova.API.Features.Quiz.BLL.Models;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.DAL.Repositories;
+using VocaNova.API.Features.Quiz.BLL.Services;
+using VocaNova.API.Features.Quiz.Contracts.Requests;
+using VocaNova.API.Features.Quiz.Mappings;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -21,7 +25,7 @@ public class QuizCreateSessionFeatureTests
 
         var result = await service.CreateSessionAsync(
             1,
-            CreateRequest(topicIds: new[] { 7u }));
+            CreateRequest(topicIds: new[] { 7u }).ToBusinessCommand());
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
@@ -51,12 +55,12 @@ public class QuizCreateSessionFeatureTests
         var service = CreateService(dbContext);
 
         // Without a list, the pool spans both lists (8 words).
-        var allWords = await service.CreateSessionAsync(1, CreateRequest());
+        var allWords = await service.CreateSessionAsync(1, CreateRequest().ToBusinessCommand());
         allWords.IsSuccess.Should().BeTrue();
         allWords.Value!.Session.QuestionCount.Should().Be(8);
 
         // Scoped to list 2, only its 4 words form the pool.
-        var scoped = await service.CreateSessionAsync(1, CreateRequest(listId: 2));
+        var scoped = await service.CreateSessionAsync(1, CreateRequest(listId: 2).ToBusinessCommand());
         scoped.IsSuccess.Should().BeTrue();
         scoped.Value!.Session.QuestionCount.Should().Be(4);
         scoped.Value.Session.ListId.Should().Be(2);
@@ -94,7 +98,7 @@ public class QuizCreateSessionFeatureTests
 
         var result = await service.CreateSessionAsync(
             1,
-            CreateRequest(mode: TestMode.Timed, timeLimitSec: null));
+            CreateRequest(mode: TestMode.Timed, timeLimitSec: null).ToBusinessCommand());
 
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(400);
@@ -111,7 +115,7 @@ public class QuizCreateSessionFeatureTests
 
         var result = await service.CreateSessionAsync(
             1,
-            CreateRequest(mode: TestMode.Elimination, lives: null));
+            CreateRequest(mode: TestMode.Elimination, lives: null).ToBusinessCommand());
 
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(400);
@@ -271,7 +275,7 @@ public class QuizCreateSessionFeatureTests
             UpdatedAt = addedAt,
             WordSenses =
             {
-                new WordSense
+                new EntityWordSense
                 {
                     SenseId = wordId,
                     WordId = wordId,
@@ -283,7 +287,7 @@ public class QuizCreateSessionFeatureTests
             },
             WordTopics =
             {
-                new WordTopic
+                new EntityWordTopic
                 {
                     WordId = wordId,
                     TopicId = 7,

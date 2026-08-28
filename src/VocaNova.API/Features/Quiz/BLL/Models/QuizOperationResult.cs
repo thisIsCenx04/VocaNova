@@ -23,6 +23,17 @@ public sealed class QuizOperationResult<T>
     public string? Error { get; }
     public QuizErrorKind? ErrorKind { get; }
 
+    public int StatusCode =>
+        ErrorKind switch
+        {
+            QuizErrorKind.Unauthorized => 401,
+            QuizErrorKind.NotFound => 404,
+            QuizErrorKind.Forbidden => 403,
+            QuizErrorKind.Conflict => 409,
+            null => 200,
+            _ => 400,
+        };
+
     public static QuizOperationResult<T> Success(T value) => new(value, null, null);
     public static QuizOperationResult<T> ValidationFailure(string error) => new(default, error, QuizErrorKind.Validation);
     public static QuizOperationResult<T> Unauthorized(string error) => new(default, error, QuizErrorKind.Unauthorized);

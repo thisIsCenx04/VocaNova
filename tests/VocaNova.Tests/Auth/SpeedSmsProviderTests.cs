@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
 using VocaNova.API.Infrastructure.Sms;
 
 namespace VocaNova.Tests.Auth;

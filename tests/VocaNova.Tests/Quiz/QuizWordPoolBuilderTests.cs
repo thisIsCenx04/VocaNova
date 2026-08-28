@@ -1,9 +1,12 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Quiz.DTOs;
-using VocaNova.API.Features.Quiz.Repositories;
-using VocaNova.API.Features.Quiz.Services;
+using VocaNova.API.Features.Quiz.Contracts.Requests;
+using VocaNova.API.Features.Quiz.Contracts.Responses;
+using VocaNova.API.Features.Quiz.BLL.Models;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.DAL.Repositories;
+using VocaNova.API.Features.Quiz.BLL.Services;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -121,7 +124,7 @@ public class QuizWordPoolBuilderTests
         var now = DateTime.UtcNow;
 
         dbContext.UserWordProgresses.AddRange(
-            new UserWordProgress
+            new EntityUserWordProgress
             {
                 ProgressId = 1,
                 UserId = 1,
@@ -130,7 +133,7 @@ public class QuizWordPoolBuilderTests
                 IsInWrongList = true,
                 UpdatedAt = now,
             },
-            new UserWordProgress
+            new EntityUserWordProgress
             {
                 ProgressId = 2,
                 UserId = 1,
@@ -139,7 +142,7 @@ public class QuizWordPoolBuilderTests
                 IsInWrongList = false,
                 UpdatedAt = now,
             },
-            new UserWordProgress
+            new EntityUserWordProgress
             {
                 ProgressId = 3,
                 UserId = 1,
@@ -148,7 +151,7 @@ public class QuizWordPoolBuilderTests
                 IsInWrongList = true,
                 UpdatedAt = now,
             },
-            new UserWordProgress
+            new EntityUserWordProgress
             {
                 ProgressId = 4,
                 UserId = 2,
@@ -273,12 +276,12 @@ public class QuizWordPoolBuilderTests
         }
 
         dbContext.WordTopics.AddRange(
-            new WordTopic { WordId = 1, TopicId = 7 },
-            new WordTopic { WordId = 2, TopicId = 8 },
-            new WordTopic { WordId = 3, TopicId = 7 },
-            new WordTopic { WordId = 4, TopicId = 8 },
-            new WordTopic { WordId = 5, TopicId = 7 },
-            new WordTopic { WordId = 6, TopicId = 7 });
+            new EntityWordTopic { WordId = 1, TopicId = 7 },
+            new EntityWordTopic { WordId = 2, TopicId = 8 },
+            new EntityWordTopic { WordId = 3, TopicId = 7 },
+            new EntityWordTopic { WordId = 4, TopicId = 8 },
+            new EntityWordTopic { WordId = 5, TopicId = 7 },
+            new EntityWordTopic { WordId = 6, TopicId = 7 });
 
         dbContext.UserListWords.AddRange(
             new UserListWord

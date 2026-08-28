@@ -2,7 +2,8 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Auth.Repositories;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Auth.DAL.Repositories;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -102,7 +103,7 @@ public class AuthRepositoryTests
                 PasswordHash = "hash",
                 UpdatedAt = DateTime.UtcNow,
             },
-            new UserProfile
+            new EntityUserProfile
             {
                 FullName = "Tran Thi B",
                 UpdatedAt = DateTime.UtcNow,
@@ -165,7 +166,7 @@ public class AuthRepositoryTests
                 PasswordHash = "hash",
                 UpdatedAt = DateTime.UtcNow,
             },
-            UserProfile = new UserProfile
+            UserProfile = new EntityUserProfile
             {
                 UserId = 1,
                 FullName = "Nguyen Van A",

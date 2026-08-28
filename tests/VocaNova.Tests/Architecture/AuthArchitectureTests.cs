@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.Options;
 using VocaNova.API.Common.Abstractions.Transactions;
+using VocaNova.API.Features.Auth.Controllers;
 
 namespace VocaNova.Tests.Architecture;
 
