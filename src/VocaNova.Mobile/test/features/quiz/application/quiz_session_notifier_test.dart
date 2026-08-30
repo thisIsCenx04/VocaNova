@@ -3,17 +3,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_session_notifier.dart';
-import 'package:vocanova_mobile/features/quiz/data/quiz_repository.dart';
-import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
+import 'package:vocanova_mobile/features/quiz/data/services/quiz_api_service.dart';
+import 'package:vocanova_mobile/features/quiz/domain/models/quiz_config.dart';
 
 void main() {
-  late MockQuizRepository repository;
+  late MockQuizApiService repository;
   late ProviderContainer container;
 
   setUp(() {
-    repository = MockQuizRepository();
+    repository = MockQuizApiService();
     container = ProviderContainer(
-      overrides: [quizRepositoryProvider.overrideWithValue(repository)],
+      overrides: [quizApiServiceProvider.overrideWithValue(repository)],
     );
   });
 
@@ -78,7 +78,7 @@ void main() {
   });
 }
 
-class MockQuizRepository extends Mock implements QuizRepository {}
+class MockQuizApiService extends Mock implements QuizApiService {}
 
 const firstQuestion = QuizQuestion(
   wordId: 7,

@@ -5,16 +5,16 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:vocanova_mobile/core/network/app_exception.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
-import 'package:vocanova_mobile/features/auth/data/auth_repository.dart';
+import 'package:vocanova_mobile/features/auth/data/services/auth_api_service.dart';
 import 'package:vocanova_mobile/features/auth/presentation/forgot_password_screen.dart';
 import 'package:vocanova_mobile/features/auth/presentation/otp_screen.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
-  late MockAuthRepository repository;
+  late MockAuthApiService repository;
 
   setUp(() {
-    repository = MockAuthRepository();
+    repository = MockAuthApiService();
   });
 
   testWidgets('labels OTP verification as phone-number verification', (
@@ -192,11 +192,11 @@ Future<void> enterOtp(WidgetTester tester, String code) async {
 Future<void> pumpScreen(
   WidgetTester tester,
   Widget screen,
-  AuthRepository repository,
+  AuthApiService repository,
 ) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [authRepositoryProvider.overrideWithValue(repository)],
+      overrides: [authApiServiceProvider.overrideWithValue(repository)],
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -209,7 +209,7 @@ Future<void> pumpScreen(
 
 Future<void> pumpForgotRouter(
   WidgetTester tester,
-  AuthRepository repository,
+  AuthApiService repository,
 ) async {
   final router = GoRouter(
     initialLocation: '/forgot-password',
@@ -226,7 +226,7 @@ Future<void> pumpForgotRouter(
   );
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [authRepositoryProvider.overrideWithValue(repository)],
+      overrides: [authApiServiceProvider.overrideWithValue(repository)],
       child: MaterialApp.router(
         routerConfig: router,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -237,4 +237,4 @@ Future<void> pumpForgotRouter(
   await tester.pumpAndSettle();
 }
 
-class MockAuthRepository extends Mock implements AuthRepository {}
+class MockAuthApiService extends Mock implements AuthApiService {}

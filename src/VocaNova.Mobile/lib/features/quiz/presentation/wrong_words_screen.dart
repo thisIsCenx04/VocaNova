@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/features/quiz/application/wrong_words_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/wrong_words_state.dart';
-import 'package:vocanova_mobile/features/quiz/domain/quiz_result.dart';
+import 'package:vocanova_mobile/features/quiz/domain/models/quiz_result.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class WrongWordsScreen extends ConsumerStatefulWidget {

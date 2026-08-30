@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vocanova_mobile/features/auth/data/google_auth_service.dart';
+import 'package:vocanova_mobile/features/auth/data/services/google_auth_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

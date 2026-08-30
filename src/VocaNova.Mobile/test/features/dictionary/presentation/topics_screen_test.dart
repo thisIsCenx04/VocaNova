@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/data/word_search_repository.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/data/services/word_search_api_service.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topics_screen.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
@@ -12,7 +12,7 @@ void main() {
   testWidgets('switches between global and personal topic counts', (
     tester,
   ) async {
-    final repository = MockWordSearchRepository();
+    final repository = MockWordSearchApiService();
     when(() => repository.getTopics()).thenAnswer(
       (_) async => const [
         TopicSummary(topicId: 1, name: 'Fruit', wordCount: 42, icon: '🍎'),
@@ -40,7 +40,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [wordSearchRepositoryProvider.overrideWithValue(repository)],
+        overrides: [wordSearchApiServiceProvider.overrideWithValue(repository)],
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -70,4 +70,4 @@ void main() {
   });
 }
 
-class MockWordSearchRepository extends Mock implements WordSearchRepository {}
+class MockWordSearchApiService extends Mock implements WordSearchApiService {}

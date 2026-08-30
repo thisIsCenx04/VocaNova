@@ -6,29 +6,29 @@ import 'package:mocktail/mocktail.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/data/word_search_repository.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/data/services/word_search_api_service.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
-import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
-import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
+import 'package:vocanova_mobile/features/lists/data/services/lists_api_service.dart';
+import 'package:vocanova_mobile/features/lists/domain/models/user_list.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
-import 'package:vocanova_mobile/features/quiz/data/quiz_repository.dart';
-import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
+import 'package:vocanova_mobile/features/quiz/data/services/quiz_api_service.dart';
+import 'package:vocanova_mobile/features/quiz/domain/models/quiz_config.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/quiz_config_screen.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
-  late MockQuizRepository repository;
-  late MockWordSearchRepository searchRepository;
-  late MockListsRepository listsRepository;
+  late MockQuizApiService repository;
+  late MockWordSearchApiService searchRepository;
+  late MockListsApiService listsApiService;
 
   setUpAll(() => registerFallbackValue(fallbackRequest));
 
   setUp(() {
-    repository = MockQuizRepository();
-    searchRepository = MockWordSearchRepository();
-    listsRepository = MockListsRepository();
-    when(() => listsRepository.getLists()).thenAnswer((_) async => testLists);
+    repository = MockQuizApiService();
+    searchRepository = MockWordSearchApiService();
+    listsApiService = MockListsApiService();
+    when(() => listsApiService.getLists()).thenAnswer((_) async => testLists);
     when(
       () => searchRepository.getPersonalTopics(),
     ).thenAnswer((_) async => testPersonalTopics);
@@ -40,7 +40,7 @@ void main() {
   testWidgets('renders the personal collection source selector', (
     tester,
   ) async {
-    await pumpConfig(tester, repository, searchRepository, listsRepository);
+    await pumpConfig(tester, repository, searchRepository, listsApiService);
 
     expect(find.text('Word scope'), findsOneWidget);
     expect(find.text('Quiz source'), findsOneWidget);
@@ -71,7 +71,7 @@ void main() {
       tester,
       repository,
       searchRepository,
-      listsRepository,
+      listsApiService,
     );
     await tester.tap(find.byKey(const Key('quiz-source-personal-topic')));
     await tester.pump();
@@ -102,7 +102,7 @@ void main() {
       tester,
       repository,
       searchRepository,
-      listsRepository,
+      listsApiService,
     );
 
     await tester.tap(find.byKey(const Key('quiz-source-list-7'))); // 6 words
@@ -126,7 +126,7 @@ void main() {
       tester,
       repository,
       searchRepository,
-      listsRepository,
+      listsApiService,
     );
     await tester.tap(find.byKey(const Key('quiz-source-list-7'))); // 6 words
     await tester.pump();
@@ -150,7 +150,7 @@ void main() {
   testWidgets('sends scope, order, and question limit to repository', (
     tester,
   ) async {
-    await pumpConfig(tester, repository, searchRepository, listsRepository);
+    await pumpConfig(tester, repository, searchRepository, listsApiService);
 
     await tester.tap(find.byKey(const Key('scope-wrong-words')));
     await tester.tap(find.byKey(const Key('order-by-difficulty')));
@@ -174,7 +174,7 @@ void main() {
       tester,
       repository,
       searchRepository,
-      listsRepository,
+      listsApiService,
       isOnline: false,
     );
 
@@ -191,9 +191,9 @@ void main() {
 
 Future<GoRouter> pumpConfig(
   WidgetTester tester,
-  QuizRepository repository,
-  WordSearchRepository searchRepository,
-  ListsRepository listsRepository, {
+  QuizApiService repository,
+  WordSearchApiService searchRepository,
+  ListsApiService listsApiService, {
   bool isOnline = true,
 }) async {
   tester.view.physicalSize = const Size(800, 2400);
@@ -220,9 +220,9 @@ Future<GoRouter> pumpConfig(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        quizRepositoryProvider.overrideWithValue(repository),
-        wordSearchRepositoryProvider.overrideWithValue(searchRepository),
-        listsRepositoryProvider.overrideWithValue(listsRepository),
+        quizApiServiceProvider.overrideWithValue(repository),
+        wordSearchApiServiceProvider.overrideWithValue(searchRepository),
+        listsApiServiceProvider.overrideWithValue(listsApiService),
         connectivityProvider.overrideWith((ref) => Stream.value(isOnline)),
       ],
       child: MaterialApp.router(
@@ -237,11 +237,11 @@ Future<GoRouter> pumpConfig(
   return router;
 }
 
-class MockQuizRepository extends Mock implements QuizRepository {}
+class MockQuizApiService extends Mock implements QuizApiService {}
 
-class MockWordSearchRepository extends Mock implements WordSearchRepository {}
+class MockWordSearchApiService extends Mock implements WordSearchApiService {}
 
-class MockListsRepository extends Mock implements ListsRepository {}
+class MockListsApiService extends Mock implements ListsApiService {}
 
 final testLists = [
   UserList(

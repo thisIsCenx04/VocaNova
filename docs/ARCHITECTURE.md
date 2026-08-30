@@ -22,8 +22,8 @@ Flutter Mobile --------------- HTTP(S)/JSON ----> VocaNova.API
 ```
 
 - `VocaNova.API` is the only backend and the only application that accesses MySQL, Redis, and backend providers.
-- `VocaNova.Dashboard` is a server-rendered administration Presentation client with no API project reference or database access.
-- `VocaNova.Mobile` is a Flutter Presentation client using Riverpod and Dio.
+- `VocaNova.Dashboard` is a server-rendered administration Presentation client with no API project reference or database access. Dashboard-owned API wire DTOs live in `Data/Dtos`, while Razor view/support models stay under `Models`.
+- `VocaNova.Mobile` is a Flutter Presentation client using Riverpod and Dio. Feature HTTP access lives in `data/services/*ApiService`, feature wire models live in `data/dtos/*Dto`, and services map DTOs to `domain/models` before state/UI consumption.
 - The API is a transitional modular monolith. Notifications, Progress, all Dictionary and Lists/personal-topic endpoints, Quiz/AI grading, KNN/runtime configuration, Auth, and Admin/SuperAdmin use corrected feature-first Presentation/BLL/DAL slices under `Features/<Feature>`.
 - Docker Compose and API/Dashboard Dockerfiles are present. Compose provisions MySQL, Redis, API, and Dashboard; the API container uses MySQL/Pomelo through `MYSQL_CONNECTION_STRING=Server=mysql;Port=3306;...`.
 - There is no microservice transport, gRPC, distributed message broker, or distributed transaction design.
@@ -78,7 +78,7 @@ The five anonymous public word/topic GET endpoints now use Presentation-owned re
 
 Dictionary word/topic administration now uses Presentation-owned request/response Contracts and mappings, framework-neutral BLL admin services/models/results and repository/storage/cache ports, plus DAL EF repositories/mappings and shared Cloudinary/Redis implementations.
 
-- All existing `/api/admin/words/**` and `/api/admin/topics/**` routes, Admin/SuperAdmin policies, messages, envelopes, pagination placement, JSON/form fields, CSV row outcomes, Cloudinary ordering, and Dashboard-owned wire models are unchanged.
+- All existing `/api/admin/words/**` and `/api/admin/topics/**` routes, Admin/SuperAdmin policies, messages, envelopes, pagination placement, JSON/form fields, CSV row outcomes, Cloudinary ordering, and Dashboard-owned DTO parsing are unchanged.
 - Word writes still invalidate word-detail and affected user-list entries without clearing the word-search cache. Topic invalidation remains operation-specific. Existing independent-save ordering for CSV, examples, topic links, and provider side effects remains unchanged.
 - MySQL `word_senses.status` is `varchar(20) NOT NULL DEFAULT 'active'`, indexed by `idx_senses_status`. EF applies the active/deleted global filter; sense delete/restore verifies word ownership, saves once, and invalidates the word-detail cache.
 - Architecture, controller-contract, cache-invalidation, Dashboard compatibility, feature behavior, and real-MySQL rollback tests enforce the slice boundaries and compatibility.
@@ -132,6 +132,19 @@ Presentation consists of:
 - The API HTTP entry point: feature-owned `Controllers`, `Contracts`, Presentation `Mappings`, middleware, filters, HTTP-specific behavior, and `Program.cs`.
 
 Presentation validates transport input, maps Request Contracts to BLL models/commands, invokes BLL service abstractions, maps BLL results to Response Contracts, and selects HTTP/UI responses. Dashboard and Mobile remain REST clients and do not receive backend BLL or DAL projects/folders.
+
+### Client DTO Boundaries
+
+Dashboard and Mobile each own their client-side DTOs for API JSON parsing. Those DTOs mirror the API's public JSON contract but are not shared source files with the backend:
+
+```text
+API Contracts/Responses -> JSON -> Dashboard Data/Dtos -> Dashboard Models/ViewModels
+API Contracts/Responses -> JSON -> Mobile data/dtos -> Mobile domain/models -> application state
+Dashboard form/view input -> Dashboard Data/Dtos -> JSON -> API Contracts/Requests
+Mobile application input -> Mobile data/dtos -> JSON -> API Contracts/Requests
+```
+
+The API keeps `Contracts/Requests|Responses` because those files are the backend's public HTTP boundary. Dashboard and Mobile use `Dtos` because they are client-owned transport/cache payload shapes.
 
 ### BLL
 

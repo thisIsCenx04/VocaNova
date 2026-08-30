@@ -11,13 +11,14 @@ import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/features/lists/application/list_detail_notifier.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
-import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
-import 'package:vocanova_mobile/features/lists/domain/list_word.dart';
+import 'package:vocanova_mobile/features/lists/data/dtos/list_word_dto.dart';
+import 'package:vocanova_mobile/features/lists/data/services/lists_api_service.dart';
+import 'package:vocanova_mobile/features/lists/domain/models/list_word.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late MockListsRepository repository;
+  late MockListsApiService repository;
   late MockConnectivityService connectivity;
   late LocalStorage storage;
   late ProviderContainer container;
@@ -27,11 +28,11 @@ void main() {
     storage = LocalStorage.create(
       preferences: await SharedPreferences.getInstance(),
     );
-    repository = MockListsRepository();
+    repository = MockListsApiService();
     connectivity = MockConnectivityService();
     container = ProviderContainer(
       overrides: [
-        listsRepositoryProvider.overrideWithValue(repository),
+        listsApiServiceProvider.overrideWithValue(repository),
         listsLocalStorageProvider.overrideWithValue(storage),
         connectivityServiceProvider.overrideWithValue(connectivity),
       ],
@@ -61,7 +62,7 @@ void main() {
   test('offline load uses cached list words', () async {
     await storage.set(
       StorageKeys.listWordsCacheJson(3),
-      jsonEncode([hello.toJson()]),
+      jsonEncode([ListWordDto.fromDomain(hello).toJson()]),
     );
     when(() => connectivity.isOnline).thenAnswer((_) async => false);
 
@@ -99,7 +100,7 @@ void main() {
   });
 }
 
-class MockListsRepository extends Mock implements ListsRepository {}
+class MockListsApiService extends Mock implements ListsApiService {}
 
 class MockConnectivityService extends Mock implements ConnectivityService {}
 

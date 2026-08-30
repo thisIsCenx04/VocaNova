@@ -6,17 +6,21 @@ import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/core/network/dio_client.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_state.dart';
-import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
-import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
+import 'package:vocanova_mobile/features/lists/data/services/lists_api_service.dart';
+import 'package:vocanova_mobile/features/lists/data/dtos/user_list_dto.dart';
+import 'package:vocanova_mobile/features/dictionary/data/dtos/word_summary_dto.dart';
+import 'package:vocanova_mobile/features/lists/domain/models/user_list.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'lists_notifier.g.dart';
 
 @Riverpod(keepAlive: true)
-ListsRepository listsRepository(Ref ref) =>
-    ListsRepository(dio: DioClient.instance.dio);
+ListsApiService listsRepository(Ref ref) =>
+    ListsApiService(dio: DioClient.instance.dio);
+
+final listsApiServiceProvider = listsRepositoryProvider;
 
 @Riverpod(keepAlive: true)
 LocalStorage listsLocalStorage(Ref ref) => LocalStorage.instance;
@@ -46,9 +50,9 @@ class ListsNotifier extends _$ListsNotifier {
     }
 
     try {
-      final repository = ref.read(listsRepositoryProvider);
-      final listsFuture = repository.getLists();
-      final personalTopicsFuture = repository.getPersonalTopics();
+      final apiService = ref.read(listsApiServiceProvider);
+      final listsFuture = apiService.getLists();
+      final personalTopicsFuture = apiService.getPersonalTopics();
       final sources = await Future.wait<Object>([
         listsFuture,
         personalTopicsFuture,
@@ -82,7 +86,7 @@ class ListsNotifier extends _$ListsNotifier {
     state = state.copyWith(isMutating: true, clearError: true);
     try {
       final created = await ref
-          .read(listsRepositoryProvider)
+          .read(listsApiServiceProvider)
           .create(name.trim());
       final lists = [created, ...state.lists];
       state = state.copyWith(lists: lists, isMutating: false);
@@ -102,7 +106,7 @@ class ListsNotifier extends _$ListsNotifier {
     state = state.copyWith(isMutating: true, clearError: true);
     try {
       final updated = await ref
-          .read(listsRepositoryProvider)
+          .read(listsApiServiceProvider)
           .rename(listId: listId, name: name.trim());
       final lists = [
         for (final list in state.lists)
@@ -128,7 +132,7 @@ class ListsNotifier extends _$ListsNotifier {
     final optimistic = [...state.lists]..removeAt(index);
     state = state.copyWith(lists: optimistic, clearError: true);
     try {
-      await ref.read(listsRepositoryProvider).delete(listId);
+      await ref.read(listsApiServiceProvider).delete(listId);
       await _cacheLists(optimistic);
       return true;
     } catch (_) {
@@ -145,14 +149,22 @@ class ListsNotifier extends _$ListsNotifier {
       .read(listsLocalStorageProvider)
       .set(
         StorageKeys.listsCacheJson,
-        jsonEncode(lists.map((list) => list.toJson()).toList()),
+        jsonEncode(
+          lists.map((list) => UserListDto.fromDomain(list).toJson()).toList(),
+        ),
       );
 
   Future<void> _cachePersonalTopics(List<PersonalTopicSummary> topics) => ref
       .read(listsLocalStorageProvider)
       .set(
         StorageKeys.personalTopicsCacheJson,
-        jsonEncode(topics.map((topic) => topic.toJson()).toList()),
+        jsonEncode(
+          topics
+              .map(
+                (topic) => PersonalTopicSummaryDto.fromDomain(topic).toJson(),
+              )
+              .toList(),
+        ),
       );
 
   bool _canMutate() {
@@ -171,7 +183,8 @@ class ListsNotifier extends _$ListsNotifier {
     try {
       return (jsonDecode(source ?? '[]') as List<dynamic>)
           .whereType<Map<String, dynamic>>()
-          .map(UserList.fromJson)
+          .map(UserListDto.fromJson)
+          .map((dto) => dto.toDomain())
           .toList(growable: false);
     } on FormatException {
       return const [];
@@ -182,7 +195,8 @@ class ListsNotifier extends _$ListsNotifier {
     try {
       return (jsonDecode(source ?? '[]') as List<dynamic>)
           .whereType<Map<String, dynamic>>()
-          .map(PersonalTopicSummary.fromJson)
+          .map(PersonalTopicSummaryDto.fromJson)
+          .map((dto) => dto.toDomain())
           .where((topic) => topic.listId != null)
           .toList(growable: false);
     } on Object {

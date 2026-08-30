@@ -21,7 +21,7 @@ Public routes, methods, authorization, HTTP behavior, response envelopes, and JS
 - Some Presentation controllers still reference shared authentication/auditing support under `Infrastructure`; the feature BLL boundaries are provider/framework independent.
 - Feature BLL/DAL registrations are grouped behind `AddBLL()` and `AddDAL(configuration)` in `DependencyInjection/VocaNovaServiceCollectionExtensions.cs`; `Program.cs` still owns HTTP framework setup and middleware order.
 - Dashboard has client-local wire/view models and a broad API client; it correctly has no API reference/database access.
-- Mobile REST gateways are named repositories; at least one application provider directly reaches the global Dio client.
+- Mobile REST gateways are named `*ApiService` under feature `data/services`, with wire/cache DTOs under `data/dtos` and app-domain types under `domain/models`.
 - MySQL/Pomelo/database-first are operational and are now the accepted long-term persistence direction. Docker/Compose foundation exists with a MySQL service aligned to that target; schema creation remains database-first and is not automated by Compose.
 
 ### Remaining-feature audit (CURRENT)
@@ -32,7 +32,7 @@ Public routes, methods, authorization, HTTP behavior, response envelopes, and JS
 - KNN/runtime configuration: recommendation, profile-vector, learning-history, admin lookup, runtime-setting, rebuild, and hosted-job paths now use the feature-first KNN slice with BLL-owned ports and DAL/infrastructure implementations. Redis topic and word recommendation keys are user-scoped; word recommendation TTL now uses `Knn:Learning:CacheTtlMinutes`. Vector weights use the non-expiring `runtime-settings:knn:vector-weights` fallback. The singleton rebuild service creates scopes for scoped repositories. The hosted job captures its interval from startup options, while only vector weights are read through the runtime settings service; changing other KNN values at runtime is not equivalent to changing vector weights.
 - Auth: feature-first Auth is live. `AuthService` uses BLL-owned repository/provider/cache/rate-limit ports plus the shared `IApplicationTransactionManager`; profile cache entries use `user:{userId}` with a five-minute TTL.
 - Admin/SuperAdmin: feature-first Admin/SuperAdmin is live. Admin reporting/user-management uses BLL-owned repository ports; status changes stage account state and token revocation in one save and invalidate the profile cache. SuperAdmin account and role services use BLL-owned repository ports and the shared transaction manager for multi-entity mutations, then invalidate affected profile caches after commit.
-- Consumers: Mobile directly consumes Auth, Lists/personal topics, Quiz, and KNN recommendation/onboarding routes through feature data repositories. Dashboard directly consumes Dictionary administration, KNN/runtime settings, AI-grading settings, Admin users/statistics, and SuperAdmin account/role routes through its API client and feature controllers/models. These manually maintained consumers must be included in contract verification for each slice.
+- Consumers: Mobile directly consumes Auth, Lists/personal topics, Quiz, and KNN recommendation/onboarding routes through feature data `*ApiService` classes. Dashboard directly consumes Dictionary administration, KNN/runtime settings, AI-grading settings, Admin users/statistics, and SuperAdmin account/role routes through its API client and feature controllers/models. These manually maintained consumers must be included in contract verification for each slice.
 
 ## Staged migration
 
@@ -265,20 +265,20 @@ Status: Resolved.
 - Preserve `[Authorize]`, the `user_id` claim, and exact GET routes: `/api/lists`, `/api/lists/{id:uint}/words`, `/api/personal-topics`, `/api/personal-topics/{topicId:uint}/words`.
 - Preserve query names/defaults: `page`, `limit`, and `wordId`. Preserve all JSON names listed in the disposition table and keep paged objects inside `data`.
 - Preserve Redis key `${Redis.InstanceName}user-lists:v2:{userId}`, 10-minute TTL, snake_case payload, and null/no-op behavior when Redis connection fails.
-- Mobile compatibility files are `lib/features/lists/data/lists_repository.dart`, `list_detail_repository.dart`, their notifier/screen consumers, and dictionary add-to-list callers.
+- Mobile compatibility files now live under `lib/features/lists/data/services/lists_api_service.dart`, with DTOs under `lib/features/lists/data/dtos`, domain models under `lib/features/lists/domain/models`, their notifier/screen consumers, and dictionary add-to-list callers.
 
 #### Test gate
 
 - Add `tests/VocaNova.Tests/Architecture/ListQueryArchitectureTests.cs` for Presentation -> BLL and DAL -> BLL direction and forbidden BLL dependencies.
 - Split/extend `UserListFeatureTests.cs` and `PersonalTopicFeatureTests.cs` with GET route, `[Authorize]`, missing/invalid `user_id`, status/message, JSON-name, pagination-in-`data`, ownership/not-found, EF query, cache hit/miss/set, exact key/TTL/payload, and Redis-unavailable tests.
 - Add `tests/VocaNova.Tests/Lists/ListControllerContractTests.cs` and `ListCacheCompatibilityTests.cs`.
-- Run Mobile `lists_repository_test.dart`, `list_detail_repository_test.dart`, Lists notifier tests, and Lists screen tests before Unit 2.
+- Run Mobile `lists_crud_api_service_test.dart`, `lists_api_service_test.dart`, Lists notifier tests, and Lists screen tests before Unit 2.
 
 #### Implementation outcome (CURRENT)
 
 - Completed on 2026-08-20. The Unit 1 manifest is implemented for GET behavior; Unit 2 has since added mutation actions to the same canonical controllers and completed the Lists migration.
 - Legacy endpoint-facing read service members, GET controller actions, unreferenced repository read members, `ListWordsQuery`, and the Infrastructure-owned user-list cache were removed after the canonical query path was verified. Unit 2 subsequently migrated the remaining repository behavior and removed `Features/Lists`.
-- Architecture, BLL/DAL behavior, controller contract, and Redis compatibility tests are present. `dotnet build VocaNova.sln` and all 500 .NET tests passed; all 15 selected existing Mobile Lists repository/notifier/screen tests passed unchanged.
+- Architecture, BLL/DAL behavior, controller contract, and Redis compatibility tests are present. `dotnet build VocaNova.sln` and all 500 .NET tests passed; all selected Mobile Lists API-service/notifier/screen tests passed unchanged after the Mobile rename.
 
 ### Unit 2 - Single-save Lists mutations
 
@@ -531,14 +531,14 @@ CURRENT: `scripts/scaffold-mysql.ps1` was run after the SQL application. The rev
 - Preserve multipart names, all JSON names listed above and in the existing public Dictionary Contracts, current messages/status/envelope, CSV row-error behavior, and paged object placement.
 - Exact nested Dictionary response fields remain: word detail `word_id`, `word`, `word_key`, `cefr`, `phonetic_uk`, `phonetic_us`, `image_url`, `is_phrase`, `senses`, `examples`, `relations`, `audio`, `derived_forms`, `idioms`, `topics`, `status`, `created_at`, `updated_at`; sense `sense_id`, `order`, `word_class`, `english_definition`, `vietnamese_meaning`, `examples`, `relations`; example `example_id`, `sense_id`, `example_en`, `example_vi`, `order`; relation `relation_id`, `sense_id`, `relation_type`, `related_word`, `linked_word_id`, `is_quiz_eligible`; audio `audio_id`, `accent`, `source`, `url`, `status`; derived form `derived_id`, `derived_word`, `linked_word_id`, `word_class`; idiom `idiom_id`, `idiom_text`, `meaning_en`, `meaning_vi`; topic `topic_id`, `name`, `name_vi`, `icon`; summary `word_id`, `word`, `phonetic`, `cefr`, `primary_meaning`, `image_url`.
 - Preserve keys/TTLs: `word-search:{q|_}:{page}:{limit}:{cefr|_}:{topicId|_}:{isPhrase|_}` 5 minutes, `word:{wordId}` 30 minutes, `topics` 60 minutes, `topic-words:{topicId}:{page}:{limit}` 10 minutes, plus Lists cache keys from Units 1-2. Preserve CURRENT invalidation coverage; do not silently add global word-search invalidation.
-- Dashboard Vocabulary/Topics controllers, `Models/Api/Dictionary`, views, and JavaScript must parse unchanged payloads.
+- Dashboard Vocabulary/Topics controllers, `Data/Dtos/Dictionary`, views, and JavaScript must parse unchanged payloads.
 
 #### Test gate
 
 - Add `DictionaryAdminArchitectureTests.cs`, `DictionaryAdminControllerContractTests.cs`, `DictionaryAdminCacheInvalidationTests.cs`, and MySQL `WordSenseSoftDeleteIntegrationTests.cs`.
 - Keep and extend `AdminWordCrudFeatureTests.cs`, `AdminWordListFeatureTests.cs`, `TopicFeatureTests.cs`, `DictionaryCacheCompatibilityTests.cs`, and `DictionaryControllerContractTests.cs` for all routes, policies, JSON, pagination, CSV outcomes, Cloudinary mapping/failure, cache invalidation, and Redis degradation.
 - Schema test verifies the new column type/default/comment/index and global filter; delete hides the sense from normal detail, admin include-deleted can see it, restore returns it, and unrelated senses remain visible.
-- Run Dashboard Dictionary controller/API-model tests and manually verify vocabulary/topic pages before Unit 4.
+- Run Dashboard Dictionary controller/DTO tests and manually verify vocabulary/topic pages before Unit 4.
 
 #### Implementation outcome (CURRENT)
 
@@ -694,14 +694,14 @@ DI remains: Quiz services/repositories/graders and AI cache repository scoped; `
 - Exact AI administration fields: configuration `provider`, `endpoint`, `model`, `fallback_models`, `max_attempts`, `retry_base_delay_ms`, `attempt_timeout_seconds`, `pass_threshold`, `has_api_key`, `api_key_hint`, `storage`, `can_write_env_file`, `supported_providers`; update request uses the same configurable fields plus `api_key`; connection test `succeeded`, `model`, `elapsed_ms`, `message`.
 - Preserve Redis key `${prefix}quiz-pool:{sessionId}:{listId|all}`, two-hour TTL, cache payload, and null/no-op degradation. Preserve Progress summary invalidation timing on session creation and successful answer save.
 - Preserve MySQL AI cache SHA-256 key inputs, seven-day validity, hit accounting, Gemini retry/model fallback, timeout behavior, pass threshold, and normalized exact-match fallback without caching fallback as AI output.
-- Preserve Mobile Quiz repository/notifier/screen behavior and Dashboard AI Settings models/controller/view/JavaScript contracts.
+- Preserve Mobile Quiz API-service/notifier/screen behavior and Dashboard AI Settings models/controller/view/JavaScript contracts.
 
 #### Test gate
 
 - Add `QuizArchitectureTests.cs`, `AiGradingArchitectureTests.cs`, `QuizControllerContractTests.cs`, and `AiGradingControllerContractTests.cs`.
 - Keep and extend all files under `tests/VocaNova.Tests/Quiz` and `AiGrading`; explicitly assert one relational submission save, independent AI-cache saves, SM-2 calculations, completion modes, pool key/TTL/payload/removal, Progress invalidation after persistence, Gemini degradation, and Redis/provider failures.
 - Contract snapshots cover every route, policy, `user_id`, status/message/envelope, query default, JSON field, and paged object.
-- Run Mobile quiz repository/application/presentation tests and Dashboard Settings API-model/controller tests before Unit 5.
+- Run Mobile quiz API-service/application/presentation tests and Dashboard Settings DTO/controller tests before Unit 5.
 
 #### Implementation outcome (CURRENT)
 
@@ -1015,7 +1015,7 @@ DI remains: Auth service, three repositories, and transaction manager scoped; pr
 - Exact request fields: register `phone`, `password`, `display_name`, `otp_code`, `date_of_birth`, `region_id`, `occupation_id`, `education_level_id`; login `phone`, `password`; Google `id_token`; refresh `refresh_token`; OTP send `phone`, `purpose`; OTP verify `phone`, `otp_code`; forgot password `phone`; reset password `phone`, `otp_code`, `new_password`; change password `current_password`, `new_password`; profile update `display_name`, `avatar_url`; learning profile `age_range_id`, `region_id`, `occupation_id`, `education_level_id`, `learning_purpose_id`; avatar multipart field `File`.
 - Exact response fields: token `access_token`, `refresh_token`, `expires_in`, `token_type`; OTP send `expires_in`; OTP verify `verified`; profile `user_id`, `phone`, `display_name`, `avatar_url`, `role`, `status`, `learning_profile`; nested learning profile uses the five learning-profile ID fields above.
 - Preserve `${prefix}user:{userId}`, five-minute TTL, payload, invalidation after committed profile/account changes, and Redis degradation. Preserve KNN topic invalidation after account/profile changes where CURRENT code does so.
-- Protect Mobile auth repository, Google service, interceptor refresh/retry, secure-token storage, notifiers/screens/onboarding; protect Dashboard `DashboardAuthService` and `BearerTokenHandler` refresh flow.
+- Protect Mobile auth API-service, Google service, interceptor refresh/retry, secure-token storage, notifiers/screens/onboarding; protect Dashboard `DashboardAuthService` and `BearerTokenHandler` refresh flow.
 
 #### Test gate
 
@@ -1148,7 +1148,7 @@ IAuditLogSink.EnqueueAsync(AuditLogRecord record, CancellationToken)
 - Add `AdminArchitectureTests.cs`, `SuperAdminArchitectureTests.cs`, `AdminControllerContractTests.cs`, `SuperAdminControllerContractTests.cs`, and `SuperAdminTransactionTests.cs`.
 - Extend current Admin/SuperAdmin feature tests for every route, policy, query/JSON/pagination field, statistic calculation/cache behavior, role-aware status guards, built-in-role protections, token revocation, cache timing, and rollback.
 - MySQL integration tests inject failures between account/auth/profile/token and role/token changes and assert full rollback. Architecture tests forbid DbContext/EF/ASP.NET/Infrastructure dependencies in BLL services.
-- Run Dashboard role, SuperAdmin, user/statistics API-model/controller tests and the full .NET/Flutter suites. After success, remove remaining legacy feature registrations/types and run the Phase 11 completion checks.
+- Run Dashboard role, SuperAdmin, user/statistics DTO/controller tests and the full .NET/Flutter suites. After success, remove remaining legacy feature registrations/types and run the Phase 11 completion checks.
 
 #### Unit 7 implementation outcome (CURRENT)
 

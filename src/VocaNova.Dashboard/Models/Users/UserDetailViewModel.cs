@@ -1,4 +1,4 @@
-using VocaNova.Dashboard.Models.Api.Users;
+using VocaNova.Dashboard.Data.Dtos.Users;
 using VocaNova.Dashboard.Services.Api;
 
 namespace VocaNova.Dashboard.Models.Users;

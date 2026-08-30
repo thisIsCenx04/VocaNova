@@ -10,16 +10,19 @@ import 'package:vocanova_mobile/core/network/dio_client.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_state.dart';
-import 'package:vocanova_mobile/features/dictionary/data/word_search_repository.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/data/dtos/word_summary_dto.dart';
+import 'package:vocanova_mobile/features/dictionary/data/services/word_search_api_service.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'word_search_notifier.g.dart';
 
 @Riverpod(keepAlive: true)
-WordSearchRepository wordSearchRepository(Ref ref) {
-  return WordSearchRepository(dio: DioClient.instance.dio);
+WordSearchApiService wordSearchRepository(Ref ref) {
+  return WordSearchApiService(dio: DioClient.instance.dio);
 }
+
+final wordSearchApiServiceProvider = wordSearchRepositoryProvider;
 
 @Riverpod(keepAlive: true)
 LocalStorage searchLocalStorage(Ref ref) => LocalStorage.instance;
@@ -121,7 +124,7 @@ class WordSearchNotifier extends _$WordSearchNotifier {
     state = state.copyWith(isLoading: true, isOffline: false, clearError: true);
     try {
       final results = await ref
-          .read(wordSearchRepositoryProvider)
+          .read(wordSearchApiServiceProvider)
           .search(
             query: query,
             cefr: state.selectedCefr,
@@ -176,13 +179,17 @@ class WordSearchNotifier extends _$WordSearchNotifier {
 
   Future<void> _loadTopics() async {
     try {
-      final topics = await ref.read(wordSearchRepositoryProvider).getTopics();
+      final topics = await ref.read(wordSearchApiServiceProvider).getTopics();
       state = state.copyWith(topics: topics);
       await ref
           .read(searchLocalStorageProvider)
           .set(
             StorageKeys.topicsCacheJson,
-            jsonEncode(topics.map((topic) => topic.toJson()).toList()),
+            jsonEncode(
+              topics
+                  .map((topic) => TopicSummaryDto.fromDomain(topic).toJson())
+                  .toList(),
+            ),
           );
     } catch (_) {
       // Cached topics remain available when the request fails.
@@ -223,7 +230,11 @@ class WordSearchNotifier extends _$WordSearchNotifier {
         .read(searchLocalStorageProvider)
         .set(
           StorageKeys.wordSearchCacheJson,
-          jsonEncode(_cachedWords.map((word) => word.toJson()).toList()),
+          jsonEncode(
+            _cachedWords
+                .map((word) => WordSummaryDto.fromDomain(word).toJson())
+                .toList(),
+          ),
         );
   }
 
@@ -242,7 +253,8 @@ class WordSearchNotifier extends _$WordSearchNotifier {
     try {
       return (jsonDecode(source ?? '[]') as List<dynamic>)
           .whereType<Map<String, dynamic>>()
-          .map(WordSummary.fromJson)
+          .map(WordSummaryDto.fromJson)
+          .map((dto) => dto.toDomain())
           .toList(growable: false);
     } on Object {
       return const [];
@@ -253,7 +265,8 @@ class WordSearchNotifier extends _$WordSearchNotifier {
     try {
       return (jsonDecode(source ?? '[]') as List<dynamic>)
           .whereType<Map<String, dynamic>>()
-          .map(TopicSummary.fromJson)
+          .map(TopicSummaryDto.fromJson)
+          .map((dto) => dto.toDomain())
           .toList(growable: false);
     } on Object {
       return const [];

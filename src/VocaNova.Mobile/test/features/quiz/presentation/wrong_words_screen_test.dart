@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
-import 'package:vocanova_mobile/features/quiz/data/quiz_repository.dart';
-import 'package:vocanova_mobile/features/quiz/domain/quiz_result.dart';
+import 'package:vocanova_mobile/features/quiz/data/services/quiz_api_service.dart';
+import 'package:vocanova_mobile/features/quiz/domain/models/quiz_result.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/wrong_words_screen.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
@@ -14,7 +14,7 @@ void main() {
   testWidgets('renders wrong words, swipes remove, and retries via config', (
     tester,
   ) async {
-    final repository = MockQuizRepository();
+    final repository = MockQuizApiService();
     when(() => repository.getWrongWords(page: 1)).thenAnswer(
       (_) async => const WrongWordsPage(items: [apple], page: 1, totalPages: 1),
     );
@@ -38,7 +38,7 @@ void main() {
     );
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [quizRepositoryProvider.overrideWithValue(repository)],
+        overrides: [quizApiServiceProvider.overrideWithValue(repository)],
         child: MaterialApp.router(
           routerConfig: router,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -67,7 +67,7 @@ void main() {
   });
 }
 
-class MockQuizRepository extends Mock implements QuizRepository {}
+class MockQuizApiService extends Mock implements QuizApiService {}
 
 const apple = WrongWord(
   wordId: 7,

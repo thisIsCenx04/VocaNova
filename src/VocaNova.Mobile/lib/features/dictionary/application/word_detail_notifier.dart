@@ -7,15 +7,18 @@ import 'package:vocanova_mobile/core/network/dio_client.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_detail_state.dart';
-import 'package:vocanova_mobile/features/dictionary/data/word_detail_repository.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_detail.dart';
+import 'package:vocanova_mobile/features/dictionary/data/dtos/word_detail_dto.dart';
+import 'package:vocanova_mobile/features/dictionary/data/services/word_detail_api_service.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_detail.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'word_detail_notifier.g.dart';
 
 @Riverpod(keepAlive: true)
-WordDetailRepository wordDetailRepository(Ref ref) =>
-    WordDetailRepository(dio: DioClient.instance.dio);
+WordDetailApiService wordDetailRepository(Ref ref) =>
+    WordDetailApiService(dio: DioClient.instance.dio);
+
+final wordDetailApiServiceProvider = wordDetailRepositoryProvider;
 
 @Riverpod(keepAlive: true)
 LocalStorage wordDetailLocalStorage(Ref ref) => LocalStorage.instance;
@@ -54,16 +57,14 @@ class WordDetailNotifier extends _$WordDetailNotifier {
         isLoading: false,
         isOffline: true,
         isSaved: saved != null,
-        errorMessage: staleCache == null
-            ? l10n.dictNoSavedWordDataError
-            : null,
+        errorMessage: staleCache == null ? l10n.dictNoSavedWordDataError : null,
       );
       return;
     }
 
     try {
-      final word = await ref.read(wordDetailRepositoryProvider).getWord(wordId);
-      await storage.setWithTtl(key, jsonEncode(word.toJson()));
+      final word = await ref.read(wordDetailApiServiceProvider).getWord(wordId);
+      await storage.setWithTtl(key, _encode(word));
       state = WordDetailState(
         word: word,
         isLoading: false,
@@ -75,9 +76,7 @@ class WordDetailNotifier extends _$WordDetailNotifier {
         isLoading: false,
         isOffline: staleCache != null,
         isSaved: saved != null,
-        errorMessage: staleCache == null
-            ? l10n.dictWordDetailLoadError
-            : null,
+        errorMessage: staleCache == null ? l10n.dictWordDetailLoadError : null,
       );
     }
   }
@@ -86,19 +85,17 @@ class WordDetailNotifier extends _$WordDetailNotifier {
     final word = state.word;
     if (word == null) return;
     final storage = ref.read(wordDetailLocalStorageProvider);
-    await storage.set(
-      StorageKeys.savedWordJson(wordId),
-      jsonEncode(word.toJson()),
-    );
-    await storage.setWithTtl(
-      StorageKeys.wordCacheJson(wordId),
-      jsonEncode(word.toJson()),
-    );
+    await storage.set(StorageKeys.savedWordJson(wordId), _encode(word));
+    await storage.setWithTtl(StorageKeys.wordCacheJson(wordId), _encode(word));
     state = state.copyWith(isSaved: true);
   }
 
-  WordDetail _decode(String source) =>
-      WordDetail.fromJson(jsonDecode(source) as Map<String, dynamic>);
+  String _encode(WordDetail word) =>
+      jsonEncode(WordDetailDto.fromDomain(word).toJson());
+
+  WordDetail _decode(String source) => WordDetailDto.fromJson(
+    jsonDecode(source) as Map<String, dynamic>,
+  ).toDomain();
 
   WordDetail? _tryDecode(String? source) {
     try {

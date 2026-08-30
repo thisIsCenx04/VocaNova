@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_result_notifier.dart';
-import 'package:vocanova_mobile/features/quiz/domain/quiz_result.dart';
+import 'package:vocanova_mobile/features/quiz/domain/models/quiz_result.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 const _correctColor = Color(0xFF16A34A);

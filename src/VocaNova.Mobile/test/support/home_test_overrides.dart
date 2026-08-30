@@ -1,6 +1,6 @@
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
-import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
-import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/auth_state.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/user_profile.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_state.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';

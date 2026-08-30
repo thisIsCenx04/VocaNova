@@ -1,4 +1,4 @@
-import 'package:vocanova_mobile/features/lists/domain/list_word.dart';
+import 'package:vocanova_mobile/features/lists/domain/models/list_word.dart';
 
 class ListDetailState {
   const ListDetailState({

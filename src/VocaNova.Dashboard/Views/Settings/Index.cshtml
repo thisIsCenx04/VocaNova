@@ -2,7 +2,7 @@
     ViewData["Title"] = T["Setting"];
     var theme = (ViewData["Theme"] as string) ?? "light";
     var language = (ViewData["Language"] as string) ?? "vi";
-    var ai = ViewData["AiGrading"] as VocaNova.Dashboard.Models.Api.Settings.AiGradingConfig;
+    var ai = ViewData["AiGrading"] as VocaNova.Dashboard.Data.Dtos.Settings.AiGradingConfig;
     var inv = System.Globalization.CultureInfo.InvariantCulture;
 }
 

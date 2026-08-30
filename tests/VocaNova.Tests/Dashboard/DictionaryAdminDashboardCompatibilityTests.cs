@@ -2,7 +2,7 @@ using System.Net;
 using System.Text;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
-using VocaNova.Dashboard.Models.Api.Dictionary;
+using VocaNova.Dashboard.Data.Dtos.Dictionary;
 using VocaNova.Dashboard.Services.Api;
 
 namespace VocaNova.Tests.Dashboard;

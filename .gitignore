@@ -84,6 +84,5 @@ input.txt
 # Figma working files (contains a read-only token — never commit)
 .figma-tmp/
 .artifacts-test/
-PROJECT_STRUCTURE_3_LAYER.md
 
 PROMPT.EXAMPLE.md

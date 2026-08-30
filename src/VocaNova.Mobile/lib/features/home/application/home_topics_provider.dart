@@ -1,23 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:vocanova_mobile/core/network/api_endpoints.dart';
 import 'package:vocanova_mobile/core/network/dio_client.dart';
-import 'package:vocanova_mobile/features/home/domain/personal_topic_recommendation.dart';
+import 'package:vocanova_mobile/features/home/data/services/home_topics_api_service.dart';
+import 'package:vocanova_mobile/features/home/domain/models/personal_topic_recommendation.dart';
+
+final homeTopicsApiServiceProvider = Provider<HomeTopicsApiService>(
+  (ref) => HomeTopicsApiService(dio: DioClient.instance.dio),
+);
 
 /// Loads the public topic catalogue for the Home "Topics for you" section.
 /// Kept separate from the search flow so the Home screen can show/refresh it
 /// independently, with its own loading/error states.
 final homeTopicsProvider =
     FutureProvider.autoDispose<List<PersonalTopicRecommendation>>((ref) async {
-      final response = await DioClient.instance.dio.get<Map<String, dynamic>>(
-        ApiEndpoints.recommendedPersonalTopics,
-        queryParameters: const {'limit': 6},
-      );
-      final data = response.data?['data'];
-      if (data is! List<dynamic>) {
-        throw const FormatException('Invalid personal topic recommendations.');
-      }
-      return data
-          .whereType<Map<String, dynamic>>()
-          .map(PersonalTopicRecommendation.fromJson)
-          .toList(growable: false);
+      return ref.read(homeTopicsApiServiceProvider).recommendedPersonalTopics();
     });

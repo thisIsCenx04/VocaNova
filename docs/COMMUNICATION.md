@@ -29,19 +29,19 @@ Browser -> MVC Controller -> Dashboard workflow/API client -> HttpClient -> Voca
 - Cookie authentication stores API access/refresh tokens in authentication properties.
 - `BearerTokenHandler` attaches the access token, performs one refresh on 401 through a separate client, updates the cookie, clones the request, and retries once.
 - Most MVC controllers call `IVocaNovaApiClient`; they translate normalized API results into views, ModelState, TempData, redirects, or status responses.
-- Dashboard directly consumes Dictionary administration, KNN/runtime settings, AI-grading settings, Admin users/statistics, and SuperAdmin account/role contracts through feature controllers and manually maintained API models.
+- Dashboard directly consumes Dictionary administration, KNN/runtime settings, AI-grading settings, Admin users/statistics, and SuperAdmin account/role contracts through feature controllers and manually maintained DTOs under `Data/Dtos`.
 - Dashboard has no reference to the API project and no DbContext/MySQL/Redis access.
 
 ## Mobile -> API (CURRENT)
 
 ```text
-Screen -> Riverpod Provider/Notifier -> feature data *Repository -> Dio -> VocaNova.API
+Screen -> Riverpod Provider/Notifier -> feature data *ApiService -> Dio -> VocaNova.API
 ```
 
 - Android emulator default base URL is `http://10.0.2.2:5013`; `API_BASE_URL` can override it with `--dart-define`.
 - `AuthInterceptor` reads secure tokens, attaches Bearer auth, serializes refresh attempts, rotates stored tokens, and retries once.
 - `ErrorInterceptor` maps Dio/backend failures to `AppException`.
-- Feature `data/*_repository.dart` classes are REST gateways despite their current names; JSON is generally mapped into client domain models.
+- Feature `data/services/*_api_service.dart` classes are REST gateways. JSON is parsed through feature `data/dtos/*_dto.dart` types and mapped into `domain/models` before application/presentation state uses it.
 - Mobile directly consumes the audited Auth, Lists/personal-topic, Quiz, and KNN recommendation/onboarding contracts. Their route strings and manually mapped request/response fields are part of each refactor slice's compatibility check.
 - `SharedPreferences` stores UI settings and TTL-based client caches. `flutter_secure_storage` stores access/refresh tokens.
 - Mobile never connects to MySQL or Redis and never references backend source.
@@ -68,7 +68,7 @@ Browser -> MVC Controller -> Dashboard workflow/service -> API Client -> REST ->
 Screen  -> Riverpod Provider/Notifier -> client service/API gateway -> Dio -> REST -> API
 ```
 
-They own language-specific wire models and must not access MySQL/Redis or reference backend source. Client-side application/domain/data concepts do not create backend BLL/DAL layers.
+They own language-specific wire models and must not access MySQL/Redis or reference backend source. Dashboard keeps API wire DTOs in `Data/Dtos`; Mobile keeps feature wire DTOs in `data/dtos`, remote HTTP gateways in `data/services`, and client domain models in `domain/models`. Client-side application/domain/data concepts do not create backend BLL/DAL layers.
 
 Within the API:
 
@@ -106,4 +106,4 @@ Flutter Mobile (outside Docker)
 
 ## Contract synchronization
 
-Until an independently accepted OpenAPI-generation decision is implemented, changes require coordinated verification of API Contracts/tests, Dashboard wire models/client calls, and Mobile parsing/repository tests. Architecture refactoring must preserve existing routes and JSON schemas unless a task explicitly authorizes an API change.
+Until an independently accepted OpenAPI-generation decision is implemented, changes require coordinated verification of API Contracts/tests, Dashboard `Data/Dtos`/client calls, and Mobile DTO/API-service tests. Architecture refactoring must preserve existing routes and JSON schemas unless a task explicitly authorizes an API change.

@@ -2,19 +2,21 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/core/network/dio_client.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
-import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
+import 'package:vocanova_mobile/features/lists/domain/models/user_list.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_state.dart';
-import 'package:vocanova_mobile/features/quiz/data/quiz_repository.dart';
-import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
+import 'package:vocanova_mobile/features/quiz/data/services/quiz_api_service.dart';
+import 'package:vocanova_mobile/features/quiz/domain/models/quiz_config.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'quiz_config_notifier.g.dart';
 
 @Riverpod(keepAlive: true)
-QuizRepository quizRepository(Ref ref) =>
-    QuizRepository(dio: DioClient.instance.dio);
+QuizApiService quizRepository(Ref ref) =>
+    QuizApiService(dio: DioClient.instance.dio);
+
+final quizApiServiceProvider = quizRepositoryProvider;
 
 @riverpod
 class QuizConfigNotifier extends _$QuizConfigNotifier {
@@ -23,9 +25,9 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
 
   Future<void> loadSources() async {
     try {
-      final listsFuture = ref.read(listsRepositoryProvider).getLists();
+      final listsFuture = ref.read(listsApiServiceProvider).getLists();
       final topicsFuture = ref
-          .read(wordSearchRepositoryProvider)
+          .read(wordSearchApiServiceProvider)
           .getPersonalTopics();
       final sources = await Future.wait<Object>([listsFuture, topicsFuture]);
       final lists = sources[0] as List<UserList>;
@@ -219,7 +221,7 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
         dateTo = null;
       }
       final result = await ref
-          .read(quizRepositoryProvider)
+          .read(quizApiServiceProvider)
           .createSession(
             QuizConfigRequest(
               mode: state.mode,

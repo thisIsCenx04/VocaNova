@@ -1,4 +1,4 @@
-using VocaNova.Dashboard.Models.Api.Knn;
+using VocaNova.Dashboard.Data.Dtos.Knn;
 
 namespace VocaNova.Dashboard.Models.Knn;
 

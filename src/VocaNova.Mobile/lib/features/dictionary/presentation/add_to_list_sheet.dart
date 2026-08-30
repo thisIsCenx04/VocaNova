@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_detail_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_detail.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_detail.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topic_icon.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
@@ -298,11 +298,11 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
 
   Future<void> _loadDestinations() async {
     try {
-      final repository = ref.read(wordDetailRepositoryProvider);
-      final listsFuture = repository.getLists();
-      final topicsFuture = repository.getPersonalTopics(wordId: widget.wordId);
+      final apiService = ref.read(wordDetailApiServiceProvider);
+      final listsFuture = apiService.getLists();
+      final topicsFuture = apiService.getPersonalTopics(wordId: widget.wordId);
       final wordFuture = widget.eligibleTopics == null
-          ? repository.getWord(widget.wordId)
+          ? apiService.getWord(widget.wordId)
           : null;
       final lists = await listsFuture;
       final allPersonalTopics = await topicsFuture;
@@ -368,7 +368,7 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
     setState(() => _isSaving = true);
     try {
       final list = await ref
-          .read(wordDetailRepositoryProvider)
+          .read(wordDetailApiServiceProvider)
           .createList(name);
       if (!mounted) return;
       setState(() {
@@ -385,13 +385,13 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
 
   Future<void> _save() async {
     setState(() => _isSaving = true);
-    final repository = ref.read(wordDetailRepositoryProvider);
+    final apiService = ref.read(wordDetailApiServiceProvider);
     final note = _noteController.text.trim();
     try {
       final String Function() destinationNameOf;
       if (_destination == _SaveDestination.lists) {
         final listId = _selectedListId!;
-        await repository.addWordToList(
+        await apiService.addWordToList(
           listId: listId,
           wordId: widget.wordId,
           note: note,
@@ -400,7 +400,7 @@ class _AddToListSheetState extends ConsumerState<AddToListSheet> {
             _lists.firstWhere((item) => item.listId == listId).listName;
       } else {
         final topicId = _selectedTopicId!;
-        await repository.addWordToPersonalTopic(
+        await apiService.addWordToPersonalTopic(
           topicId: topicId,
           wordId: widget.wordId,
           note: note,

@@ -15,10 +15,12 @@ import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/secure_storage.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
-import 'package:vocanova_mobile/features/auth/data/auth_repository.dart';
-import 'package:vocanova_mobile/features/auth/data/google_auth_service.dart';
-import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
-import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
+import 'package:vocanova_mobile/features/auth/data/services/auth_api_service.dart';
+import 'package:vocanova_mobile/features/auth/data/dtos/user_profile_dto.dart';
+import 'package:vocanova_mobile/features/auth/data/services/google_auth_service.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/auth_state.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/auth_tokens.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/user_profile.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -37,7 +39,7 @@ void main() {
     tokenType: 'Bearer',
   );
 
-  late MockAuthRepository repository;
+  late MockAuthApiService repository;
   late MockSecureStorage secureStorage;
   late MockAppRouter appRouter;
   late MockGoRouter goRouter;
@@ -51,7 +53,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     preferences = await SharedPreferences.getInstance();
     localStorage = LocalStorage.create(preferences: preferences);
-    repository = MockAuthRepository();
+    repository = MockAuthApiService();
     secureStorage = MockSecureStorage();
     appRouter = MockAppRouter();
     goRouter = MockGoRouter();
@@ -62,7 +64,7 @@ void main() {
 
     container = ProviderContainer(
       overrides: [
-        authRepositoryProvider.overrideWithValue(repository),
+        authApiServiceProvider.overrideWithValue(repository),
         localStorageProvider.overrideWithValue(localStorage),
         secureStorageProvider.overrideWithValue(secureStorage),
         appRouterProvider.overrideWithValue(appRouter),
@@ -196,7 +198,7 @@ void main() {
   test('loadCurrentUser uses valid one-day cache when API fails', () async {
     await localStorage.setWithTtl(
       StorageKeys.userProfileJson,
-      jsonEncode(user.toJson()),
+      jsonEncode(UserProfileDto.fromDomain(user).toJson()),
     );
     when(
       () => secureStorage.getAccessToken(),
@@ -331,7 +333,7 @@ void main() {
   });
 }
 
-class MockAuthRepository extends Mock implements AuthRepository {}
+class MockAuthApiService extends Mock implements AuthApiService {}
 
 class MockSecureStorage extends Mock implements SecureStorage {}
 

@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
-using VocaNova.Dashboard.Models.Api.Settings;
+using VocaNova.Dashboard.Data.Dtos.Settings;
 using VocaNova.Dashboard.Services.Api;
 
 namespace VocaNova.Tests.Dashboard;
@@ -59,7 +59,7 @@ public sealed class AiGradingDashboardCompatibilityTests
         configuration.IsStoredInEnvFile.Should().BeTrue();
         updated.IsSuccess.Should().BeTrue();
         reset.IsSuccess.Should().BeTrue();
-        connection.Should().Be(new VocaNova.Dashboard.Models.Api.Settings.AiGradingConnectionTest(true, "primary", 12, "Connected."));
+        connection.Should().Be(new VocaNova.Dashboard.Data.Dtos.Settings.AiGradingConnectionTest(true, "primary", 12, "Connected."));
         handler.PendingCount.Should().Be(0);
     }
 

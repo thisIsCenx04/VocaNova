@@ -10,7 +10,7 @@ import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 import 'package:vocanova_mobile/features/dictionary/application/audio_playback_service.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_detail_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_detail_state.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_detail.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_detail.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/add_to_list_sheet.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
@@ -183,9 +183,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
     await Clipboard.setData(ClipboardData(text: '${word.word}$definition'));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(AppLocalizations.of(context)!.dictWordCopied),
-      ),
+      SnackBar(content: Text(AppLocalizations.of(context)!.dictWordCopied)),
     );
   }
 

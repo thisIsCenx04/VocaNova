@@ -239,7 +239,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     setState(() => _isLoading = true);
     try {
       await ref
-          .read(authRepositoryProvider)
+          .read(authApiServiceProvider)
           .forgotPassword(_phoneController.text.trim());
       if (!mounted) return;
       setState(() {
@@ -258,7 +258,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     setState(() => _isLoading = true);
     try {
       await ref
-          .read(authRepositoryProvider)
+          .read(authApiServiceProvider)
           .forgotPassword(_phoneController.text.trim());
       if (!mounted) return;
       setState(() => _failedAttempts = 0);
@@ -280,7 +280,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     setState(() => _isLoading = true);
     try {
       final verified = await ref
-          .read(authRepositoryProvider)
+          .read(authApiServiceProvider)
           .verifyResetOtp(phone: _phoneController.text.trim(), otpCode: code);
       if (!mounted || !verified) return;
       setState(() {
@@ -308,7 +308,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     setState(() => _isLoading = true);
     try {
       await ref
-          .read(authRepositoryProvider)
+          .read(authApiServiceProvider)
           .resetPassword(
             phone: _phoneController.text.trim(),
             otpCode: _otpCode,

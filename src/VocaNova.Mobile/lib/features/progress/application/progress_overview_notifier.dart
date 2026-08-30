@@ -7,15 +7,18 @@ import 'package:vocanova_mobile/core/network/dio_client.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_state.dart';
-import 'package:vocanova_mobile/features/progress/data/progress_repository.dart';
-import 'package:vocanova_mobile/features/progress/domain/progress_summary.dart';
+import 'package:vocanova_mobile/features/progress/data/dtos/progress_summary_dto.dart';
+import 'package:vocanova_mobile/features/progress/data/services/progress_api_service.dart';
+import 'package:vocanova_mobile/features/progress/domain/models/progress_summary.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'progress_overview_notifier.g.dart';
 
 @Riverpod(keepAlive: true)
-ProgressRepository progressRepository(Ref ref) =>
-    ProgressRepository(dio: DioClient.instance.dio);
+ProgressApiService progressRepository(Ref ref) =>
+    ProgressApiService(dio: DioClient.instance.dio);
+
+final progressApiServiceProvider = progressRepositoryProvider;
 
 @Riverpod(keepAlive: true)
 LocalStorage progressLocalStorage(Ref ref) => LocalStorage.instance;
@@ -50,11 +53,11 @@ class ProgressOverviewNotifier extends _$ProgressOverviewNotifier {
     }
 
     try {
-      final summary = await ref.read(progressRepositoryProvider).getSummary();
+      final summary = await ref.read(progressApiServiceProvider).getSummary();
       state = ProgressOverviewState(summary: summary, isLoading: false);
       await storage.setWithTtl(
         StorageKeys.progressSummaryJson,
-        jsonEncode(summary.toJson()),
+        jsonEncode(ProgressSummaryDto.fromDomain(summary).toJson()),
       );
     } catch (_) {
       state = ProgressOverviewState(
@@ -70,7 +73,7 @@ class ProgressOverviewNotifier extends _$ProgressOverviewNotifier {
     try {
       final json = jsonDecode(source ?? '');
       return json is Map<String, dynamic>
-          ? ProgressSummary.fromJson(json)
+          ? ProgressSummaryDto.fromJson(json).toDomain()
           : null;
     } on FormatException {
       return null;

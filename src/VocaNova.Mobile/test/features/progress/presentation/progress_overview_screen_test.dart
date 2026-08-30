@@ -10,8 +10,9 @@ import 'package:vocanova_mobile/core/storage/storage_keys.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
-import 'package:vocanova_mobile/features/progress/data/progress_repository.dart';
-import 'package:vocanova_mobile/features/progress/domain/progress_summary.dart';
+import 'package:vocanova_mobile/features/progress/data/dtos/progress_summary_dto.dart';
+import 'package:vocanova_mobile/features/progress/data/services/progress_api_service.dart';
+import 'package:vocanova_mobile/features/progress/domain/models/progress_summary.dart';
 import 'package:vocanova_mobile/features/progress/presentation/progress_overview_screen.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
@@ -19,7 +20,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('renders all progress overview metrics from API', (tester) async {
-    final repository = MockProgressRepository();
+    final repository = MockProgressApiService();
     final connectivity = MockConnectivityService();
     SharedPreferences.setMockInitialValues({});
     final storage = LocalStorage.create(
@@ -45,7 +46,7 @@ void main() {
   testWidgets('offline renders fresh cached summary and banner', (
     tester,
   ) async {
-    final repository = MockProgressRepository();
+    final repository = MockProgressApiService();
     final connectivity = MockConnectivityService();
     SharedPreferences.setMockInitialValues({});
     final storage = LocalStorage.create(
@@ -53,7 +54,7 @@ void main() {
     );
     await storage.setWithTtl(
       StorageKeys.progressSummaryJson,
-      jsonEncode(summary.toJson()),
+      jsonEncode(ProgressSummaryDto.fromDomain(summary).toJson()),
     );
     when(() => connectivity.isOnline).thenAnswer((_) async => false);
 
@@ -66,7 +67,7 @@ void main() {
 
 Future<void> pumpOverview(
   WidgetTester tester,
-  ProgressRepository repository,
+  ProgressApiService repository,
   ConnectivityService connectivity,
   LocalStorage storage,
 ) async {
@@ -77,7 +78,7 @@ Future<void> pumpOverview(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        progressRepositoryProvider.overrideWithValue(repository),
+        progressApiServiceProvider.overrideWithValue(repository),
         progressLocalStorageProvider.overrideWithValue(storage),
         connectivityServiceProvider.overrideWithValue(connectivity),
       ],
@@ -92,7 +93,7 @@ Future<void> pumpOverview(
   await tester.pump(const Duration(milliseconds: 100));
 }
 
-class MockProgressRepository extends Mock implements ProgressRepository {}
+class MockProgressApiService extends Mock implements ProgressApiService {}
 
 class MockConnectivityService extends Mock implements ConnectivityService {}
 

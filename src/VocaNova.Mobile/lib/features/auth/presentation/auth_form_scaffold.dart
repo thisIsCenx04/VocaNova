@@ -131,7 +131,9 @@ class GoogleAuthButton extends StatelessWidget {
           fontWeight: FontWeight.w700,
         ),
       ),
-      label: Text(label ?? AppLocalizations.of(context)!.authContinueWithGoogle),
+      label: Text(
+        label ?? AppLocalizations.of(context)!.authContinueWithGoogle,
+      ),
     );
   }
 }

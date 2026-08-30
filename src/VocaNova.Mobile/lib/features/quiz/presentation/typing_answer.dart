@@ -44,7 +44,9 @@ class _TypingAnswerState extends State<_TypingAnswer> {
           minLines: isAi ? 3 : 1,
           maxLines: isAi ? 5 : 1,
           decoration: InputDecoration(
-            labelText: isAi ? l10n.quizTypingLabelAi : l10n.quizTypingLabelDefault,
+            labelText: isAi
+                ? l10n.quizTypingLabelAi
+                : l10n.quizTypingLabelDefault,
             helperText: isAi
                 ? l10n.quizTypingHelperAi
                 : l10n.quizTypingHelperDefault,
@@ -108,7 +110,9 @@ class _TypingFeedback extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              result.isCorrect ? l10n.quizTypingCorrect : l10n.quizTypingIncorrect,
+              result.isCorrect
+                  ? l10n.quizTypingCorrect
+                  : l10n.quizTypingIncorrect,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: color.shade800,
                 fontWeight: FontWeight.w800,

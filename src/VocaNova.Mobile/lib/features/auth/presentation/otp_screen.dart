@@ -114,7 +114,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       final verified = widget.purpose == 'register'
           ? await _completeRegister(code)
           : await ref
-                .read(authRepositoryProvider)
+                .read(authApiServiceProvider)
                 .verifyOtp(phone: widget.phone, otpCode: code);
       if (!mounted) {
         return;
@@ -179,7 +179,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     setState(() => _isLoading = true);
     try {
       await ref
-          .read(authRepositoryProvider)
+          .read(authApiServiceProvider)
           .sendOtp(phone: widget.phone, purpose: widget.purpose);
       if (!mounted) {
         return;

@@ -22,7 +22,7 @@
             values = demographics?.EducationLevels.Select(g => g.UserCount).ToArray() ?? Array.Empty<int>(),
         },
     });
-    var wrongWords = Model.Learning?.TopWrongWords ?? new List<VocaNova.Dashboard.Models.Api.Stats.WrongWordStat>();
+    var wrongWords = Model.Learning?.TopWrongWords ?? new List<VocaNova.Dashboard.Data.Dtos.Stats.WrongWordStat>();
 }
 
 <div class="page-header">

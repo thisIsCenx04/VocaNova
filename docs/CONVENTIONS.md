@@ -20,8 +20,8 @@ CURRENT names are documented accurately even when they differ from TARGET conven
 | BLL | `I*Service`/`*Service`, models mixed with DTOs/entities | Business models/results, `I*Service`, and `*Service` under `Features/<Feature>/BLL`; framework neutral. |
 | BLL persistence ports | Production feature repository interfaces are BLL-owned; some test-only compatibility helpers still exist. | BLL-owned `I*Repository` under `Features/<Feature>/BLL/Abstractions`, using BLL models/commands. |
 | DAL | `*Repository`, scaffolded POCO entity names, configurations | Feature implementations under `Features/<Feature>/DAL`; shared entities, EF configurations, Redis, and providers under consolidated `Infrastructure`. |
-| Dashboard | `Models/Api`, mostly `*ViewModel`, `VocaNovaApiClient` | `*ViewModel`; Dashboard-owned Requests/Responses; `ApiClient` and UI workflow services. |
-| Mobile | `*State`, Notifier/Provider, REST classes named `*Repository` | Riverpod State/Notifier/Provider; client service/API gateway for remote HTTP; explicit local-store names for device persistence. |
+| Dashboard | `Data/Dtos`, mostly `*ViewModel`, `VocaNovaApiClient` | `*ViewModel`; Dashboard-owned Requests/Responses; `ApiClient` and UI workflow services. |
+| Mobile | `*State`, Notifier/Provider, `data/services/*ApiService`, feature-owned `data/dtos/*Dto` wire models, `domain/models` domain models | Riverpod State/Notifier/Provider; client service/API gateway for remote HTTP; explicit local-store names for device persistence. |
 
 ## Ownership and dependencies (TARGET)
 
@@ -45,6 +45,10 @@ CURRENT names are documented accurately even when they differ from TARGET conven
 - Public routes, methods, status behavior, response envelopes, and JSON property names are compatibility surfaces.
 
 CURRENT production feature slices separate HTTP Contracts, BLL models/results, and DAL entity/provider/cache representations across Notifications, Progress, Dictionary, Lists/personal topics, Quiz/AI grading, KNN/runtime configuration, Auth, Admin, and SuperAdmin. Remaining `Dto` names or compatibility helpers are legacy/test-local surfaces only; do not introduce new ambiguous DTOs.
+
+CURRENT Dashboard API payloads use Dashboard-owned DTOs under `src/VocaNova.Dashboard/Data/Dtos`. Razor/UI models remain under `src/VocaNova.Dashboard/Models`, and `Services/Api` owns HTTP transport/envelope parsing.
+
+CURRENT Mobile REST payloads use explicit feature-owned DTOs under `src/VocaNova.Mobile/lib/features/<feature>/data/dtos`. Remote HTTP calls are named `*ApiService` under `data/services`, cache workflows serialize through DTOs, and application/presentation layers consume domain models from `domain/models` rather than DTOs.
 
 ## Async, validation, and errors
 

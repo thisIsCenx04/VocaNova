@@ -4,15 +4,15 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/wrong_words_notifier.dart';
-import 'package:vocanova_mobile/features/quiz/data/quiz_repository.dart';
-import 'package:vocanova_mobile/features/quiz/domain/quiz_result.dart';
+import 'package:vocanova_mobile/features/quiz/data/services/quiz_api_service.dart';
+import 'package:vocanova_mobile/features/quiz/domain/models/quiz_result.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
 
   test('loads pages and rolls back failed optimistic remove', () async {
-    final repository = MockQuizRepository();
+    final repository = MockQuizApiService();
     when(() => repository.getWrongWords(page: 1)).thenAnswer(
       (_) async => const WrongWordsPage(items: [apple], page: 1, totalPages: 2),
     );
@@ -21,7 +21,7 @@ void main() {
     );
     when(() => repository.removeWrongWord(7)).thenThrow(Exception('failed'));
     final container = ProviderContainer(
-      overrides: [quizRepositoryProvider.overrideWithValue(repository)],
+      overrides: [quizApiServiceProvider.overrideWithValue(repository)],
     );
     addTearDown(container.dispose);
     final subscription = container.listen(wrongWordsProvider, (_, _) {});
@@ -38,7 +38,7 @@ void main() {
   });
 }
 
-class MockQuizRepository extends Mock implements QuizRepository {}
+class MockQuizApiService extends Mock implements QuizApiService {}
 
 const apple = WrongWord(
   wordId: 7,

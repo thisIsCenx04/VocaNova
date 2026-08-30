@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using VocaNova.Dashboard.Models.Api.SuperAdmin;
+using VocaNova.Dashboard.Data.Dtos.SuperAdmin;
 
 namespace VocaNova.Dashboard.Models.Roles;
 

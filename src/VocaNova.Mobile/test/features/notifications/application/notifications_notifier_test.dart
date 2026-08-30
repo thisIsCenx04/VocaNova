@@ -2,15 +2,15 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vocanova_mobile/features/notifications/application/notifications_notifier.dart';
-import 'package:vocanova_mobile/features/notifications/data/notifications_repository.dart';
-import 'package:vocanova_mobile/features/notifications/domain/app_notification.dart';
+import 'package:vocanova_mobile/features/notifications/data/services/notifications_api_service.dart';
+import 'package:vocanova_mobile/features/notifications/domain/models/app_notification.dart';
 
 void main() {
   test('loading notifications refreshes the home unread count', () async {
-    final repository = FakeNotificationsRepository();
+    final repository = FakeNotificationsApiService();
     final container = ProviderContainer(
       overrides: [
-        notificationsRepositoryProvider.overrideWithValue(repository),
+        notificationsApiServiceProvider.overrideWithValue(repository),
       ],
     );
     addTearDown(container.dispose);
@@ -35,8 +35,8 @@ final unreadNotification = AppNotification(
   createdAt: DateTime.utc(2026, 8, 3),
 );
 
-class FakeNotificationsRepository extends NotificationsRepository {
-  FakeNotificationsRepository() : super(dio: Dio());
+class FakeNotificationsApiService extends NotificationsApiService {
+  FakeNotificationsApiService() : super(dio: Dio());
 
   List<AppNotification> items = [];
 

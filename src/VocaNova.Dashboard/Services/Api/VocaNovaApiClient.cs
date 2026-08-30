@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.WebUtilities;
-using VocaNova.Dashboard.Models.Api.Dictionary;
-using VocaNova.Dashboard.Models.Api.Stats;
+using VocaNova.Dashboard.Data.Dtos.Dictionary;
+using VocaNova.Dashboard.Data.Dtos.Stats;
 
 namespace VocaNova.Dashboard.Services.Api;
 
@@ -191,7 +191,7 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
             var statusCode = (int)response.StatusCode;
 
             var envelope = await response.Content
-                .ReadFromJsonAsync<ApiEnvelope<Models.Api.Dictionary.BulkImportResult>>(ApiJson.Default, cancellationToken);
+                .ReadFromJsonAsync<ApiEnvelope<VocaNova.Dashboard.Data.Dtos.Dictionary.BulkImportResult>>(ApiJson.Default, cancellationToken);
 
             if (response.IsSuccessStatusCode && envelope?.Data is not null)
             {
@@ -208,7 +208,7 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         }
     }
 
-    public Task<PagedData<Models.Api.Users.AdminUserSummary>> GetUsersAsync(UserListFilter filter, CancellationToken cancellationToken = default)
+    public Task<PagedData<VocaNova.Dashboard.Data.Dtos.Users.AdminUserSummary>> GetUsersAsync(UserListFilter filter, CancellationToken cancellationToken = default)
     {
         var queryParams = new Dictionary<string, string?>
         {
@@ -223,21 +223,21 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         if (!string.IsNullOrWhiteSpace(filter.SortDirection)) queryParams["sortDirection"] = filter.SortDirection;
 
         var uri = QueryHelpers.AddQueryString("api/admin/users", queryParams);
-        return GetPagedAsync<Models.Api.Users.AdminUserSummary>(uri, filter.Page, filter.Limit, cancellationToken);
+        return GetPagedAsync<VocaNova.Dashboard.Data.Dtos.Users.AdminUserSummary>(uri, filter.Page, filter.Limit, cancellationToken);
     }
 
-    public Task<Models.Api.Users.AdminUserTopics?> GetUserTopicsAsync(uint userId, CancellationToken cancellationToken = default) =>
-        GetDataAsync<Models.Api.Users.AdminUserTopics>($"api/admin/users/{userId}/topics", cancellationToken);
+    public Task<VocaNova.Dashboard.Data.Dtos.Users.AdminUserTopics?> GetUserTopicsAsync(uint userId, CancellationToken cancellationToken = default) =>
+        GetDataAsync<VocaNova.Dashboard.Data.Dtos.Users.AdminUserTopics>($"api/admin/users/{userId}/topics", cancellationToken);
 
-    public Task<Models.Api.Users.AdminUserDetail?> GetUserDetailAsync(uint userId, CancellationToken cancellationToken = default) =>
-        GetDataAsync<Models.Api.Users.AdminUserDetail>($"api/admin/users/{userId}", cancellationToken);
+    public Task<VocaNova.Dashboard.Data.Dtos.Users.AdminUserDetail?> GetUserDetailAsync(uint userId, CancellationToken cancellationToken = default) =>
+        GetDataAsync<VocaNova.Dashboard.Data.Dtos.Users.AdminUserDetail>($"api/admin/users/{userId}", cancellationToken);
 
-    public Task<PagedData<Models.Api.Users.AdminUserTestSession>> GetUserTestHistoryAsync(uint userId, int page, int limit, CancellationToken cancellationToken = default) =>
-        GetPagedAsync<Models.Api.Users.AdminUserTestSession>(
+    public Task<PagedData<VocaNova.Dashboard.Data.Dtos.Users.AdminUserTestSession>> GetUserTestHistoryAsync(uint userId, int page, int limit, CancellationToken cancellationToken = default) =>
+        GetPagedAsync<VocaNova.Dashboard.Data.Dtos.Users.AdminUserTestSession>(
             $"api/admin/users/{userId}/test-history?page={page}&limit={limit}", page, limit, cancellationToken);
 
-    public Task<PagedData<Models.Api.Users.AuditLog>> GetUserAuditLogsAsync(uint userId, int page, int limit, CancellationToken cancellationToken = default) =>
-        GetPagedAsync<Models.Api.Users.AuditLog>(
+    public Task<PagedData<VocaNova.Dashboard.Data.Dtos.Users.AuditLog>> GetUserAuditLogsAsync(uint userId, int page, int limit, CancellationToken cancellationToken = default) =>
+        GetPagedAsync<VocaNova.Dashboard.Data.Dtos.Users.AuditLog>(
             $"api/admin/audit-logs?userId={userId}&page={page}&limit={limit}", page, limit, cancellationToken);
 
     public Task<ApiActionResult> DeactivateUserAsync(uint userId, CancellationToken cancellationToken = default) =>
@@ -246,7 +246,7 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> RestoreUserAsync(uint userId, CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Patch, $"api/admin/users/{userId}/restore", cancellationToken);
 
-    public Task<PagedData<Models.Api.SuperAdmin.AdminAccount>> GetAdminAccountsAsync(
+    public Task<PagedData<VocaNova.Dashboard.Data.Dtos.SuperAdmin.AdminAccount>> GetAdminAccountsAsync(
         AdminAccountFilter filter,
         CancellationToken cancellationToken = default)
     {
@@ -262,13 +262,13 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         if (!string.IsNullOrWhiteSpace(filter.SortDirection)) queryParams["sort_direction"] = filter.SortDirection;
 
         var uri = QueryHelpers.AddQueryString("api/superadmin/admins", queryParams);
-        return GetPagedAsync<Models.Api.SuperAdmin.AdminAccount>(uri, filter.Page, filter.Limit, cancellationToken);
+        return GetPagedAsync<VocaNova.Dashboard.Data.Dtos.SuperAdmin.AdminAccount>(uri, filter.Page, filter.Limit, cancellationToken);
     }
 
-    public Task<Models.Api.SuperAdmin.AdminAccount?> GetAdminAccountAsync(
+    public Task<VocaNova.Dashboard.Data.Dtos.SuperAdmin.AdminAccount?> GetAdminAccountAsync(
         uint adminId,
         CancellationToken cancellationToken = default) =>
-        GetDataAsync<Models.Api.SuperAdmin.AdminAccount>($"api/superadmin/admins/{adminId}", cancellationToken);
+        GetDataAsync<VocaNova.Dashboard.Data.Dtos.SuperAdmin.AdminAccount>($"api/superadmin/admins/{adminId}", cancellationToken);
 
     public Task<ApiActionResult> CreateAdminAccountAsync(
         AdminAccountInput input,
@@ -290,14 +290,14 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> DeleteAdminAccountAsync(uint adminId, CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Delete, $"api/superadmin/admins/{adminId}", cancellationToken);
 
-    public Task<PagedData<Models.Api.SuperAdmin.ManagedRole>> GetRolesAsync(CancellationToken cancellationToken = default) =>
+    public Task<PagedData<VocaNova.Dashboard.Data.Dtos.SuperAdmin.ManagedRole>> GetRolesAsync(CancellationToken cancellationToken = default) =>
         GetRolesAsync(null, null, cancellationToken);
 
-    public Task<PagedData<Models.Api.SuperAdmin.ManagedRole>> GetRolesAsync(
+    public Task<PagedData<VocaNova.Dashboard.Data.Dtos.SuperAdmin.ManagedRole>> GetRolesAsync(
         string? search, string? type, CancellationToken cancellationToken = default) =>
         GetRolesAsync(search, type, null, null, cancellationToken);
 
-    public Task<PagedData<Models.Api.SuperAdmin.ManagedRole>> GetRolesAsync(
+    public Task<PagedData<VocaNova.Dashboard.Data.Dtos.SuperAdmin.ManagedRole>> GetRolesAsync(
         string? search,
         string? type,
         string? sortBy,
@@ -309,7 +309,7 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         if (!string.IsNullOrWhiteSpace(type)) query["type"] = type;
         if (!string.IsNullOrWhiteSpace(sortBy)) query["sort_by"] = sortBy;
         if (!string.IsNullOrWhiteSpace(sortDirection)) query["sort_direction"] = sortDirection;
-        return GetPagedAsync<Models.Api.SuperAdmin.ManagedRole>(
+        return GetPagedAsync<VocaNova.Dashboard.Data.Dtos.SuperAdmin.ManagedRole>(
             QueryHelpers.AddQueryString("api/superadmin/roles", query), 1, 100, cancellationToken);
     }
 
@@ -325,7 +325,7 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> AssignRoleAsync(uint roleId, uint userId, CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Post, $"api/superadmin/roles/{roleId}/users/{userId}", cancellationToken);
 
-    public Task<IReadOnlyList<Models.Api.Dictionary.AdminTopic>> GetAdminTopicsAsync(
+    public Task<IReadOnlyList<VocaNova.Dashboard.Data.Dtos.Dictionary.AdminTopic>> GetAdminTopicsAsync(
         string? q,
         string? status,
         bool includeDeleted,
@@ -339,7 +339,7 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         if (!string.IsNullOrWhiteSpace(status)) queryParams["status"] = status;
 
         var uri = QueryHelpers.AddQueryString("api/admin/topics", queryParams);
-        return GetListAsync<Models.Api.Dictionary.AdminTopic>(uri, cancellationToken);
+        return GetListAsync<VocaNova.Dashboard.Data.Dtos.Dictionary.AdminTopic>(uri, cancellationToken);
     }
 
     public Task<ApiActionResult> CreateTopicAsync(TopicInput input, CancellationToken cancellationToken = default) =>
@@ -357,11 +357,11 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> RestoreTopicAsync(uint topicId, CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Patch, $"api/admin/topics/{topicId}/restore", cancellationToken);
 
-    public Task<Models.Api.Knn.KnnConfig?> GetKnnConfigAsync(CancellationToken cancellationToken = default) =>
-        GetDataAsync<Models.Api.Knn.KnnConfig>("api/admin/knn/config", cancellationToken);
+    public Task<VocaNova.Dashboard.Data.Dtos.Knn.KnnConfig?> GetKnnConfigAsync(CancellationToken cancellationToken = default) =>
+        GetDataAsync<VocaNova.Dashboard.Data.Dtos.Knn.KnnConfig>("api/admin/knn/config", cancellationToken);
 
-    public Task<Models.Api.Knn.KnnRebuildStatus?> GetKnnRebuildStatusAsync(CancellationToken cancellationToken = default) =>
-        GetDataAsync<Models.Api.Knn.KnnRebuildStatus>("api/admin/knn/rebuild-status", cancellationToken);
+    public Task<VocaNova.Dashboard.Data.Dtos.Knn.KnnRebuildStatus?> GetKnnRebuildStatusAsync(CancellationToken cancellationToken = default) =>
+        GetDataAsync<VocaNova.Dashboard.Data.Dtos.Knn.KnnRebuildStatus>("api/admin/knn/rebuild-status", cancellationToken);
 
     public Task<ApiActionResult> TriggerKnnRebuildAsync(CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Post, "api/admin/knn/trigger-rebuild", cancellationToken);
@@ -396,7 +396,7 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         SendActionAsync(HttpMethod.Patch, $"api/admin/knn/{lookup}/{id}/restore", cancellationToken);
 
     public Task<ApiActionResult> UpdateKnnVectorWeightsAsync(
-        Models.Api.Knn.KnnVectorWeights weights,
+        VocaNova.Dashboard.Data.Dtos.Knn.KnnVectorWeights weights,
         CancellationToken cancellationToken = default) =>
         SendJsonActionAsync(HttpMethod.Put, "api/admin/knn/config/vector-weights", new
         {
@@ -411,11 +411,11 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> ResetKnnVectorWeightsAsync(CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Post, "api/admin/knn/config/vector-weights/reset", cancellationToken);
 
-    public Task<Models.Api.Settings.AiGradingConfig?> GetAiGradingConfigAsync(CancellationToken cancellationToken = default) =>
-        GetDataAsync<Models.Api.Settings.AiGradingConfig>("api/admin/settings/ai-grading", cancellationToken);
+    public Task<VocaNova.Dashboard.Data.Dtos.Settings.AiGradingConfig?> GetAiGradingConfigAsync(CancellationToken cancellationToken = default) =>
+        GetDataAsync<VocaNova.Dashboard.Data.Dtos.Settings.AiGradingConfig>("api/admin/settings/ai-grading", cancellationToken);
 
     public Task<ApiActionResult> UpdateAiGradingConfigAsync(
-        Models.Api.Settings.AiGradingConfigInput input,
+        VocaNova.Dashboard.Data.Dtos.Settings.AiGradingConfigInput input,
         CancellationToken cancellationToken = default) =>
         SendJsonActionAsync(HttpMethod.Put, "api/admin/settings/ai-grading", new
         {
@@ -433,7 +433,7 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> ResetAiGradingConfigAsync(CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Post, "api/admin/settings/ai-grading/reset", cancellationToken);
 
-    public async Task<Models.Api.Settings.AiGradingConnectionTest?> TestAiGradingConnectionAsync(
+    public async Task<VocaNova.Dashboard.Data.Dtos.Settings.AiGradingConnectionTest?> TestAiGradingConnectionAsync(
         CancellationToken cancellationToken = default)
     {
         const string requestUri = "api/admin/settings/ai-grading/test";
@@ -447,7 +447,7 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
             }
 
             var envelope = await response.Content
-                .ReadFromJsonAsync<ApiEnvelope<Models.Api.Settings.AiGradingConnectionTest>>(
+                .ReadFromJsonAsync<ApiEnvelope<VocaNova.Dashboard.Data.Dtos.Settings.AiGradingConnectionTest>>(
                     ApiJson.Default,
                     cancellationToken);
             return envelope?.Data;
@@ -460,8 +460,8 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         }
     }
 
-    public Task<Models.Api.Auth.MeProfile?> GetMyProfileAsync(CancellationToken cancellationToken = default) =>
-        GetDataAsync<Models.Api.Auth.MeProfile>("api/auth/me", cancellationToken);
+    public Task<VocaNova.Dashboard.Data.Dtos.Auth.MeProfile?> GetMyProfileAsync(CancellationToken cancellationToken = default) =>
+        GetDataAsync<VocaNova.Dashboard.Data.Dtos.Auth.MeProfile>("api/auth/me", cancellationToken);
 
     public Task<ApiActionResult> UpdateMyProfileAsync(string? displayName, string? avatarUrl, CancellationToken cancellationToken = default) =>
         SendJsonActionAsync(HttpMethod.Put, "api/auth/me/profile", new

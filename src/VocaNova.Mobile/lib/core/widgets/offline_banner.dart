@@ -14,7 +14,10 @@ class OfflineBanner extends StatelessWidget {
       child: Text(
         AppLocalizations.of(context)!.commonOfflineBanner,
         textAlign: TextAlign.center,
-        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700),
+        style: const TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

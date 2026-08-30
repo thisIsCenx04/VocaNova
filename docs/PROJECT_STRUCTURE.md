@@ -66,7 +66,8 @@ VocaNova/
 |   |-- VocaNova.Dashboard/
 |   |   |-- Dockerfile
 |   |   |-- Controllers/
-|   |   |-- Models/{AdminAccounts,Api,Auth,Dashboard,Knn,Profile,Roles,Statistics,Topics,Users,Vocabulary}/
+|   |   |-- Data/Dtos/{Auth,Dictionary,Knn,Settings,Stats,SuperAdmin,Users}/
+|   |   |-- Models/{AdminAccounts,Auth,Dashboard,Knn,Profile,Roles,Statistics,Topics,Users,Vocabulary}/
 |   |   |-- Routing/
 |   |   |-- Services/{Api,Auth,Localization}/
 |   |   |-- Views/
@@ -79,7 +80,7 @@ VocaNova/
 |       |   |-- app/{router,settings,theme}/
 |       |   |-- core/{connectivity,network,storage,widgets}/
 |       |   |-- features/{auth,dictionary,home,lists,notifications,progress,quiz,settings,shared}/
-|       |   |   `-- application, data, domain, presentation as used by each feature
+|       |   |   `-- application, data/{dtos,services}, domain/models, presentation as used by each feature
 |       |   |-- l10n/
 |       |   `-- main.dart
 |       |-- test/
@@ -101,11 +102,13 @@ VocaNova/
 | `API/DependencyInjection` | API composition extensions. `AddBLL()` groups feature BLL service registrations and `AddDAL(configuration)` groups feature DAL/shared infrastructure registrations while `Program.cs` keeps HTTP/middleware ordering. |
 | `API/Common` | Shared envelopes/results, helpers, routing, security, and validation; currently includes some EF/ASP.NET-coupled code. |
 | `Dashboard/Services/Api` | HTTP transport, Bearer injection, refresh/retry, endpoint operations, and envelope parsing. |
-| `Dashboard/Models` | Dashboard-owned wire models and Razor view/support models. |
-| `Mobile/lib/features/*/data` | Dio-backed API gateways currently named repositories and JSON/domain mapping. |
+| `Dashboard/Data/Dtos` | Dashboard-owned API wire DTOs used by `Services/Api` for JSON request/response payloads. |
+| `Dashboard/Models` | Razor view/support models for Dashboard UI state; not the API wire boundary. |
+| `Mobile/lib/features/*/data` | Feature-owned `dtos` wire models plus Dio-backed `services/*ApiService` HTTP gateways and DTO/domain mapping. |
+| `Mobile/lib/features/*/domain/models` | Client-side domain models consumed by application state and presentation; no JSON/cache parsing lives here. |
 | `Mobile/lib/features/*/application` | Riverpod state, providers, notifiers, caching, and UI workflows. |
 | `tests/VocaNova.Tests` | API/Dashboard xUnit tests using mocks, HTTP handlers, EF InMemory, and a rolled-back MySQL integration test for WordSense soft delete. |
-| `Mobile/test` | Flutter unit, networking, storage, provider, repository, router, and widget tests. |
+| `Mobile/test` | Flutter unit, networking, storage, provider, API-service, router, and widget tests. |
 | `docker-compose.yml` | Four-service Docker foundation: MySQL, non-persistent Redis, API, and Dashboard with health-based dependencies. |
 | API/Dashboard `Dockerfile` | .NET 8 multi-stage restore/publish/runtime images exposing container HTTP port 8080. |
 
@@ -150,7 +153,11 @@ VocaNova/
 |   |   |-- Filters/
 |   |   `-- Program.cs
 |   |-- VocaNova.Dashboard/      # REST-only Presentation client
+|   |   |-- Data/Dtos/            # Dashboard-owned API wire DTOs
+|   |   |-- Models/               # Razor view/support models
+|   |   `-- Services/Api/         # HTTP client/envelope parsing
 |   `-- VocaNova.Mobile/         # REST-only Presentation client; outside Docker
+|       `-- lib/features/<Feature>/{application,data/{dtos,services},domain/models,presentation}/
 |-- tests/VocaNova.Tests/
 |-- scripts/
 `-- docs/
@@ -176,6 +183,8 @@ Features/<Feature>/
 ```
 
 Request validators are Presentation concerns and may live beside the feature's Request Contracts. No `DTOs` folder or new `Dto` suffix is part of the target. Mapping is explicit/manual by default; AutoMapper is not mandated.
+
+Dashboard and Mobile are client Presentation apps, so their API wire shapes are client-owned DTOs rather than backend BLL models. Dashboard stores those DTOs under `Data/Dtos`; Mobile stores them under feature `data/dtos` beside `data/services/*ApiService` HTTP gateways. The API still names its public HTTP boundary `Contracts/Requests|Responses` to distinguish backend transport contracts from BLL models and DAL entities.
 
 Shared/global infrastructure remains consolidated. `VocaNovaDbContext`, scaffolded entities, EF configurations, database-first synchronization, transaction coordination, Redis implementations, authentication, storage, providers, auditing, and runtime configuration stay outside `Features`. Cross-feature framework-neutral primitives such as `Common/Models/PagedCollection.cs` stay under `Common` rather than being duplicated.
 
@@ -203,5 +212,6 @@ Common/Models/PagedCollection.cs
 - Test-only compatibility cleanup is partially complete. Progress, KNN, Quiz, and SuperAdmin compatibility adapters have been retired; remaining test-local compatibility surfaces are `tests/VocaNova.Tests/Auth/CompatAuthRepository.cs`, `tests/VocaNova.Tests/Dictionary/DictionaryCompatibilityAdapters.cs`, `tests/VocaNova.Tests/Lists/ListsCompatibilityAdapters.cs`, and broad aliases in `tests/VocaNova.Tests/GlobalUsings.cs`.
 - Shared entities/configurations, `VocaNovaDbContext`, Redis, and provider implementations remain consolidated under `Infrastructure`.
 - Feature BLL/DAL registrations are grouped behind `AddBLL()` and `AddDAL(configuration)`; `Program.cs` still owns HTTP framework setup and middleware order.
-- Dashboard/Mobile remain REST clients; their client-side layers are not backend BLL/DAL.
+- Dashboard/Mobile remain REST clients; their client-side layers are not backend BLL/DAL. Dashboard API wire models now live under `Data/Dtos`, while Mobile feature HTTP wire models live under `lib/features/<feature>/data/dtos` and map to domain models before reaching application/presentation state.
+- Mobile feature folders use `data/dtos` for wire/cache payloads, `data/services/*ApiService` for remote HTTP, `domain/models` for app-domain types, `application` for Riverpod state/notifiers/providers, and `presentation` for widgets/screens.
 - Dockerfiles and Compose health checks/container DNS are implemented for `mysql`, `redis`, `api`, and `dashboard`; Compose uses the named `mysql_data` volume and wires the API's existing MySQL configuration to `mysql:3306`.

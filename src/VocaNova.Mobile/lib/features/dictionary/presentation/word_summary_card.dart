@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 
 class WordSummaryCard extends StatelessWidget {
   const WordSummaryCard({

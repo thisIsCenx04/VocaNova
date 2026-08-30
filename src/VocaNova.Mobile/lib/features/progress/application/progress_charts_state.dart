@@ -1,4 +1,4 @@
-import 'package:vocanova_mobile/features/progress/domain/progress_analytics.dart';
+import 'package:vocanova_mobile/features/progress/domain/models/progress_analytics.dart';
 
 class ProgressChartsState {
   const ProgressChartsState({

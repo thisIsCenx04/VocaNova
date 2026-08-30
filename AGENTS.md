@@ -42,7 +42,7 @@ Then read the task-specific document:
 - The API is a transitional modular monolith. Notifications, Progress, all Dictionary and Lists/personal-topic endpoints, Quiz/AI grading, KNN/runtime configuration, Auth, and Admin/SuperAdmin use corrected feature-first Presentation/BLL/DAL slices under `Features/<Feature>`.
 - Persistence is EF Core 8 with MySQL 8 and Pomelo. The workflow is database-first through `scripts/scaffold-mysql.ps1`; no EF migration set exists. `WordSense` now uses the reviewed `status` column and the same active/deleted global-filter pattern as `Word` and `Topic`.
 - Redis is a cache/runtime-settings fallback, not the system of record.
-- Dashboard and Mobile communicate with the API only through HTTP(S)/REST and own their wire models.
+- Dashboard and Mobile communicate with the API only through HTTP(S)/REST and own their wire models. Dashboard API wire DTOs live under `src/VocaNova.Dashboard/Data/Dtos`; Mobile feature wire DTOs live under `src/VocaNova.Mobile/lib/features/<feature>/data/dtos`, with remote HTTP gateways in `data/services` and client domain models in `domain/models`.
 - Test-only compatibility cleanup is partially complete: Auth, Dictionary, and Lists still have local test compatibility helpers/aliases, while Progress, KNN, Quiz, and SuperAdmin adapters have been retired.
 - Docker foundation is present and aligned with the accepted relational target: Compose defines `mysql`, `redis`, `api`, and `dashboard`; API/Dashboard have multi-stage Dockerfiles, and the API container receives `MYSQL_CONNECTION_STRING` for `mysql:3306`.
 

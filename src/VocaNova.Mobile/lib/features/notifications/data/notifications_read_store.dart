@@ -35,7 +35,8 @@ class NotificationsReadStore {
   Future<void> markRead(int id) => markAllRead([id]);
 
   Future<void> markAllRead(Iterable<int> ids) async {
-    final current = await readIds()..addAll(ids);
+    final current = await readIds()
+      ..addAll(ids);
     await _local.set<String>(_key, jsonEncode(current.toList(growable: false)));
   }
 }

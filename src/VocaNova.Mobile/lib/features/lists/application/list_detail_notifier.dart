@@ -6,7 +6,8 @@ import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
 import 'package:vocanova_mobile/features/lists/application/list_detail_state.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
-import 'package:vocanova_mobile/features/lists/domain/list_word.dart';
+import 'package:vocanova_mobile/features/lists/data/dtos/list_word_dto.dart';
+import 'package:vocanova_mobile/features/lists/domain/models/list_word.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'list_detail_notifier.g.dart';
@@ -34,7 +35,7 @@ class ListDetailNotifier extends _$ListDetailNotifier {
     }
     try {
       final result = await ref
-          .read(listsRepositoryProvider)
+          .read(listsApiServiceProvider)
           .getWords(listId: listId, page: 1);
       state = ListDetailState(
         words: result.items,
@@ -60,7 +61,7 @@ class ListDetailNotifier extends _$ListDetailNotifier {
     state = state.copyWith(isLoadingMore: true, clearError: true);
     try {
       final result = await ref
-          .read(listsRepositoryProvider)
+          .read(listsApiServiceProvider)
           .getWords(listId: listId, page: state.page + 1);
       final words = [...state.words, ...result.items];
       state = state.copyWith(
@@ -82,7 +83,7 @@ class ListDetailNotifier extends _$ListDetailNotifier {
     if (!_canMutate()) return false;
     try {
       final word = await ref
-          .read(listsRepositoryProvider)
+          .read(listsApiServiceProvider)
           .addWord(listId: listId, wordId: wordId);
       final words = [
         word,
@@ -105,7 +106,7 @@ class ListDetailNotifier extends _$ListDetailNotifier {
     if (!_canMutate()) return false;
     try {
       final added = await ref
-          .read(listsRepositoryProvider)
+          .read(listsApiServiceProvider)
           .addRandomWords(
             listId: listId,
             count: count,
@@ -135,7 +136,7 @@ class ListDetailNotifier extends _$ListDetailNotifier {
     state = state.copyWith(words: optimistic, clearError: true);
     try {
       await ref
-          .read(listsRepositoryProvider)
+          .read(listsApiServiceProvider)
           .removeWord(listId: listId, wordId: wordId);
       await _cache(optimistic);
       return true;
@@ -153,7 +154,9 @@ class ListDetailNotifier extends _$ListDetailNotifier {
       .read(listsLocalStorageProvider)
       .set(
         StorageKeys.listWordsCacheJson(listId),
-        jsonEncode(words.map((word) => word.toJson()).toList()),
+        jsonEncode(
+          words.map((word) => ListWordDto.fromDomain(word).toJson()).toList(),
+        ),
       );
 
   bool _canMutate() {
@@ -172,7 +175,8 @@ class ListDetailNotifier extends _$ListDetailNotifier {
     try {
       return (jsonDecode(source ?? '[]') as List<dynamic>)
           .whereType<Map<String, dynamic>>()
-          .map(ListWord.fromJson)
+          .map(ListWordDto.fromJson)
+          .map((dto) => dto.toDomain())
           .toList(growable: false);
     } on FormatException {
       return const [];

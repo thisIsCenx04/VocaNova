@@ -7,14 +7,14 @@ import 'package:vocanova_mobile/features/dictionary/application/audio_playback_s
 import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_detail_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/data/word_detail_repository.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_detail.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/data/services/word_detail_api_service.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_detail.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/word_detail_screen.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
-  late MockWordDetailRepository repository;
+  late MockWordDetailApiService repository;
   late MockConnectivityService connectivity;
   late MockLocalStorage storage;
   late MockAudioPlaybackService audio;
@@ -22,7 +22,7 @@ void main() {
   setUpAll(() => registerFallbackValue(Duration.zero));
 
   setUp(() {
-    repository = MockWordDetailRepository();
+    repository = MockWordDetailApiService();
     connectivity = MockConnectivityService();
     storage = MockLocalStorage();
     audio = MockAudioPlaybackService();
@@ -188,7 +188,7 @@ void main() {
 
 Future<void> pumpDetail(
   WidgetTester tester,
-  WordDetailRepository repository,
+  WordDetailApiService repository,
   ConnectivityService connectivity,
   LocalStorage storage,
   AudioPlaybackService audio,
@@ -196,7 +196,7 @@ Future<void> pumpDetail(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        wordDetailRepositoryProvider.overrideWithValue(repository),
+        wordDetailApiServiceProvider.overrideWithValue(repository),
         wordDetailLocalStorageProvider.overrideWithValue(storage),
         connectivityServiceProvider.overrideWithValue(connectivity),
         audioPlaybackServiceProvider.overrideWithValue(audio),
@@ -212,7 +212,7 @@ Future<void> pumpDetail(
   await tester.pump(const Duration(milliseconds: 100));
 }
 
-class MockWordDetailRepository extends Mock implements WordDetailRepository {}
+class MockWordDetailApiService extends Mock implements WordDetailApiService {}
 
 class MockConnectivityService extends Mock implements ConnectivityService {}
 

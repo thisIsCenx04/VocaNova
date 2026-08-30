@@ -10,13 +10,14 @@ import 'package:vocanova_mobile/core/storage/storage_keys.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/data/word_search_repository.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/data/dtos/word_summary_dto.dart';
+import 'package:vocanova_mobile/features/dictionary/data/services/word_search_api_service.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late MockWordSearchRepository repository;
+  late MockWordSearchApiService repository;
   late MockConnectivityService connectivity;
   late LocalStorage storage;
   late ProviderContainer container;
@@ -26,11 +27,11 @@ void main() {
     storage = LocalStorage.create(
       preferences: await SharedPreferences.getInstance(),
     );
-    repository = MockWordSearchRepository();
+    repository = MockWordSearchApiService();
     connectivity = MockConnectivityService();
     container = ProviderContainer(
       overrides: [
-        wordSearchRepositoryProvider.overrideWithValue(repository),
+        wordSearchApiServiceProvider.overrideWithValue(repository),
         connectivityServiceProvider.overrideWithValue(connectivity),
         searchLocalStorageProvider.overrideWithValue(storage),
       ],
@@ -74,14 +75,18 @@ void main() {
     await storage.set(
       StorageKeys.wordSearchCacheJson,
       jsonEncode([
-        const WordSummary(
-          wordId: 1,
-          word: 'hello',
-          cefr: 'A1',
-          primaryMeaning: 'xin chào',
-          topicIds: {2},
+        WordSummaryDto.fromDomain(
+          const WordSummary(
+            wordId: 1,
+            word: 'hello',
+            cefr: 'A1',
+            primaryMeaning: 'xin chào',
+            topicIds: {2},
+          ),
         ).toJson(),
-        const WordSummary(wordId: 2, word: 'help', cefr: 'A2').toJson(),
+        WordSummaryDto.fromDomain(
+          const WordSummary(wordId: 2, word: 'help', cefr: 'A2'),
+        ).toJson(),
       ]),
     );
     when(() => connectivity.isOnline).thenAnswer((_) async => false);
@@ -129,6 +134,6 @@ void main() {
   );
 }
 
-class MockWordSearchRepository extends Mock implements WordSearchRepository {}
+class MockWordSearchApiService extends Mock implements WordSearchApiService {}
 
 class MockConnectivityService extends Mock implements ConnectivityService {}

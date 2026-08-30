@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
-import 'package:vocanova_mobile/features/auth/domain/onboarding_catalog.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/onboarding_catalog.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_form_scaffold.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_request_error.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_validators.dart';
@@ -56,7 +56,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Future<void> _loadOptions() async {
     try {
       final options = await ref
-          .read(authRepositoryProvider)
+          .read(authApiServiceProvider)
           .getLearningProfileOptions();
       if (mounted) {
         setState(() => _options = options);
@@ -329,7 +329,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     setState(() => _isLoading = true);
     try {
       await ref
-          .read(authRepositoryProvider)
+          .read(authApiServiceProvider)
           .sendOtp(phone: phone, purpose: 'register');
       if (!mounted) {
         return;
