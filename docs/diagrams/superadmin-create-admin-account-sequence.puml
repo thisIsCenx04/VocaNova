@@ -1,0 +1,89 @@
+@startuml
+title Create Admin Account Sequence (/api/superadmin/admins)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor SuperAdmin
+boundary "Create Admin Account\nPage (Dashboard)" as CreatePage
+control "AdminAccountsController\n(Dashboard)" as DashboardController
+control "ServiceAPI\n(Dashboard)" as ServiceApi
+entity "CreateAdminAccountRequest /\nAdminAccountResponse\n(Request/Response DTO)" as AdminAccountDto
+control "SuperAdminAccountsController\n(API)" as ApiController
+control "SuperAdminAccountService" as AccountService
+control "SuperAdminAccountRepository" as AccountRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over CreatePage, MySQL
+Checked in current code:
+Dashboard AdminAccountsController posts create data through ServiceAPI.
+API uses CreateAdminAccountRequest and returns AdminAccountResponse.
+end note
+
+SuperAdmin -> CreatePage: Open create admin page
+SuperAdmin -> CreatePage: Enter full name, email,\nphone, password, status
+SuperAdmin -> CreatePage: Submit form
+CreatePage -> DashboardController: POST /admin-accounts/create
+DashboardController -> DashboardController: Validate form input
+
+alt Form input invalid
+    DashboardController --> CreatePage: Show validation message
+else Form input valid
+    DashboardController -> ServiceApi: CreateAdminAccountAsync(input)
+    ServiceApi -> AdminAccountDto: Create request data\n(full_name, email, phone,\npassword, status)
+    AdminAccountDto -> ApiController: POST /api/superadmin/admins\nCreateAdminAccountRequest
+    ApiController -> ApiController: Check super admin authorization
+    ApiController -> ApiController: Validate CreateAdminAccountRequest
+
+    alt Request validation fails
+        ApiController --> ServiceApi: HTTP 400 error
+        ServiceApi --> DashboardController: Action failed
+        DashboardController --> CreatePage: Show error message
+    else Request validation success
+        ApiController -> AccountService: CreateAsync(create data)
+        AccountService -> AccountRepository: FindDuplicateAsync(phone, email)
+        AccountRepository -> DbContext: Query duplicate phone/email
+        DbContext -> MySQL: SELECT user_auth
+        MySQL --> DbContext: Duplicate row or null
+        DbContext --> AccountRepository: Result
+        AccountRepository --> AccountService: Duplicate message or null
+
+        alt Phone or email already exists
+            AccountService --> ApiController: Conflict result
+            ApiController --> ServiceApi: HTTP 409 error
+            ServiceApi --> DashboardController: Action failed
+            DashboardController --> CreatePage: Show error message
+        else Phone and email are available
+            AccountService -> AccountRepository: GetAdminRoleIdAsync()
+            AccountRepository -> DbContext: Query admin role
+            DbContext -> MySQL: SELECT roles
+            MySQL --> DbContext: Admin role row or null
+            DbContext --> AccountRepository: Result
+            AccountRepository --> AccountService: role_id or null
+
+            alt Admin role missing
+                AccountService --> ApiController: Validation failure
+                ApiController --> ServiceApi: HTTP 400 error
+                ServiceApi --> DashboardController: Action failed
+                DashboardController --> CreatePage: Show error message
+            else Admin role exists
+                AccountService -> AccountService: Hash password\nand begin transaction
+                AccountService -> AccountRepository: AddAccountAsync(create data)
+                AccountRepository -> DbContext: Add User, UserAuth, UserProfile
+                DbContext -> MySQL: INSERT admin account data
+                MySQL --> DbContext: Insert result
+                DbContext --> AccountRepository: Save result
+                AccountRepository --> AccountService: Created admin account
+                AccountService --> ApiController: Return created account
+                ApiController -> AdminAccountDto: Create response data\n(AdminAccountResponse)
+                AdminAccountDto --> ServiceApi: HTTP 201 Created\nAdminAccountResponse
+                ServiceApi --> DashboardController: Action success
+                DashboardController --> CreatePage: Redirect to admin account list
+            end
+        end
+    end
+end
+
+@enduml
