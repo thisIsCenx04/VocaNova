@@ -28,7 +28,7 @@ alt Data input invalid
     OtpScreen --> Guest: Show error message
 else Data input valid
     OtpScreen -> OtpVerifyDto: Create request data\n(phone, otp_code)
-    OtpScreen -> AuthController: POST /api/auth/otp/verify\nOtpVerifyRequest
+    OtpVerifyDto -> AuthController: POST /api/auth/otp/verify\nOtpVerifyRequest
     AuthController -> AuthController: Validate OtpVerifyRequest
 
     alt Request validation fails
@@ -76,7 +76,7 @@ else Data input valid
 
             AuthService --> AuthController: Return verify result
             AuthController -> OtpVerifyDto: Create response data\n(verified)
-            AuthController --> OtpScreen: HTTP 200 OK\nOtpVerifyResponse
+            OtpVerifyDto --> OtpScreen: HTTP 200 OK\nOtpVerifyResponse
             OtpScreen --> Guest: Show success message
         end
     end
