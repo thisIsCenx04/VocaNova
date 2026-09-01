@@ -1,0 +1,57 @@
+@startuml
+title Delete Word Audio Sequence (/api/admin/words/{id}/audio/{audioId})
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Vocabulary Page\n(Dashboard)" as VocabularyPage
+control "VocabularyController\n(Dashboard)" as DashboardController
+control "ServiceAPI\n(Dashboard)" as ServiceApi
+control "AdminWordsController\n(API)" as ApiController
+control "WordAdminService" as WordService
+control "WordAdminRepository" as WordRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over VocabularyPage, MySQL
+Checked in current code:
+Dashboard route is POST /vocabulary/{id}/audio/{audioId}/delete.
+ServiceAPI calls DELETE /api/admin/words/{id}/audio/{audioId}.
+No request DTO body is used; API returns bool in the response envelope.
+Delete is soft delete: audio status becomes deleted.
+end note
+
+Admin -> VocabularyPage: Click Delete audio
+VocabularyPage -> DashboardController: POST /vocabulary/{id}/audio/{audioId}/delete
+DashboardController -> ServiceApi: DeleteAudioAsync(wordId, audioId)
+ServiceApi -> ApiController: DELETE /api/admin/words/{id}/audio/{audioId}
+ApiController -> ApiController: Check admin authorization
+ApiController -> WordService: SoftDeleteAudioAsync(wordId, audioId)
+
+WordService -> WordRepository: SetAudioStatusAsync(wordId, audioId, deleted)
+WordRepository -> DbContext: Find audio asset
+DbContext -> MySQL: SELECT word_audio_assets
+MySQL --> DbContext: Audio row or null
+DbContext --> WordRepository: Result
+
+alt Audio asset not found or already deleted
+    WordRepository --> WordService: false
+    WordService --> ApiController: NotFound result
+    ApiController --> ServiceApi: HTTP 404 error
+    ServiceApi --> DashboardController: Action failed
+    DashboardController --> VocabularyPage: Show error message
+else Audio asset found
+    WordRepository -> DbContext: Set audio status deleted
+    DbContext -> MySQL: UPDATE word_audio_assets
+    MySQL --> DbContext: Update result
+    DbContext --> WordRepository: Save result
+    WordRepository --> WordService: true
+    WordService --> ApiController: Success result
+    ApiController --> ServiceApi: HTTP 200 OK
+    ServiceApi --> DashboardController: Action success
+    DashboardController --> VocabularyPage: Show audio removed feedback
+end
+
+@enduml
