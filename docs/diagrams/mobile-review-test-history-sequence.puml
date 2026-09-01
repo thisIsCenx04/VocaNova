@@ -1,0 +1,60 @@
+@startuml
+title Review Test History Sequence (/api/quiz/history)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Learner
+boundary "Review Test History UI" as HistoryUi
+control "QuizSessionsController\n(BE API)" as BeController
+entity "QuizHistoryRequest\n(BE Request DTO)" as BeHistoryRequestDto
+entity "QuizHistoryItemResponse\n(BE Response DTO)" as BeHistoryResponseDto
+control "QuizHistoryService" as HistoryService
+entity "TestSession" as TestSessionEntity
+control "QuizHistoryRepository" as HistoryRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over HistoryUi, MySQL
+Checked in current code:
+BE controller exists: QuizSessionsController.
+BE request/response DTOs exist: QuizHistoryRequest and QuizHistoryItemResponse.
+Endpoint is GET /api/quiz/history with page and limit query parameters.
+Mobile currently has no QuizApiService.getHistory method and no FE history DTO.
+Profile UI has a Test history entry, but no Mobile API flow is implemented for history yet.
+Entity exists: TestSession.
+end note
+
+Learner -> HistoryUi: Open test history
+HistoryUi -> BeController: GET /api/quiz/history\npage, limit
+BeController -> BeHistoryRequestDto: Bind query string
+BeHistoryRequestDto --> BeController: QuizHistoryRequest
+BeController -> BeController: Check authenticated user
+
+alt User id missing
+    BeController --> HistoryUi: HTTP 401 error
+else User authenticated
+    BeController -> HistoryService: GetHistoryAsync(userId, query)
+    HistoryService -> HistoryService: Validate page and limit
+
+    alt Query validation fails
+        HistoryService --> BeController: Validation failure
+        BeController --> HistoryUi: HTTP 400 error
+    else Query validation success
+        HistoryService -> HistoryRepository: GetHistoryAsync(userId, page, limit)
+        HistoryRepository -> DbContext: Query paged test sessions
+        DbContext -> MySQL: SELECT COUNT(*),\nSELECT test_sessions
+        MySQL --> DbContext: History rows
+        DbContext -> TestSessionEntity: Read TestSession rows
+        TestSessionEntity --> DbContext: Quiz history rows
+        DbContext --> HistoryRepository: Paged history result
+        HistoryRepository --> HistoryService: Paged history
+        HistoryService --> BeController: History result
+        BeController -> BeHistoryResponseDto: Create QuizHistoryItemResponse list
+        BeHistoryResponseDto --> BeController: QuizHistoryItemResponse list
+        BeController --> HistoryUi: HTTP 200 OK\nQuizHistoryItemResponse list
+    end
+end
+
+@enduml

@@ -1,0 +1,28 @@
+@startuml
+title Change Language Sequence (Mobile local settings)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Learner
+boundary "Change Language UI" as LanguageUi
+control "AppSettingsNotifier\n(FE Mobile)" as SettingsController
+control "LocalStorage\n(Device)" as LocalStorage
+
+note over LanguageUi, LocalStorage
+Checked in current code:
+Language is changed by AppSettingsNotifier.setLocale(languageCode).
+The selected locale is saved to LocalStorage with StorageKeys.appLocale.
+No FE DTO, BE DTO, API controller, repository, DbContext or database is used.
+end note
+
+Learner -> LanguageUi: Select language
+LanguageUi -> SettingsController: setLocale(languageCode)
+SettingsController -> SettingsController: Normalize to en or vi
+SettingsController -> LocalStorage: Save StorageKeys.appLocale
+LocalStorage --> SettingsController: Saved language code
+SettingsController -> SettingsController: Update AppSettingsState.locale
+SettingsController --> LanguageUi: Rebuild localized UI
+
+@enduml

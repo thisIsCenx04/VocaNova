@@ -1,0 +1,87 @@
+@startuml
+title View Statistics Dashboard Sequence (/api/progress/summary)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Learner
+boundary "Statistics Dashboard UI" as StatisticsDashboardUi
+control "ProgressOverviewNotifier\n(FE Mobile)" as FeController
+control "ProgressApiService\n(FE Mobile)" as FeApiService
+entity "ProgressSummaryDto\n(FE Response DTO)" as FeSummaryDto
+entity "ProgressSummaryResponse\n(BE Response DTO)" as BeSummaryDto
+control "ProgressController\n(BE API)" as BeController
+control "ProgressSummaryService" as SummaryService
+entity "TestSession" as TestSessionEntity
+entity "TestAnswer" as TestAnswerEntity
+entity "UserWordProgress" as UserWordProgressEntity
+control "ProgressSummaryRepository" as SummaryRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over StatisticsDashboardUi, MySQL
+Checked in current code:
+Mobile UI file exists: progress_overview_screen.dart.
+FE controller/service exist: ProgressOverviewNotifier and ProgressApiService.
+FE response DTO exists: ProgressSummaryDto.
+BE controller exists: ProgressController.
+BE response DTO exists: ProgressSummaryResponse.
+Endpoint is GET /api/progress/summary; no request DTO body is used.
+Entities exist: TestSession, TestAnswer and UserWordProgress.
+end note
+
+Learner -> StatisticsDashboardUi: Open statistics dashboard
+StatisticsDashboardUi -> FeController: load()
+FeController -> FeApiService: getSummary()
+FeApiService -> BeController: GET /api/progress/summary
+BeController -> BeController: Check authenticated user
+
+alt User id missing
+    BeController --> FeApiService: HTTP 401 error
+    FeApiService --> FeController: Action failed
+    FeController --> StatisticsDashboardUi: Show error state
+else User authenticated
+    BeController -> SummaryService: GetSummaryAsync(userId)
+    SummaryService -> SummaryService: Build seven-day and month query
+    SummaryService -> SummaryRepository: GetSummaryStatisticsAsync(userId, query)
+    SummaryRepository -> DbContext: Query session dates
+    DbContext -> MySQL: SELECT test_sessions
+    MySQL --> DbContext: Session date rows
+    DbContext -> TestSessionEntity: Read TestSession dates
+    TestSessionEntity --> DbContext: Session dates
+
+    SummaryRepository -> DbContext: Query answer accuracy
+    DbContext -> MySQL: SELECT test_answers\nJOIN test_sessions
+    MySQL --> DbContext: Answer statistic rows
+    DbContext -> TestAnswerEntity: Read TestAnswer rows
+    DbContext -> TestSessionEntity: Read TestSession rows
+    TestAnswerEntity --> DbContext: Correct and total counts
+    TestSessionEntity --> DbContext: Seven-day scope
+
+    SummaryRepository -> DbContext: Query progress counts
+    DbContext -> MySQL: SELECT user_word_progresses
+    MySQL --> DbContext: Progress rows
+    DbContext -> UserWordProgressEntity: Read UserWordProgress rows
+    UserWordProgressEntity --> DbContext: Words in progress\nand mastered words
+
+    SummaryRepository -> DbContext: Query sessions this month
+    DbContext -> MySQL: SELECT test_sessions
+    MySQL --> DbContext: Monthly session rows
+    DbContext -> TestSessionEntity: Read TestSession rows
+    TestSessionEntity --> DbContext: Monthly session count
+
+    DbContext --> SummaryRepository: Summary statistics
+    SummaryRepository --> SummaryService: Summary statistics
+    SummaryService -> SummaryService: Calculate streaks\nand accuracy
+    SummaryService --> BeController: Summary result
+    BeController -> BeSummaryDto: Create ProgressSummaryResponse
+    BeSummaryDto --> BeController: ProgressSummaryResponse
+    BeController --> FeApiService: HTTP 200 OK\nProgressSummaryResponse
+    FeApiService -> FeSummaryDto: Parse response data
+    FeSummaryDto --> FeApiService: ProgressSummary
+    FeApiService --> FeController: Progress summary
+    FeController --> StatisticsDashboardUi: Show statistics cards
+end
+
+@enduml

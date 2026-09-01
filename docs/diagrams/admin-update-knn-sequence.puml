@@ -1,0 +1,104 @@
+@startuml
+title Update KNN Lookup Sequence (/knn/{slug}/save and /api/admin/knn/{slug}/{id})
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Update KNN UI" as UpdateKnnUi
+control "KnnController\n(FE Dashboard)" as FeController
+control "AdminKnnController\n(BE API)" as BeController
+entity "AgeRange / Region /\nOccupation / EducationLevel /\nLearningPurpose\n(FE Response DTO)" as FeLookupDto
+entity "UpdateAgeRangeRequest / UpdateRegionRequest /\nUpdateOccupationRequest / UpdateEducationLevelRequest /\nUpdateLearningPurposeRequest\n(BE Request DTO)" as BeUpdateDto
+entity "AgeRangeResponse / RegionResponse /\nOccupationResponse / EducationLevelResponse /\nLearningPurposeResponse\n(BE Response DTO)" as BeLookupResponseDto
+control "AdminKnnLookupService" as LookupService
+entity "AgeRange" as AgeRangeEntity
+entity "Region" as RegionEntity
+entity "Occupation" as OccupationEntity
+entity "EducationLevel" as EducationLevelEntity
+entity "LearningPurpose" as LearningPurposeEntity
+control "AdminKnnLookupRepository" as LookupRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over UpdateKnnUi, MySQL
+Checked in current code:
+Dashboard UI file exists: Views/Knn/Lookup.cshtml.
+FE controller exists: KnnController.
+BE controller exists: AdminKnnController.
+BE update request DTOs and response DTOs exist for each KNN lookup type.
+Update KNN means updating one lookup row under a valid KNN slug.
+Entities exist: AgeRange, Region, Occupation, EducationLevel and LearningPurpose.
+end note
+
+Admin -> UpdateKnnUi: Edit lookup row
+Admin -> UpdateKnnUi: Save changes
+UpdateKnnUi -> FeController: POST /knn/{slug}/save\nid, form data
+FeController -> FeController: Validate slug\nand build payload
+FeController -> BeController: VocaNovaApiClient.UpdateKnnLookupAsync\nPUT /api/admin/knn/{slug}/{id}
+BeController -> BeUpdateDto: Bind request body\nby slug
+BeUpdateDto --> BeController: Update lookup request
+BeController -> BeController: Check admin authorization
+BeController -> BeController: Validate update request
+
+alt Request invalid
+    BeController --> FeController: HTTP 400 error
+    FeController --> UpdateKnnUi: Show error message
+else Request valid
+    BeController -> LookupService: Update{LookupType}Async(id, command)
+    LookupService -> LookupRepository: Check duplicate name/code
+    LookupRepository -> DbContext: Query lookup table
+    DbContext -> MySQL: SELECT lookup table
+    MySQL --> DbContext: Duplicate row or null
+    DbContext --> LookupRepository: Duplicate check result
+    LookupRepository --> LookupService: exists or not
+
+    alt Duplicate or invalid parent
+        LookupService --> BeController: Conflict or validation failure
+        BeController --> FeController: HTTP 400/409 error
+        FeController --> UpdateKnnUi: Show error message
+    else Lookup item can be updated
+        LookupService -> LookupRepository: Update lookup row
+        LookupRepository -> DbContext: Find lookup entity
+        DbContext -> MySQL: SELECT lookup table
+        MySQL --> DbContext: Lookup row or null
+
+        alt Lookup item not found
+            DbContext --> LookupRepository: null
+            LookupRepository --> LookupService: null
+            LookupService --> BeController: NotFound result
+            BeController --> FeController: HTTP 404 error
+            FeController --> UpdateKnnUi: Show error message
+        else Lookup item found
+            DbContext -> AgeRangeEntity: Read AgeRange if slug age-ranges
+            DbContext -> RegionEntity: Read Region if slug regions
+            DbContext -> OccupationEntity: Read Occupation if slug occupations
+            DbContext -> EducationLevelEntity: Read EducationLevel if slug education-levels
+            DbContext -> LearningPurposeEntity: Read LearningPurpose if slug learning-purposes
+            AgeRangeEntity --> DbContext: AgeRange?
+            RegionEntity --> DbContext: Region?
+            OccupationEntity --> DbContext: Occupation?
+            EducationLevelEntity --> DbContext: EducationLevel?
+            LearningPurposeEntity --> DbContext: LearningPurpose?
+            LookupRepository -> AgeRangeEntity: Update fields if AgeRange
+            LookupRepository -> RegionEntity: Update fields if Region
+            LookupRepository -> OccupationEntity: Update fields if Occupation
+            LookupRepository -> EducationLevelEntity: Update fields if EducationLevel
+            LookupRepository -> LearningPurposeEntity: Update fields if LearningPurpose
+            LookupRepository -> DbContext: Track lookup update
+            DbContext -> MySQL: UPDATE lookup table
+            MySQL --> DbContext: Update result
+            DbContext --> LookupRepository: Saved lookup
+            LookupRepository --> LookupService: Updated lookup item
+            LookupService --> BeController: Updated lookup result
+            BeController -> BeLookupResponseDto: Create lookup response
+            BeLookupResponseDto --> BeController: Lookup response
+            BeController -> FeLookupDto: HTTP 200 OK\nlookup response JSON
+            FeLookupDto --> FeController: Lookup DTO
+            FeController --> UpdateKnnUi: Show updated feedback
+        end
+    end
+end
+
+@enduml

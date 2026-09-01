@@ -1,0 +1,145 @@
+@startuml
+title Take Exam Sequence (/api/quiz/sessions)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Learner
+boundary "Take Exam UI" as TakeExamUi
+control "QuizConfigNotifier\n(FE Mobile)" as FeController
+control "QuizApiService\n(FE Mobile)" as FeApiService
+entity "QuizConfigRequestDto\n(FE Request DTO)" as FeCreateSessionDto
+entity "QuizSessionStartDto\n(FE Response DTO)" as FeSessionStartDto
+entity "CreateSessionRequest\n(BE Request DTO)" as BeCreateSessionDto
+entity "CreateSessionResponse\n(BE Response DTO)" as BeCreateSessionResponseDto
+entity "QuestionResponse\n(BE Response DTO)" as BeQuestionDto
+control "QuizSessionsController\n(BE API)" as BeController
+control "QuizSessionService" as SessionService
+control "QuizSessionBuilder" as SessionBuilder
+control "QuizQuestionBuilder" as QuestionBuilder
+entity "UserList" as UserListEntity
+entity "UserListWord" as UserListWordEntity
+entity "UserWordProgress" as UserWordProgressEntity
+entity "Word" as WordEntity
+entity "WordSense" as WordSenseEntity
+entity "WordTopic" as WordTopicEntity
+entity "TestSession" as TestSessionEntity
+entity "TestSessionTopic" as TestSessionTopicEntity
+control "QuizPoolRepository" as PoolRepository
+control "QuizQuestionRepository" as QuestionRepository
+control "QuizSessionRepository" as SessionRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over TakeExamUi, MySQL
+Checked in current code:
+Mobile UI file exists: quiz_config_screen.dart.
+FE controller/service exist: QuizConfigNotifier and QuizApiService.
+FE request/response DTOs exist: QuizConfigRequestDto and QuizSessionStartDto.
+BE request/response DTOs exist: CreateSessionRequest,
+CreateSessionResponse and QuestionResponse.
+Endpoint is POST /api/quiz/sessions.
+Entities exist: UserList, UserListWord, UserWordProgress, Word,
+WordSense, WordTopic, TestSession and TestSessionTopic.
+end note
+
+Learner -> TakeExamUi: Configure exam
+TakeExamUi -> FeController: createSession()
+FeController -> FeController: Validate source, scope,\nmode and question limit
+
+alt Mobile validation fails
+    FeController --> TakeExamUi: Show validation error
+else Mobile validation success
+    FeController -> FeCreateSessionDto: Create QuizConfigRequestDto
+    FeCreateSessionDto --> FeController: Request JSON
+    FeController -> FeApiService: createSession(request)
+    FeApiService -> BeController: POST /api/quiz/sessions\nCreateSessionRequest JSON
+    BeController -> BeCreateSessionDto: Bind request body
+    BeCreateSessionDto --> BeController: CreateSessionRequest
+    BeController -> BeController: Check authenticated user
+    BeController -> SessionService: CreateSessionAsync(userId, command)
+    SessionService -> SessionService: Validate mode, question type,\nscope, order and answer method
+
+    alt Request invalid
+        SessionService --> BeController: Validation failure
+        BeController --> FeApiService: HTTP 400 error
+        FeApiService --> FeController: Action failed
+        FeController --> TakeExamUi: Show create session error
+    else Request valid
+        SessionService -> SessionBuilder: BuildPoolAsync(userId, command)
+        SessionBuilder -> PoolRepository: GetCandidatesAsync(userId, command)
+        PoolRepository -> DbContext: Query quiz candidate words
+        DbContext -> MySQL: SELECT user_list_words\nJOIN user_lists, words,\nword_topics, user_word_progresses
+        MySQL --> DbContext: Candidate rows
+        DbContext -> UserListWordEntity: Read UserListWord rows
+        DbContext -> UserListEntity: Check UserList status
+        DbContext -> WordEntity: Check active Word rows
+        DbContext -> WordTopicEntity: Filter WordTopic rows
+        DbContext -> UserWordProgressEntity: Read wrong counts
+        UserListWordEntity --> DbContext: Candidate word ids
+        UserListEntity --> DbContext: List status
+        WordEntity --> DbContext: Word status
+        WordTopicEntity --> DbContext: Topic filters
+        UserWordProgressEntity --> DbContext: Wrong counts
+        DbContext --> PoolRepository: Quiz pool words
+        PoolRepository --> SessionBuilder: Candidate pool
+        SessionBuilder -> SessionBuilder: Apply word order\nand word limit
+        SessionBuilder --> SessionService: Quiz pool
+
+        alt Not enough words
+            SessionService --> BeController: Validation failure
+            BeController --> FeApiService: HTTP 400 error
+            FeApiService --> FeController: Action failed
+            FeController --> TakeExamUi: Show not enough words
+        else Pool ready
+            SessionService -> QuestionBuilder: BuildQuestionAsync(firstWordId, questionType)
+            QuestionBuilder -> QuestionRepository: FindQuestionWordAsync(firstWordId)
+            QuestionRepository -> DbContext: Query selected Word\nwith senses and topics
+            DbContext -> MySQL: SELECT words,\nword_senses, word_topics
+            MySQL --> DbContext: Question word rows
+            DbContext -> WordEntity: Read Word
+            DbContext -> WordSenseEntity: Read WordSense
+            DbContext -> WordTopicEntity: Read WordTopic ids
+            WordEntity --> DbContext: Word
+            WordSenseEntity --> DbContext: Expected answer source
+            WordTopicEntity --> DbContext: Topic ids
+            DbContext --> QuestionRepository: Question word
+
+            QuestionBuilder -> QuestionRepository: GetDistractorsAsync(wordId,\nwordClass, topicIds)
+            QuestionRepository -> DbContext: Query distractor words and senses
+            DbContext -> MySQL: SELECT words,\nSELECT word_senses
+            MySQL --> DbContext: Distractor rows
+            DbContext -> WordEntity: Read distractor Words
+            DbContext -> WordSenseEntity: Read distractor WordSenses
+            WordEntity --> DbContext: Distractor words
+            WordSenseEntity --> DbContext: Distractor answers
+            DbContext --> QuestionRepository: Distractor candidates
+            QuestionRepository --> QuestionBuilder: Question data
+            QuestionBuilder --> SessionService: First question
+
+            SessionService -> SessionRepository: CreateAsync(userId, command,\ntopicIds, questionCount)
+            SessionRepository -> TestSessionEntity: Create TestSession
+            SessionRepository -> TestSessionTopicEntity: Create TestSessionTopic rows
+            TestSessionEntity --> SessionRepository: TestSession
+            TestSessionTopicEntity --> SessionRepository: TestSessionTopic rows
+            SessionRepository -> DbContext: Add session graph
+            DbContext -> MySQL: INSERT test_sessions,\ntest_session_topics
+            MySQL --> DbContext: Insert result
+            DbContext --> SessionRepository: Save result
+            SessionRepository --> SessionService: Created session
+            SessionService --> BeController: Created session result
+            BeController -> BeCreateSessionResponseDto: Create CreateSessionResponse
+            BeController -> BeQuestionDto: Include first QuestionResponse
+            BeQuestionDto --> BeCreateSessionResponseDto: QuestionResponse
+            BeCreateSessionResponseDto --> BeController: CreateSessionResponse
+            BeController --> FeApiService: HTTP 201 Created\nCreateSessionResponse
+            FeApiService -> FeSessionStartDto: Parse response data
+            FeSessionStartDto --> FeApiService: QuizSessionStart
+            FeApiService --> FeController: QuizSessionStart
+            FeController --> TakeExamUi: Navigate to quiz session
+        end
+    end
+end
+
+@enduml

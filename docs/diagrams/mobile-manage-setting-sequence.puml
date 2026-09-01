@@ -1,0 +1,34 @@
+@startuml
+title Manage Setting Sequence (Mobile local settings)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Learner
+boundary "Manage Setting UI" as SettingUi
+control "AppSettingsNotifier\n(FE Mobile)" as SettingsController
+control "LocalStorage\n(Device)" as LocalStorage
+
+note over SettingUi, LocalStorage
+Checked in current code:
+Mobile settings state exists in AppSettingsNotifier and AppSettingsState.
+Settings are stored locally through LocalStorage.
+No FE DTO, BE DTO, API controller, repository, DbContext or database is used.
+Stored keys include app locale, theme and reminder/audio options.
+end note
+
+Learner -> SettingUi: Open settings
+SettingUi -> SettingsController: load()
+SettingsController -> LocalStorage: Read app setting keys
+LocalStorage --> SettingsController: Stored values or defaults
+SettingsController --> SettingUi: Show current settings
+
+Learner -> SettingUi: Toggle setting option
+SettingUi -> SettingsController: setDailyReminder()\nor setSoundEffects()
+SettingsController -> LocalStorage: Save updated value
+LocalStorage --> SettingsController: Saved
+SettingsController -> SettingsController: Update AppSettingsState
+SettingsController --> SettingUi: Refresh setting value
+
+@enduml

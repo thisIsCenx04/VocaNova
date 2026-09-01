@@ -1,0 +1,75 @@
+@startuml
+title Delete KNN Lookup Sequence (/knn/{slug}/delete and /api/admin/knn/{slug}/{id})
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Delete KNN UI" as DeleteKnnUi
+control "KnnController\n(FE Dashboard)" as FeController
+control "AdminKnnController\n(BE API)" as BeController
+control "AdminKnnLookupService" as LookupService
+entity "AgeRange" as AgeRangeEntity
+entity "Region" as RegionEntity
+entity "Occupation" as OccupationEntity
+entity "EducationLevel" as EducationLevelEntity
+entity "LearningPurpose" as LearningPurposeEntity
+control "AdminKnnLookupRepository" as LookupRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over DeleteKnnUi, MySQL
+Checked in current code:
+Dashboard UI file exists: Views/Knn/Lookup.cshtml.
+FE controller exists: KnnController.
+BE controller exists: AdminKnnController.
+Delete uses route id only and returns bool in the response envelope.
+Delete KNN means soft deleting one lookup row under a valid KNN slug.
+Entities exist: AgeRange, Region, Occupation, EducationLevel and LearningPurpose.
+end note
+
+Admin -> DeleteKnnUi: Click delete lookup item
+DeleteKnnUi -> FeController: POST /knn/{slug}/delete\nid, returnUrl?
+FeController -> FeController: Validate slug
+FeController -> BeController: VocaNovaApiClient.DeleteKnnLookupAsync\nDELETE /api/admin/knn/{slug}/{id}
+BeController -> BeController: Check admin authorization
+BeController -> LookupService: Delete{LookupType}Async(id)
+LookupService -> LookupRepository: Set lookup status deleted
+LookupRepository -> DbContext: Find lookup entity
+DbContext -> MySQL: SELECT lookup table
+MySQL --> DbContext: Lookup row or null
+
+alt Lookup item not found
+    DbContext --> LookupRepository: null
+    LookupRepository --> LookupService: false
+    LookupService --> BeController: NotFound result
+    BeController --> FeController: HTTP 404 error
+    FeController --> DeleteKnnUi: Show delete error
+else Lookup item found
+    DbContext -> AgeRangeEntity: Read AgeRange if slug age-ranges
+    DbContext -> RegionEntity: Read Region if slug regions
+    DbContext -> OccupationEntity: Read Occupation if slug occupations
+    DbContext -> EducationLevelEntity: Read EducationLevel if slug education-levels
+    DbContext -> LearningPurposeEntity: Read LearningPurpose if slug learning-purposes
+    AgeRangeEntity --> DbContext: AgeRange?
+    RegionEntity --> DbContext: Region?
+    OccupationEntity --> DbContext: Occupation?
+    EducationLevelEntity --> DbContext: EducationLevel?
+    LearningPurposeEntity --> DbContext: LearningPurpose?
+    LookupRepository -> AgeRangeEntity: Set Status = deleted if AgeRange
+    LookupRepository -> RegionEntity: Set Status = deleted if Region
+    LookupRepository -> OccupationEntity: Set Status = deleted if Occupation
+    LookupRepository -> EducationLevelEntity: Set Status = deleted if EducationLevel
+    LookupRepository -> LearningPurposeEntity: Set Status = deleted if LearningPurpose
+    LookupRepository -> DbContext: Save lookup status
+    DbContext -> MySQL: UPDATE lookup table
+    MySQL --> DbContext: Update result
+    DbContext --> LookupRepository: Save result
+    LookupRepository --> LookupService: true
+    LookupService --> BeController: Success result
+    BeController --> FeController: HTTP 200 OK\nbool
+    FeController --> DeleteKnnUi: Show deleted feedback
+end
+
+@enduml

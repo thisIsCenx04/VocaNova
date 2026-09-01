@@ -1,0 +1,105 @@
+@startuml
+title Review Incorrect Vocabulary Sequence (/api/quiz/wrong-words)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Learner
+boundary "Review Incorrect Vocabulary UI" as WrongWordsUi
+control "WrongWordsNotifier\n(FE Mobile)" as FeController
+control "QuizApiService\n(FE Mobile)" as FeApiService
+entity "WrongWordDto\n(FE Response DTO)" as FeWrongWordDto
+entity "WrongWordsRequest\n(BE Request DTO)" as BeWrongWordsRequestDto
+entity "WrongWordResponse\n(BE Response DTO)" as BeWrongWordResponseDto
+control "QuizSessionsController\n(BE API)" as BeController
+control "QuizHistoryService" as HistoryService
+entity "UserWordProgress" as UserWordProgressEntity
+entity "Word" as WordEntity
+entity "WordSense" as WordSenseEntity
+control "QuizHistoryRepository" as HistoryRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over WrongWordsUi, MySQL
+Checked in current code:
+Mobile UI file exists: wrong_words_screen.dart.
+FE controller/service exist: WrongWordsNotifier and QuizApiService.
+FE response DTO exists: WrongWordDto.
+BE request/response DTOs exist: WrongWordsRequest and WrongWordResponse.
+Endpoints are GET /api/quiz/wrong-words and DELETE /api/quiz/wrong-words/{wordId}.
+Entities exist: UserWordProgress, Word and WordSense.
+end note
+
+Learner -> WrongWordsUi: Open incorrect vocabulary
+WrongWordsUi -> FeController: load()
+FeController -> FeApiService: getWrongWords(page)
+FeApiService -> BeController: GET /api/quiz/wrong-words\npage, limit
+BeController -> BeWrongWordsRequestDto: Bind query string
+BeWrongWordsRequestDto --> BeController: WrongWordsRequest
+BeController -> BeController: Check authenticated user
+BeController -> HistoryService: GetWrongWordsAsync(userId, query)
+HistoryService -> HistoryService: Validate page and limit
+
+alt Query validation fails
+    HistoryService --> BeController: Validation failure
+    BeController --> FeApiService: HTTP 400 error
+    FeApiService --> FeController: Action failed
+    FeController --> WrongWordsUi: Show load error
+else Query validation success
+    HistoryService -> HistoryRepository: GetWrongWordsAsync(userId, page, limit)
+    HistoryRepository -> DbContext: Query wrong vocabulary
+    DbContext -> MySQL: SELECT user_word_progresses\nJOIN words and word_senses
+    MySQL --> DbContext: Wrong word rows
+    DbContext -> UserWordProgressEntity: Read UserWordProgress rows
+    DbContext -> WordEntity: Read Word rows
+    DbContext -> WordSenseEntity: Read primary WordSense
+    UserWordProgressEntity --> DbContext: Wrong counts and mastery
+    WordEntity --> DbContext: Word text
+    WordSenseEntity --> DbContext: Primary meaning
+    DbContext --> HistoryRepository: Paged wrong words
+    HistoryRepository --> HistoryService: Paged wrong words
+    HistoryService --> BeController: Wrong words result
+    BeController -> BeWrongWordResponseDto: Create WrongWordResponse list
+    BeWrongWordResponseDto --> BeController: WrongWordResponse list
+    BeController --> FeApiService: HTTP 200 OK\nWrongWordResponse list
+    FeApiService -> FeWrongWordDto: Parse response data
+    FeWrongWordDto --> FeApiService: WrongWord list
+    FeApiService --> FeController: WrongWordsPage
+    FeController --> WrongWordsUi: Show incorrect vocabulary
+end
+
+opt Clear word from incorrect list
+    Learner -> WrongWordsUi: Remove wrong word
+    WrongWordsUi -> FeController: remove(wordId)
+    FeController -> FeApiService: removeWrongWord(wordId)
+    FeApiService -> BeController: DELETE /api/quiz/wrong-words/{wordId}
+    BeController -> HistoryService: ClearWrongWordAsync(userId, wordId)
+    HistoryService -> HistoryRepository: ClearWrongWordAsync(userId, wordId)
+    HistoryRepository -> DbContext: Find UserWordProgress
+    DbContext -> MySQL: SELECT user_word_progresses
+    MySQL --> DbContext: Progress row or null
+    DbContext -> UserWordProgressEntity: Read UserWordProgress?
+    UserWordProgressEntity --> DbContext: UserWordProgress or null
+
+    alt Wrong word not found
+        HistoryRepository --> HistoryService: false
+        HistoryService --> BeController: NotFound result
+        BeController --> FeApiService: HTTP 404 error
+        FeApiService --> FeController: Action failed
+        FeController --> WrongWordsUi: Restore item and show error
+    else Wrong word found
+        HistoryRepository -> UserWordProgressEntity: Set IsInWrongList = false
+        UserWordProgressEntity --> HistoryRepository: Progress updated
+        HistoryRepository -> DbContext: Save changes
+        DbContext -> MySQL: UPDATE user_word_progresses
+        MySQL --> DbContext: Save result
+        HistoryRepository --> HistoryService: true
+        HistoryService --> BeController: Success result
+        BeController --> FeApiService: HTTP 200 OK
+        FeApiService --> FeController: Action success
+        FeController --> WrongWordsUi: Remove item from list
+    end
+end
+
+@enduml

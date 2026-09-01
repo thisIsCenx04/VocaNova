@@ -1,0 +1,78 @@
+@startuml
+title View Learning Charts Sequence (/api/progress/chart)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Learner
+boundary "Learning Charts UI" as ChartsUi
+control "ProgressChartsNotifier\n(FE Mobile)" as FeController
+control "ProgressApiService\n(FE Mobile)" as FeApiService
+entity "ProgressChartDto\n(FE Response DTO)" as FeChartDto
+entity "ProgressChartRequest\n(BE Request DTO)" as BeChartRequestDto
+entity "ProgressChartResponse\n(BE Response DTO)" as BeChartResponseDto
+control "ProgressController\n(BE API)" as BeController
+control "ProgressAnalyticsService" as AnalyticsService
+entity "TestSession" as TestSessionEntity
+entity "TestAnswer" as TestAnswerEntity
+control "ProgressAnalyticsRepository" as AnalyticsRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over ChartsUi, MySQL
+Checked in current code:
+Mobile UI file exists: progress_charts_screen.dart.
+FE controller/service exist: ProgressChartsNotifier and ProgressApiService.
+FE response DTO exists: ProgressChartDto.
+BE controller exists: ProgressController.
+BE DTOs exist: ProgressChartRequest and ProgressChartResponse.
+Endpoint is GET /api/progress/chart with granularity query.
+Entities exist: TestSession and TestAnswer.
+end note
+
+Learner -> ChartsUi: Open learning charts
+ChartsUi -> FeController: load()
+FeController -> FeApiService: getChart(granularity)
+FeApiService -> BeController: GET /api/progress/chart\ngranularity
+BeController -> BeChartRequestDto: Bind query string
+BeChartRequestDto --> BeController: ProgressChartRequest
+BeController -> BeController: Check authenticated user
+BeController -> AnalyticsService: GetChartAsync(userId, query)
+AnalyticsService -> AnalyticsService: Validate granularity\nand build periods
+
+alt Granularity invalid
+    AnalyticsService --> BeController: Validation failure
+    BeController --> FeApiService: HTTP 400 error
+    FeApiService --> FeController: Action failed
+    FeController --> ChartsUi: Show chart error
+else Granularity valid
+    AnalyticsService -> AnalyticsRepository: GetSessionTimesAsync(userId, window)
+    AnalyticsRepository -> DbContext: Query session started times
+    DbContext -> MySQL: SELECT test_sessions
+    MySQL --> DbContext: Session rows
+    DbContext -> TestSessionEntity: Read TestSession rows
+    TestSessionEntity --> DbContext: Session times
+
+    AnalyticsService -> AnalyticsRepository: GetAnswerStatisticsAsync(userId, window)
+    AnalyticsRepository -> DbContext: Query answer statistics
+    DbContext -> MySQL: SELECT test_answers\nJOIN test_sessions
+    MySQL --> DbContext: Answer rows
+    DbContext -> TestAnswerEntity: Read TestAnswer rows
+    DbContext -> TestSessionEntity: Read TestSession rows
+    TestAnswerEntity --> DbContext: Correct and total answers
+    TestSessionEntity --> DbContext: Session scope
+    DbContext --> AnalyticsRepository: Chart source rows
+    AnalyticsRepository --> AnalyticsService: Chart source rows
+    AnalyticsService -> AnalyticsService: Build chart points
+    AnalyticsService --> BeController: Chart result
+    BeController -> BeChartResponseDto: Create ProgressChartResponse
+    BeChartResponseDto --> BeController: ProgressChartResponse
+    BeController --> FeApiService: HTTP 200 OK\nProgressChartResponse
+    FeApiService -> FeChartDto: Parse response data
+    FeChartDto --> FeApiService: ProgressChart
+    FeApiService --> FeController: Progress chart
+    FeController --> ChartsUi: Show learning chart
+end
+
+@enduml

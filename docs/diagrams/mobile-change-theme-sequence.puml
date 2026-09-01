@@ -1,0 +1,29 @@
+@startuml
+title Change Theme Sequence (Mobile local settings)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Learner
+boundary "Change Theme UI" as ThemeUi
+control "AppSettingsNotifier\n(FE Mobile)" as SettingsController
+control "LocalStorage\n(Device)" as LocalStorage
+
+note over ThemeUi, LocalStorage
+Checked in current code:
+Theme is changed by AppSettingsNotifier.setThemeMode(themeMode).
+The selected theme is saved to LocalStorage with StorageKeys.appTheme.
+Allowed values are light, dark and system.
+No FE DTO, BE DTO, API controller, repository, DbContext or database is used.
+end note
+
+Learner -> ThemeUi: Select theme
+ThemeUi -> SettingsController: setThemeMode(themeMode)
+SettingsController -> SettingsController: Map ThemeMode to value
+SettingsController -> LocalStorage: Save StorageKeys.appTheme
+LocalStorage --> SettingsController: Saved theme value
+SettingsController -> SettingsController: Update AppSettingsState.themeMode
+SettingsController --> ThemeUi: Rebuild themed UI
+
+@enduml
