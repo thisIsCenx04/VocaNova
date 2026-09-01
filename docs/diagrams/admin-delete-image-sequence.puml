@@ -1,0 +1,68 @@
+@startuml
+title Delete Word Image Sequence (/api/admin/words/{id}/image)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Vocabulary Page\n(Dashboard)" as VocabularyPage
+control "VocabularyController\n(Dashboard)" as DashboardController
+control "ServiceAPI\n(Dashboard)" as ServiceApi
+entity "UpdateWordImageRequest /\nWordDetailResponse\n(Request/Response DTO)" as ImageDto
+control "AdminWordsController\n(API)" as ApiController
+control "WordAdminService" as WordService
+control "WordAdminRepository" as WordRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over VocabularyPage, MySQL
+Checked in current code:
+Dashboard route is POST /vocabulary/{id}/image/delete.
+Dashboard ServiceAPI calls PUT /api/admin/words/{id}/image with image_url = null.
+API uses UpdateWordImageRequest and returns WordDetailResponse.
+Delete image clears the word image_url; no storage delete call was found.
+end note
+
+Admin -> VocabularyPage: Click Delete image
+VocabularyPage -> DashboardController: POST /vocabulary/{id}/image/delete
+DashboardController -> ServiceApi: UpdateImageUrlAsync(wordId, null)
+ServiceApi -> ImageDto: Create request data\n(image_url = null)
+ImageDto -> ApiController: PUT /api/admin/words/{id}/image\nUpdateWordImageRequest
+ApiController -> ApiController: Check admin authorization
+ApiController -> ApiController: Validate UpdateWordImageRequest
+
+alt Request validation fails
+    ApiController --> ServiceApi: HTTP 400 error
+    ServiceApi --> DashboardController: Action failed
+    DashboardController --> VocabularyPage: Show error message
+else Request validation success
+    ApiController -> WordService: UpdateImageUrlAsync(wordId, null)
+    WordService -> WordService: Normalize image URL
+    WordService -> WordRepository: SetImageUrlAsync(wordId, null)
+    WordRepository -> DbContext: Find word
+    DbContext -> MySQL: SELECT words
+    MySQL --> DbContext: Word row or null
+    DbContext --> WordRepository: Result
+
+    alt Word not found
+        WordRepository --> WordService: null
+        WordService --> ApiController: NotFound result
+        ApiController --> ServiceApi: HTTP 404 error
+        ServiceApi --> DashboardController: Action failed
+        DashboardController --> VocabularyPage: Show error message
+    else Word found
+        WordRepository -> DbContext: Clear word image_url
+        DbContext -> MySQL: UPDATE words
+        MySQL --> DbContext: Update result
+        DbContext --> WordRepository: Save result
+        WordRepository --> WordService: Updated word detail
+        WordService --> ApiController: Return updated word
+        ApiController -> ImageDto: Create response data\n(WordDetailResponse)
+        ImageDto --> ServiceApi: HTTP 200 OK\nWordDetailResponse
+        ServiceApi --> DashboardController: Action success
+        DashboardController --> VocabularyPage: Show image removed feedback
+    end
+end
+
+@enduml
