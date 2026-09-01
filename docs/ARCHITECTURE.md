@@ -170,11 +170,11 @@ src/VocaNova.API/
 |       |   `-- Responses/
 |       |-- Mappings/
 |       |-- BLL/
-|       |   |-- Abstractions/
 |       |   |-- Models/
 |       |   `-- Services/
 |       `-- DAL/
 |           |-- Repositories/
+|           |   `-- Interfaces/
 |           `-- Mappings/
 |-- Infrastructure/
 |   |-- Persistence/{Configurations,Entities,Transactions}/
@@ -193,7 +193,7 @@ src/VocaNova.API/
 `-- Program.cs
 ```
 
-Feature Contracts never use a `DTOs` folder or new `Dto` suffix. Request validators are Presentation concerns and may live beside Request Contracts. Repository/cache/provider interfaces required by a use case remain under its BLL abstractions; repository implementations alone live in the feature DAL. Mapping is explicit/manual by default and no mapping library is mandated.
+Feature Contracts never use a `DTOs` folder or new `Dto` suffix. Request validators are Presentation concerns and may live beside Request Contracts. Repository/cache/provider interfaces required by a use case remain logically BLL-owned through `Features.<Feature>.BLL.Abstractions` namespaces. CURRENT source stores those interface files physically under `Features/<Feature>/DAL/Repositories/Interfaces`; repository implementations live beside them under the feature DAL. Mapping is explicit/manual by default and no mapping library is mandated.
 
 Notifications, Progress, all Dictionary endpoints, Lists/personal-topic endpoints, Quiz/AI grading, KNN/runtime configuration, Auth, and Admin/SuperAdmin now use this physical layout. Shared `VocaNovaDbContext`, entities/configurations, Redis, authentication, storage, and providers remain outside `Features`.
 
@@ -203,8 +203,8 @@ Allowed:
 
 ```text
 Feature Controller          -> same-feature BLL service abstraction
-Feature BLL service         -> BLL-owned repository/provider/cache abstraction
-Feature DAL implementation  -> same-feature BLL abstraction
+Feature BLL service         -> BLL-owned repository/provider/cache abstraction namespace
+Feature DAL implementation  -> same-feature BLL abstraction namespace
 Program.cs       -> Presentation + BLL + DAL registration
 ```
 

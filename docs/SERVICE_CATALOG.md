@@ -11,7 +11,7 @@ Public routes, HTTP methods, authorization behavior, JSON schemas, and envelopes
 Purpose: Registration, password and Google login, rotating refresh tokens, logout, OTP verification/recovery, account/profile management, avatar upload, and learning-profile updates.
 
 - Controllers: `Features/Auth/Controllers/AuthController.cs`
-- Services: `Features/Auth/BLL/Services/IAuthService`, `Features/Auth/BLL/Services/AuthService`
+- Services: `Features/Auth/BLL/Services/IServices/IAuthService`, `Features/Auth/BLL/Services/AuthService`
 - Repositories: BLL-owned `IAuthAccountRepository`, `IRefreshTokenRepository`, and `IOtpRepository` implemented by `Features/Auth/DAL/Repositories/AuthAccountRepository`, `RefreshTokenRepository`, and `OtpRepository`
 - Database: `User`, `Role`, `UserAuth`, `UserProfile`, `UserLearningProfile`, lookup entities, `RefreshToken`, `OtpVerification`, `UserTopicPreference`
 - Integrations: BLL-owned ports for JWT, Google ID-token validation, OTP generation, SMS, password/refresh-token hashing, Cloudinary avatars, Redis profile/KNN cache, and in-memory auth rate limits; shared Infrastructure provides the concrete implementations.

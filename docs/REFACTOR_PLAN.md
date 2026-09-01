@@ -77,7 +77,7 @@ Status: Completed for the ordered feature units. Notifications, Progress, all Di
 ### Phase 4 - Move abstractions to BLL and implementations to DAL
 
 - Goal: invert dependencies correctly.
-- Changes: place persistence/cache/auth/storage/provider ports in `BLL/Abstractions`; move EF/Redis/provider implementations under DAL; add DAL mapping.
+- Changes: make persistence/cache/auth/storage/provider ports logically BLL-owned. CURRENT source declares them in `Features.<Feature>.BLL.Abstractions` namespaces while physically storing the interface files under `DAL/Repositories/Interfaces`; EF/Redis/provider implementations remain under DAL/shared Infrastructure, with DAL mapping.
 - Compatibility: preserve cache keys/TTL/invalidation and provider behavior.
 - Verification: architecture tests, feature tests, Redis-unavailable tests, provider contract tests.
 - Risk/rollback: do not mechanically move interfaces that expose entities/Contracts; redesign their signatures with adapters.
@@ -144,10 +144,10 @@ The seven units below are ordered implementation gates. A later session implemen
 |---|---|---|
 | 1. Read-only Lists/personal-topic queries | Completed | Implemented with the resolved BLL lookup-result design and re-homed under ADR-018; full .NET and Mobile compatibility suites are green. |
 | 2. Single-save Lists mutations | Completed | Implemented and re-homed under ADR-018. CURRENT independent-save ordering and partial-write risk are deliberately preserved; no Lists transaction design was accepted or introduced. |
-| 3. Dictionary administration | Completed | Feature-first administration is live; the reviewed WordSense status SQL was applied and re-scaffolded, and 537/537 .NET tests pass. |
+| 3. Dictionary administration | Completed | Feature-first administration is live; the reviewed WordSense status SQL was applied and re-scaffolded, with historical .NET verification passing at that unit. |
 | 4. Quiz and AI grading | Completed | Feature-first Quiz/AI grading is live with transaction, cache, provider, route, and client compatibility verified. |
 | 5. KNN/runtime configuration | Completed | Feature-first KNN/runtime configuration is live; routes/contracts/cache keys/runtime vector behavior are preserved, and word recommendation TTL now uses `Knn:Learning:CacheTtlMinutes`. |
-| 6. Auth | Completed | Feature-first Auth is live with BLL-owned persistence/provider/cache/rate-limit ports, EF transaction manager, route/JSON/envelope compatibility, and 572/572 .NET tests passing. |
+| 6. Auth | Completed | Feature-first Auth is live with BLL-owned persistence/provider/cache/rate-limit ports, EF transaction manager, route/JSON/envelope compatibility, and current .NET tests passing. |
 | 7. Admin/SuperAdmin | Completed | Feature-first Admin/SuperAdmin is live. The remaining Admin BLL EF-entity leak was removed, Admin repository namespaces now match their BLL/DAL folders, and Admin/SuperAdmin architecture tests cover routes, service boundaries, DAL port implementation, and BLL source independence. |
 
 #### ADR-018 re-home outcome (CURRENT)
@@ -155,7 +155,7 @@ The seven units below are ordered implementation gates. A later session implemen
 - Completed on 2026-08-20 before Unit 3. Notifications, Progress, public Dictionary reads, and Lists Units 1-2 moved from the superseded top-level layer roots into `Features/<Feature>/{Controllers,Contracts,Mappings,BLL,DAL}`.
 - Repository/cache ports remain BLL-owned. Feature repository implementations/mappings moved into feature DAL slices; Redis cache implementations moved under shared `Infrastructure/Caching`; cross-feature `PagedCollection` moved to `Common/Models`.
 - No route, method, authorization, status/message/envelope, JSON field, cache key/TTL/invalidation, database, provider, or transaction behavior changed. Unit 2's two non-atomic partial-write sequences remain protected by regression tests.
-- Pre-move verification passed 518 .NET tests. Post-move verification passed 524 tests, including feature-first layout and per-feature BLL boundary assertions. Unit 3 subsequently passed 537 tests; Unit 4 passed 565 tests. Unit 5 passed 569 .NET tests and the full Flutter suite. Unit 6 now passes 572 .NET tests.
+- Historical verification included 518 pre-move .NET tests, 524 post-move tests, 537 after Unit 3, 565 after Unit 4, and 569 after Unit 5. CURRENT verification on 2026-08-31 passes 563 .NET tests and the 162-test serial Flutter suite.
 
 ### Unit 1 - Read-only Lists and personal-topic queries
 
@@ -175,13 +175,13 @@ Features/Lists/BLL/Models/UserListSummary.cs
 Features/Lists/BLL/Models/ListWord.cs
 Features/Lists/BLL/Models/PersonalTopic.cs
 Features/Lists/BLL/Models/ListResult.cs
-Features/Lists/BLL/Services/IListQueryService.cs
+Features/Lists/BLL/Services/IServices/IListQueryService.cs
 Features/Lists/BLL/Services/ListQueryService.cs
-Features/Lists/BLL/Services/IPersonalTopicQueryService.cs
+Features/Lists/BLL/Services/IServices/IPersonalTopicQueryService.cs
 Features/Lists/BLL/Services/PersonalTopicQueryService.cs
-Features/Lists/BLL/Abstractions/IListQueryRepository.cs
-Features/Lists/BLL/Abstractions/IPersonalTopicQueryRepository.cs
-Features/Lists/BLL/Abstractions/IUserListCache.cs
+Features/Lists/DAL/Repositories/Interfaces/IListQueryRepository.cs
+Features/Lists/DAL/Repositories/Interfaces/IPersonalTopicQueryRepository.cs
+Features/Lists/DAL/Repositories/Interfaces/IUserListCache.cs
 Features/Lists/DAL/Repositories/ListQueryRepository.cs
 Features/Lists/DAL/Repositories/PersonalTopicQueryRepository.cs
 Features/Lists/DAL/Mappings/ListPersistenceMappings.cs
@@ -277,8 +277,8 @@ Status: Resolved.
 #### Implementation outcome (CURRENT)
 
 - Completed on 2026-08-20. The Unit 1 manifest is implemented for GET behavior; Unit 2 has since added mutation actions to the same canonical controllers and completed the Lists migration.
-- Legacy endpoint-facing read service members, GET controller actions, unreferenced repository read members, `ListWordsQuery`, and the Infrastructure-owned user-list cache were removed after the canonical query path was verified. Unit 2 subsequently migrated the remaining repository behavior and removed `Features/Lists`.
-- Architecture, BLL/DAL behavior, controller contract, and Redis compatibility tests are present. `dotnet build VocaNova.sln` and all 500 .NET tests passed; all selected Mobile Lists API-service/notifier/screen tests passed unchanged after the Mobile rename.
+- Legacy endpoint-facing read service members, GET controller actions, unreferenced repository read members, `ListWordsQuery`, and the Infrastructure-owned user-list cache were removed after the canonical query path was verified. Unit 2 subsequently migrated the remaining repository behavior into the current `Features/Lists` slice.
+- Architecture, BLL/DAL behavior, controller contract, and Redis compatibility tests are present. Historical verification passed the then-current 500 .NET tests; current suite counts are recorded in the execution status above.
 
 ### Unit 2 - Single-save Lists mutations
 
@@ -303,12 +303,12 @@ Features/Lists/Contracts/Requests/AddPersonalTopicWordRequestValidator.cs
 Features/Lists/Mappings/ListMutationMappings.cs
 Features/Lists/BLL/Models/ListCommands.cs
 Features/Lists/BLL/Models/ListMutationModels.cs
-Features/Lists/BLL/Services/IListMutationService.cs
+Features/Lists/BLL/Services/IServices/IListMutationService.cs
 Features/Lists/BLL/Services/ListMutationService.cs
-Features/Lists/BLL/Services/IPersonalTopicMutationService.cs
+Features/Lists/BLL/Services/IServices/IPersonalTopicMutationService.cs
 Features/Lists/BLL/Services/PersonalTopicMutationService.cs
-Features/Lists/BLL/Abstractions/IListMutationRepository.cs
-Features/Lists/BLL/Abstractions/IPersonalTopicMutationRepository.cs
+Features/Lists/DAL/Repositories/Interfaces/IListMutationRepository.cs
+Features/Lists/DAL/Repositories/Interfaces/IPersonalTopicMutationRepository.cs
 Features/Lists/DAL/Repositories/ListMutationRepository.cs
 Features/Lists/DAL/Repositories/PersonalTopicMutationRepository.cs
 Features/Lists/DAL/Mappings/ListMutationPersistenceMappings.cs
@@ -389,7 +389,7 @@ DI remains: mutation services and both EF repositories are scoped; the Unit 1 ca
 - Completed on 2026-08-20. All Lists/personal-topic mutation actions, Contracts, validators, mappings, BLL services/models/results/ports, and DAL repositories/mappings use the corrected `Features/Lists` slice. The older mixed Lists implementation was removed only after focused equivalence checks passed; ADR-018 later re-homed the already-layered files without changing behavior.
 - `ListLookupResult<ListOwnership>` preserves the distinct missing/deleted/reserved-list 404 and foreign-list 403 outcomes for mutation ownership checks. Routes, authorization, request/response JSON, messages, envelopes, soft-delete behavior, random selection behavior, and cache timing remain compatible.
 - The non-atomic random-add and personal-topic get-or-create paths remain deliberately unchanged. Tests prove the earlier membership or reserved list survives an induced later save failure; this unit does not fix or conceal that partial-write risk.
-- `dotnet build VocaNova.sln` passed with no warnings or errors; all 518 .NET tests and all 162 Flutter tests passed. `flutter analyze` still reports five pre-existing issues in `test/app/router/app_router_test.dart` (one dependency-info finding and four unused imports), outside Unit 2 scope.
+- Historical Unit 2 verification passed `dotnet build VocaNova.sln`, 518 .NET tests, and 162 Flutter tests. CURRENT `flutter analyze` reports no issues.
 
 ### Unit 3 - Dictionary administration and WordSense soft delete
 
@@ -431,14 +431,14 @@ Features/Dictionary/BLL/Models/AdminTopic.cs
 Features/Dictionary/BLL/Models/BulkImportResult.cs
 Features/Dictionary/BLL/Models/StoredMedia.cs
 Features/Dictionary/BLL/Models/DictionaryResult.cs                 # existing result extended/reused
-Features/Dictionary/BLL/Services/IWordAdminService.cs
+Features/Dictionary/BLL/Services/IServices/IWordAdminService.cs
 Features/Dictionary/BLL/Services/WordAdminService.cs
-Features/Dictionary/BLL/Services/ITopicAdminService.cs
+Features/Dictionary/BLL/Services/IServices/ITopicAdminService.cs
 Features/Dictionary/BLL/Services/TopicAdminService.cs
-Features/Dictionary/BLL/Abstractions/IWordAdminRepository.cs
-Features/Dictionary/BLL/Abstractions/ITopicAdminRepository.cs
-Features/Dictionary/BLL/Abstractions/IWordImageStorage.cs
-Features/Dictionary/BLL/Abstractions/IWordAudioStorage.cs
+Features/Dictionary/DAL/Repositories/Interfaces/IWordAdminRepository.cs
+Features/Dictionary/DAL/Repositories/Interfaces/ITopicAdminRepository.cs
+Features/Dictionary/DAL/Repositories/Interfaces/IWordImageStorage.cs
+Features/Dictionary/DAL/Repositories/Interfaces/IWordAudioStorage.cs
 Features/Dictionary/DAL/Repositories/WordAdminRepository.cs
 Features/Dictionary/DAL/Repositories/TopicAdminRepository.cs
 Features/Dictionary/DAL/Mappings/DictionaryAdminPersistenceMappings.cs
@@ -545,7 +545,7 @@ CURRENT: `scripts/scaffold-mysql.ps1` was run after the SQL application. The rev
 - Completed on 2026-08-20. Dictionary administration now occupies the Unit 3 feature-first manifest; legacy admin Dictionary controllers, mixed DTOs, services, repositories, validators, cache adapters, and audio-storage adapter were removed after equivalence verification.
 - `scripts/add-word-sense-status.sql` was reviewed, applied to MySQL, and followed by `scripts/scaffold-mysql.ps1`. Schema metadata and soft-delete/filter/restore behavior are covered by a real-MySQL test that rolls back its data changes.
 - Routes, authorization, messages, envelopes, pagination placement, JSON/form names, CSV outcomes, independent-save ordering, Cloudinary ordering, Redis keys/TTLs/invalidation, and Dashboard wire parsing are preserved. No global word-search invalidation or transaction redesign was added.
-- `dotnet build VocaNova.sln` succeeds with zero warnings/errors and `dotnet test VocaNova.sln` passes 537/537 tests.
+- Historical Unit 3 verification passed `dotnet build VocaNova.sln` with zero warnings/errors and the then-current 537-test .NET suite.
 
 ### Unit 4 - Quiz and AI grading
 
@@ -581,39 +581,39 @@ Features/AiGrading/BLL/Models/AiGradingModels.cs
 Features/AiGrading/BLL/Models/AiGradingConfiguration.cs
 Features/Quiz/BLL/Models/QuizOperationResult.cs
 Features/AiGrading/BLL/Models/AiGradingOperationResult.cs
-Features/Quiz/BLL/Services/IQuizSessionService.cs
+Features/Quiz/BLL/Services/IServices/IQuizSessionService.cs
 Features/Quiz/BLL/Services/QuizSessionService.cs
-Features/Quiz/BLL/Services/IQuizSessionBuilder.cs
+Features/Quiz/BLL/Services/IServices/IQuizSessionBuilder.cs
 Features/Quiz/BLL/Services/QuizSessionBuilder.cs
-Features/Quiz/BLL/Services/IQuizQuestionBuilder.cs
+Features/Quiz/BLL/Services/IServices/IQuizQuestionBuilder.cs
 Features/Quiz/BLL/Services/QuizQuestionBuilder.cs
-Features/Quiz/BLL/Services/IQuizSubmissionService.cs
+Features/Quiz/BLL/Services/IServices/IQuizSubmissionService.cs
 Features/Quiz/BLL/Services/QuizSubmissionService.cs
-Features/Quiz/BLL/Services/IQuizResultService.cs
+Features/Quiz/BLL/Services/IServices/IQuizResultService.cs
 Features/Quiz/BLL/Services/QuizResultService.cs
-Features/Quiz/BLL/Services/IQuizHistoryService.cs
+Features/Quiz/BLL/Services/IServices/IQuizHistoryService.cs
 Features/Quiz/BLL/Services/QuizHistoryService.cs
-Features/Quiz/BLL/Services/ISrsService.cs
+Features/Quiz/BLL/Services/IServices/ISrsService.cs
 Features/Quiz/BLL/Services/SrsService.cs
-Features/Quiz/BLL/Services/IAnswerGrader.cs
+Features/Quiz/BLL/Services/IServices/IAnswerGrader.cs
 Features/Quiz/BLL/Services/ExactTypingGrader.cs
 Features/Quiz/BLL/Services/MultipleChoiceGrader.cs
 Features/Quiz/BLL/Services/AcceptedAnswersParser.cs
 Features/Quiz/BLL/Services/QuizSessionStatisticsCalculator.cs
-Features/AiGrading/BLL/Services/IAiGradingService.cs
+Features/AiGrading/BLL/Services/IServices/IAiGradingService.cs
 Features/AiGrading/BLL/Services/CachedAiGradingService.cs
-Features/AiGrading/BLL/Services/IAiGradingConfigurationService.cs
+Features/AiGrading/BLL/Services/IServices/IAiGradingConfigurationService.cs
 Features/AiGrading/BLL/Services/AiGradingConfigurationService.cs
-Features/Quiz/BLL/Abstractions/IQuizSessionRepository.cs
-Features/Quiz/BLL/Abstractions/IQuizPoolRepository.cs
-Features/Quiz/BLL/Abstractions/IQuizQuestionRepository.cs
-Features/Quiz/BLL/Abstractions/IQuizSubmissionRepository.cs
-Features/Quiz/BLL/Abstractions/IQuizResultRepository.cs
-Features/Quiz/BLL/Abstractions/IQuizHistoryRepository.cs
-Features/Quiz/BLL/Abstractions/ISrsRepository.cs
-Features/AiGrading/BLL/Abstractions/IAiGradingCacheRepository.cs
-Features/Quiz/BLL/Abstractions/IQuizPoolCache.cs
-Features/AiGrading/BLL/Abstractions/IAiGradingProvider.cs
+Features/Quiz/DAL/Repositories/Interfaces/IQuizSessionRepository.cs
+Features/Quiz/DAL/Repositories/Interfaces/IQuizPoolRepository.cs
+Features/Quiz/DAL/Repositories/Interfaces/IQuizQuestionRepository.cs
+Features/Quiz/DAL/Repositories/Interfaces/IQuizSubmissionRepository.cs
+Features/Quiz/DAL/Repositories/Interfaces/IQuizResultRepository.cs
+Features/Quiz/DAL/Repositories/Interfaces/IQuizHistoryRepository.cs
+Features/Quiz/DAL/Repositories/Interfaces/ISrsRepository.cs
+Features/AiGrading/DAL/Repositories/Interfaces/IAiGradingCacheRepository.cs
+Features/Quiz/DAL/Repositories/Interfaces/IQuizPoolCache.cs
+Features/AiGrading/DAL/Repositories/Interfaces/IAiGradingProvider.cs
 Common/Abstractions/Configuration/IRuntimeConfigWriter.cs
 Common/Abstractions/Configuration/IRuntimeSettingsStore.cs
 Features/Quiz/DAL/Repositories/QuizSessionRepository.cs
@@ -709,7 +709,7 @@ DI remains: Quiz services/repositories/graders and AI cache repository scoped; `
 - Presentation maps the unchanged Quiz and AI-administration HTTP Contracts to framework-neutral BLL commands/models/results. Quiz and AI repository/cache/provider interfaces are BLL-owned; EF implementations and persistence mappings are feature DAL, while Redis, Gemini, and runtime configuration adapters remain shared Infrastructure. The implemented question-repository port carries the source-required preferred word class and topic IDs so distractor selection remains identical; the AI-provider port also carries the existing Admin connection-test operation.
 - Submission ordering is unchanged under ADR-017: a cache hit counter or new Gemini cache row can save independently first; answer, session, and SRS changes are then staged and persisted through exactly one `SaveSubmissionAsync` save. No encompassing transaction or different save order was introduced.
 - Quiz pool key `${prefix}quiz-pool:{sessionId}:{listId|all}`, two-hour TTL, payload/removal/degraded behavior, Progress invalidation timing, seven-day MySQL AI cache, hit/miss accounting, Gemini retries/model fallback/timeout, pass threshold, and non-cached normalized exact-match degradation remain unchanged.
-- Route/policy/envelope/JSON tests, save-order and post-persistence invalidation regression tests, BLL boundary tests, all 565 .NET tests, 32 focused Mobile Quiz tests, the 162-test serial Flutter suite, and the Dashboard AI settings client compatibility test pass. Dashboard and Mobile production code remained unchanged.
+- Historical Unit 4 verification passed route/policy/envelope/JSON tests, save-order and post-persistence invalidation regression tests, BLL boundary tests, the then-current 565-test .NET suite, 32 focused Mobile Quiz tests, the 162-test serial Flutter suite, and the Dashboard AI settings client compatibility test. Dashboard and Mobile production code remained unchanged.
 
 ### Unit 5 - KNN recommendations and runtime configuration
 
@@ -745,25 +745,25 @@ Features/Knn/BLL/Models/KnnLearningModels.cs
 Features/Knn/BLL/Models/KnnRecommendationModels.cs
 Features/Knn/BLL/Models/KnnAdminModels.cs
 Features/Knn/BLL/Models/KnnOperationResult.cs
-Features/Knn/BLL/Services/IKnnOnboardingService.cs
+Features/Knn/BLL/Services/IServices/IKnnOnboardingService.cs
 Features/Knn/BLL/Services/KnnOnboardingService.cs
-Features/Knn/BLL/Services/IKnnLearningService.cs
+Features/Knn/BLL/Services/IServices/IKnnLearningService.cs
 Features/Knn/BLL/Services/KnnLearningService.cs
-Features/Knn/BLL/Services/IKnnRuntimeConfigurationService.cs
+Features/Knn/BLL/Services/IServices/IKnnRuntimeConfigurationService.cs
 Features/Knn/BLL/Services/KnnRuntimeConfigurationService.cs
-Features/Knn/BLL/Services/IKnnRebuildService.cs
+Features/Knn/BLL/Services/IServices/IKnnRebuildService.cs
 Features/Knn/BLL/Services/KnnRebuildService.cs
-Features/Knn/BLL/Services/IAdminKnnLookupService.cs
+Features/Knn/BLL/Services/IServices/IAdminKnnLookupService.cs
 Features/Knn/BLL/Services/AdminKnnLookupService.cs
 Features/Knn/BLL/Services/KnnProfileVectorBuilder.cs
 Features/Knn/BLL/Services/KnnMath.cs
-Features/Knn/BLL/Abstractions/IKnnProfileRepository.cs
-Features/Knn/BLL/Abstractions/IKnnLearningRepository.cs
-Features/Knn/BLL/Abstractions/IAdminKnnLookupRepository.cs
-Features/Knn/BLL/Abstractions/IKnnTopicRecommendationCache.cs
-Features/Knn/BLL/Abstractions/IKnnWordRecommendationCache.cs
-Features/Knn/BLL/Abstractions/IKnnRebuildStateCache.cs
-Features/Knn/BLL/Abstractions/IAdminKnnTriggerRateLimiter.cs
+Features/Knn/DAL/Repositories/Interfaces/IKnnProfileRepository.cs
+Features/Knn/DAL/Repositories/Interfaces/IKnnLearningRepository.cs
+Features/Knn/DAL/Repositories/Interfaces/IAdminKnnLookupRepository.cs
+Features/Knn/DAL/Repositories/Interfaces/IKnnTopicRecommendationCache.cs
+Features/Knn/DAL/Repositories/Interfaces/IKnnWordRecommendationCache.cs
+Features/Knn/DAL/Repositories/Interfaces/IKnnRebuildStateCache.cs
+Features/Knn/DAL/Repositories/Interfaces/IAdminKnnTriggerRateLimiter.cs
 Features/Knn/DAL/Repositories/KnnProfileRepository.cs
 Features/Knn/DAL/Repositories/KnnLearningRepository.cs
 Features/Knn/DAL/Repositories/AdminKnnLookupRepository.cs
@@ -856,7 +856,7 @@ No new option is introduced. `KnnLearningOptions.CacheTtlMinutes` already exists
 - Public recommendation and `/api/admin/knn/**` routes, authorization, JSON names, envelope/pagination behavior, Redis keys, runtime vector `.env` prefix, rebuild singleton scope pattern, hosted interval capture, and manual trigger rate limiting are preserved.
 - The word recommendation cache TTL fix is live: `${prefix}knn-words:{userId}` now expires by `Knn:Learning:CacheTtlMinutes`; `Knn:Learning:RebuildIntervalHours` remains only the hosted rebuild schedule. No new configuration option or schema change was introduced.
 - Implementation kept existing cache payloads by serializing BLL recommendation records directly; no separate `KnnTopicRecommendationCacheEntry`, `KnnWordRecommendationCacheEntry`, or `KnnPersistenceMappings.cs` file was required after source verification.
-- Verification: `dotnet build VocaNova.sln --no-restore`, `dotnet test VocaNova.sln --no-build` (569/569), and `flutter test` from `src/VocaNova.Mobile` all passed.
+- Historical Unit 5 verification passed `dotnet build VocaNova.sln --no-restore`, `dotnet test VocaNova.sln --no-build` (569/569), and `flutter test` from `src/VocaNova.Mobile`. CURRENT verification on 2026-08-31 passes 563 .NET tests and `flutter test --concurrency=1`.
 
 ### Unit 6 - Auth
 
@@ -897,22 +897,22 @@ Features/Auth/BLL/Models/AuthCommands.cs
 Features/Auth/BLL/Models/AuthModels.cs
 Features/Auth/BLL/Models/AuthPersistenceModels.cs
 Features/Auth/BLL/Models/AuthOperationResult.cs
-Features/Auth/BLL/Services/IAuthService.cs
+Features/Auth/BLL/Services/IServices/IAuthService.cs
 Features/Auth/BLL/Services/AuthService.cs
-Features/Auth/BLL/Abstractions/IAuthAccountRepository.cs
-Features/Auth/BLL/Abstractions/IRefreshTokenRepository.cs
-Features/Auth/BLL/Abstractions/IOtpRepository.cs
+Features/Auth/DAL/Repositories/Interfaces/IAuthAccountRepository.cs
+Features/Auth/DAL/Repositories/Interfaces/IRefreshTokenRepository.cs
+Features/Auth/DAL/Repositories/Interfaces/IOtpRepository.cs
 Common/Abstractions/Transactions/IApplicationTransactionManager.cs
 Common/Abstractions/Transactions/IApplicationTransaction.cs
-Features/Auth/BLL/Abstractions/IJwtTokenService.cs
-Features/Auth/BLL/Abstractions/IGoogleIdentityProvider.cs
-Features/Auth/BLL/Abstractions/IOtpCodeGenerator.cs
-Features/Auth/BLL/Abstractions/IPasswordHasher.cs
-Features/Auth/BLL/Abstractions/IRefreshTokenHasher.cs
-Features/Auth/BLL/Abstractions/ISmsSender.cs
-Features/Auth/BLL/Abstractions/IAvatarStorage.cs
-Features/Auth/BLL/Abstractions/IUserProfileCache.cs
-Features/Auth/BLL/Abstractions/IAuthRateLimiter.cs
+Features/Auth/DAL/Repositories/Interfaces/IJwtTokenService.cs
+Features/Auth/DAL/Repositories/Interfaces/IGoogleIdentityProvider.cs
+Features/Auth/DAL/Repositories/Interfaces/IOtpCodeGenerator.cs
+Features/Auth/DAL/Repositories/Interfaces/IPasswordHasher.cs
+Features/Auth/DAL/Repositories/Interfaces/IRefreshTokenHasher.cs
+Features/Auth/DAL/Repositories/Interfaces/ISmsSender.cs
+Features/Auth/DAL/Repositories/Interfaces/IAvatarStorage.cs
+Features/Auth/DAL/Repositories/Interfaces/IUserProfileCache.cs
+Features/Auth/DAL/Repositories/Interfaces/IAuthRateLimiter.cs
 Features/Auth/DAL/Repositories/AuthAccountRepository.cs
 Features/Auth/DAL/Repositories/RefreshTokenRepository.cs
 Features/Auth/DAL/Repositories/OtpRepository.cs
@@ -1031,7 +1031,7 @@ DI remains: Auth service, three repositories, and transaction manager scoped; pr
 - JWT, Google identity, OTP generation, password hashing, refresh-token hashing, SMS, avatar storage, profile cache, and auth rate limiting are BLL-owned ports implemented by shared Infrastructure classes. Legacy Infrastructure-owned Auth provider/cache/storage interfaces were removed.
 - `IApplicationTransactionManager`/`IApplicationTransaction` are live under `Common/Abstractions/Transactions`, with EF implementations under `Infrastructure/Persistence/Transactions`. Auth registration, new Google-account creation, refresh-token rotation, password reset, and account deletion now use the shared transaction manager and invalidate profile/KNN caches after commit.
 - Public Auth routes, authorization classification, snake_case JSON fields, shared envelope, bearer claims, hashed refresh-token storage, OTP behavior, Google admission, profile cache key/TTL, and avatar upload behavior were preserved.
-- Verification: `dotnet build VocaNova.sln --no-restore` passed; `dotnet test VocaNova.sln --no-build` passed 572/572 tests, including `AuthArchitectureTests`.
+- Historical Unit 6 verification passed `dotnet build VocaNova.sln --no-restore` and the then-current .NET suite including `AuthArchitectureTests`. CURRENT verification on 2026-08-31 passes 563 .NET tests.
 
 ### Unit 7 - Admin and SuperAdmin
 
@@ -1049,7 +1049,7 @@ Features/SuperAdmin/Contracts/Requests/CreateAdminAccountRequest.cs
 Features/SuperAdmin/Contracts/Requests/UpdateAdminAccountRequest.cs
 Features/SuperAdmin/Contracts/Requests/RoleRequest.cs
 Features/SuperAdmin/Contracts/Requests/SaveRoleRequest.cs
-Features/Admin/Contracts/Responses/AdminStatisticsResponses.cs
+Features/Admin/Contracts/Responses/AdminStatsResponses.cs
 Features/Admin/Contracts/Responses/AdminUserResponses.cs
 Features/SuperAdmin/Contracts/Responses/AdminAccountResponse.cs
 Features/SuperAdmin/Contracts/Responses/RoleResponse.cs
@@ -1061,33 +1061,31 @@ Features/SuperAdmin/Contracts/Requests/CreateAdminAccountRequestValidator.cs
 Features/SuperAdmin/Contracts/Requests/UpdateAdminAccountRequestValidator.cs
 Features/Admin/Mappings/AdminMappings.cs
 Features/SuperAdmin/Mappings/SuperAdminMappings.cs
-Features/Admin/BLL/Models/AdminStatisticsModels.cs
+Features/Admin/BLL/Models/AdminStatsModels.cs
 Features/Admin/BLL/Models/AdminUserModels.cs
 Features/SuperAdmin/BLL/Models/AdminAccountModels.cs
 Features/SuperAdmin/BLL/Models/RoleModels.cs
 Features/Admin/BLL/Models/AdminOperationResult.cs
 Features/SuperAdmin/BLL/Models/SuperAdminOperationResult.cs
-Features/Admin/BLL/Services/IAdminStatisticsService.cs
-Features/Admin/BLL/Services/AdminStatisticsService.cs
-Features/Admin/BLL/Services/IAdminUserService.cs
+Features/Admin/BLL/Services/IServices/IAdminStatsService.cs
+Features/Admin/BLL/Services/AdminStatsService.cs
+Features/Admin/BLL/Services/IServices/IAdminUserService.cs
 Features/Admin/BLL/Services/AdminUserService.cs
-Features/SuperAdmin/BLL/Services/ISuperAdminAccountService.cs
+Features/SuperAdmin/BLL/Services/IServices/ISuperAdminAccountService.cs
 Features/SuperAdmin/BLL/Services/SuperAdminAccountService.cs
-Features/SuperAdmin/BLL/Services/IRoleManagementService.cs
+Features/SuperAdmin/BLL/Services/IServices/IRoleManagementService.cs
 Features/SuperAdmin/BLL/Services/RoleManagementService.cs
-Features/Admin/BLL/Abstractions/IAdminStatisticsRepository.cs
-Features/Admin/BLL/Abstractions/IAdminUserRepository.cs
-Features/SuperAdmin/BLL/Abstractions/ISuperAdminAccountRepository.cs
-Features/SuperAdmin/BLL/Abstractions/IRoleManagementRepository.cs
-Features/Admin/BLL/Abstractions/IAdminStatisticsCache.cs
+Features/Admin/DAL/Repositories/Interfaces/IAdminStatsRepository.cs
+Features/Admin/DAL/Repositories/Interfaces/IAdminUserRepository.cs
+Features/SuperAdmin/DAL/Repositories/Interfaces/ISuperAdminAccountRepository.cs
+Features/SuperAdmin/DAL/Repositories/Interfaces/IRoleManagementRepository.cs
 Common/Abstractions/Auditing/IAuditLogSink.cs
-Features/Admin/DAL/Repositories/AdminStatisticsRepository.cs
+Features/Admin/DAL/Repositories/AdminStatsRepository.cs
 Features/Admin/DAL/Repositories/AdminUserRepository.cs
 Features/SuperAdmin/DAL/Repositories/SuperAdminAccountRepository.cs
 Features/SuperAdmin/DAL/Repositories/RoleManagementRepository.cs
 Features/Admin/DAL/Mappings/AdminPersistenceMappings.cs
 Features/SuperAdmin/DAL/Mappings/SuperAdminPersistenceMappings.cs
-Infrastructure/Caching/Admin/MemoryAdminStatisticsCache.cs
 Infrastructure/Auditing/AuditLogRecord.cs
 Infrastructure/Auditing/AuditLogQueue.cs
 Infrastructure/Auditing/AuditLogBackgroundService.cs
@@ -1098,24 +1096,24 @@ Unit 6's transaction manager and user-profile cache ports/implementations are re
 #### Current-type disposition
 
 - `AdminAuditLogQuery` -> HTTP `AdminAuditLogRequest` + BLL `AdminAuditLogQuery`; `AdminUserQuery` -> HTTP `AdminUserRequest` + BLL query. Preserve their current mixed query names exactly: Admin user uses `includeDeleted`, `sortBy`, `sortDirection`; audit uses `user_id`.
-- All response-shaped types in `AdminStatsDtos.cs` become BLL models plus members of `AdminStatisticsResponses.cs`: dashboard, demographics/group, learning/wrong-word/accuracy rows, session trend/count rows, mastery distribution/rows, activity trend/points, and audit log. Internal database aggregation rows (`AdminSessionAccuracyRow`, `AdminSessionCountRow`, `AdminMasteryCountRow`) become BLL persistence models only and are never serialized.
+- All response-shaped types in `AdminStatsDtos.cs` become BLL models plus members of `AdminStatsResponses.cs`: dashboard, demographics/group, learning/wrong-word/accuracy rows, session trend/count rows, mastery distribution/rows, activity trend/points, and audit log. Internal database aggregation rows (`AdminSessionAccuracyRow`, `AdminSessionCountRow`, `AdminMasteryCountRow`) become BLL persistence models only and are never serialized.
 - The exact response-class ledger is `AdminDashboardStatsDto`, `AdminDemographicsDto`, `AdminDemographicGroupDto`, `AdminLearningStatsDto`, `AdminWrongWordDto`, `AdminAccuracyTrendPointDto`, `AdminSessionsTrendDto`, `AdminSessionTrendPointDto`, `AdminMasteryDistributionDto`, `AdminMasteryLevelDto`, `AdminActivityTrendDto`, `AdminActivityTrendPointDto`, and `AdminAuditLogDto` -> same concepts without `Dto` in BLL and the grouped HTTP response file. `AdminAuditLogQueryValidator` -> `AdminAuditLogRequestValidator`; `AdminUserQueryValidator` -> `AdminUserRequestValidator`; `AdminAccountQueryValidator` -> `AdminAccountRequestValidator`.
 - `AdminUserSummaryDto`, `AdminUserTopicsDto`, `AdminTopicChipDto`, `AdminUserDetailDto`, `AdminUserTestSessionDto`, and `AdminUserLearningProfileDto` become BLL models and members of `AdminUserResponses.cs`, preserving every current snake_case field.
 - `AdminAccountQuery`, `CreateAdminAccountRequest`, `UpdateAdminAccountRequest`, `RoleQuery`, and `SaveRoleRequest` become Contracts plus BLL commands/queries. `AdminAccountDto`, `RoleDto`, and `RoleUserDto` become BLL models and the three SuperAdmin responses. Preserve all current snake_case names.
-- Current `IAdminStatsService`/`AdminStatsService` and `IAdminStatsRepository`/`AdminStatsRepository` map to the renamed `IAdminStatisticsService`/`AdminStatisticsService` and `IAdminStatisticsRepository`/`AdminStatisticsRepository`. Admin user pairs retain their concepts. SuperAdmin services remain use cases but gain the two BLL persistence ports; no service accesses EF or `VocaNovaDbContext`.
-- Current validators move to the exact Contract validation files. `IMemoryCache` use becomes BLL `IAdminStatisticsCache` with DAL memory implementation; profile invalidation reuses Unit 6 `IUserProfileCache`.
+- Current `IAdminStatsService`/`AdminStatsService` and `IAdminStatsRepository`/`AdminStatsRepository` retain their established names. Admin user pairs retain their concepts. SuperAdmin services remain use cases but gain the two BLL persistence ports; no service accesses EF or `VocaNovaDbContext`.
+- Current validators move to the exact Contract validation files. `AdminStatsService` uses ASP.NET Core's `IMemoryCache` directly for `admin:stats:dashboard`; profile invalidation reuses Unit 6 `IUserProfileCache`.
 - `IAuditLogQueue`, `AuditLogMessage`, `AuditLogQueue`, and `AuditLogBackgroundService` become the BLL `IAuditLogSink` boundary plus the three DAL auditing files above. `AuditLogMiddleware` remains Presentation and submits a provider-neutral audit record; `AuditLogHttpContextKeys` remains with the middleware.
 
 #### BLL ports and transaction rules
 
-`IAdminStatisticsRepository` exposes dashboard counts, demographics, wrong words, accuracy rows, session counts, mastery counts, activity data, and paged audit logs as BLL models. `IAdminUserRepository` exposes paged users, detail/history/topics, role/status lookup, token-revocation staging, and save. Status mutations remain one relational save followed by profile-cache removal.
+`IAdminStatsRepository` exposes dashboard counts, demographics, wrong words, accuracy rows, session counts, mastery counts, activity data, and paged audit logs as BLL models. `IAdminUserRepository` exposes paged users, detail/history/topics, role/status lookup, token-revocation staging, and save. Status mutations remain one relational save followed by profile-cache removal.
 
 `ISuperAdminAccountRepository` exposes account list/detail, email/phone uniqueness, role lookup, account/auth/profile staging, and active-token revocation using BLL models. `IRoleManagementRepository` exposes role list/detail/name checks, members, built-in/in-use checks, role CRUD/assignment staging, and token revocation. Both services use Unit 6's transaction manager for every mutation: begin, stage all related entities/tokens, call the transaction's `SaveChangesAsync`, commit, then invalidate profile cache. Reads do not begin transactions. This replaces direct DbContext access while preserving one atomic relational unit and prevents cache invalidation on rollback.
 
-DI remains: Admin/SuperAdmin services and EF repositories scoped; `IMemoryCache`/`MemoryAdminStatisticsCache`, audit queue, and Redis profile cache singleton; audit writer remains hosted. Scoped transaction/repository objects must never be captured by those singletons.
+DI remains: Admin/SuperAdmin services and EF repositories scoped; `IMemoryCache`, audit queue, and Redis profile cache singleton; audit writer remains hosted. Scoped transaction/repository objects must never be captured by those singletons.
 
 ```csharp
-IAdminStatisticsRepository.GetDashboardAsync/GetDemographicsAsync/GetWrongWordsAsync/GetAccuracyRowsAsync/GetSessionCountsAsync/GetMasteryCountsAsync/GetActivityRowsAsync/GetAuditLogsAsync -> corresponding BLL models/PagedCollection
+IAdminStatsRepository.GetDashboardAsync/GetDemographicsAsync/GetWrongWordsAsync/GetAccuracyRowsAsync/GetSessionCountsAsync/GetMasteryCountsAsync/GetActivityRowsAsync/GetAuditLogsAsync -> corresponding BLL models/PagedCollection
 IAdminUserRepository.GetUsersAsync(AdminUserQuery, CancellationToken) -> PagedCollection<AdminUserSummary>
 IAdminUserRepository.GetDetailAsync/GetTopicsAsync/GetTestHistoryAsync -> corresponding BLL models
 IAdminUserRepository.GetStatusTargetAsync(uint userId, CancellationToken) -> AdminUserStatusTarget?
@@ -1127,7 +1125,7 @@ ISuperAdminAccountRepository.StageCreate/StageUpdate/StageStatus/StageDelete/Sta
 IRoleManagementRepository.GetRolesAsync/GetRoleAsync/GetUsersAsync -> corresponding BLL models
 IRoleManagementRepository.NameExistsAsync/IsBuiltInAsync/IsInUseAsync -> bool
 IRoleManagementRepository.StageCreate/StageUpdate/StageDelete/StageAssign/StageRemove/StageRevokeTokens using BLL commands
-IAdminStatisticsCache.GetOrCreateDashboardAsync(Func<CancellationToken,Task<AdminDashboardStatistics>>, TimeSpan ttl, CancellationToken) -> AdminDashboardStatistics
+AdminStatsService uses `IMemoryCache.GetOrCreateAsync` with key `admin:stats:dashboard` and a five-minute absolute expiration.
 IAuditLogSink.EnqueueAsync(AuditLogRecord record, CancellationToken)
 ```
 

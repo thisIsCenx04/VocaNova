@@ -136,7 +136,7 @@ VocaNova/
 |   |   |       |-- Contracts/{Requests,Responses}/
 |   |   |       |-- Mappings/
 |   |   |       |-- BLL/{Models,Services}/
-|   |   |       `-- DAL/{Repositories,Mappings}/
+|   |   |       `-- DAL/{Repositories,Repositories/Interfaces,Mappings}/
 |   |   |-- Infrastructure/
 |   |   |   |-- Persistence/{Configurations,Entities,Transactions}/
 |   |   |   |-- Caching/
@@ -178,7 +178,7 @@ Features/<Feature>/
 |       `-- IServices/           # service interfaces
 `-- DAL/
     |-- Repositories/            # repository implementations
-    |   `-- Interfaces/          # repository interfaces
+    |   `-- Interfaces/          # BLL-owned abstraction namespaces, current physical location
     `-- Mappings/                # BLL model <-> persistence representation
 ```
 
@@ -186,7 +186,7 @@ Request validators are Presentation concerns and may live beside the feature's R
 
 Dashboard and Mobile are client Presentation apps, so their API wire shapes are client-owned DTOs rather than backend BLL models. Dashboard stores those DTOs under `Data/Dtos`; Mobile stores them under feature `data/dtos` beside `data/services/*ApiService` HTTP gateways. The API still names its public HTTP boundary `Contracts/Requests|Responses` to distinguish backend transport contracts from BLL models and DAL entities.
 
-Shared/global infrastructure remains consolidated. `VocaNovaDbContext`, scaffolded entities, EF configurations, database-first synchronization, transaction coordination, Redis implementations, authentication, storage, providers, auditing, and runtime configuration stay outside `Features`. Cross-feature framework-neutral primitives such as `Common/Models/PagedCollection.cs` stay under `Common` rather than being duplicated.
+Shared/global infrastructure remains consolidated. `VocaNovaDbContext`, scaffolded entities, EF configurations, database-first synchronization, transaction coordination, Redis implementations, authentication, storage, providers, auditing, and runtime configuration stay outside `Features`. Repository/cache/provider interface files currently sit under each feature's `DAL/Repositories/Interfaces` folder while declaring `Features.<Feature>.BLL.Abstractions` namespaces, so logical ownership remains BLL even though the physical path is transitional. Cross-feature framework-neutral primitives such as `Common/Models/PagedCollection.cs` stay under `Common` rather than being duplicated.
 
 ### Migrated feature files (CURRENT)
 

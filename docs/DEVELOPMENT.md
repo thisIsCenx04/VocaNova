@@ -30,7 +30,7 @@ Set-Location src/VocaNova.Mobile
 flutter pub get
 dart format --output=none --set-exit-if-changed lib test
 flutter analyze
-flutter test
+flutter test --concurrency=1
 ```
 
 Flutter is not a solution project and must be verified separately.

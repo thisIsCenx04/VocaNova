@@ -60,7 +60,7 @@ DAL          -> BLL abstractions
 - DAL: feature repository implementations/mappings plus shared EF Core, `VocaNovaDbContext`, entities/configurations, MySQL/Pomelo, Redis, authentication/storage, and external-provider implementations under `Infrastructure`.
 - `Program.cs` is the composition root and registers feature BLL/DAL through `AddBLL()` and `AddDAL(configuration)`.
 
-The canonical target API layout is feature-first. Each `Features/<Feature>/` owns `Controllers`, `Contracts/Requests|Responses`, `Mappings`, `BLL/Abstractions|Models|Services`, and `DAL/Repositories|Mappings`. Repository interfaces remain BLL-owned; shared persistence, Redis, authentication, storage, providers, and other global infrastructure stay consolidated outside `Features/`. The backend remains a modular monolith. Dashboard and Mobile do not receive backend BLL/DAL folders or projects.
+The canonical target API layout is feature-first. Each `Features/<Feature>/` owns `Controllers`, `Contracts/Requests|Responses`, `Mappings`, `BLL/Models|Services`, and `DAL/Repositories|Repositories/Interfaces|Mappings`. Repository/cache/provider interfaces remain logically BLL-owned through `Features.<Feature>.BLL.Abstractions` namespaces; CURRENT source stores those interface files physically under `Features/<Feature>/DAL/Repositories/Interfaces`. Shared persistence, Redis, authentication, storage, providers, and other global infrastructure stay consolidated outside `Features/`. The backend remains a modular monolith. Dashboard and Mobile do not receive backend BLL/DAL folders or projects.
 
 ## Strict dependency and contract rules
 

@@ -148,20 +148,20 @@ Features/<Feature>/
 |   `-- Responses/
 |-- Mappings/
 |-- BLL/
-|   |-- Abstractions/
 |   |-- Models/
 |   `-- Services/
 `-- DAL/
     |-- Repositories/
+    |   `-- Interfaces/
     `-- Mappings/
 ```
 
 Public HTTP types use `*Request` and `*Response`; no new `DTOs` folder or generic `Dto` suffix is introduced. Request validators remain Presentation concerns and may live beside the feature's Request Contracts. Business result/error types remain inside the feature BLL model boundary. Mapping is explicit/manual by default; Mapster or AutoMapper requires a case-specific reason and is not mandated.
 
-Repository and other use-case-required interfaces belong to `Features/<Feature>/BLL/Abstractions`; only their implementations belong to `Features/<Feature>/DAL/Repositories`. DAL mapping belongs to the feature DAL slice. Controllers depend on BLL service abstractions, never DAL implementations.
+Repository and other use-case-required interfaces belong logically to BLL abstraction namespaces. CURRENT source stores those interface files physically under `Features/<Feature>/DAL/Repositories/Interfaces` while declaring `Features.<Feature>.BLL.Abstractions`; only concrete implementations belong to `Features/<Feature>/DAL/Repositories`. DAL mapping belongs to the feature DAL slice. Controllers depend on BLL service abstractions, never DAL implementations.
 
 Shared persistence and infrastructure remain consolidated outside feature folders. `VocaNovaDbContext`, scaffolded entities, EF configurations, database-first synchronization, migrations if ever introduced by a separate decision, and transaction coordination stay under shared `Infrastructure/Persistence` or an equivalent shared DAL location. Redis, authentication, storage, auditing, runtime configuration, rate limiting, OTP, SMS, and external-provider implementations also remain shared infrastructure. Cross-feature, layer-safe primitives remain under `Common`.
 
-Consequences: The ordered feature migration units now use corrected feature-first slices without changing public behavior. Physical feature grouping does not permit BLL-to-DAL dependencies or repository interfaces in DAL. Shared persistence/provider implementations remain consolidated under `Infrastructure`, and `AddBLL()`/`AddDAL(configuration)` are the CURRENT grouped registration surface.
+Consequences: The ordered feature migration units now use corrected feature-first slices without changing public behavior. Physical feature grouping does not permit BLL-to-DAL dependencies; repository/cache/provider interface files sit in `DAL/Repositories/Interfaces` but keep BLL abstraction namespaces and BLL-only signatures. Shared persistence/provider implementations remain consolidated under `Infrastructure`, and `AddBLL()`/`AddDAL(configuration)` are the CURRENT grouped registration surface.
 
 Supersedes: ADR-008. ADR-001 through ADR-007, ADR-010, ADR-013 through ADR-017 remain in force.
