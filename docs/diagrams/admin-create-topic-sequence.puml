@@ -1,0 +1,106 @@
+@startuml
+title Create Topic Sequence (/api/admin/topics)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Create Topic\nPage (Dashboard)" as CreateTopicPage
+control "TopicsController\n(Dashboard)" as DashboardController
+control "ServiceAPI\n(Dashboard)" as ServiceApi
+entity "CreateTopicRequest /\nTopicSummaryResponse\n(Request/Response DTO)" as TopicDto
+control "AdminTopicsController\n(API)" as ApiController
+control "TopicAdminService" as TopicService
+control "TopicAdminRepository" as TopicRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over CreateTopicPage, MySQL
+Checked in current code:
+Dashboard TopicsController posts create data through ServiceAPI.
+API uses CreateTopicRequest and returns TopicSummaryResponse.
+CreateTopicRequest can include word_ids for initial topic vocabulary.
+end note
+
+Admin -> CreateTopicPage: Open create topic page
+Admin -> CreateTopicPage: Enter topic name,\nVietnamese name?, icon?, words?
+Admin -> CreateTopicPage: Submit form
+CreateTopicPage -> DashboardController: POST /topics/create
+DashboardController -> DashboardController: Validate form input\nand selected words
+
+alt Form input invalid
+    DashboardController --> CreateTopicPage: Show validation message
+else Form input valid
+    DashboardController -> ServiceApi: GetAdminTopicsAsync()
+    ServiceApi -> ApiController: GET /api/admin/topics
+    ApiController --> ServiceApi: Existing topics
+    ServiceApi --> DashboardController: Existing topics
+
+    alt Topic name already exists
+        DashboardController --> CreateTopicPage: Show duplicate topic message
+    else Topic can be submitted
+        DashboardController -> ServiceApi: CreateTopicAsync(input)
+        ServiceApi -> TopicDto: Create request data\n(topic_name, topic_name_vi?,\nicon?, word_ids?)
+        TopicDto -> ApiController: POST /api/admin/topics\nCreateTopicRequest
+        ApiController -> ApiController: Check admin authorization
+        ApiController -> ApiController: Validate CreateTopicRequest
+
+        alt Request validation fails
+            ApiController --> ServiceApi: HTTP 400 error
+            ServiceApi --> DashboardController: Action failed
+            DashboardController --> CreateTopicPage: Show error message
+        else Request validation success
+            ApiController -> TopicService: CreateAsync(create data)
+            TopicService -> TopicService: Normalize topic data
+            TopicService -> TopicRepository: NameExistsAsync(topicName, topicNameVi)
+            TopicRepository -> DbContext: Query duplicate topic name
+            DbContext -> MySQL: SELECT topics
+            MySQL --> DbContext: Topic row or null
+            DbContext --> TopicRepository: Result
+            TopicRepository --> TopicService: exists or not
+
+            alt Topic name already exists
+                TopicService --> ApiController: Conflict result
+                ApiController --> ServiceApi: HTTP 409 error
+                ServiceApi --> DashboardController: Action failed
+                DashboardController --> CreateTopicPage: Show error message
+            else Topic name is available
+                TopicService -> TopicRepository: WordIdsExistAsync(wordIds)
+                TopicRepository -> DbContext: Check selected vocabulary words
+                DbContext -> MySQL: SELECT words
+                MySQL --> DbContext: Word rows count
+                DbContext --> TopicRepository: Result
+                TopicRepository --> TopicService: valid or invalid
+
+                alt Selected word id invalid
+                    TopicService --> ApiController: Validation failure
+                    ApiController --> ServiceApi: HTTP 400 error
+                    ServiceApi --> DashboardController: Action failed
+                    DashboardController --> CreateTopicPage: Show error message
+                else Selected words valid
+                    TopicService -> TopicRepository: CreateAsync(create data)
+                    TopicRepository -> DbContext: Add or restore Topic
+                    DbContext -> MySQL: INSERT/UPDATE topics
+                    MySQL --> DbContext: Save result
+
+                    opt word_ids supplied
+                        TopicRepository -> DbContext: Add topic word links
+                        DbContext -> MySQL: INSERT word_topics
+                        MySQL --> DbContext: Save result
+                    end
+
+                    DbContext --> TopicRepository: Topic summary
+                    TopicRepository --> TopicService: Created topic
+                    TopicService --> ApiController: Return created topic
+                    ApiController -> TopicDto: Create response data\n(TopicSummaryResponse)
+                    TopicDto --> ServiceApi: HTTP 201 Created\nTopicSummaryResponse
+                    ServiceApi --> DashboardController: Action success
+                    DashboardController --> CreateTopicPage: Redirect to topic list
+                end
+            end
+        end
+    end
+end
+
+@enduml
