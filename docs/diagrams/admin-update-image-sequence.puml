@@ -1,0 +1,85 @@
+@startuml
+title Update Word Image Sequence (/api/admin/words/{id}/image)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Vocabulary Page\n(Dashboard)" as VocabularyPage
+control "VocabularyController\n(Dashboard)" as DashboardController
+control "ServiceAPI\n(Dashboard)" as ServiceApi
+entity "UploadWordImageRequest /\nWordDetailResponse\n(Request/Response DTO)" as ImageDto
+control "AdminWordsController\n(API)" as ApiController
+control "WordAdminService" as WordService
+control "IWordImageStorage" as ImageStorage
+control "WordAdminRepository" as WordRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over VocabularyPage, MySQL
+Checked in current code:
+Dashboard VocabularyController uploads image file through ServiceAPI.
+API endpoint is POST /api/admin/words/{id}/image.
+API uses UploadWordImageRequest and returns WordDetailResponse.
+IWordImageStorage is implemented by CloudinaryWordImageStorage.
+end note
+
+Admin -> VocabularyPage: Choose image file
+Admin -> VocabularyPage: Click Upload image
+VocabularyPage -> DashboardController: POST /vocabulary/{id}/image
+DashboardController -> DashboardController: Validate file exists
+
+alt No image file selected
+    DashboardController --> VocabularyPage: Show error message
+else Image file selected
+    DashboardController -> ServiceApi: UploadImageAsync(wordId, image file)
+    ServiceApi -> ImageDto: Create multipart request\n(file)
+    ImageDto -> ApiController: POST /api/admin/words/{id}/image\nUploadWordImageRequest
+    ApiController -> ApiController: Check admin authorization
+    ApiController -> ApiController: Bind UploadWordImageRequest
+
+    ApiController -> WordService: UploadImageAsync(wordId, file)
+    WordService -> WordService: Validate image file\n(type and size)
+
+    alt Image file invalid
+        WordService --> ApiController: Validation failure
+        ApiController --> ServiceApi: HTTP 400 error
+        ServiceApi --> DashboardController: Action failed
+        DashboardController --> VocabularyPage: Show error message
+    else Image file valid
+        WordService -> WordRepository: WordExistsAsync(wordId)
+        WordRepository -> DbContext: Query word
+        DbContext -> MySQL: SELECT words
+        MySQL --> DbContext: Word row or null
+        DbContext --> WordRepository: Result
+        WordRepository --> WordService: exists or not
+
+        alt Word not found
+            WordService --> ApiController: NotFound result
+            ApiController --> ServiceApi: HTTP 404 error
+            ServiceApi --> DashboardController: Action failed
+            DashboardController --> VocabularyPage: Show error message
+        else Word exists
+            WordService -> ImageStorage: UploadAsync(file)
+            ImageStorage --> WordService: uploaded image URL
+
+            WordService -> WordRepository: SetImageUrlAsync(wordId, imageUrl)
+            WordRepository -> DbContext: Update word image_url
+            DbContext -> MySQL: UPDATE words
+            MySQL --> DbContext: Update result
+            DbContext --> WordRepository: Save result
+            WordRepository --> WordService: Updated word detail
+
+            WordService --> ApiController: Return updated word
+            ApiController -> ImageDto: Create response data\n(WordDetailResponse)
+            ImageDto --> ServiceApi: HTTP 200 OK\nWordDetailResponse
+            ServiceApi --> DashboardController: Action success
+            DashboardController -> ServiceApi: GetWordDetailAsync(wordId)
+            ServiceApi --> DashboardController: Updated word detail
+            DashboardController --> VocabularyPage: Show uploaded image
+        end
+    end
+end
+
+@enduml
