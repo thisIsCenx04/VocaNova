@@ -7,7 +7,7 @@ skinparam sequenceMessageAlign center
 
 actor Guest
 boundary "OtpScreen" as OtpScreen
-entity "OtpVerifyRequest\n(Request DTO)" as OtpVerifyRequest
+entity "OtpVerifyRequest / OtpVerifyResponse\n(Request/Response DTO)" as OtpVerifyDto
 control "AuthController" as AuthController
 control "AuthService" as AuthService
 control "OtpRepository" as OtpRepository
@@ -16,6 +16,7 @@ database "MySQL Database" as MySQL
 
 note over OtpScreen, MySQL
 Current code has OTP verification by phone.
+OtpVerifyRequest and OtpVerifyResponse exist in API Contracts.
 No separate verify-email flow was found in Auth code.
 end note
 
@@ -26,7 +27,7 @@ OtpScreen -> OtpScreen: Validate OTP input
 alt Data input invalid
     OtpScreen --> Guest: Show error message
 else Data input valid
-    OtpScreen -> OtpVerifyRequest: Create request data\n(phone, otp_code)
+    OtpScreen -> OtpVerifyDto: Create request data\n(phone, otp_code)
     OtpScreen -> AuthController: POST /api/auth/otp/verify\nOtpVerifyRequest
     AuthController -> AuthController: Validate OtpVerifyRequest
 
@@ -74,7 +75,8 @@ else Data input valid
             OtpRepository --> AuthService: OTP verified
 
             AuthService --> AuthController: Return verify result
-            AuthController --> OtpScreen: HTTP 200 OK
+            AuthController -> OtpVerifyDto: Create response data\n(verified)
+            AuthController --> OtpScreen: HTTP 200 OK\nOtpVerifyResponse
             OtpScreen --> Guest: Show success message
         end
     end

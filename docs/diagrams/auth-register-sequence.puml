@@ -7,7 +7,7 @@ skinparam sequenceMessageAlign center
 
 actor Guest
 boundary "RegisterScreen" as RegisterScreen
-entity "RegisterRequest\n(Request DTO)" as RegisterRequest
+entity "RegisterRequest / TokenResponse\n(Request/Response DTO)" as RegisterDto
 control "AuthController" as AuthController
 control "AuthService" as AuthService
 control "BcryptPasswordHasher" as PasswordHasher
@@ -16,7 +16,7 @@ database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
 note over RegisterScreen, MySQL
-RegisterRequest exists in API Contracts.
+RegisterRequest and TokenResponse exist in API Contracts.
 end note
 
 Guest -> RegisterScreen: Access page
@@ -27,7 +27,7 @@ RegisterScreen -> RegisterScreen: Validate input
 alt Data input invalid
     RegisterScreen --> Guest: Show error message
 else Data input valid
-    RegisterScreen -> RegisterRequest: Create request data\n(phone, password, display_name,\notp_code, optional profile fields)
+    RegisterScreen -> RegisterDto: Create request data\n(phone, password, display_name,\notp_code, optional profile fields)
     RegisterScreen -> AuthController: POST /api/auth/register\nRegisterRequest
     AuthController -> AuthController: Validate RegisterRequest
 
@@ -100,7 +100,8 @@ else Data input valid
                     DbContext --> AuthAccountRepository: Save result
 
                     AuthService --> AuthController: Return register result
-                    AuthController --> RegisterScreen: HTTP 201 Created
+                    AuthController -> RegisterDto: Create response data\n(access_token, refresh_token,\nexpires_in, token_type)
+                    AuthController --> RegisterScreen: HTTP 201 Created\nTokenResponse
                     RegisterScreen --> Guest: Show success message
                 end
             end

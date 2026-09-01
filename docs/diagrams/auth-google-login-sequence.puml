@@ -8,7 +8,7 @@ skinparam sequenceMessageAlign center
 actor Guest
 boundary "LoginScreen" as LoginScreen
 control "GoogleAuthService" as GoogleAuthService
-entity "GoogleLoginRequest\n(Request DTO)" as GoogleLoginRequest
+entity "GoogleLoginRequest / TokenResponse\n(Request/Response DTO)" as GoogleLoginDto
 control "AuthController" as AuthController
 control "AuthService" as AuthService
 control "AuthAccountRepository" as AuthAccountRepository
@@ -16,7 +16,7 @@ database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
 note over LoginScreen, MySQL
-GoogleLoginRequest exists in API Contracts.
+GoogleLoginRequest and TokenResponse exist in API Contracts.
 Mobile GoogleAuthService gets the id_token before the API call.
 end note
 
@@ -28,7 +28,7 @@ GoogleAuthService --> LoginScreen: id_token
 alt Google login cancelled or token missing
     LoginScreen --> Guest: Show error message
 else Google token received
-    LoginScreen -> GoogleLoginRequest: Create request data\n(id_token)
+    LoginScreen -> GoogleLoginDto: Create request data\n(id_token)
     LoginScreen -> AuthController: POST /api/auth/google\nGoogleLoginRequest
     AuthController -> AuthController: Validate GoogleLoginRequest
 
@@ -68,7 +68,8 @@ else Google token received
                     MySQL --> DbContext: Insert result
 
                     AuthService --> AuthController: Return login result
-                    AuthController --> LoginScreen: HTTP 200 OK
+                    AuthController -> GoogleLoginDto: Create response data\n(access_token, refresh_token,\nexpires_in, token_type)
+                    AuthController --> LoginScreen: HTTP 200 OK\nTokenResponse
                     LoginScreen --> Guest: Navigate to app
                 end
             else New Google account
@@ -116,7 +117,8 @@ else Google token received
                         DbContext --> AuthAccountRepository: Save result
 
                         AuthService --> AuthController: Return login result
-                        AuthController --> LoginScreen: HTTP 200 OK
+                        AuthController -> GoogleLoginDto: Create response data\n(access_token, refresh_token,\nexpires_in, token_type)
+                        AuthController --> LoginScreen: HTTP 200 OK\nTokenResponse
                         LoginScreen --> Guest: Navigate to app
                     end
                 end

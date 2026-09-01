@@ -7,7 +7,7 @@ skinparam sequenceMessageAlign center
 
 actor Guest
 boundary "LoginScreen" as LoginScreen
-entity "LoginRequest\n(Request DTO)" as LoginRequest
+entity "LoginRequest / TokenResponse\n(Request/Response DTO)" as LoginDto
 control "AuthController" as AuthController
 control "AuthService" as AuthService
 control "BcryptPasswordHasher" as PasswordHasher
@@ -17,7 +17,7 @@ database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
 note over LoginScreen, MySQL
-LoginRequest exists in API Contracts.
+LoginRequest and TokenResponse exist in API Contracts.
 end note
 
 Guest -> LoginScreen: Access login page
@@ -28,7 +28,7 @@ LoginScreen -> LoginScreen: Validate input
 alt Data input invalid
     LoginScreen --> Guest: Show error message
 else Data input valid
-    LoginScreen -> LoginRequest: Create request data\n(phone, password)
+    LoginScreen -> LoginDto: Create request data\n(phone, password)
     LoginScreen -> AuthController: POST /api/auth/login\nLoginRequest
     AuthController -> AuthController: Validate LoginRequest
 
@@ -75,7 +75,8 @@ else Data input valid
                     RefreshTokenRepository --> AuthService: Login saved
 
                     AuthService --> AuthController: Return login result
-                    AuthController --> LoginScreen: HTTP 200 OK
+                    AuthController -> LoginDto: Create response data\n(access_token, refresh_token,\nexpires_in, token_type)
+                    AuthController --> LoginScreen: HTTP 200 OK\nTokenResponse
                     LoginScreen --> Guest: Navigate to app
                 end
             end
