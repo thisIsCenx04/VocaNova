@@ -15,7 +15,7 @@ entity "WordDetailResponse\n(BE Response DTO)" as BeWordDetailDto
 entity "UpdateWordRequest\n(BE Request DTO)" as BeUpdateWordRequestDto
 entity "UpdateSenseRequest\n(BE Request DTO)" as BeUpdateSenseRequestDto
 entity "CreateSenseRequest\n(BE Request DTO)" as BeCreateSenseRequestDto
-entity "WordSeanseResponse\n(BE Response DTO)" as BeWordSenseDto
+entity "WordSenseResponse\n(BE Response DTO)" as BeWordSenseDto
 control "WordReadService" as WordReadService
 control "WordAdminService" as WordAdminService
 entity "Word" as WordEntity
