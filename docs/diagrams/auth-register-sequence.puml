@@ -10,10 +10,8 @@ boundary "Register\nPage" as RegisterPage
 entity "Register\nDTO" as RegisterDto
 control "Auth\nController" as AuthController
 control "Auth\nService" as AuthService
-control "Password\nHash Service" as PasswordHashService
+control "Password Hash\nService" as PasswordHashService
 control "Auth\nRepository" as AuthRepository
-control "OTP\nRepository" as OtpRepository
-control "Refresh Token\nRepository" as RefreshTokenRepository
 database "VocaNovaDb\nContext" as DbContext
 database "MySQL\nDatabase" as MySQL
 
@@ -51,12 +49,12 @@ else Data input valid
             AuthController --> RegisterPage: HTTP 409 Phone already exists
             RegisterPage --> Guest: Show error message
         else Phone is available
-            AuthService -> OtpRepository: FindLatestAsync(phone, userId=null)
-            OtpRepository -> DbContext: Query OTP by phone
+            AuthService -> AuthRepository: Find latest active OTP
+            AuthRepository -> DbContext: Query OTP by phone
             DbContext -> MySQL: SELECT latest OTP
             MySQL --> DbContext: OTP row or null
-            DbContext --> OtpRepository: Result
-            OtpRepository --> AuthService: OTP result
+            DbContext --> AuthRepository: Result
+            AuthRepository --> AuthService: OTP result
 
             alt OTP invalid
                 AuthService --> AuthController: Unauthorized/Conflict result
@@ -72,17 +70,17 @@ else Data input valid
                 DbContext --> AuthRepository: Save result
                 AuthRepository --> AuthService: Created account
 
-                AuthService -> OtpRepository: Mark OTP used
-                OtpRepository -> DbContext: Update OTP
+                AuthService -> AuthRepository: Mark OTP used
+                AuthRepository -> DbContext: Update OTP
                 DbContext -> MySQL: UPDATE otp_verifications
                 MySQL --> DbContext: Update result
-                DbContext --> OtpRepository: Save result
+                DbContext --> AuthRepository: Save result
 
-                AuthService -> RefreshTokenRepository: Create refresh token
-                RefreshTokenRepository -> DbContext: Add RefreshToken
+                AuthService -> AuthRepository: Create refresh token
+                AuthRepository -> DbContext: Add RefreshToken
                 DbContext -> MySQL: INSERT refresh_tokens
                 MySQL --> DbContext: Insert result
-                DbContext --> RefreshTokenRepository: Save result
+                DbContext --> AuthRepository: Save result
 
                 AuthService --> AuthController: Return register result
                 AuthController --> RegisterPage: HTTP 201 Created
