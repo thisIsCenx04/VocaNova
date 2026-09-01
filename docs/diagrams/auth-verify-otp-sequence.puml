@@ -1,85 +1,83 @@
 @startuml
 title Verify OTP Sequence (/api/auth/otp/verify)
-
 autonumber
 skinparam responseMessageBelowArrow true
 skinparam sequenceMessageAlign center
-
 actor Guest
-boundary "OtpScreen" as OtpScreen
-entity "OtpVerifyRequest / OtpVerifyResponse\n(Request/Response DTO)" as OtpVerifyDto
+boundary "OtpScreen UI" as OtpScreen
+entity "OtpVerifyRequest\n(BE Request DTO)" as OtpVerifyRequestDto
+entity "OtpVerifyResponse\n(BE Response DTO)" as OtpVerifyResponseDto
 control "AuthController" as AuthController
 control "AuthService" as AuthService
+entity "OtpVerification" as OtpEntity
 control "OtpRepository" as OtpRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
-
 note over OtpScreen, MySQL
 Current code has OTP verification by phone.
 OtpVerifyRequest and OtpVerifyResponse exist in API Contracts.
 No separate verify-email flow was found in Auth code.
 end note
-
 Guest -> OtpScreen: Enter OTP code
 Guest -> OtpScreen: Click Verify button
 OtpScreen -> OtpScreen: Validate OTP input
-
 alt Data input invalid
-    OtpScreen --> Guest: Show error message
+OtpScreen --> Guest: Show error message
 else Data input valid
-    OtpScreen -> OtpVerifyDto: Create request data\n(phone, otp_code)
-    OtpVerifyDto -> AuthController: POST /api/auth/otp/verify\nOtpVerifyRequest
-    AuthController -> AuthController: Validate OtpVerifyRequest
-
-    alt Request validation fails
-        AuthController --> OtpScreen: HTTP 400 error
-        OtpScreen --> Guest: Show error message
-    else Request validation success
-        AuthController -> AuthService: VerifyOtpAsync(otp data)
-        AuthService -> OtpRepository: FindLatestAsync(phone, userId=null)
-        OtpRepository -> DbContext: Query latest active OTP
-        DbContext -> MySQL: SELECT latest OTP
-        MySQL --> DbContext: OTP row or null
-        DbContext --> OtpRepository: Result
-        OtpRepository --> AuthService: OtpRecord or null
-
-        alt OTP missing or expired
-            AuthService --> AuthController: Unauthorized result
-            AuthController --> OtpScreen: HTTP 401 error
-            OtpScreen --> Guest: Show error message
-        else OTP already used
-            AuthService --> AuthController: Conflict result
-            AuthController --> OtpScreen: HTTP 409 error
-            OtpScreen --> Guest: Show error message
-        else Too many verify attempts
-            AuthService --> AuthController: TooManyRequests result
-            AuthController --> OtpScreen: HTTP 429 error
-            OtpScreen --> Guest: Show error message
-        else OTP code is wrong
-            AuthService -> OtpRepository: StageAttemptAsync(otpId, attempt + 1)
-            OtpRepository -> DbContext: Update verify attempt count
-            DbContext -> MySQL: UPDATE otp_verifications
-            MySQL --> DbContext: Update result
-            DbContext --> OtpRepository: Save result
-            OtpRepository --> AuthService: Attempt saved
-
-            AuthService --> AuthController: Unauthorized result
-            AuthController --> OtpScreen: HTTP 401 Invalid OTP
-            OtpScreen --> Guest: Show error message
-        else OTP valid
-            AuthService -> OtpRepository: StageUsedAsync(otp, userId=null)
-            OtpRepository -> DbContext: Mark OTP used
-            DbContext -> MySQL: UPDATE otp_verifications
-            MySQL --> DbContext: Update result
-            DbContext --> OtpRepository: Save result
-            OtpRepository --> AuthService: OTP verified
-
-            AuthService --> AuthController: Return verify result
-            AuthController -> OtpVerifyDto: Create response data\n(verified)
-            OtpVerifyDto --> OtpScreen: HTTP 200 OK\nOtpVerifyResponse
-            OtpScreen --> Guest: Show success message
-        end
-    end
+OtpScreen -> OtpVerifyRequestDto: Create request data(phone, otp_code)
+OtpVerifyRequestDto -> AuthController: POST /api/auth/otp/verifyOtpVerifyRequest
+AuthController -> AuthController: Validate OtpVerifyRequest
+alt Request validation fails
+AuthController --> OtpScreen: HTTP 400 error
+OtpScreen --> Guest: Show error message
+else Request validation success
+AuthController -> AuthService: VerifyOtpAsync(otp data)
+AuthService -> OtpRepository: FindLatestAsync(phone, userId=null)
+OtpRepository -> DbContext: Query latest active OTP
+DbContext -> MySQL: SELECT latest OTP
+MySQL --> DbContext: OTP row or null
+DbContext -> OtpEntity: Materialize OtpVerification?
+OtpEntity --> DbContext: OtpVerification or null
+DbContext --> OtpRepository: Result
+OtpRepository --> AuthService: OtpRecord or null
+alt OTP missing or expired
+AuthService --> AuthController: Unauthorized result
+AuthController --> OtpScreen: HTTP 401 error
+OtpScreen --> Guest: Show error message
+else OTP already used
+AuthService --> AuthController: Conflict result
+AuthController --> OtpScreen: HTTP 409 error
+OtpScreen --> Guest: Show error message
+else Too many verify attempts
+AuthService --> AuthController: TooManyRequests result
+AuthController --> OtpScreen: HTTP 429 error
+OtpScreen --> Guest: Show error message
+else OTP code is wrong
+AuthService -> OtpRepository: StageAttemptAsync(otpId, attempt + 1)
+OtpRepository -> OtpEntity: Increment AttemptCount
+OtpEntity --> OtpRepository: OtpVerification updated
+OtpRepository -> DbContext: Track OTP attempt
+DbContext -> MySQL: UPDATE otp_verifications
+MySQL --> DbContext: Update result
+DbContext --> OtpRepository: Save result
+OtpRepository --> AuthService: Attempt saved
+AuthService --> AuthController: Unauthorized result
+AuthController --> OtpScreen: HTTP 401 Invalid OTP
+OtpScreen --> Guest: Show error message
+else OTP valid
+AuthService -> OtpRepository: StageUsedAsync(otp, userId=null)
+OtpRepository -> OtpEntity: Set UsedAt
+OtpEntity --> OtpRepository: OtpVerification updated
+OtpRepository -> DbContext: Track OTP used
+DbContext -> MySQL: UPDATE otp_verifications
+MySQL --> DbContext: Update result
+DbContext --> OtpRepository: Save result
+OtpRepository --> AuthService: OTP verified
+AuthService --> AuthController: Return verify result
+AuthController -> OtpVerifyResponseDto: Create response data(verified)
+OtpVerifyResponseDto --> OtpScreen: HTTP 200 OK\nOtpVerifyResponse
+OtpScreen --> Guest: Show success message
 end
-
+end
+end
 @enduml

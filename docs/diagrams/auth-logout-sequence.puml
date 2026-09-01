@@ -1,70 +1,65 @@
 @startuml
 title Logout Sequence (/api/auth/logout)
-
 autonumber
 skinparam responseMessageBelowArrow true
 skinparam sequenceMessageAlign center
-
 actor User
-boundary "ProfileScreen" as ProfileScreen
-entity "RefreshTokenRequest\n(Request DTO)" as RefreshTokenRequest
+boundary "ProfileScreen UI" as ProfileScreen
+entity "RefreshTokenRequest\n(BE Request DTO)" as RefreshTokenRequest
 control "AuthController" as AuthController
 control "AuthService" as AuthService
+entity "RefreshToken" as RefreshTokenEntity
 control "RefreshTokenRepository" as RefreshTokenRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 collections "LocalStorage" as LocalStorage
-
 note over ProfileScreen, MySQL
 RefreshTokenRequest exists in API Contracts and is reused by logout.
 SecureStorage and Google sign-out are handled in mobile code, but are not drawn as lifelines here.
 end note
-
 User -> ProfileScreen: Click Logout button
 ProfileScreen -> ProfileScreen: Get refresh token
-
 alt Refresh token exists
-    ProfileScreen -> RefreshTokenRequest: Create request data\n(refresh_token)
-    ProfileScreen -> AuthController: POST /api/auth/logout\nRefreshTokenRequest
-    AuthController -> AuthController: Validate RefreshTokenRequest
-
-    alt Request validation fails
-        AuthController --> ProfileScreen: HTTP 400 error
-    else Request validation success
-        AuthController -> AuthService: LogoutAsync(refresh token)
-        AuthService -> AuthService: Hash refresh token
-        AuthService -> RefreshTokenRepository: StageRevokeAsync(tokenHash)
-        RefreshTokenRepository -> DbContext: Find token by hash
-        DbContext -> MySQL: SELECT refresh_tokens
-        MySQL --> DbContext: Token row or null
-        DbContext --> RefreshTokenRepository: Result
-
-        alt Refresh token invalid
-            RefreshTokenRepository --> AuthService: false
-            AuthService --> AuthController: Unauthorized result
-            AuthController --> ProfileScreen: HTTP 401 Invalid refresh token
-        else Refresh token valid
-            RefreshTokenRepository -> DbContext: Set RevokedAt
-            DbContext -> MySQL: UPDATE refresh_tokens
-            MySQL --> DbContext: Update result
-            DbContext --> RefreshTokenRepository: Save result
-            RefreshTokenRepository --> AuthService: true
-            AuthService --> AuthController: Success result
-            AuthController --> ProfileScreen: HTTP 200 OK
-        end
-    end
-else No refresh token
-    ProfileScreen -> ProfileScreen: Skip API logout request
+ProfileScreen -> RefreshTokenRequest: Create request data(refresh_token)
+ProfileScreen -> AuthController: POST /api/auth/logoutRefreshTokenRequest
+AuthController -> AuthController: Validate RefreshTokenRequest
+alt Request validation fails
+AuthController --> ProfileScreen: HTTP 400 error
+else Request validation success
+AuthController -> AuthService: LogoutAsync(refresh token)
+AuthService -> AuthService: Hash refresh token
+AuthService -> RefreshTokenRepository: StageRevokeAsync(tokenHash)
+RefreshTokenRepository -> DbContext: Find token by hash
+DbContext -> MySQL: SELECT refresh_tokens
+MySQL --> DbContext: Token row or null
+DbContext -> RefreshTokenEntity: Materialize RefreshToken?
+RefreshTokenEntity --> DbContext: RefreshToken or null
+DbContext --> RefreshTokenRepository: Result
+alt Refresh token invalid
+RefreshTokenRepository --> AuthService: false
+AuthService --> AuthController: Unauthorized result
+AuthController --> ProfileScreen: HTTP 401 Invalid refresh token
+else Refresh token valid
+RefreshTokenRepository -> RefreshTokenEntity: Set RevokedAt
+RefreshTokenEntity --> RefreshTokenRepository: RefreshToken updated
+RefreshTokenRepository -> DbContext: Track RefreshToken
+DbContext -> MySQL: UPDATE refresh_tokens
+MySQL --> DbContext: Update result
+DbContext --> RefreshTokenRepository: Save result
+RefreshTokenRepository --> AuthService: true
+AuthService --> AuthController: Success result
+AuthController --> ProfileScreen: HTTP 200 OK
 end
-
+end
+else No refresh token
+ProfileScreen -> ProfileScreen: Skip API logout request
+end
 note over ProfileScreen, LocalStorage
 Current mobile behavior: local logout still continues even when API logout fails.
 end note
-
 ProfileScreen -> ProfileScreen: Sign out Google account
 ProfileScreen -> ProfileScreen: Clear access and refresh tokens
 ProfileScreen -> LocalStorage: Clear local app data
 LocalStorage --> ProfileScreen: Cleared
 ProfileScreen --> User: Navigate to LoginScreen
-
 @enduml

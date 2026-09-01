@@ -1,57 +1,51 @@
 @startuml
 title Delete Topic Sequence (/api/admin/topics/{id})
-
 autonumber
 skinparam responseMessageBelowArrow true
 skinparam sequenceMessageAlign center
-
 actor Admin
-boundary "Topics Page\n(Dashboard)" as TopicsPage
-control "TopicsController\n(Dashboard)" as DashboardController
-control "ServiceAPI\n(Dashboard)" as ServiceApi
-control "AdminTopicsController\n(API)" as ApiController
+boundary "Topics UI" as TopicsPage
+control "TopicsController\n(FE Dashboard)" as DashboardController
+control "AdminTopicsController\n(BE API)" as ApiController
 control "TopicAdminService" as TopicService
+entity "Topic" as TopicEntity
 control "TopicAdminRepository" as TopicRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
-
 note over TopicsPage, MySQL
 Checked in current code:
-Dashboard calls DeleteTopicAsync through ServiceAPI.
+Dashboard calls DeleteTopicAsync through VocaNovaApiClient.
 API endpoint is DELETE /api/admin/topics/{id}.
 No request DTO body is used; API returns bool in the response envelope.
 Delete is soft delete: topic status becomes deleted.
 end note
-
 Admin -> TopicsPage: Click Delete topic
 TopicsPage -> DashboardController: POST /topics/{id}/delete
-DashboardController -> ServiceApi: DeleteTopicAsync(id)
-ServiceApi -> ApiController: DELETE /api/admin/topics/{id}
+DashboardController -> ApiController: VocaNovaApiClient.DeleteTopicAsync(id)\nDELETE /api/admin/topics/{id}
 ApiController -> ApiController: Check admin authorization
 ApiController -> TopicService: SoftDeleteAsync(id)
-
 TopicService -> TopicRepository: SetStatusAsync(id, deleted)
 TopicRepository -> DbContext: Find topic
 DbContext -> MySQL: SELECT topics
 MySQL --> DbContext: Topic row or null
+DbContext -> TopicEntity: Materialize Topic?
+TopicEntity --> DbContext: Topic or null
 DbContext --> TopicRepository: Result
-
 alt Topic not found
-    TopicRepository --> TopicService: false
-    TopicService --> ApiController: NotFound result
-    ApiController --> ServiceApi: HTTP 404 error
-    ServiceApi --> DashboardController: Action failed
-    DashboardController --> TopicsPage: Show feedback
+TopicRepository --> TopicService: false
+TopicService --> ApiController: NotFound result
+ApiController --> DashboardController: HTTP 404 error
+DashboardController --> TopicsPage: Show feedback
 else Topic found
-    TopicRepository -> DbContext: Set topic status deleted
-    DbContext -> MySQL: UPDATE topics
-    MySQL --> DbContext: Update result
-    DbContext --> TopicRepository: Save result
-    TopicRepository --> TopicService: true
-    TopicService --> ApiController: Success result
-    ApiController --> ServiceApi: HTTP 200 OK
-    ServiceApi --> DashboardController: Action success
-    DashboardController --> TopicsPage: Show feedback and refresh list
+TopicRepository -> TopicEntity: Set Status = deleted
+TopicEntity --> TopicRepository: Topic updated
+TopicRepository -> DbContext: Track Topic status
+DbContext -> MySQL: UPDATE topics
+MySQL --> DbContext: Update result
+DbContext --> TopicRepository: Save result
+TopicRepository --> TopicService: true
+TopicService --> ApiController: Success result
+ApiController --> DashboardController: HTTP 200 OK
+DashboardController --> TopicsPage: Show feedback and refresh list
 end
-
 @enduml

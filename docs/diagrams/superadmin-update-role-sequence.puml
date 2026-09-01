@@ -6,112 +6,120 @@ skinparam responseMessageBelowArrow true
 skinparam sequenceMessageAlign center
 
 actor SuperAdmin
-boundary "Edit Role\nPage (Dashboard)" as EditRolePage
-control "RolesController\n(Dashboard)" as DashboardController
-control "ServiceAPI\n(Dashboard)" as ServiceApi
-entity "SaveRoleRequest /\nRoleResponse\n(Request/Response DTO)" as RoleDto
-control "RolesController\n(API)" as ApiController
+boundary "Edit Role UI" as EditRolePage
+control "RolesController\n(FE Dashboard)" as FeController
+control "RolesController\n(BE API)" as BeController
+entity "ManagedRole\n(FE Response DTO)" as FeRoleDto
+entity "SaveRoleRequest\n(BE Request DTO)" as BeRequestDto
+entity "RoleResponse\n(BE Response DTO)" as BeResponseDto
 control "RoleManagementService" as RoleService
+entity "Role" as RoleEntity
 control "RoleManagementRepository" as RoleRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
 note over EditRolePage, MySQL
 Checked in current code:
-Dashboard RolesController loads roles, then posts edit data through ServiceAPI.
-API uses SaveRoleRequest and returns RoleResponse.
+FE controller exists: RolesController.
+FE response DTO exists: ManagedRole.
+BE controller exists: RolesController.
+BE DTOs exist: SaveRoleRequest and RoleResponse.
+Entity exists: Role.
 System role names cannot be changed.
 end note
 
 SuperAdmin -> EditRolePage: Open edit role page
-EditRolePage -> DashboardController: GET /roles/{roleId}/edit
-DashboardController -> ServiceApi: GetRolesAsync()
-ServiceApi -> ApiController: GET /api/superadmin/roles
-ApiController -> RoleService: GetRolesAsync(query)
+EditRolePage -> FeController: GET /roles/{roleId}/edit
+FeController -> BeController: VocaNovaApiClient.GetRolesAsync\nGET /api/superadmin/roles
+BeController -> RoleService: GetRolesAsync(query)
 RoleService -> RoleRepository: GetRolesAsync(query)
 RoleRepository -> DbContext: Query roles
 DbContext -> MySQL: SELECT roles
 MySQL --> DbContext: Role rows
+DbContext -> RoleEntity: Materialize Role rows
+RoleEntity --> DbContext: Roles
 DbContext --> RoleRepository: Result
 RoleRepository --> RoleService: Paged roles
-RoleService --> ApiController: Return roles result
-ApiController -> RoleDto: Create response data\n(RoleResponse)
-RoleDto --> ServiceApi: HTTP 200 OK\nPaged RoleResponse
-ServiceApi --> DashboardController: Roles
+RoleService --> BeController: Return roles result
+BeController -> BeResponseDto: Create RoleResponse
+BeResponseDto --> BeController: Paged RoleResponse
+BeController -> FeRoleDto: HTTP 200 OK\nPaged RoleResponse JSON
+FeRoleDto --> FeController: Paged ManagedRole
 
 alt Role not found or system role
-    DashboardController --> EditRolePage: Show not found\nor redirect with error
+    FeController --> EditRolePage: Show not found\nor redirect with error
 else Role can be edited
-    DashboardController --> EditRolePage: Render edit form
+    FeController --> EditRolePage: Render edit form
 end
 
 SuperAdmin -> EditRolePage: Enter new role name
 SuperAdmin -> EditRolePage: Submit form
-EditRolePage -> DashboardController: POST /roles/{roleId}/edit
-DashboardController -> DashboardController: Validate form input
+EditRolePage -> FeController: POST /roles/{roleId}/edit
+FeController -> FeController: Validate form input
 
 alt Form input invalid
-    DashboardController --> EditRolePage: Show validation message
+    FeController --> EditRolePage: Show validation message
 else Form input valid
-    DashboardController -> ServiceApi: UpdateRoleAsync(roleId, roleName)
-    ServiceApi -> RoleDto: Create request data\n(role_name)
-    RoleDto -> ApiController: PUT /api/superadmin/roles/{roleId}\nSaveRoleRequest
-    ApiController -> ApiController: Check super admin authorization
-    ApiController -> ApiController: Validate SaveRoleRequest
+    FeController -> BeController: VocaNovaApiClient.UpdateRoleAsync\nPUT /api/superadmin/roles/{roleId}
+    BeController -> BeRequestDto: Bind JSON body
+    BeRequestDto --> BeController: SaveRoleRequest
+    BeController -> BeController: Check super admin authorization
+    BeController -> BeController: Validate SaveRoleRequest
 
     alt Request validation fails
-        ApiController --> ServiceApi: HTTP 400 error
-        ServiceApi --> DashboardController: Action failed
-        DashboardController --> EditRolePage: Show error message
+        BeController --> FeController: HTTP 400 error
+        FeController --> EditRolePage: Show error message
     else Request validation success
-        ApiController -> RoleService: UpdateAsync(roleId, role data)
+        BeController -> RoleService: UpdateAsync(roleId, role data)
         RoleService -> RoleService: Normalize and validate role name
 
         alt Role name invalid
-            RoleService --> ApiController: Validation failure
-            ApiController --> ServiceApi: HTTP 400 error
-            ServiceApi --> DashboardController: Action failed
-            DashboardController --> EditRolePage: Show error message
+            RoleService --> BeController: Validation failure
+            BeController --> FeController: HTTP 400 error
+            FeController --> EditRolePage: Show error message
         else Role name valid
             RoleService -> RoleRepository: GetRoleNameAsync(roleId)
             RoleRepository -> DbContext: Query current role name
             DbContext -> MySQL: SELECT roles
             MySQL --> DbContext: Role row or null
+            DbContext -> RoleEntity: Materialize Role?
+            RoleEntity --> DbContext: Role or null
             DbContext --> RoleRepository: Result
             RoleRepository --> RoleService: role name or null
 
             alt Role not found or system role name changed
-                RoleService --> ApiController: NotFound/Forbidden result
-                ApiController --> ServiceApi: HTTP 404/403 error
-                ServiceApi --> DashboardController: Action failed
-                DashboardController --> EditRolePage: Show error message
+                RoleService --> BeController: NotFound/Forbidden result
+                BeController --> FeController: HTTP 404/403 error
+                FeController --> EditRolePage: Show error message
             else Role can be updated
                 RoleService -> RoleRepository: RoleExistsExcludeAsync(roleId, roleName)
                 RoleRepository -> DbContext: Query duplicate role name
                 DbContext -> MySQL: SELECT roles
                 MySQL --> DbContext: Duplicate row or null
+                DbContext -> RoleEntity: Materialize Role?
+                RoleEntity --> DbContext: Role or null
                 DbContext --> RoleRepository: Result
                 RoleRepository --> RoleService: exists or not
 
                 alt Role name already exists
-                    RoleService --> ApiController: Conflict result
-                    ApiController --> ServiceApi: HTTP 409 error
-                    ServiceApi --> DashboardController: Action failed
-                    DashboardController --> EditRolePage: Show error message
+                    RoleService --> BeController: Conflict result
+                    BeController --> FeController: HTTP 409 error
+                    FeController --> EditRolePage: Show error message
                 else Role name is available
                     RoleService -> RoleService: Begin transaction
                     RoleService -> RoleRepository: UpdateRoleAsync(roleId, roleName)
-                    RoleRepository -> DbContext: Update Role
+                    RoleRepository -> RoleEntity: Update Role
+                    RoleEntity --> RoleRepository: Role
+                    RoleRepository -> DbContext: Track Role update
                     DbContext -> MySQL: UPDATE roles
                     MySQL --> DbContext: Update result
                     DbContext --> RoleRepository: Save result
                     RoleRepository --> RoleService: Updated role
-
-                    RoleService --> ApiController: Return updated role
-                    ApiController -> RoleDto: Create response data\n(RoleResponse)
-                    RoleDto --> ServiceApi: HTTP 200 OK\nRoleResponse
-                    ServiceApi --> DashboardController: Action success
-                    DashboardController --> EditRolePage: Redirect to role list
+                    RoleService --> BeController: Return updated role
+                    BeController -> BeResponseDto: Create RoleResponse
+                    BeResponseDto --> BeController: RoleResponse
+                    BeController --> FeController: HTTP 200 OK\nRoleResponse
+                    FeController --> EditRolePage: Redirect to role list
                 end
             end
         end

@@ -1,122 +1,133 @@
 @startuml
 title Update Admin Account Sequence (/api/superadmin/admins/{id})
-
 autonumber
 skinparam responseMessageBelowArrow true
 skinparam sequenceMessageAlign center
-
 actor SuperAdmin
-boundary "Edit Admin Account\nPage (Dashboard)" as EditPage
-control "AdminAccountsController\n(Dashboard)" as DashboardController
-control "ServiceAPI\n(Dashboard)" as ServiceApi
-entity "UpdateAdminAccountRequest /\nAdminAccountResponse\n(Request/Response DTO)" as AdminAccountDto
-control "SuperAdminAccountsController\n(API)" as ApiController
+boundary "Edit Admin Account UI" as EditPage
+control "AdminAccountsController\n(FE Dashboard)" as FeController
+control "SuperAdminAccountsController\n(BE API)" as BeController
+entity "AdminAccount\n(FE Response DTO)" as FeResponseDto
+entity "UpdateAdminAccountRequest\n(BE Request DTO)" as BeRequestDto
+entity "AdminAccountResponse\n(BE Response DTO)" as BeResponseDto
 control "SuperAdminAccountService" as AccountService
+entity "User" as UserEntity
+entity "UserAuth" as UserAuthEntity
+entity "UserProfile" as UserProfileEntity
+entity "RefreshToken" as RefreshTokenEntity
 control "SuperAdminAccountRepository" as AccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
-
 note over EditPage, MySQL
 Checked in current code:
-Dashboard AdminAccountsController posts edit data through ServiceAPI.
-API uses UpdateAdminAccountRequest and returns AdminAccountResponse.
-If password is changed or status becomes locked, active refresh tokens are revoked.
+Dashboard UI file exists: Views/AdminAccounts/Edit.cshtml.
+FE controller exists: AdminAccountsController.
+FE response DTO exists: Dashboard Data/Dtos/SuperAdmin/AdminAccount.
+BE controller exists: SuperAdminAccountsController.
+BE DTOs exist: UpdateAdminAccountRequest and AdminAccountResponse.
+Entities exist: User, UserAuth, UserProfile and RefreshToken.
+Dashboard calls API through VocaNovaApiClient.GetAdminAccountAsync and UpdateAdminAccountAsync.
 end note
-
 SuperAdmin -> EditPage: Open edit admin page
-EditPage -> DashboardController: GET /admin-accounts/{id}/edit
-DashboardController -> ServiceApi: GetAdminAccountAsync(id)
-ServiceApi -> ApiController: GET /api/superadmin/admins/{id}
-ApiController -> AccountService: GetAccountAsync(id)
+EditPage -> FeController: GET /admin-accounts/{id}/edit
+FeController -> BeController: VocaNovaApiClient.GetAdminAccountAsync\nGET /api/superadmin/admins/{id}
+BeController -> AccountService: GetAccountAsync(id)
 AccountService -> AccountRepository: GetAccountAsync(id)
 AccountRepository -> DbContext: Query admin account
-DbContext -> MySQL: SELECT admin account
+DbContext -> MySQL: SELECT users with auth/profile/role
 MySQL --> DbContext: Admin account row or null
 DbContext --> AccountRepository: Result
 AccountRepository --> AccountService: Admin account or null
-
 alt Admin account not found or deleted
-    AccountService --> ApiController: NotFound result
-    ApiController --> ServiceApi: HTTP 404 error
-    ServiceApi --> DashboardController: null
-    DashboardController --> EditPage: Show not found
+    AccountService --> BeController: NotFound result
+    BeController --> FeController: HTTP 404 error
+    FeController --> EditPage: Show not found
 else Admin account found
-    AccountService --> ApiController: Return admin account
-    ApiController -> AdminAccountDto: Create response data\n(AdminAccountResponse)
-    AdminAccountDto --> ServiceApi: HTTP 200 OK\nAdminAccountResponse
-    ServiceApi --> DashboardController: Admin account
-    DashboardController --> EditPage: Render edit form
+    AccountService --> BeController: Admin account result
+    BeController -> BeResponseDto: Create AdminAccountResponse
+    BeResponseDto --> BeController: AdminAccountResponse
+    BeController -> FeResponseDto: HTTP 200 OK\nAdminAccountResponse JSON
+    FeResponseDto --> FeController: AdminAccount
+    FeController --> EditPage: Render edit form
 end
-
 SuperAdmin -> EditPage: Update full name, email,\nphone, password?, status
 SuperAdmin -> EditPage: Submit form
-EditPage -> DashboardController: POST /admin-accounts/{id}/edit
-DashboardController -> DashboardController: Validate form input
-
+EditPage -> FeController: POST /admin-accounts/{id}/edit\nEditAdminAccountViewModel
+FeController -> FeController: Validate id, ModelState\nand status
 alt Form input invalid
-    DashboardController --> EditPage: Show validation message
+    FeController --> EditPage: Return Edit.cshtml\nwith validation errors
 else Form input valid
-    DashboardController -> ServiceApi: UpdateAdminAccountAsync(id, input)
-    ServiceApi -> AdminAccountDto: Create request data\n(full_name, email, phone,\npassword?, status)
-    AdminAccountDto -> ApiController: PUT /api/superadmin/admins/{id}\nUpdateAdminAccountRequest
-    ApiController -> ApiController: Check super admin authorization
-    ApiController -> ApiController: Validate UpdateAdminAccountRequest
-
+    FeController -> BeController: VocaNovaApiClient.UpdateAdminAccountAsync\nPUT /api/superadmin/admins/{id}
+    BeController -> BeRequestDto: Bind JSON body
+    BeRequestDto --> BeController: UpdateAdminAccountRequest
+    BeController -> BeController: Check super admin authorization
+    BeController -> BeController: Validate UpdateAdminAccountRequest
     alt Request validation fails
-        ApiController --> ServiceApi: HTTP 400 error
-        ServiceApi --> DashboardController: Action failed
-        DashboardController --> EditPage: Show error message
+        BeController --> FeController: HTTP 400 error
+        FeController --> EditPage: Return Edit.cshtml\nwith error message
     else Request validation success
-        ApiController -> AccountService: UpdateAsync(id, update data)
+        BeController -> AccountService: UpdateAsync(id, update data)
         AccountService -> AccountRepository: FindDuplicateAsync(phone, email, id)
-        AccountRepository -> DbContext: Query duplicate phone/email
+        AccountRepository -> DbContext: Query UserAuth
         DbContext -> MySQL: SELECT user_auth
         MySQL --> DbContext: Duplicate row or null
         DbContext --> AccountRepository: Result
         AccountRepository --> AccountService: Duplicate message or null
-
         alt Phone or email already exists
-            AccountService --> ApiController: Conflict result
-            ApiController --> ServiceApi: HTTP 409 error
-            ServiceApi --> DashboardController: Action failed
-            DashboardController --> EditPage: Show error message
+            AccountService --> BeController: Conflict result
+            BeController --> FeController: HTTP 409 error
+            FeController --> EditPage: Return Edit.cshtml\nwith error message
         else Phone and email are available
             AccountService -> AccountRepository: GetAccountStatusAsync(id)
-            AccountRepository -> DbContext: Query current admin status
-            DbContext -> MySQL: SELECT user status
+            AccountRepository -> DbContext: Query User status
+            DbContext -> MySQL: SELECT users
             MySQL --> DbContext: Status row or null
-            DbContext --> AccountRepository: Result
-            AccountRepository --> AccountService: status or null
-
+            DbContext --> AccountRepository: status or null
             alt Admin account not found or deleted
-                AccountService --> ApiController: NotFound result
-                ApiController --> ServiceApi: HTTP 404 error
-                ServiceApi --> DashboardController: Action failed
-                DashboardController --> EditPage: Show error message
+                AccountService --> BeController: NotFound result
+                BeController --> FeController: HTTP 404 error
+                FeController --> EditPage: Return Edit.cshtml\nwith error message
             else Admin account can be updated
                 AccountService -> AccountService: Hash password if supplied\nand begin transaction
-
                 opt Password changed or status becomes locked
                     AccountService -> AccountRepository: RevokeActiveRefreshTokensAsync(id)
-                    AccountRepository -> DbContext: Revoke active refresh tokens
+                    AccountRepository -> RefreshTokenEntity: Set RevokedAt
+                    RefreshTokenEntity --> AccountRepository: RefreshToken updated
+                    AccountRepository -> DbContext: Track refresh token updates
                     DbContext -> MySQL: UPDATE refresh_tokens
                     MySQL --> DbContext: Update result
                 end
-
                 AccountService -> AccountRepository: UpdateAccountAsync(id, update data)
-                AccountRepository -> DbContext: Update User, UserAuth, UserProfile
-                DbContext -> MySQL: UPDATE admin account data
-                MySQL --> DbContext: Update result
-                DbContext --> AccountRepository: Save result
-                AccountRepository --> AccountService: Updated admin account
-                AccountService --> ApiController: Return updated account
-                ApiController -> AdminAccountDto: Create response data\n(AdminAccountResponse)
-                AdminAccountDto --> ServiceApi: HTTP 200 OK\nAdminAccountResponse
-                ServiceApi --> DashboardController: Action success
-                DashboardController --> EditPage: Redirect to admin account list
+                AccountRepository -> DbContext: Find admin account
+                DbContext -> MySQL: SELECT users with auth/profile/role
+                MySQL --> DbContext: Admin account row or null
+                DbContext --> AccountRepository: Result
+                alt Admin account disappeared
+                    AccountRepository --> AccountService: null
+                    AccountService --> BeController: NotFound result
+                    BeController --> FeController: HTTP 404 error
+                    FeController --> EditPage: Return Edit.cshtml\nwith error message
+                else Admin account found
+                    AccountRepository -> UserEntity: Update status
+                    AccountRepository -> UserAuthEntity: Update phone, email,\npassword_hash?
+                    AccountRepository -> UserProfileEntity: Update full_name
+                    UserEntity --> AccountRepository: User
+                    UserAuthEntity --> AccountRepository: UserAuth
+                    UserProfileEntity --> AccountRepository: UserProfile
+                    AccountRepository -> DbContext: Track User entity graph
+                    DbContext -> MySQL: UPDATE users,\nuser_auth, user_profiles
+                    MySQL --> DbContext: Update result
+                    DbContext --> AccountRepository: Tracking state
+                    AccountRepository --> AccountService: Updated admin account
+                    AccountService -> AccountService: Save changes\nand commit transaction
+                    AccountService --> BeController: Updated admin result
+                    BeController -> BeResponseDto: Create AdminAccountResponse
+                    BeResponseDto --> BeController: AdminAccountResponse
+                    BeController --> FeController: HTTP 200 OK\nAdminAccountResponse
+                    FeController --> EditPage: Redirect to admin account list
+                end
             end
         end
     end
 end
-
 @enduml

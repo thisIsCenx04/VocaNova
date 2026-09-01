@@ -1,73 +1,66 @@
 @startuml
 title Lock / Unlock Admin Account Sequence (/api/superadmin/admins/{id}/lock or unlock)
-
 autonumber
 skinparam responseMessageBelowArrow true
 skinparam sequenceMessageAlign center
-
 actor SuperAdmin
-boundary "Admin Accounts Page\n(Dashboard)" as AdminAccountsPage
-control "AdminAccountsController\n(Dashboard)" as DashboardController
-control "ServiceAPI\n(Dashboard)" as ServiceApi
-control "SuperAdminAccountsController\n(API)" as ApiController
+boundary "Admin Accounts UI" as AdminAccountsPage
+control "AdminAccountsController\n(FE Dashboard)" as DashboardController
+control "SuperAdminAccountsController\n(BE API)" as ApiController
 control "SuperAdminAccountService" as AccountService
+entity "User" as UserEntity
+entity "RefreshToken" as RefreshTokenEntity
 control "SuperAdminAccountRepository" as AccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
-
 note over AdminAccountsPage, MySQL
 Checked in current code:
-Dashboard calls LockAdminAccountAsync or UnlockAdminAccountAsync through ServiceAPI.
+Dashboard calls LockAdminAccountAsync or UnlockAdminAccountAsync through VocaNovaApiClient.
 API endpoints are PATCH /api/superadmin/admins/{id}/lock and /unlock.
 No request DTO body is used; API returns bool in the response envelope.
 Lock revokes active refresh tokens; unlock only changes status to active.
 end note
-
 SuperAdmin -> AdminAccountsPage: Click Lock/Unlock admin account
 AdminAccountsPage -> DashboardController: POST /admin-accounts/{id}/lock\nor /admin-accounts/{id}/unlock
-DashboardController -> ServiceApi: LockAdminAccountAsync(id)\nor UnlockAdminAccountAsync(id)
-ServiceApi -> ApiController: PATCH /api/superadmin/admins/{id}/lock\nor /api/superadmin/admins/{id}/unlock
+DashboardController -> ApiController: VocaNovaApiClient.LockAdminAccountAsync(id)\nor UnlockAdminAccountAsync(id)\nPATCH /api/superadmin/admins/{id}/lock\nor /api/superadmin/admins/{id}/unlock
 ApiController -> ApiController: Check super admin authorization
 ApiController -> AccountService: LockAsync(id)\nor UnlockAsync(id)
-
 AccountService -> AccountRepository: GetAccountStatusAsync(id)
 AccountRepository -> DbContext: Query admin account status
 DbContext -> MySQL: SELECT user status
 MySQL --> DbContext: Status row or null
+DbContext -> UserEntity: Materialize User?
+UserEntity --> DbContext: User or null
 DbContext --> AccountRepository: Result
 AccountRepository --> AccountService: status or null
-
 alt Admin account not found or deleted
-    AccountService --> ApiController: NotFound result
-    ApiController --> ServiceApi: HTTP 404 error
-    ServiceApi --> DashboardController: Action failed
-    DashboardController --> AdminAccountsPage: Show feedback
+AccountService --> ApiController: NotFound result
+ApiController --> DashboardController: HTTP 404 error
+DashboardController --> AdminAccountsPage: Show feedback
 else Admin account already in target state
-    AccountService --> ApiController: Conflict result
-    ApiController --> ServiceApi: HTTP 409 error
-    ServiceApi --> DashboardController: Action failed
-    DashboardController --> AdminAccountsPage: Show feedback
+AccountService --> ApiController: Conflict result
+ApiController --> DashboardController: HTTP 409 error
+DashboardController --> AdminAccountsPage: Show feedback
 else Admin account can be changed
-    AccountService -> AccountService: Begin transaction
-
-    opt Lock admin account
-        AccountService -> AccountRepository: RevokeActiveRefreshTokensAsync(id)
-        AccountRepository -> DbContext: Revoke active refresh tokens
-        DbContext -> MySQL: UPDATE refresh_tokens
-        MySQL --> DbContext: Update result
-    end
-
-    AccountService -> AccountRepository: ChangeStatusAsync(id, locked/active)
-    AccountRepository -> DbContext: Update admin account status
-    DbContext -> MySQL: UPDATE users
-    MySQL --> DbContext: Update result
-    DbContext --> AccountRepository: Save result
-    AccountRepository --> AccountService: Status changed
-
-    AccountService --> ApiController: Success result
-    ApiController --> ServiceApi: HTTP 200 OK
-    ServiceApi --> DashboardController: Action success
-    DashboardController --> AdminAccountsPage: Show feedback and refresh list
+AccountService -> AccountService: Begin transaction
+opt Lock admin account
+AccountService -> AccountRepository: RevokeActiveRefreshTokensAsync(id)
+AccountRepository -> RefreshTokenEntity: Set RevokedAt
+RefreshTokenEntity --> AccountRepository: RefreshToken updated
+AccountRepository -> DbContext: Track refresh token updates
+DbContext -> MySQL: UPDATE refresh_tokens
+MySQL --> DbContext: Update result
 end
-
+AccountService -> AccountRepository: ChangeStatusAsync(id, locked/active)
+AccountRepository -> UserEntity: Update status
+UserEntity --> AccountRepository: User updated
+AccountRepository -> DbContext: Track User status
+DbContext -> MySQL: UPDATE users
+MySQL --> DbContext: Update result
+DbContext --> AccountRepository: Save result
+AccountRepository --> AccountService: Status changed
+AccountService --> ApiController: Success result
+ApiController --> DashboardController: HTTP 200 OK
+DashboardController --> AdminAccountsPage: Show feedback and refresh list
+end
 @enduml

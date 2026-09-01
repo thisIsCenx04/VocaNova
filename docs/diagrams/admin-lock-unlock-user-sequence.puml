@@ -1,72 +1,74 @@
 @startuml
 title Lock / Unlock User Sequence (/api/admin/users/{id}/deactivate or restore)
-
 autonumber
 skinparam responseMessageBelowArrow true
 skinparam sequenceMessageAlign center
-
 actor Admin
-boundary "Users Page\n(Dashboard)" as UsersPage
-control "UsersController\n(Dashboard)" as DashboardUsersController
-control "ServiceAPI\n(Dashboard)" as ServiceApi
-control "AdminUsersController\n(API)" as AdminUsersController
+boundary "Users UI" as UsersPage
+control "UsersController\n(FE Dashboard)" as DashboardUsersController
+control "AdminUsersController\n(BE API)" as AdminUsersController
 control "AdminUserService" as AdminUserService
+entity "User" as UserEntity
+entity "Role" as RoleEntity
+entity "RefreshToken" as RefreshTokenEntity
 control "AdminUserRepository" as AdminUserRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
-
 note over UsersPage, MySQL
 Checked in current code:
 Dashboard uses POST /users/{id}/deactivate or /restore.
-ServiceAPI calls PATCH /api/admin/users/{id}/deactivate or /restore.
+VocaNovaApiClient calls PATCH /api/admin/users/{id}/deactivate or /restore.
 No request DTO body is used; API returns bool in the response envelope.
+Entities exist: User, Role and RefreshToken.
 end note
-
 Admin -> UsersPage: Click Lock/Unlock user
 UsersPage -> DashboardUsersController: POST /users/{id}/deactivate\nor /users/{id}/restore
-DashboardUsersController -> ServiceApi: DeactivateUserAsync(id)\nor RestoreUserAsync(id)
-ServiceApi -> AdminUsersController: PATCH /api/admin/users/{id}/deactivate\nor /api/admin/users/{id}/restore
+DashboardUsersController -> AdminUsersController: VocaNovaApiClient.DeactivateUserAsync(id)\nor RestoreUserAsync(id)
+DashboardUsersController -> AdminUsersController: PATCH /api/admin/users/{id}/deactivate\nor /api/admin/users/{id}/restore
 AdminUsersController -> AdminUsersController: Check admin authorization
-AdminUsersController -> AdminUserService: DeactivateAsync(id, actorRole)\nor RestoreAsync(id, actorRole)
-
+AdminUsersController -> AdminUserService: DeactivateAsync(id, actorRole)or RestoreAsync(id, actorRole)
 AdminUserService -> AdminUserRepository: GetStatusTargetAsync(id)
 AdminUserRepository -> DbContext: Query target user status and role
 DbContext -> MySQL: SELECT user status and role
 MySQL --> DbContext: Target row or null
+DbContext -> UserEntity: Materialize User?
+DbContext -> RoleEntity: Materialize Role?
+UserEntity --> DbContext: User or null
+RoleEntity --> DbContext: Role or null
 DbContext --> AdminUserRepository: Result
 AdminUserRepository --> AdminUserService: Status target or null
-
 alt User not found
-    AdminUserService --> AdminUsersController: NotFound result
-    AdminUsersController --> ServiceApi: HTTP 404 error
-    ServiceApi --> DashboardUsersController: Action failed
-    DashboardUsersController --> UsersPage: Show feedback
+AdminUserService --> AdminUsersController: NotFound result
+AdminUsersController --> DashboardUsersController: HTTP 404 error
+AdminUsersController --> DashboardUsersController: Action failed
+DashboardUsersController --> UsersPage: Show feedback
 else User cannot be managed
-    AdminUserService --> AdminUsersController: Forbidden/Conflict result
-    AdminUsersController --> ServiceApi: HTTP 403/409 error
-    ServiceApi --> DashboardUsersController: Action failed
-    DashboardUsersController --> UsersPage: Show feedback
+AdminUserService --> AdminUsersController: Forbidden/Conflict result
+AdminUsersController --> DashboardUsersController: HTTP 403/409 error
+AdminUsersController --> DashboardUsersController: Action failed
+DashboardUsersController --> UsersPage: Show feedback
 else User can be managed
-    AdminUserService -> AdminUserRepository: StageStatusAsync(id, locked/active)
-    AdminUserRepository -> DbContext: Update user status
-    DbContext -> MySQL: UPDATE users
-    MySQL --> DbContext: Update result
-
-    opt Lock user
-        AdminUserService -> AdminUserRepository: RevokeActiveRefreshTokensAsync(id)
-        AdminUserRepository -> DbContext: Revoke active refresh tokens
-        DbContext -> MySQL: UPDATE refresh_tokens
-        MySQL --> DbContext: Update result
-    end
-
-    AdminUserService -> AdminUserRepository: SaveChangesAsync()
-    AdminUserRepository -> DbContext: Save changes
-    DbContext --> AdminUserRepository: Save result
-    AdminUserRepository --> AdminUserService: Saved
-    AdminUserService --> AdminUsersController: Success result
-    AdminUsersController --> ServiceApi: HTTP 200 OK
-    ServiceApi --> DashboardUsersController: Action success
-    DashboardUsersController --> UsersPage: Show feedback and refresh page
+AdminUserService -> AdminUserRepository: StageStatusAsync(id, locked/active)
+AdminUserRepository -> UserEntity: Update status
+UserEntity --> AdminUserRepository: User updated
+AdminUserRepository -> DbContext: Track User status
+DbContext -> MySQL: UPDATE users
+MySQL --> DbContext: Update result
+opt Lock user
+AdminUserService -> AdminUserRepository: RevokeActiveRefreshTokensAsync(id)
+AdminUserRepository -> RefreshTokenEntity: Set RevokedAt
+RefreshTokenEntity --> AdminUserRepository: RefreshToken updated
+AdminUserRepository -> DbContext: Track refresh token updates
+DbContext -> MySQL: UPDATE refresh_tokens
+MySQL --> DbContext: Update result
 end
-
+AdminUserService -> AdminUserRepository: SaveChangesAsync()
+AdminUserRepository -> DbContext: Save changes
+DbContext --> AdminUserRepository: Save result
+AdminUserRepository --> AdminUserService: Saved
+AdminUserService --> AdminUsersController: Success result
+AdminUsersController --> DashboardUsersController: HTTP 200 OK
+AdminUsersController --> DashboardUsersController: Action success
+DashboardUsersController --> UsersPage: Show feedback and refresh page
+end
 @enduml
