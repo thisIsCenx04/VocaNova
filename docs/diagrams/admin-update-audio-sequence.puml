@@ -1,0 +1,98 @@
+@startuml
+title Update Word Audio Sequence (/api/admin/words/{id}/audio)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Vocabulary Page\n(Dashboard)" as VocabularyPage
+control "VocabularyController\n(Dashboard)" as DashboardController
+control "ServiceAPI\n(Dashboard)" as ServiceApi
+entity "UploadWordAudioRequest /\nWordAudioResponse\n(Request/Response DTO)" as AudioDto
+control "AdminWordsController\n(API)" as ApiController
+control "WordAdminService" as WordService
+control "IWordAudioStorage" as AudioStorage
+control "WordAdminRepository" as WordRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over VocabularyPage, MySQL
+Checked in current code:
+Create audio and update audio use the same upload/upsert flow.
+Dashboard VocabularyController uploads audio file through ServiceAPI.
+Dashboard currently sends accent = "us" for the upload.
+API endpoint is POST /api/admin/words/{id}/audio.
+API uses UploadWordAudioRequest and returns WordAudioResponse.
+IWordAudioStorage is implemented by CloudinaryWordAudioStorage.
+end note
+
+Admin -> VocabularyPage: Choose replacement audio file
+Admin -> VocabularyPage: Click Upload audio
+VocabularyPage -> DashboardController: POST /vocabulary/{id}/audio
+DashboardController -> DashboardController: Validate file exists
+
+alt No audio file selected
+    DashboardController --> VocabularyPage: Show error message
+else Audio file selected
+    DashboardController -> ServiceApi: UploadAudioAsync(wordId, audio file)
+    ServiceApi -> AudioDto: Create multipart request\n(accent = "us", file)
+    AudioDto -> ApiController: POST /api/admin/words/{id}/audio\nUploadWordAudioRequest
+    ApiController -> ApiController: Check admin authorization
+    ApiController -> ApiController: Bind UploadWordAudioRequest
+
+    ApiController -> WordService: UploadAudioAsync(wordId, accent, file)
+    WordService -> WordService: Normalize accent\nand validate audio file
+
+    alt Accent or audio file invalid
+        WordService --> ApiController: Validation failure
+        ApiController --> ServiceApi: HTTP 400 error
+        ServiceApi --> DashboardController: Action failed
+        DashboardController --> VocabularyPage: Show error message
+    else Audio file valid
+        WordService -> WordRepository: WordExistsAsync(wordId)
+        WordRepository -> DbContext: Query word
+        DbContext -> MySQL: SELECT words
+        MySQL --> DbContext: Word row or null
+        DbContext --> WordRepository: Result
+        WordRepository --> WordService: exists or not
+
+        alt Word not found
+            WordService --> ApiController: NotFound result
+            ApiController --> ServiceApi: HTTP 404 error
+            ServiceApi --> DashboardController: Action failed
+            DashboardController --> VocabularyPage: Show error message
+        else Word exists
+            WordService -> AudioStorage: UploadAsync(file, accent)
+            AudioStorage --> WordService: uploaded audio URL
+
+            WordService -> WordRepository: UpsertAudioAsync(wordId, uploaded audio, accent)
+            WordRepository -> DbContext: Find audio asset by word and accent
+            DbContext -> MySQL: SELECT word_audio_assets
+            MySQL --> DbContext: Audio row or null
+            DbContext --> WordRepository: Result
+
+            alt Audio asset does not exist
+                WordRepository -> DbContext: Add word audio asset
+                DbContext -> MySQL: INSERT word_audio_assets
+                MySQL --> DbContext: Insert result
+            else Audio asset exists
+                WordRepository -> DbContext: Replace storage URL\nand mark uploaded
+                DbContext -> MySQL: UPDATE word_audio_assets
+                MySQL --> DbContext: Update result
+            end
+
+            DbContext --> WordRepository: Save result
+            WordRepository --> WordService: WordAudio
+            WordService --> ApiController: Return updated audio
+            ApiController -> AudioDto: Create response data\n(WordAudioResponse)
+            AudioDto --> ServiceApi: HTTP 200 OK\nWordAudioResponse
+            ServiceApi --> DashboardController: Action success
+            DashboardController -> ServiceApi: GetWordDetailAsync(wordId)
+            ServiceApi --> DashboardController: Updated word detail
+            DashboardController --> VocabularyPage: Show updated audio
+        end
+    end
+end
+
+@enduml
