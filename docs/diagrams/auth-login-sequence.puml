@@ -6,72 +6,77 @@ skinparam responseMessageBelowArrow true
 skinparam sequenceMessageAlign center
 
 actor Guest
-boundary "Login\nPage" as LoginPage
-entity "Login\nDTO" as LoginDto
-control "Auth\nController" as AuthController
-control "Auth\nService" as AuthService
-control "Password Hash\nService" as PasswordHashService
-control "Auth\nRepository" as AuthRepository
-database "VocaNovaDb\nContext" as DbContext
-database "MySQL\nDatabase" as MySQL
+boundary "LoginScreen" as LoginScreen
+entity "LoginRequest\n(Request DTO)" as LoginRequest
+control "AuthController" as AuthController
+control "AuthService" as AuthService
+control "BcryptPasswordHasher" as PasswordHasher
+control "AuthAccountRepository" as AuthAccountRepository
+control "RefreshTokenRepository" as RefreshTokenRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
 
-Guest -> LoginPage: Access login page
-Guest -> LoginPage: Enter phone and password
-Guest -> LoginPage: Click Login button
-LoginPage -> LoginPage: Validate input
+note over LoginScreen, MySQL
+LoginRequest exists in API Contracts.
+end note
+
+Guest -> LoginScreen: Access login page
+Guest -> LoginScreen: Enter phone and password
+Guest -> LoginScreen: Click Login button
+LoginScreen -> LoginScreen: Validate input
 
 alt Data input invalid
-    LoginPage --> Guest: Show error message
+    LoginScreen --> Guest: Show error message
 else Data input valid
-    LoginPage -> LoginDto: Create login DTO\n(phone, password)
-    LoginPage -> AuthController: POST /api/auth/login\nLogin DTO
-    AuthController -> AuthController: Validate login request
+    LoginScreen -> LoginRequest: Create request data\n(phone, password)
+    LoginScreen -> AuthController: POST /api/auth/login\nLoginRequest
+    AuthController -> AuthController: Validate LoginRequest
 
     alt Request validation or rate limit fails
-        AuthController --> LoginPage: HTTP 400/429 error
-        LoginPage --> Guest: Show error message
+        AuthController --> LoginScreen: HTTP 400/429 error
+        LoginScreen --> Guest: Show error message
     else Request validation success
         AuthController -> AuthService: LoginAsync(login data)
-        AuthService -> AuthRepository: FindByPhoneAsync(phone)
-        AuthRepository -> DbContext: Query user by phone
+        AuthService -> AuthAccountRepository: FindByPhoneAsync(phone)
+        AuthAccountRepository -> DbContext: Query user by phone
         DbContext -> MySQL: SELECT user account
         MySQL --> DbContext: User row or null
-        DbContext --> AuthRepository: Result
-        AuthRepository --> AuthService: AuthAccount or null
+        DbContext --> AuthAccountRepository: Result
+        AuthAccountRepository --> AuthService: AuthAccount or null
 
         alt User not found or password missing
             AuthService --> AuthController: Unauthorized result
-            AuthController --> LoginPage: HTTP 401 Invalid phone or password
-            LoginPage --> Guest: Show error message
+            AuthController --> LoginScreen: HTTP 401 Invalid phone or password
+            LoginScreen --> Guest: Show error message
         else User found
-            AuthService -> PasswordHashService: Verify(password, passwordHash)
-            PasswordHashService --> AuthService: Valid or invalid
+            AuthService -> PasswordHasher: Verify(password, passwordHash)
+            PasswordHasher --> AuthService: Valid or invalid
 
             alt Password invalid
                 AuthService --> AuthController: Unauthorized result
-                AuthController --> LoginPage: HTTP 401 Invalid phone or password
-                LoginPage --> Guest: Show error message
+                AuthController --> LoginScreen: HTTP 401 Invalid phone or password
+                LoginScreen --> Guest: Show error message
             else Password valid
                 alt Account locked or deleted
                     AuthService --> AuthController: Forbidden/Unauthorized result
-                    AuthController --> LoginPage: HTTP 403/401 error
-                    LoginPage --> Guest: Show error message
+                    AuthController --> LoginScreen: HTTP 403/401 error
+                    LoginScreen --> Guest: Show error message
                 else Account active
-                    AuthService -> AuthRepository: Update last login
-                    AuthRepository -> DbContext: Update User.LastLoginAt
+                    AuthService -> AuthAccountRepository: StageLastLoginAsync(userId)
+                    AuthAccountRepository -> DbContext: Update User.LastLoginAt
                     DbContext -> MySQL: UPDATE users
                     MySQL --> DbContext: Update result
 
-                    AuthService -> AuthRepository: Create refresh token
-                    AuthRepository -> DbContext: Add RefreshToken
+                    AuthService -> RefreshTokenRepository: StageCreateAsync(CreateRefreshToken)
+                    RefreshTokenRepository -> DbContext: Add RefreshToken
                     DbContext -> MySQL: INSERT refresh_tokens
                     MySQL --> DbContext: Insert result
-                    DbContext --> AuthRepository: Save result
-                    AuthRepository --> AuthService: Login saved
+                    DbContext --> RefreshTokenRepository: Save result
+                    RefreshTokenRepository --> AuthService: Login saved
 
                     AuthService --> AuthController: Return login result
-                    AuthController --> LoginPage: HTTP 200 OK
-                    LoginPage --> Guest: Navigate to app
+                    AuthController --> LoginScreen: HTTP 200 OK
+                    LoginScreen --> Guest: Navigate to app
                 end
             end
         end

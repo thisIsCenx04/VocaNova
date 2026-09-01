@@ -6,85 +6,103 @@ skinparam responseMessageBelowArrow true
 skinparam sequenceMessageAlign center
 
 actor Guest
-boundary "Register\nPage" as RegisterPage
-entity "Register\nDTO" as RegisterDto
-control "Auth\nController" as AuthController
-control "Auth\nService" as AuthService
-control "Password Hash\nService" as PasswordHashService
-control "Auth\nRepository" as AuthRepository
-database "VocaNovaDb\nContext" as DbContext
-database "MySQL\nDatabase" as MySQL
+boundary "RegisterScreen" as RegisterScreen
+entity "RegisterRequest\n(Request DTO)" as RegisterRequest
+control "AuthController" as AuthController
+control "AuthService" as AuthService
+control "BcryptPasswordHasher" as PasswordHasher
+control "AuthAccountRepository" as AuthAccountRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
 
-note over RegisterPage, MySQL
-OTP was already sent before this register request.
-This diagram shows the current /api/auth/register flow.
+note over RegisterScreen, MySQL
+RegisterRequest exists in API Contracts.
 end note
 
-Guest -> RegisterPage: Access page
-Guest -> RegisterPage: Enter information
-Guest -> RegisterPage: Click Register button
-RegisterPage -> RegisterPage: Validate input
+Guest -> RegisterScreen: Access page
+Guest -> RegisterScreen: Enter information
+Guest -> RegisterScreen: Click Register button
+RegisterScreen -> RegisterScreen: Validate input
 
 alt Data input invalid
-    RegisterPage --> Guest: Show error message
+    RegisterScreen --> Guest: Show error message
 else Data input valid
-    RegisterPage -> RegisterDto: Create register DTO\n(phone, password, display_name,\notp_code, optional profile fields)
-    RegisterPage -> AuthController: POST /api/auth/register\nRegister DTO
-    AuthController -> AuthController: Validate register request
+    RegisterScreen -> RegisterRequest: Create request data\n(phone, password, display_name,\notp_code, optional profile fields)
+    RegisterScreen -> AuthController: POST /api/auth/register\nRegisterRequest
+    AuthController -> AuthController: Validate RegisterRequest
 
     alt Request validation fails
-        AuthController --> RegisterPage: HTTP 400 with validation errors
-        RegisterPage --> Guest: Show error message
+        AuthController --> RegisterScreen: HTTP 400 with validation errors
+        RegisterScreen --> Guest: Show error message
     else Request validation success
         AuthController -> AuthService: RegisterAsync(register data)
-        AuthService -> AuthRepository: FindByPhoneAsync(phone)
-        AuthRepository -> DbContext: Query user by phone
+        AuthService -> AuthAccountRepository: FindByPhoneAsync(phone)
+        AuthAccountRepository -> DbContext: Query user by phone
         DbContext -> MySQL: SELECT user account
         MySQL --> DbContext: User row or null
-        DbContext --> AuthRepository: Result
-        AuthRepository --> AuthService: AuthAccount or null
+        DbContext --> AuthAccountRepository: Result
+        AuthAccountRepository --> AuthService: AuthAccount or null
 
         alt Account exists
             AuthService --> AuthController: Conflict result
-            AuthController --> RegisterPage: HTTP 409 Phone already exists
-            RegisterPage --> Guest: Show error message
+            AuthController --> RegisterScreen: HTTP 409 Phone already exists
+            RegisterScreen --> Guest: Show error message
         else Phone is available
-            AuthService -> AuthRepository: Find latest active OTP
-            AuthRepository -> DbContext: Query OTP by phone
+            AuthService -> AuthAccountRepository: Check latest active OTP
+            AuthAccountRepository -> DbContext: Query latest active OTP
             DbContext -> MySQL: SELECT latest OTP
             MySQL --> DbContext: OTP row or null
-            DbContext --> AuthRepository: Result
-            AuthRepository --> AuthService: OTP result
+            DbContext --> AuthAccountRepository: Result
+            AuthAccountRepository --> AuthService: OTP result
 
             alt OTP invalid
                 AuthService --> AuthController: Unauthorized/Conflict result
-                AuthController --> RegisterPage: HTTP error
-                RegisterPage --> Guest: Show error message
+                AuthController --> RegisterScreen: HTTP error
+                RegisterScreen --> Guest: Show error message
             else OTP valid
-                AuthService -> PasswordHashService: Hash(password)
-                PasswordHashService --> AuthService: password hash
-                AuthService -> AuthRepository: Create user account
-                AuthRepository -> DbContext: Add User, UserAuth,\nUserProfile, LearningProfile?
-                DbContext -> MySQL: INSERT account data
-                MySQL --> DbContext: Insert result
-                DbContext --> AuthRepository: Save result
-                AuthRepository --> AuthService: Created account
+                AuthService -> AuthAccountRepository: FindRoleByNameAsync("User")
+                AuthAccountRepository -> DbContext: Query role
+                DbContext -> MySQL: SELECT roles
+                MySQL --> DbContext: Role row or null
+                DbContext --> AuthAccountRepository: Result
+                AuthAccountRepository --> AuthService: AuthRole or null
 
-                AuthService -> AuthRepository: Mark OTP used
-                AuthRepository -> DbContext: Update OTP
-                DbContext -> MySQL: UPDATE otp_verifications
-                MySQL --> DbContext: Update result
-                DbContext --> AuthRepository: Save result
+                alt Default user role missing
+                    AuthService --> AuthController: Validation failure
+                    AuthController --> RegisterScreen: HTTP 400 error
+                    RegisterScreen --> Guest: Show error message
+                else Role exists
+                    AuthService -> PasswordHasher: Hash(password)
+                    PasswordHasher --> AuthService: password hash
+                    AuthService -> AuthAccountRepository: StageCreateAsync(CreateAuthAccount)
+                    AuthAccountRepository -> DbContext: Add User, UserAuth,\nUserProfile, UserLearningProfile?
+                    DbContext -> MySQL: INSERT account data
+                    MySQL --> DbContext: Insert result
+                    DbContext --> AuthAccountRepository: Save result
 
-                AuthService -> AuthRepository: Create refresh token
-                AuthRepository -> DbContext: Add RefreshToken
-                DbContext -> MySQL: INSERT refresh_tokens
-                MySQL --> DbContext: Insert result
-                DbContext --> AuthRepository: Save result
+                    AuthService -> AuthAccountRepository: FindByPhoneAsync(phone)
+                    AuthAccountRepository -> DbContext: Reload created account
+                    DbContext -> MySQL: SELECT created user account
+                    MySQL --> DbContext: Created user row
+                    DbContext --> AuthAccountRepository: Result
+                    AuthAccountRepository --> AuthService: Created account
 
-                AuthService --> AuthController: Return register result
-                AuthController --> RegisterPage: HTTP 201 Created
-                RegisterPage --> Guest: Show success message
+                    AuthService -> AuthAccountRepository: Mark OTP used
+                    AuthAccountRepository -> DbContext: Update OTP
+                    DbContext -> MySQL: UPDATE otp_verifications
+                    MySQL --> DbContext: Update result
+                    DbContext --> AuthAccountRepository: Save result
+
+                    AuthService -> AuthAccountRepository: Create refresh token
+                    AuthAccountRepository -> DbContext: Add RefreshToken
+                    DbContext -> MySQL: INSERT refresh_tokens
+                    MySQL --> DbContext: Insert result
+                    DbContext --> AuthAccountRepository: Save result
+
+                    AuthService --> AuthController: Return register result
+                    AuthController --> RegisterScreen: HTTP 201 Created
+                    RegisterScreen --> Guest: Show success message
+                end
             end
         end
     end
