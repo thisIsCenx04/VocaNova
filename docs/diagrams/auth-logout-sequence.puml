@@ -1,0 +1,65 @@
+@startuml
+title Logout Sequence (/api/auth/logout)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor User
+boundary "Profile/Settings\nPage" as LogoutPage
+entity "Logout\nDTO" as LogoutDto
+control "Auth\nController" as AuthController
+control "Auth\nService" as AuthService
+control "Auth\nRepository" as AuthRepository
+database "VocaNovaDb\nContext" as DbContext
+database "MySQL\nDatabase" as MySQL
+collections "Local\nStorage" as LocalStorage
+
+User -> LogoutPage: Click Logout button
+LogoutPage -> LogoutPage: Get refresh token
+
+alt Refresh token exists
+    LogoutPage -> LogoutDto: Create logout DTO\n(refresh_token)
+    LogoutPage -> AuthController: POST /api/auth/logout\nLogout DTO
+    AuthController -> AuthController: Validate logout request
+
+    alt Request validation fails
+        AuthController --> LogoutPage: HTTP 400 error
+    else Request validation success
+        AuthController -> AuthService: LogoutAsync(refresh token)
+        AuthService -> AuthService: Hash refresh token
+        AuthService -> AuthRepository: Revoke refresh token
+        AuthRepository -> DbContext: Find token by hash
+        DbContext -> MySQL: SELECT refresh_tokens
+        MySQL --> DbContext: Token row or null
+        DbContext --> AuthRepository: Result
+
+        alt Refresh token invalid
+            AuthRepository --> AuthService: Revoke failed
+            AuthService --> AuthController: Unauthorized result
+            AuthController --> LogoutPage: HTTP 401 Invalid refresh token
+        else Refresh token valid
+            AuthRepository -> DbContext: Set RevokedAt
+            DbContext -> MySQL: UPDATE refresh_tokens
+            MySQL --> DbContext: Update result
+            DbContext --> AuthRepository: Save result
+            AuthRepository --> AuthService: Revoke success
+            AuthService --> AuthController: Success result
+            AuthController --> LogoutPage: HTTP 200 OK
+        end
+    end
+else No refresh token
+    LogoutPage -> LogoutPage: Skip API logout request
+end
+
+note over LogoutPage, LocalStorage
+Current mobile behavior: local logout still continues even when API logout fails.
+end note
+
+LogoutPage -> LogoutPage: Sign out Google account
+LogoutPage -> LogoutPage: Clear access and refresh tokens
+LogoutPage -> LocalStorage: Clear local app data
+LocalStorage --> LogoutPage: Cleared
+LogoutPage --> User: Navigate to Login page
+
+@enduml
