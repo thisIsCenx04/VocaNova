@@ -1,0 +1,85 @@
+@startuml
+title Create Role Sequence (/api/superadmin/roles)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor SuperAdmin
+boundary "Create Role\nPage (Dashboard)" as CreateRolePage
+control "RolesController\n(Dashboard)" as DashboardController
+control "ServiceAPI\n(Dashboard)" as ServiceApi
+entity "SaveRoleRequest /\nRoleResponse\n(Request/Response DTO)" as RoleDto
+control "RolesController\n(API)" as ApiController
+control "RoleManagementService" as RoleService
+control "RoleManagementRepository" as RoleRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over CreateRolePage, MySQL
+Checked in current code:
+Dashboard RolesController posts create data through ServiceAPI.
+API uses SaveRoleRequest and returns RoleResponse.
+end note
+
+SuperAdmin -> CreateRolePage: Open create role page
+SuperAdmin -> CreateRolePage: Enter role name
+SuperAdmin -> CreateRolePage: Submit form
+CreateRolePage -> DashboardController: POST /roles/create
+DashboardController -> DashboardController: Validate form input
+
+alt Form input invalid
+    DashboardController --> CreateRolePage: Show validation message
+else Form input valid
+    DashboardController -> ServiceApi: CreateRoleAsync(roleName)
+    ServiceApi -> RoleDto: Create request data\n(role_name)
+    RoleDto -> ApiController: POST /api/superadmin/roles\nSaveRoleRequest
+    ApiController -> ApiController: Check super admin authorization
+    ApiController -> ApiController: Validate SaveRoleRequest
+
+    alt Request validation fails
+        ApiController --> ServiceApi: HTTP 400 error
+        ServiceApi --> DashboardController: Action failed
+        DashboardController --> CreateRolePage: Show error message
+    else Request validation success
+        ApiController -> RoleService: CreateAsync(role data)
+        RoleService -> RoleService: Normalize and validate role name
+
+        alt Role name invalid
+            RoleService --> ApiController: Validation failure
+            ApiController --> ServiceApi: HTTP 400 error
+            ServiceApi --> DashboardController: Action failed
+            DashboardController --> CreateRolePage: Show error message
+        else Role name valid
+            RoleService -> RoleRepository: RoleExistsAsync(roleName)
+            RoleRepository -> DbContext: Query role by name
+            DbContext -> MySQL: SELECT roles
+            MySQL --> DbContext: Role row or null
+            DbContext --> RoleRepository: Result
+            RoleRepository --> RoleService: exists or not
+
+            alt Role name already exists
+                RoleService --> ApiController: Conflict result
+                ApiController --> ServiceApi: HTTP 409 error
+                ServiceApi --> DashboardController: Action failed
+                DashboardController --> CreateRolePage: Show error message
+            else Role can be created
+                RoleService -> RoleService: Begin transaction
+                RoleService -> RoleRepository: AddRoleAsync(roleName)
+                RoleRepository -> DbContext: Add Role
+                DbContext -> MySQL: INSERT roles
+                MySQL --> DbContext: Insert result
+                DbContext --> RoleRepository: Save result
+                RoleRepository --> RoleService: Created role
+
+                RoleService --> ApiController: Return created role
+                ApiController -> RoleDto: Create response data\n(RoleResponse)
+                RoleDto --> ServiceApi: HTTP 201 Created\nRoleResponse
+                ServiceApi --> DashboardController: Action success
+                DashboardController --> CreateRolePage: Redirect to role list
+            end
+        end
+    end
+end
+
+@enduml
