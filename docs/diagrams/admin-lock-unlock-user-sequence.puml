@@ -1,0 +1,72 @@
+@startuml
+title Lock / Unlock User Sequence (/api/admin/users/{id}/deactivate or restore)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Users Page\n(Dashboard)" as UsersPage
+control "UsersController\n(Dashboard)" as DashboardUsersController
+control "ServiceAPI\n(Dashboard)" as ServiceApi
+control "AdminUsersController\n(API)" as AdminUsersController
+control "AdminUserService" as AdminUserService
+control "AdminUserRepository" as AdminUserRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over UsersPage, MySQL
+Checked in current code:
+Dashboard uses POST /users/{id}/deactivate or /restore.
+ServiceAPI calls PATCH /api/admin/users/{id}/deactivate or /restore.
+No request DTO body is used; API returns bool in the response envelope.
+end note
+
+Admin -> UsersPage: Click Lock/Unlock user
+UsersPage -> DashboardUsersController: POST /users/{id}/deactivate\nor /users/{id}/restore
+DashboardUsersController -> ServiceApi: DeactivateUserAsync(id)\nor RestoreUserAsync(id)
+ServiceApi -> AdminUsersController: PATCH /api/admin/users/{id}/deactivate\nor /api/admin/users/{id}/restore
+AdminUsersController -> AdminUsersController: Check admin authorization
+AdminUsersController -> AdminUserService: DeactivateAsync(id, actorRole)\nor RestoreAsync(id, actorRole)
+
+AdminUserService -> AdminUserRepository: GetStatusTargetAsync(id)
+AdminUserRepository -> DbContext: Query target user status and role
+DbContext -> MySQL: SELECT user status and role
+MySQL --> DbContext: Target row or null
+DbContext --> AdminUserRepository: Result
+AdminUserRepository --> AdminUserService: Status target or null
+
+alt User not found
+    AdminUserService --> AdminUsersController: NotFound result
+    AdminUsersController --> ServiceApi: HTTP 404 error
+    ServiceApi --> DashboardUsersController: Action failed
+    DashboardUsersController --> UsersPage: Show feedback
+else User cannot be managed
+    AdminUserService --> AdminUsersController: Forbidden/Conflict result
+    AdminUsersController --> ServiceApi: HTTP 403/409 error
+    ServiceApi --> DashboardUsersController: Action failed
+    DashboardUsersController --> UsersPage: Show feedback
+else User can be managed
+    AdminUserService -> AdminUserRepository: StageStatusAsync(id, locked/active)
+    AdminUserRepository -> DbContext: Update user status
+    DbContext -> MySQL: UPDATE users
+    MySQL --> DbContext: Update result
+
+    opt Lock user
+        AdminUserService -> AdminUserRepository: RevokeActiveRefreshTokensAsync(id)
+        AdminUserRepository -> DbContext: Revoke active refresh tokens
+        DbContext -> MySQL: UPDATE refresh_tokens
+        MySQL --> DbContext: Update result
+    end
+
+    AdminUserService -> AdminUserRepository: SaveChangesAsync()
+    AdminUserRepository -> DbContext: Save changes
+    DbContext --> AdminUserRepository: Save result
+    AdminUserRepository --> AdminUserService: Saved
+    AdminUserService --> AdminUsersController: Success result
+    AdminUsersController --> ServiceApi: HTTP 200 OK
+    ServiceApi --> DashboardUsersController: Action success
+    DashboardUsersController --> UsersPage: Show feedback and refresh page
+end
+
+@enduml
