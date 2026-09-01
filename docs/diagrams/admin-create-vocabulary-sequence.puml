@@ -1,0 +1,161 @@
+@startuml
+title Create Vocabulary Sequence (/vocabulary/create and /api/admin/words)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Create Vocabulary UI" as CreateVocabularyUi
+control "VocabularyController\n(FE Dashboard)" as FeController
+control "AdminWordsController\n(BE API)" as BeController
+entity "CreateWordRequest\n(BE Request DTO)" as BeCreateWordRequestDto
+entity "WordDetailResponse\n(BE Response DTO)" as BeWordDetailResponseDto
+entity "CreateSenseRequest\n(BE Request DTO)" as BeCreateSenseRequestDto
+entity "WordSenseResponse\n(BE Response DTO)" as BeWordSenseResponseDto
+control "WordAdminService" as WordService
+entity "Word" as WordEntity
+entity "WordSense" as WordSenseEntity
+entity "WordExample" as WordExampleEntity
+control "WordAdminRepository" as WordRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over CreateVocabularyUi, MySQL
+Checked in current code:
+Dashboard UI file exists: Views/Vocabulary/Create.cshtml.
+FE controller exists: VocabularyController.
+BE controller exists: AdminWordsController.
+BE DTOs exist: CreateWordRequest, WordDetailResponse,
+CreateSenseRequest and WordSenseResponse.
+VocabularyController posts word metadata through VocaNovaApiClient.CreateWordWithIdAsync.
+Dashboard parses only word_id from the created word response, then optionally creates senses.
+No Dashboard Data/Dtos FE response DTO is used for this create action.
+Entities exist: Word, WordSense and WordExample.
+end note
+
+Admin -> CreateVocabularyUi: Open create vocabulary page
+CreateVocabularyUi -> FeController: GET /vocabulary/create
+FeController --> CreateVocabularyUi: Render create form
+
+Admin -> CreateVocabularyUi: Enter word, CEFR,\nphonetic and meanings
+Admin -> CreateVocabularyUi: Submit form
+CreateVocabularyUi -> FeController: POST /vocabulary/create\nform data
+FeController -> FeController: Validate word input
+
+alt Word input invalid
+    FeController --> CreateVocabularyUi: Redirect with validation error
+else Word input valid
+    FeController -> BeController: VocaNovaApiClient.CreateWordWithIdAsync\nPOST /api/admin/words
+    BeController -> BeCreateWordRequestDto: Bind JSON body
+    BeCreateWordRequestDto --> BeController: CreateWordRequest
+    BeController -> BeController: Check admin authorization
+    BeController -> BeController: Validate CreateWordRequest
+
+    alt Request validation fails
+        BeController --> FeController: HTTP 400 error
+        FeController --> CreateVocabularyUi: Redirect with error message
+    else Request validation success
+        BeController -> WordService: CreateAsync(create word data)
+        WordService -> WordService: Normalize word, word_key,\nCEFR and phonetics
+
+        alt Word data invalid
+            WordService --> BeController: Validation failure
+            BeController --> FeController: HTTP 400 error
+            FeController --> CreateVocabularyUi: Redirect with error message
+        else Word data valid
+            WordService -> WordRepository: WordExistsAsync(wordKey)
+            WordRepository -> DbContext: Query word by word_key
+            DbContext -> MySQL: SELECT words
+            MySQL --> DbContext: Word row or null
+            DbContext -> WordEntity: Read Word?
+            WordEntity --> DbContext: Word or null
+            DbContext --> WordRepository: Result
+            WordRepository --> WordService: exists or not
+
+            alt Word already exists
+                WordService --> BeController: Conflict result
+                BeController --> FeController: HTTP 409 error
+                FeController --> CreateVocabularyUi: Redirect with duplicate message
+            else Word can be created
+                WordService -> WordRepository: CreateAsync(create word data)
+                WordRepository -> WordEntity: Create Word
+                WordEntity --> WordRepository: Word
+                WordRepository -> DbContext: Add Word
+                DbContext -> MySQL: INSERT words
+                MySQL --> DbContext: Insert result
+                DbContext --> WordRepository: Save result
+                WordRepository -> DbContext: FindDetailAsync(wordId)
+                DbContext -> MySQL: SELECT word detail
+                MySQL --> DbContext: Word detail row
+                DbContext -> WordEntity: Project Word detail
+                WordEntity --> DbContext: Word detail
+                DbContext --> WordRepository: Word detail
+                WordRepository --> WordService: Created word
+                WordService --> BeController: Created word result
+                BeController -> BeWordDetailResponseDto: Create WordDetailResponse
+                BeWordDetailResponseDto --> BeController: WordDetailResponse
+                BeController --> FeController: HTTP 201 Created\nWordDetailResponse
+            end
+        end
+    end
+
+    alt Word creation failed or word_id missing
+        FeController --> CreateVocabularyUi: Redirect with error message
+    else Word created and word_id received
+        loop For each meaning block with EN or VI text
+            FeController -> BeController: VocaNovaApiClient.CreateSenseAsync\nPOST /api/admin/words/{wordId}/senses
+            BeController -> BeCreateSenseRequestDto: Bind JSON body
+            BeCreateSenseRequestDto --> BeController: CreateSenseRequest
+            BeController -> BeController: Check admin authorization
+            BeController -> BeController: Validate CreateSenseRequest
+
+            alt Sense request validation fails
+                BeController --> FeController: HTTP 400 error
+                FeController -> FeController: Add sense error
+            else Sense request validation success
+                BeController -> WordService: CreateSenseAsync(wordId, sense data)
+                WordService -> WordService: Normalize sense data
+                WordService -> WordRepository: CreateSenseAsync(wordId, sense data)
+                WordRepository -> DbContext: Check word exists
+                DbContext -> MySQL: SELECT words
+                MySQL --> DbContext: Word row or null
+                DbContext -> WordEntity: Read Word?
+                WordEntity --> DbContext: Word or null
+
+                alt Word not found
+                    DbContext --> WordRepository: Not found
+                    WordRepository --> WordService: null
+                    WordService --> BeController: NotFound result
+                    BeController --> FeController: HTTP 404 error
+                    FeController -> FeController: Add sense error
+                else Word exists
+                    WordRepository -> DbContext: Get next sense order
+                    DbContext -> MySQL: SELECT word_senses
+                    MySQL --> DbContext: Max sense order
+                    WordRepository -> WordSenseEntity: Create WordSense
+                    WordSenseEntity --> WordRepository: WordSense
+
+                    opt Example supplied
+                        WordRepository -> WordExampleEntity: Create WordExample
+                        WordExampleEntity --> WordRepository: WordExample
+                    end
+
+                    WordRepository -> DbContext: Add WordSense\nand WordExample?
+                    DbContext -> MySQL: INSERT word_senses,\nword_examples?
+                    MySQL --> DbContext: Insert result
+                    DbContext --> WordRepository: Save result
+                    WordRepository --> WordService: Created sense
+                    WordService --> BeController: Created sense result
+                    BeController -> BeWordSenseResponseDto: Create WordSenseResponse
+                    BeWordSenseResponseDto --> BeController: WordSenseResponse
+                    BeController --> FeController: HTTP 201 Created\nWordSenseResponse
+                end
+            end
+        end
+
+        FeController --> CreateVocabularyUi: Redirect to vocabulary list\nwith success or sense warning
+    end
+end
+
+@enduml
