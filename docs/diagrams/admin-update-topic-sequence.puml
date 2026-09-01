@@ -1,0 +1,128 @@
+@startuml
+title Update Topic Sequence (/api/admin/topics/{id})
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Edit Topic\nPage (Dashboard)" as EditTopicPage
+control "TopicsController\n(Dashboard)" as DashboardController
+control "ServiceAPI\n(Dashboard)" as ServiceApi
+entity "UpdateTopicRequest /\nTopicSummaryResponse\n(Request/Response DTO)" as TopicDto
+control "AdminTopicsController\n(API)" as ApiController
+control "TopicAdminService" as TopicService
+control "TopicAdminRepository" as TopicRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over EditTopicPage, MySQL
+Checked in current code:
+Dashboard TopicsController loads topic data, then posts update data through ServiceAPI.
+API uses UpdateTopicRequest and returns TopicSummaryResponse.
+UpdateTopicRequest can replace topic word links with word_ids.
+end note
+
+Admin -> EditTopicPage: Open edit topic page
+EditTopicPage -> DashboardController: GET /topics/{id}/edit
+DashboardController -> ServiceApi: GetAdminTopicsAsync()
+ServiceApi -> ApiController: GET /api/admin/topics
+ApiController --> ServiceApi: Existing topics
+ServiceApi --> DashboardController: Existing topics
+
+alt Topic not found
+    DashboardController --> EditTopicPage: Show not found
+else Topic found
+    DashboardController -> ServiceApi: GetWordsAsync(topic filter)
+    ServiceApi --> DashboardController: Topic vocabulary words
+    DashboardController --> EditTopicPage: Render edit form
+end
+
+Admin -> EditTopicPage: Update topic name,\nVietnamese name?, icon?, words?
+Admin -> EditTopicPage: Submit form
+EditTopicPage -> DashboardController: POST /topics/{id}/update
+DashboardController -> DashboardController: Validate form input\nand selected words
+
+alt Form input invalid
+    DashboardController --> EditTopicPage: Show validation message
+else Form input valid
+    DashboardController -> ServiceApi: GetAdminTopicsAsync()
+    ServiceApi -> ApiController: GET /api/admin/topics
+    ApiController --> ServiceApi: Existing topics
+    ServiceApi --> DashboardController: Existing topics
+
+    alt Topic name already exists
+        DashboardController --> EditTopicPage: Show duplicate topic message
+    else Topic can be submitted
+        DashboardController -> ServiceApi: UpdateTopicAsync(id, input)
+        ServiceApi -> TopicDto: Create request data\n(topic_name, topic_name_vi?,\nicon?, word_ids?)
+        TopicDto -> ApiController: PUT /api/admin/topics/{id}\nUpdateTopicRequest
+        ApiController -> ApiController: Check admin authorization
+        ApiController -> ApiController: Validate UpdateTopicRequest
+
+        alt Request validation fails
+            ApiController --> ServiceApi: HTTP 400 error
+            ServiceApi --> DashboardController: Action failed
+            DashboardController --> EditTopicPage: Show error message
+        else Request validation success
+            ApiController -> TopicService: UpdateAsync(id, update data)
+            TopicService -> TopicService: Normalize topic data
+            TopicService -> TopicRepository: NameExistsAsync(topicName, topicNameVi, id)
+            TopicRepository -> DbContext: Query duplicate topic name
+            DbContext -> MySQL: SELECT topics
+            MySQL --> DbContext: Topic row or null
+            DbContext --> TopicRepository: Result
+            TopicRepository --> TopicService: exists or not
+
+            alt Topic name already exists
+                TopicService --> ApiController: Conflict result
+                ApiController --> ServiceApi: HTTP 409 error
+                ServiceApi --> DashboardController: Action failed
+                DashboardController --> EditTopicPage: Show error message
+            else Topic name is available
+                TopicService -> TopicRepository: WordIdsExistAsync(wordIds)
+                TopicRepository -> DbContext: Check selected vocabulary words
+                DbContext -> MySQL: SELECT words
+                MySQL --> DbContext: Word rows count
+                DbContext --> TopicRepository: Result
+                TopicRepository --> TopicService: valid or invalid
+
+                alt Selected word id invalid
+                    TopicService --> ApiController: Validation failure
+                    ApiController --> ServiceApi: HTTP 400 error
+                    ServiceApi --> DashboardController: Action failed
+                    DashboardController --> EditTopicPage: Show error message
+                else Selected words valid
+                    TopicService -> TopicRepository: UpdateAsync(id, update data)
+                    TopicRepository -> DbContext: Update Topic
+                    DbContext -> MySQL: UPDATE topics
+                    MySQL --> DbContext: Save result
+
+                    opt word_ids supplied
+                        TopicRepository -> DbContext: Replace topic word links
+                        DbContext -> MySQL: DELETE/INSERT word_topics
+                        MySQL --> DbContext: Save result
+                    end
+
+                    DbContext --> TopicRepository: Topic summary or null
+                    TopicRepository --> TopicService: Updated topic or null
+
+                    alt Topic not found
+                        TopicService --> ApiController: NotFound result
+                        ApiController --> ServiceApi: HTTP 404 error
+                        ServiceApi --> DashboardController: Action failed
+                        DashboardController --> EditTopicPage: Show error message
+                    else Topic updated
+                        TopicService --> ApiController: Return updated topic
+                        ApiController -> TopicDto: Create response data\n(TopicSummaryResponse)
+                        TopicDto --> ServiceApi: HTTP 200 OK\nTopicSummaryResponse
+                        ServiceApi --> DashboardController: Action success
+                        DashboardController --> EditTopicPage: Redirect to topic list
+                    end
+                end
+            end
+        end
+    end
+end
+
+@enduml
