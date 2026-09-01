@@ -1,0 +1,234 @@
+@startuml
+title Update Vocabulary Sequence (/vocabulary/{id}/edit and /api/admin/words/{id})
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Edit Vocabulary UI" as EditVocabularyUi
+control "VocabularyController\n(FE Dashboard)" as FeController
+control "WordsController\n(BE API)" as ReadController
+control "AdminWordsController\n(BE API)" as AdminController
+entity "WordDetail\n(FE Response DTO)" as FeWordDetailDto
+entity "WordDetailResponse\n(BE Response DTO)" as BeWordDetailDto
+entity "UpdateWordRequest\n(BE Request DTO)" as BeUpdateWordRequestDto
+entity "UpdateSenseRequest\n(BE Request DTO)" as BeUpdateSenseRequestDto
+entity "CreateSenseRequest\n(BE Request DTO)" as BeCreateSenseRequestDto
+entity "WordSenseResponse\n(BE Response DTO)" as BeWordSenseDto
+control "WordReadService" as WordReadService
+control "WordAdminService" as WordAdminService
+entity "Word" as WordEntity
+entity "WordSense" as WordSenseEntity
+entity "WordExample" as WordExampleEntity
+control "WordReadRepository" as WordReadRepository
+control "WordAdminRepository" as WordAdminRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over EditVocabularyUi, MySQL
+Checked in current code:
+Dashboard UI file exists: Views/Vocabulary/Edit.cshtml.
+FE controller exists: VocabularyController.
+BE controllers exist: WordsController and AdminWordsController.
+FE response DTO exists: WordDetail.
+BE DTOs exist: WordDetailResponse, UpdateWordRequest,
+UpdateSenseRequest, CreateSenseRequest and WordSenseResponse.
+VocabularyController.Edit loads word detail, updates metadata,
+updates existing senses, optionally creates a new sense, then optionally toggles status.
+Entities exist: Word, WordSense and WordExample.
+end note
+
+Admin -> EditVocabularyUi: Open edit vocabulary page
+EditVocabularyUi -> FeController: GET /vocabulary/{id}/edit
+FeController -> ReadController: VocaNovaApiClient.GetWordDetailAsync\nGET /api/words/{id}
+ReadController -> WordReadService: GetByIdAsync(id)
+WordReadService -> WordReadRepository: FindDetailAsync(id)
+WordReadRepository -> DbContext: Query word detail
+DbContext -> MySQL: SELECT words with senses\nand examples
+MySQL --> DbContext: Word detail rows or null
+
+alt Word not found
+    DbContext --> WordReadRepository: null
+    WordReadRepository --> WordReadService: null
+    WordReadService --> ReadController: NotFound result
+    ReadController --> FeController: HTTP 404 error
+    FeController --> EditVocabularyUi: Show not found
+else Word found
+    DbContext -> WordEntity: Read Word
+    DbContext -> WordSenseEntity: Read WordSenses
+    DbContext -> WordExampleEntity: Read WordExamples
+    WordEntity --> DbContext: Word
+    WordSenseEntity --> DbContext: WordSense rows
+    WordExampleEntity --> DbContext: WordExample rows
+    DbContext --> WordReadRepository: Word detail graph
+    WordReadRepository --> WordReadService: Word detail
+    WordReadService --> ReadController: Word detail result
+    ReadController -> BeWordDetailDto: Create WordDetailResponse
+    BeWordDetailDto --> ReadController: WordDetailResponse
+    ReadController -> FeWordDetailDto: HTTP 200 OK\nWordDetailResponse JSON
+    FeWordDetailDto --> FeController: WordDetail
+    FeController --> EditVocabularyUi: Render edit form
+end
+
+Admin -> EditVocabularyUi: Update metadata,\nmeanings, examples and status
+Admin -> EditVocabularyUi: Submit form
+EditVocabularyUi -> FeController: POST /vocabulary/{id}/edit\nform data
+FeController -> FeController: Validate word input
+
+alt Word input invalid
+    FeController --> EditVocabularyUi: Redirect with validation error
+else Word input valid
+    FeController -> AdminController: VocaNovaApiClient.UpdateWordAsync\nPUT /api/admin/words/{id}
+    AdminController -> BeUpdateWordRequestDto: Bind JSON body
+    BeUpdateWordRequestDto --> AdminController: UpdateWordRequest
+    AdminController -> AdminController: Check admin authorization
+    AdminController -> AdminController: Validate UpdateWordRequest
+
+    alt Request validation fails
+        AdminController --> FeController: HTTP 400 error
+        FeController --> EditVocabularyUi: Redirect with error message
+    else Request validation success
+        AdminController -> WordAdminService: UpdateAsync(id, update word data)
+        WordAdminService -> WordAdminService: Normalize word, word_key,\nCEFR and phonetics
+        WordAdminService -> WordAdminRepository: WordExistsAsync(wordKey, id)
+        WordAdminRepository -> DbContext: Query duplicate word
+        DbContext -> MySQL: SELECT words
+        MySQL --> DbContext: Duplicate row or null
+        DbContext -> WordEntity: Read Word?
+        WordEntity --> DbContext: Word or null
+        DbContext --> WordAdminRepository: Result
+        WordAdminRepository --> WordAdminService: exists or not
+
+        alt Word already exists
+            WordAdminService --> AdminController: Conflict result
+            AdminController --> FeController: HTTP 409 error
+            FeController --> EditVocabularyUi: Redirect with duplicate message
+        else Word can be updated
+            WordAdminService -> WordAdminRepository: UpdateMetadataAsync(id, update data)
+            WordAdminRepository -> DbContext: Find Word
+            DbContext -> MySQL: SELECT words
+            MySQL --> DbContext: Word row or null
+            DbContext -> WordEntity: Read Word?
+            WordEntity --> DbContext: Word or null
+
+            alt Word not found
+                DbContext --> WordAdminRepository: null
+                WordAdminRepository --> WordAdminService: null
+                WordAdminService --> AdminController: NotFound result
+                AdminController --> FeController: HTTP 404 error
+                FeController --> EditVocabularyUi: Redirect with error message
+            else Word found
+                WordAdminRepository -> WordEntity: Update word metadata
+                WordEntity --> WordAdminRepository: Word updated
+                WordAdminRepository -> DbContext: Track Word
+                DbContext -> MySQL: UPDATE words
+                MySQL --> DbContext: Update result
+                DbContext --> WordAdminRepository: Save result
+                WordAdminRepository -> DbContext: FindDetailAsync(id)
+                DbContext -> MySQL: SELECT word detail
+                MySQL --> DbContext: Word detail rows
+                DbContext --> WordAdminRepository: Word detail
+                WordAdminRepository --> WordAdminService: Updated word
+                WordAdminService --> AdminController: Updated word result
+                AdminController -> BeWordDetailDto: Create WordDetailResponse
+                BeWordDetailDto --> AdminController: WordDetailResponse
+                AdminController --> FeController: HTTP 200 OK\nWordDetailResponse
+            end
+        end
+    end
+
+    loop For each existing sense with English definition
+        FeController -> AdminController: VocaNovaApiClient.UpdateSenseAsync\nPUT /api/admin/words/{id}/senses/{senseId}
+        AdminController -> BeUpdateSenseRequestDto: Bind JSON body
+        BeUpdateSenseRequestDto --> AdminController: UpdateSenseRequest
+        AdminController -> AdminController: Check admin authorization
+        AdminController -> AdminController: Validate UpdateSenseRequest
+
+        alt Sense request validation fails
+            AdminController --> FeController: HTTP 400 error
+            FeController -> FeController: Add sense error
+        else Sense request validation success
+            AdminController -> WordAdminService: UpdateSenseAsync(id, senseId, sense data)
+            WordAdminService -> WordAdminService: Normalize sense data
+            WordAdminService -> WordAdminRepository: UpdateSenseAsync(id, senseId, sense data)
+            WordAdminRepository -> DbContext: Find WordSense with examples
+            DbContext -> MySQL: SELECT word_senses\nJOIN word_examples
+            MySQL --> DbContext: Sense rows or null
+            DbContext -> WordSenseEntity: Read WordSense?
+            DbContext -> WordExampleEntity: Read WordExamples
+            WordSenseEntity --> DbContext: WordSense or null
+            WordExampleEntity --> DbContext: WordExample rows
+
+            alt Sense not found
+                DbContext --> WordAdminRepository: null
+                WordAdminRepository --> WordAdminService: null
+                WordAdminService --> AdminController: NotFound result
+                AdminController --> FeController: HTTP 404 error
+                FeController -> FeController: Add sense error
+            else Sense found
+                WordAdminRepository -> WordSenseEntity: Update sense fields
+                WordAdminRepository -> WordExampleEntity: Update or add examples
+                WordSenseEntity --> WordAdminRepository: WordSense updated
+                WordExampleEntity --> WordAdminRepository: WordExample rows updated
+                WordAdminRepository -> DbContext: Track WordSense\nand WordExamples
+                DbContext -> MySQL: UPDATE word_senses,\nINSERT/UPDATE word_examples
+                MySQL --> DbContext: Save result
+                DbContext --> WordAdminRepository: Save result
+                WordAdminRepository --> WordAdminService: Updated sense
+                WordAdminService --> AdminController: Updated sense result
+                AdminController -> BeWordSenseDto: Create WordSenseResponse
+                BeWordSenseDto --> AdminController: WordSenseResponse
+                AdminController --> FeController: HTTP 200 OK\nWordSenseResponse
+            end
+        end
+    end
+
+    opt New meaning supplied
+        FeController -> AdminController: VocaNovaApiClient.CreateSenseAsync\nPOST /api/admin/words/{id}/senses
+        AdminController -> BeCreateSenseRequestDto: Bind JSON body
+        BeCreateSenseRequestDto --> AdminController: CreateSenseRequest
+        AdminController -> WordAdminService: CreateSenseAsync(id, sense data)
+        WordAdminService -> WordAdminRepository: CreateSenseAsync(id, sense data)
+        WordAdminRepository -> DbContext: Check Word exists\nand get next sense order
+        DbContext -> MySQL: SELECT words,\nSELECT word_senses
+        MySQL --> DbContext: Word row and max order
+        DbContext -> WordEntity: Read Word?
+        WordEntity --> DbContext: Word or null
+        WordAdminRepository -> WordSenseEntity: Create WordSense
+        WordSenseEntity --> WordAdminRepository: WordSense
+        WordAdminRepository -> DbContext: Add WordSense
+        DbContext -> MySQL: INSERT word_senses
+        MySQL --> DbContext: Insert result
+        DbContext --> WordAdminRepository: Save result
+        WordAdminRepository --> WordAdminService: Created sense
+        WordAdminService --> AdminController: Created sense result
+        AdminController -> BeWordSenseDto: Create WordSenseResponse
+        BeWordSenseDto --> AdminController: WordSenseResponse
+        AdminController --> FeController: HTTP 201 Created\nWordSenseResponse
+    end
+
+    opt Status changed
+        FeController -> AdminController: VocaNovaApiClient.DeleteWordAsync\nor RestoreWordAsync
+        AdminController -> WordAdminService: SoftDeleteAsync(id)\nor RestoreAsync(id)
+        WordAdminService -> WordAdminRepository: SetWordStatusAsync(id, status)
+        WordAdminRepository -> DbContext: Find Word
+        DbContext -> MySQL: SELECT words
+        MySQL --> DbContext: Word row or null
+        DbContext -> WordEntity: Read Word?
+        WordEntity --> DbContext: Word or null
+        WordAdminRepository -> WordEntity: Update status
+        WordEntity --> WordAdminRepository: Word updated
+        WordAdminRepository -> DbContext: Track Word status
+        DbContext -> MySQL: UPDATE words
+        MySQL --> DbContext: Update result
+        DbContext --> WordAdminRepository: Save result
+        WordAdminRepository --> WordAdminService: Status changed
+        WordAdminService --> AdminController: Success result
+        AdminController --> FeController: HTTP 200 OK
+    end
+
+    FeController --> EditVocabularyUi: Redirect to vocabulary list\nwith success or warnings
+end
+
+@enduml
