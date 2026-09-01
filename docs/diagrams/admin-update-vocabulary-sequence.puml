@@ -15,7 +15,7 @@ entity "WordDetailResponse\n(BE Response DTO)" as BeWordDetailDto
 entity "UpdateWordRequest\n(BE Request DTO)" as BeUpdateWordRequestDto
 entity "UpdateSenseRequest\n(BE Request DTO)" as BeUpdateSenseRequestDto
 entity "CreateSenseRequest\n(BE Request DTO)" as BeCreateSenseRequestDto
-entity "WordSenseResponse\n(BE Response DTO)" as BeWordSenseDto
+entity "WordSeanseResponse\n(BE Response DTO)" as BeWordSenseDto
 control "WordReadService" as WordReadService
 control "WordAdminService" as WordAdminService
 entity "Word" as WordEntity
@@ -68,7 +68,6 @@ else Word found
     BeWordDetailDto --> ReadController: WordDetailResponse
     ReadController -> FeWordDetailDto: HTTP 200 OK\nWordDetailResponse JSON
     FeWordDetailDto --> FeController: WordDetail
-    FeController --> EditVocabularyUi: Render edit form
 end
 
 Admin -> EditVocabularyUi: Update metadata,\nmeanings, examples and status

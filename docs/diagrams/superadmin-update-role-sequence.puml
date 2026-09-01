@@ -49,7 +49,6 @@ FeRoleDto --> FeController: Paged ManagedRole
 alt Role not found or system role
     FeController --> EditRolePage: Show not found\nor redirect with error
 else Role can be edited
-    FeController --> EditRolePage: Render edit form
 end
 
 SuperAdmin -> EditRolePage: Enter new role name

@@ -48,7 +48,6 @@ else Admin account found
     BeResponseDto --> BeController: AdminAccountResponse
     BeController -> FeResponseDto: HTTP 200 OK\nAdminAccountResponse JSON
     FeResponseDto --> FeController: AdminAccount
-    FeController --> EditPage: Render edit form
 end
 SuperAdmin -> EditPage: Update full name, email,\nphone, password?, status
 SuperAdmin -> EditPage: Submit form

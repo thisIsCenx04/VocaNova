@@ -36,7 +36,6 @@ end note
 
 Admin -> CreateVocabularyUi: Open create vocabulary page
 CreateVocabularyUi -> FeController: GET /vocabulary/create
-FeController --> CreateVocabularyUi: Render create form
 
 Admin -> CreateVocabularyUi: Enter word, CEFR,\nphonetic and meanings
 Admin -> CreateVocabularyUi: Submit form

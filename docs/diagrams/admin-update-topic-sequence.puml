@@ -36,7 +36,6 @@ else Topic found
 DashboardController -> ApiController: VocaNovaApiClient.GetWordsAsync(topic filter)
 ApiController -> FeWordDto: HTTP 200 OK\nPaged WordListItem JSON
 FeWordDto --> DashboardController: Topic vocabulary words
-DashboardController --> EditTopicPage: Render edit form
 end
 Admin -> EditTopicPage: Update topic name,\nVietnamese name?, icon?, words?
 Admin -> EditTopicPage: Submit form
