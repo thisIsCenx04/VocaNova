@@ -1,0 +1,95 @@
+@startuml
+title Register Sequence (/api/auth/register)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Guest
+boundary "Register\nPage" as RegisterPage
+entity "Register\nDTO" as RegisterDto
+control "Auth\nController" as AuthController
+control "Auth\nService" as AuthService
+control "Password\nHash Service" as PasswordHashService
+control "Auth\nRepository" as AuthRepository
+control "OTP\nRepository" as OtpRepository
+control "Refresh Token\nRepository" as RefreshTokenRepository
+database "VocaNovaDb\nContext" as DbContext
+database "MySQL\nDatabase" as MySQL
+
+note over RegisterPage, MySQL
+OTP was already sent before this register request.
+This diagram shows the current /api/auth/register flow.
+end note
+
+Guest -> RegisterPage: Access page
+Guest -> RegisterPage: Enter information
+Guest -> RegisterPage: Click Register button
+RegisterPage -> RegisterPage: Validate input
+
+alt Data input invalid
+    RegisterPage --> Guest: Show error message
+else Data input valid
+    RegisterPage -> RegisterDto: Create register DTO\n(phone, password, display_name,\notp_code, optional profile fields)
+    RegisterPage -> AuthController: POST /api/auth/register\nRegister DTO
+    AuthController -> AuthController: Validate register request
+
+    alt Request validation fails
+        AuthController --> RegisterPage: HTTP 400 with validation errors
+        RegisterPage --> Guest: Show error message
+    else Request validation success
+        AuthController -> AuthService: RegisterAsync(register data)
+        AuthService -> AuthRepository: FindByPhoneAsync(phone)
+        AuthRepository -> DbContext: Query user by phone
+        DbContext -> MySQL: SELECT user account
+        MySQL --> DbContext: User row or null
+        DbContext --> AuthRepository: Result
+        AuthRepository --> AuthService: AuthAccount or null
+
+        alt Account exists
+            AuthService --> AuthController: Conflict result
+            AuthController --> RegisterPage: HTTP 409 Phone already exists
+            RegisterPage --> Guest: Show error message
+        else Phone is available
+            AuthService -> OtpRepository: FindLatestAsync(phone, userId=null)
+            OtpRepository -> DbContext: Query OTP by phone
+            DbContext -> MySQL: SELECT latest OTP
+            MySQL --> DbContext: OTP row or null
+            DbContext --> OtpRepository: Result
+            OtpRepository --> AuthService: OTP result
+
+            alt OTP invalid
+                AuthService --> AuthController: Unauthorized/Conflict result
+                AuthController --> RegisterPage: HTTP error
+                RegisterPage --> Guest: Show error message
+            else OTP valid
+                AuthService -> PasswordHashService: Hash(password)
+                PasswordHashService --> AuthService: password hash
+                AuthService -> AuthRepository: Create user account
+                AuthRepository -> DbContext: Add User, UserAuth,\nUserProfile, LearningProfile?
+                DbContext -> MySQL: INSERT account data
+                MySQL --> DbContext: Insert result
+                DbContext --> AuthRepository: Save result
+                AuthRepository --> AuthService: Created account
+
+                AuthService -> OtpRepository: Mark OTP used
+                OtpRepository -> DbContext: Update OTP
+                DbContext -> MySQL: UPDATE otp_verifications
+                MySQL --> DbContext: Update result
+                DbContext --> OtpRepository: Save result
+
+                AuthService -> RefreshTokenRepository: Create refresh token
+                RefreshTokenRepository -> DbContext: Add RefreshToken
+                DbContext -> MySQL: INSERT refresh_tokens
+                MySQL --> DbContext: Insert result
+                DbContext --> RefreshTokenRepository: Save result
+
+                AuthService --> AuthController: Return register result
+                AuthController --> RegisterPage: HTTP 201 Created
+                RegisterPage --> Guest: Show success message
+            end
+        end
+    end
+end
+
+@enduml
