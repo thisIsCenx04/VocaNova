@@ -10,210 +10,210 @@ Generated from mobile-take-exam-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 class QuizConfigNotifier <<service>> {
-  + createSession() : FutureOfQuizSessionStart
+  \+ createSession() : FutureOfQuizSessionStart
 }
 class QuizApiService <<service>> {
-  + _dio : Dio
+  \+ _dio : Dio
   --
-  + createSession() : FutureOfQuizSessionStart
+  \+ createSession() : FutureOfQuizSessionStart
 }
 class QuizConfigRequestDto <<dto>> {
-  + mode : String
-  + questionType : int
-  + scopeType : String
-  + wordOrder : String
-  + wordLimit : intNullable
-  + listId : intNullable
-  + scopeDateFrom : DateTimeNullable
-  + scopeDateTo : DateTimeNullable
-  + topicIds : ListOfint
-  + timeLimitSec : intNullable
-  + lives : intNullable
-  + answerMethod : String
+  \+ mode : String
+  \+ questionType : int
+  \+ scopeType : String
+  \+ wordOrder : String
+  \+ wordLimit : intNullable
+  \+ listId : intNullable
+  \+ scopeDateFrom : DateTimeNullable
+  \+ scopeDateTo : DateTimeNullable
+  \+ topicIds : ListOfint
+  \+ timeLimitSec : intNullable
+  \+ lives : intNullable
+  \+ answerMethod : String
 }
 class QuizSessionStartDto <<dto>> {
-  + sessionId : int
-  + answerMethod : String
-  + mode : String
-  + questionCount : int
-  + listId : intNullable
-  + timeLimitSec : intNullable
-  + lives : intNullable
-  + firstQuestion : QuizQuestionDto
+  \+ sessionId : int
+  \+ answerMethod : String
+  \+ mode : String
+  \+ questionCount : int
+  \+ listId : intNullable
+  \+ timeLimitSec : intNullable
+  \+ lives : intNullable
+  \+ firstQuestion : QuizQuestionDto
 }
 class CreateSessionRequest <<dto>> {
-  + Mode : stringNullable
-  + QuestionType : int
-  + ScopeType : stringNullable
-  + ScopeDateFrom : DateOnlyNullable
-  + ScopeDateTo : DateOnlyNullable
-  + TopicIds : ListOfUintNullable
-  + WordOrder : stringNullable
-  + WordLimit : intNullable
-  + TimeLimitSec : intNullable
-  + Lives : intNullable
-  + AnswerMethod : stringNullable
-  + ListId : uintNullable
+  \+ Mode : stringNullable
+  \+ QuestionType : int
+  \+ ScopeType : stringNullable
+  \+ ScopeDateFrom : DateOnlyNullable
+  \+ ScopeDateTo : DateOnlyNullable
+  \+ TopicIds : ListOfUintNullable
+  \+ WordOrder : stringNullable
+  \+ WordLimit : intNullable
+  \+ TimeLimitSec : intNullable
+  \+ Lives : intNullable
+  \+ AnswerMethod : stringNullable
+  \+ ListId : uintNullable
 }
 class CreateSessionResponse <<dto>> {
-  + Session : QuizSessionResponse
-  + FirstQuestion : QuestionResponse
+  \+ Session : QuizSessionResponse
+  \+ FirstQuestion : QuestionResponse
 }
 class QuestionResponse <<dto>> {
-  + WordId : uint
-  + SenseId : uint
-  + QuestionType : int
-  + DisplayContent : string
-  + ExpectedAnswer : string
-  + Choices : IReadOnlyCollectionOfstring
+  \+ WordId : uint
+  \+ SenseId : uint
+  \+ QuestionType : int
+  \+ DisplayContent : string
+  \+ ExpectedAnswer : string
+  \+ Choices : IReadOnlyCollectionOfstring
 }
 class QuizSessionsController <<backend_controller>> {
-  - _sessionService : IQuizSessionService
-  - _submissionService : IQuizSubmissionService
-  - _resultService : IQuizResultService
-  - _historyService : IQuizHistoryService
+  \- _sessionService : IQuizSessionService
+  \- _submissionService : IQuizSubmissionService
+  \- _resultService : IQuizResultService
+  \- _historyService : IQuizHistoryService
   --
-  + Create(request: CreateSessionRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  \+ Create(request: CreateSessionRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class QuizSessionService <<service>> {
-  - _sessionBuilder : IQuizSessionBuilder
-  - _questionBuilder : IQuizQuestionBuilder
-  - _repository : IQuizSessionRepository
-  - _progressCache : IProgressSummaryCacheNullable
+  \- _sessionBuilder : IQuizSessionBuilder
+  \- _questionBuilder : IQuizQuestionBuilder
+  \- _repository : IQuizSessionRepository
+  \- _progressCache : IProgressSummaryCacheNullable
   --
-  + CreateSessionAsync(userId: uint, command: CreateQuizSessionCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfCreatedQuizSession
+  \+ CreateSessionAsync(userId: uint, command: CreateQuizSessionCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfCreatedQuizSession
 }
 class QuizSessionBuilder <<entity>> {
-  - _quizPoolRepository : IQuizPoolRepository
+  \- _quizPoolRepository : IQuizPoolRepository
   --
-  + BuildPoolAsync(userId: uint, request: BuildQuizPoolCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfIReadOnlyCollectionOfQuizPoolWord
+  \+ BuildPoolAsync(userId: uint, request: BuildQuizPoolCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfIReadOnlyCollectionOfQuizPoolWord
 }
 class QuizQuestionBuilder <<entity>> {
-  - _quizQuestionRepository : IQuizQuestionRepository
+  \- _quizQuestionRepository : IQuizQuestionRepository
   --
-  + BuildQuestionAsync(wordId: uint, questionType: int, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizQuestion
+  \+ BuildQuestionAsync(wordId: uint, questionType: int, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizQuestion
 }
 class UserList <<entity>> {
-  + ListId : uint
-  + UserId : uint
-  + ListName : string
-  + Status : string
-  + CreatedAt : DateTime
-  + User : User
-  + UserListWordStats : ICollectionOfUserListWordStat
-  + UserListWords : ICollectionOfUserListWord
+  \+ ListId : uint
+  \+ UserId : uint
+  \+ ListName : string
+  \+ Status : string
+  \+ CreatedAt : DateTime
+  \+ User : User
+  \+ UserListWordStats : ICollectionOfUserListWordStat
+  \+ UserListWords : ICollectionOfUserListWord
 }
 class UserListWord <<entity>> {
-  + UserId : uint
-  + ListId : uint
-  + WordId : uint
-  + AddMethod : string
-  + Note : stringNullable
-  + AddedAt : DateTime
-  + Status : string
-  + List : UserList
-  + User : User
-  + Word : Word
+  \+ UserId : uint
+  \+ ListId : uint
+  \+ WordId : uint
+  \+ AddMethod : string
+  \+ Note : stringNullable
+  \+ AddedAt : DateTime
+  \+ Status : string
+  \+ List : UserList
+  \+ User : User
+  \+ Word : Word
 }
 class UserWordProgress <<entity>> {
-  + ProgressId : uint
-  + UserId : uint
-  + WordId : uint
-  + TestCount : int
-  + CorrectCount : int
-  + WrongCount : int
-  + ConsecutiveCorrect : int
-  + IsInWrongList : bool
-  + MasteryLevel : int
-  + SrsInterval : int
-  + EaseFactor : float
-  + LastTestedAt : DateTimeNullable
+  \+ ProgressId : uint
+  \+ UserId : uint
+  \+ WordId : uint
+  \+ TestCount : int
+  \+ CorrectCount : int
+  \+ WrongCount : int
+  \+ ConsecutiveCorrect : int
+  \+ IsInWrongList : bool
+  \+ MasteryLevel : int
+  \+ SrsInterval : int
+  \+ EaseFactor : float
+  \+ LastTestedAt : DateTimeNullable
 }
 class Word <<entity>> {
-  + WordId : uint
-  + Word1 : string
-  + WordKey : string
-  + CefrLevel : stringNullable
-  + PhoneticUk : stringNullable
-  + PhoneticUs : stringNullable
-  + ImageUrl : stringNullable
-  + IsPhrase : bool
-  + Status : string
-  + CreatedAt : DateTime
-  + UpdatedAt : DateTime
-  + AiGradingCaches : ICollectionOfAiGradingCache
+  \+ WordId : uint
+  \+ Word1 : string
+  \+ WordKey : string
+  \+ CefrLevel : stringNullable
+  \+ PhoneticUk : stringNullable
+  \+ PhoneticUs : stringNullable
+  \+ ImageUrl : stringNullable
+  \+ IsPhrase : bool
+  \+ Status : string
+  \+ CreatedAt : DateTime
+  \+ UpdatedAt : DateTime
+  \+ AiGradingCaches : ICollectionOfAiGradingCache
 }
 class WordSense <<entity>> {
-  + SenseId : uint
-  + WordId : uint
-  + SenseOrder : int
-  + WordClass : string
-  + EnglishDefinition : string
-  + VietnameseMeaning : stringNullable
-  + Status : string
-  + TestAnswers : ICollectionOfTestAnswer
-  + Word : Word
-  + WordExamples : ICollectionOfWordExample
-  + WordRelations : ICollectionOfWordRelation
+  \+ SenseId : uint
+  \+ WordId : uint
+  \+ SenseOrder : int
+  \+ WordClass : string
+  \+ EnglishDefinition : string
+  \+ VietnameseMeaning : stringNullable
+  \+ Status : string
+  \+ TestAnswers : ICollectionOfTestAnswer
+  \+ Word : Word
+  \+ WordExamples : ICollectionOfWordExample
+  \+ WordRelations : ICollectionOfWordRelation
 }
 class WordTopic <<dto>> {
-  + WordId : uint
-  + TopicId : uint
-  + IsPrimary : bool
-  + Topic : Topic
-  + Word : Word
+  \+ WordId : uint
+  \+ TopicId : uint
+  \+ IsPrimary : bool
+  \+ Topic : Topic
+  \+ Word : Word
 }
 class TestSession <<entity>> {
-  + SessionId : uint
-  + UserId : uint
-  + TestType : string
-  + Mode : string
-  + QuestionType : int
-  + ScopeType : string
-  + ScopeDateFrom : DateOnlyNullable
-  + ScopeDateTo : DateOnlyNullable
-  + WordOrder : string
-  + WordLimit : intNullable
-  + TimeLimitSec : intNullable
-  + Lives : intNullable
+  \+ SessionId : uint
+  \+ UserId : uint
+  \+ TestType : string
+  \+ Mode : string
+  \+ QuestionType : int
+  \+ ScopeType : string
+  \+ ScopeDateFrom : DateOnlyNullable
+  \+ ScopeDateTo : DateOnlyNullable
+  \+ WordOrder : string
+  \+ WordLimit : intNullable
+  \+ TimeLimitSec : intNullable
+  \+ Lives : intNullable
 }
 class TestSessionTopic <<entity>> {
-  + SessionId : uint
-  + TopicId : uint
-  + Session : TestSession
-  + Topic : Topic
+  \+ SessionId : uint
+  \+ TopicId : uint
+  \+ Session : TestSession
+  \+ Topic : Topic
 }
 class QuizPoolRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  \- _dbContext : VocaNovaDbContext
   --
-  + GetCandidatesAsync(userId: uint, command: BuildQuizPoolCommand, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfQuizPoolWord
+  \+ GetCandidatesAsync(userId: uint, command: BuildQuizPoolCommand, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfQuizPoolWord
 }
 class QuizQuestionRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  \- _dbContext : VocaNovaDbContext
   --
-  + FindQuestionWordAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizQuestionWord
-  + GetDistractorsAsync(excludingWordId: uint, wordClass: string, topicIds: ListOfUint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfQuizQuestionWord
+  \+ FindQuestionWordAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizQuestionWord
+  \+ GetDistractorsAsync(excludingWordId: uint, wordClass: string, topicIds: ListOfUint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfQuizQuestionWord
 }
 class QuizSessionRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  \- _dbContext : VocaNovaDbContext
   --
-  + CreateAsync(userId: uint, command: CreateQuizSessionCommand, topicIds: ListOfUint, questionCount: int, cancellationToken: CancellationToken) : TaskOfQuizSession
+  \+ CreateAsync(userId: uint, command: CreateQuizSessionCommand, topicIds: ListOfUint, questionCount: int, cancellationToken: CancellationToken) : TaskOfQuizSession
 }
 class VocaNovaDbContext <<dbcontext>> {
-  + AgeRanges : DbSetOfAgeRange
-  + AiGradingCaches : DbSetOfAiGradingCache
-  + AuditLogs : DbSetOfAuditLog
-  + EducationLevels : DbSetOfEducationLevel
-  + LearningPurposes : DbSetOfLearningPurpose
-  + Occupations : DbSetOfOccupation
-  + OtpVerifications : DbSetOfOtpVerification
-  + RefreshTokens : DbSetOfRefreshToken
-  + Regions : DbSetOfRegion
-  + Roles : DbSetOfRole
-  + TestAnswers : DbSetOfTestAnswer
-  + TestSessions : DbSetOfTestSession
+  \+ AgeRanges : DbSetOfAgeRange
+  \+ AiGradingCaches : DbSetOfAiGradingCache
+  \+ AuditLogs : DbSetOfAuditLog
+  \+ EducationLevels : DbSetOfEducationLevel
+  \+ LearningPurposes : DbSetOfLearningPurpose
+  \+ Occupations : DbSetOfOccupation
+  \+ OtpVerifications : DbSetOfOtpVerification
+  \+ RefreshTokens : DbSetOfRefreshToken
+  \+ Regions : DbSetOfRegion
+  \+ Roles : DbSetOfRole
+  \+ TestAnswers : DbSetOfTestAnswer
+  \+ TestSessions : DbSetOfTestSession
   --
-  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  \+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
 }
 class MySQL_Database <<database>> {
 

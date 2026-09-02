@@ -10,127 +10,127 @@ Generated from admin-bulk-import-word-csv-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 class VocabularyController <<frontend_controller>> {
-  - _apiClient : IVocaNovaApiClient
-  - _translator : ITranslator
+  \- _apiClient : IVocaNovaApiClient
+  \- _translator : ITranslator
   --
-  + Import() : IActionResult
-  + Import(file: IFormFileNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
+  \+ Import() : IActionResult
+  \+ Import(file: IFormFileNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class AdminWordsController <<backend_controller>> {
-  - _service : IWordAdminService
+  \- _service : IWordAdminService
   --
-  + Import(request: ImportWordsRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  \+ Import(request: ImportWordsRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class BulkImportResult <<dto>> {
-  + ImportedWords : int
-  + ImportedSenses : int
-  + Skipped : int
-  + Errors : IReadOnlyCollectionOfBulkImportError
-  + UpdatedWords : int
-  + ImportedTopics : int
-  + ImportedExamples : int
+  \+ ImportedWords : int
+  \+ ImportedSenses : int
+  \+ Skipped : int
+  \+ Errors : IReadOnlyCollectionOfBulkImportError
+  \+ UpdatedWords : int
+  \+ ImportedTopics : int
+  \+ ImportedExamples : int
 }
 class ImportWordsRequest <<dto>> {
-  + File : IFormFileNullable
+  \+ File : IFormFileNullable
 }
 class BulkImportResponse <<dto>> {
-  + ImportedWords : int
-  + ImportedSenses : int
-  + Skipped : int
-  + Errors : IReadOnlyCollectionOfBulkImportErrorResponse
-  + UpdatedWords : int
-  + ImportedTopics : int
-  + ImportedExamples : int
+  \+ ImportedWords : int
+  \+ ImportedSenses : int
+  \+ Skipped : int
+  \+ Errors : IReadOnlyCollectionOfBulkImportErrorResponse
+  \+ UpdatedWords : int
+  \+ ImportedTopics : int
+  \+ ImportedExamples : int
 }
 class BulkImportErrorResponse <<dto>> {
-  + Row : int
-  + Column : string
-  + Message : string
+  \+ Row : int
+  \+ Column : string
+  \+ Message : string
 }
 class WordAdminService <<service>> {
-  - _repository : IWordAdminRepository
-  - _audioStorage : IWordAudioStorageNullable
-  - _imageStorage : IWordImageStorageNullable
-  - _wordDetailCache : IWordDetailCacheNullable
-  - _userListCache : IUserListCacheNullable
+  \- _repository : IWordAdminRepository
+  \- _audioStorage : IWordAudioStorageNullable
+  \- _imageStorage : IWordImageStorageNullable
+  \- _wordDetailCache : IWordDetailCacheNullable
+  \- _userListCache : IUserListCacheNullable
   --
-  + ImportCsvAsync(content: UploadedContentNullable, cancellationToken: CancellationToken) : TaskOfDictionaryBulkImportResult
+  \+ ImportCsvAsync(content: UploadedContentNullable, cancellationToken: CancellationToken) : TaskOfDictionaryBulkImportResult
 }
 class Word <<entity>> {
-  + WordId : uint
-  + Word1 : string
-  + WordKey : string
-  + CefrLevel : stringNullable
-  + PhoneticUk : stringNullable
-  + PhoneticUs : stringNullable
-  + ImageUrl : stringNullable
-  + IsPhrase : bool
-  + Status : string
-  + CreatedAt : DateTime
-  + UpdatedAt : DateTime
-  + AiGradingCaches : ICollectionOfAiGradingCache
+  \+ WordId : uint
+  \+ Word1 : string
+  \+ WordKey : string
+  \+ CefrLevel : stringNullable
+  \+ PhoneticUk : stringNullable
+  \+ PhoneticUs : stringNullable
+  \+ ImageUrl : stringNullable
+  \+ IsPhrase : bool
+  \+ Status : string
+  \+ CreatedAt : DateTime
+  \+ UpdatedAt : DateTime
+  \+ AiGradingCaches : ICollectionOfAiGradingCache
 }
 class WordSense <<entity>> {
-  + SenseId : uint
-  + WordId : uint
-  + SenseOrder : int
-  + WordClass : string
-  + EnglishDefinition : string
-  + VietnameseMeaning : stringNullable
-  + Status : string
-  + TestAnswers : ICollectionOfTestAnswer
-  + Word : Word
-  + WordExamples : ICollectionOfWordExample
-  + WordRelations : ICollectionOfWordRelation
+  \+ SenseId : uint
+  \+ WordId : uint
+  \+ SenseOrder : int
+  \+ WordClass : string
+  \+ EnglishDefinition : string
+  \+ VietnameseMeaning : stringNullable
+  \+ Status : string
+  \+ TestAnswers : ICollectionOfTestAnswer
+  \+ Word : Word
+  \+ WordExamples : ICollectionOfWordExample
+  \+ WordRelations : ICollectionOfWordRelation
 }
 class WordExample <<entity>> {
-  + ExampleId : uint
-  + WordId : uint
-  + SenseId : uintNullable
-  + ExampleEn : string
-  + ExampleVi : stringNullable
-  + OrderIndex : int
-  + Sense : WordSenseNullable
-  + Word : Word
+  \+ ExampleId : uint
+  \+ WordId : uint
+  \+ SenseId : uintNullable
+  \+ ExampleEn : string
+  \+ ExampleVi : stringNullable
+  \+ OrderIndex : int
+  \+ Sense : WordSenseNullable
+  \+ Word : Word
 }
 class Topic <<entity>> {
-  + TopicId : uint
-  + TopicName : string
-  + TopicNameVi : stringNullable
-  + Icon : stringNullable
-  + Status : string
-  + TestSessionTopics : ICollectionOfTestSessionTopic
-  + UserTopicPreferences : ICollectionOfUserTopicPreference
-  + WordTopics : ICollectionOfWordTopic
+  \+ TopicId : uint
+  \+ TopicName : string
+  \+ TopicNameVi : stringNullable
+  \+ Icon : stringNullable
+  \+ Status : string
+  \+ TestSessionTopics : ICollectionOfTestSessionTopic
+  \+ UserTopicPreferences : ICollectionOfUserTopicPreference
+  \+ WordTopics : ICollectionOfWordTopic
 }
 class WordTopic <<dto>> {
-  + WordId : uint
-  + TopicId : uint
-  + IsPrimary : bool
-  + Topic : Topic
-  + Word : Word
+  \+ WordId : uint
+  \+ TopicId : uint
+  \+ IsPrimary : bool
+  \+ Topic : Topic
+  \+ Word : Word
 }
 class WordAdminRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  \- _dbContext : VocaNovaDbContext
   --
-  + SearchAsync(filter: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfPagedAdminWordListItem
-  + WordKeyExistsAsync(wordKey: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfBool
+  \+ SearchAsync(filter: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfPagedAdminWordListItem
+  \+ WordKeyExistsAsync(wordKey: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfBool
 }
 class VocaNovaDbContext <<dbcontext>> {
-  + AgeRanges : DbSetOfAgeRange
-  + AiGradingCaches : DbSetOfAiGradingCache
-  + AuditLogs : DbSetOfAuditLog
-  + EducationLevels : DbSetOfEducationLevel
-  + LearningPurposes : DbSetOfLearningPurpose
-  + Occupations : DbSetOfOccupation
-  + OtpVerifications : DbSetOfOtpVerification
-  + RefreshTokens : DbSetOfRefreshToken
-  + Regions : DbSetOfRegion
-  + Roles : DbSetOfRole
-  + TestAnswers : DbSetOfTestAnswer
-  + TestSessions : DbSetOfTestSession
+  \+ AgeRanges : DbSetOfAgeRange
+  \+ AiGradingCaches : DbSetOfAiGradingCache
+  \+ AuditLogs : DbSetOfAuditLog
+  \+ EducationLevels : DbSetOfEducationLevel
+  \+ LearningPurposes : DbSetOfLearningPurpose
+  \+ Occupations : DbSetOfOccupation
+  \+ OtpVerifications : DbSetOfOtpVerification
+  \+ RefreshTokens : DbSetOfRefreshToken
+  \+ Regions : DbSetOfRegion
+  \+ Roles : DbSetOfRole
+  \+ TestAnswers : DbSetOfTestAnswer
+  \+ TestSessions : DbSetOfTestSession
   --
-  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  \+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
 }
 class MySQL_Database <<database>> {
 

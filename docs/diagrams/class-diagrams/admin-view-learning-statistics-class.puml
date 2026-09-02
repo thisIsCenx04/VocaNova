@@ -10,157 +10,157 @@ Generated from admin-view-learning-statistics-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 class StatisticsController <<frontend_controller>> {
-  - _apiClient : IVocaNovaApiClient
+  \- _apiClient : IVocaNovaApiClient
   --
-  + Index(cancellationToken: CancellationToken) : TaskOfIActionResult
-  + ActivityTrend(granularity: string, cancellationToken: CancellationToken) : TaskOfIActionResult
+  \+ Index(cancellationToken: CancellationToken) : TaskOfIActionResult
+  \+ ActivityTrend(granularity: string, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class AdminStatsController <<backend_controller>> {
-  - _adminStatsService : IAdminStatsService
+  \- _adminStatsService : IAdminStatsService
   --
-  + GetDemographics(cancellationToken: CancellationToken) : TaskOfIActionResult
-  + GetLearningStats(cancellationToken: CancellationToken) : TaskOfIActionResult
+  \+ GetDemographics(cancellationToken: CancellationToken) : TaskOfIActionResult
+  \+ GetLearningStats(cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class LearningStats <<dto>> {
-  + TopWrongWords : IReadOnlyListOfWrongWordStat
-  + AccuracyTrend : IReadOnlyListOfAccuracyTrendPoint
+  \+ TopWrongWords : IReadOnlyListOfWrongWordStat
+  \+ AccuracyTrend : IReadOnlyListOfAccuracyTrendPoint
 }
 class Demographics <<dto>> {
-  + AgeRanges : IReadOnlyListOfDemographicGroup
-  + Occupations : IReadOnlyListOfDemographicGroup
-  + EducationLevels : IReadOnlyListOfDemographicGroup
+  \+ AgeRanges : IReadOnlyListOfDemographicGroup
+  \+ Occupations : IReadOnlyListOfDemographicGroup
+  \+ EducationLevels : IReadOnlyListOfDemographicGroup
 }
 class AdminLearningStatsResponse <<dto>> {
-  + TopWrongWords : IReadOnlyCollectionOfAdminWrongWordResponse
-  + AccuracyTrend : IReadOnlyCollectionOfAdminAccuracyTrendPointResponse
+  \+ TopWrongWords : IReadOnlyCollectionOfAdminWrongWordResponse
+  \+ AccuracyTrend : IReadOnlyCollectionOfAdminAccuracyTrendPointResponse
 }
 class AdminDemographicsResponse <<dto>> {
-  + AgeRanges : IReadOnlyCollectionOfAdminDemographicGroupResponse
-  + Occupations : IReadOnlyCollectionOfAdminDemographicGroupResponse
-  + EducationLevels : IReadOnlyCollectionOfAdminDemographicGroupResponse
+  \+ AgeRanges : IReadOnlyCollectionOfAdminDemographicGroupResponse
+  \+ Occupations : IReadOnlyCollectionOfAdminDemographicGroupResponse
+  \+ EducationLevels : IReadOnlyCollectionOfAdminDemographicGroupResponse
 }
 class AdminStatsService <<service>> {
-  - _repository : IAdminStatsRepository
+  \- _repository : IAdminStatsRepository
   --
-  + GetDemographicsAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminDemographicsModel
-  + GetLearningStatsAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminLearningStatsModel
+  \+ GetDemographicsAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminDemographicsModel
+  \+ GetLearningStatsAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminLearningStatsModel
 }
 class TestAnswer <<entity>> {
-  + AnswerId : uint
-  + SessionId : uint
-  + WordId : uint
-  + SenseId : uintNullable
-  + QuestionNumber : int
-  + QuestionType : int
-  + DisplayContent : string
-  + ExpectedAnswer : string
-  + AcceptedAnswers : stringNullable
-  + UserAnswer : stringNullable
-  + IsCorrect : boolNullable
-  + AiScore : floatNullable
+  \+ AnswerId : uint
+  \+ SessionId : uint
+  \+ WordId : uint
+  \+ SenseId : uintNullable
+  \+ QuestionNumber : int
+  \+ QuestionType : int
+  \+ DisplayContent : string
+  \+ ExpectedAnswer : string
+  \+ AcceptedAnswers : stringNullable
+  \+ UserAnswer : stringNullable
+  \+ IsCorrect : boolNullable
+  \+ AiScore : floatNullable
 }
 class Word <<entity>> {
-  + WordId : uint
-  + Word1 : string
-  + WordKey : string
-  + CefrLevel : stringNullable
-  + PhoneticUk : stringNullable
-  + PhoneticUs : stringNullable
-  + ImageUrl : stringNullable
-  + IsPhrase : bool
-  + Status : string
-  + CreatedAt : DateTime
-  + UpdatedAt : DateTime
-  + AiGradingCaches : ICollectionOfAiGradingCache
+  \+ WordId : uint
+  \+ Word1 : string
+  \+ WordKey : string
+  \+ CefrLevel : stringNullable
+  \+ PhoneticUk : stringNullable
+  \+ PhoneticUs : stringNullable
+  \+ ImageUrl : stringNullable
+  \+ IsPhrase : bool
+  \+ Status : string
+  \+ CreatedAt : DateTime
+  \+ UpdatedAt : DateTime
+  \+ AiGradingCaches : ICollectionOfAiGradingCache
 }
 class TestSession <<entity>> {
-  + SessionId : uint
-  + UserId : uint
-  + TestType : string
-  + Mode : string
-  + QuestionType : int
-  + ScopeType : string
-  + ScopeDateFrom : DateOnlyNullable
-  + ScopeDateTo : DateOnlyNullable
-  + WordOrder : string
-  + WordLimit : intNullable
-  + TimeLimitSec : intNullable
-  + Lives : intNullable
+  \+ SessionId : uint
+  \+ UserId : uint
+  \+ TestType : string
+  \+ Mode : string
+  \+ QuestionType : int
+  \+ ScopeType : string
+  \+ ScopeDateFrom : DateOnlyNullable
+  \+ ScopeDateTo : DateOnlyNullable
+  \+ WordOrder : string
+  \+ WordLimit : intNullable
+  \+ TimeLimitSec : intNullable
+  \+ Lives : intNullable
 }
 class UserLearningProfile <<entity>> {
-  + UserId : uint
-  + AgeRangeId : uintNullable
-  + RegionId : uintNullable
-  + OccupationId : uintNullable
-  + EducationLevelId : uintNullable
-  + LearningPurposeId : uintNullable
-  + CreatedAt : DateTime
-  + UpdatedAt : DateTime
-  + AgeRange : AgeRangeNullable
-  + EducationLevel : EducationLevelNullable
-  + LearningPurpose : LearningPurposeNullable
-  + Occupation : OccupationNullable
+  \+ UserId : uint
+  \+ AgeRangeId : uintNullable
+  \+ RegionId : uintNullable
+  \+ OccupationId : uintNullable
+  \+ EducationLevelId : uintNullable
+  \+ LearningPurposeId : uintNullable
+  \+ CreatedAt : DateTime
+  \+ UpdatedAt : DateTime
+  \+ AgeRange : AgeRangeNullable
+  \+ EducationLevel : EducationLevelNullable
+  \+ LearningPurpose : LearningPurposeNullable
+  \+ Occupation : OccupationNullable
 }
 class User <<entity>> {
-  + UserId : uint
-  + RoleId : uint
-  + Status : string
-  + LastLoginAt : DateTimeNullable
-  + CreatedAt : DateTime
-  + UpdatedAt : DateTime
-  + AuditLogs : ICollectionOfAuditLog
-  + OtpVerifications : ICollectionOfOtpVerification
-  + RefreshTokens : ICollectionOfRefreshToken
-  + Role : Role
-  + TestSessions : ICollectionOfTestSession
-  + UserAuth : UserAuthNullable
+  \+ UserId : uint
+  \+ RoleId : uint
+  \+ Status : string
+  \+ LastLoginAt : DateTimeNullable
+  \+ CreatedAt : DateTime
+  \+ UpdatedAt : DateTime
+  \+ AuditLogs : ICollectionOfAuditLog
+  \+ OtpVerifications : ICollectionOfOtpVerification
+  \+ RefreshTokens : ICollectionOfRefreshToken
+  \+ Role : Role
+  \+ TestSessions : ICollectionOfTestSession
+  \+ UserAuth : UserAuthNullable
 }
 class AgeRange <<entity>> {
-  + AgeRangeId : uint
-  + Name : string
-  + MinAge : intNullable
-  + MaxAge : intNullable
-  + DisplayOrder : int
-  + Status : string
-  + UserLearningProfiles : ICollectionOfUserLearningProfile
+  \+ AgeRangeId : uint
+  \+ Name : string
+  \+ MinAge : intNullable
+  \+ MaxAge : intNullable
+  \+ DisplayOrder : int
+  \+ Status : string
+  \+ UserLearningProfiles : ICollectionOfUserLearningProfile
 }
 class Occupation <<entity>> {
-  + OccupationId : uint
-  + Name : string
-  + Description : stringNullable
-  + Status : string
-  + UserLearningProfiles : ICollectionOfUserLearningProfile
+  \+ OccupationId : uint
+  \+ Name : string
+  \+ Description : stringNullable
+  \+ Status : string
+  \+ UserLearningProfiles : ICollectionOfUserLearningProfile
 }
 class EducationLevel <<entity>> {
-  + EducationLevelId : uint
-  + Name : string
-  + Description : stringNullable
-  + DisplayOrder : int
-  + Status : string
-  + UserLearningProfiles : ICollectionOfUserLearningProfile
+  \+ EducationLevelId : uint
+  \+ Name : string
+  \+ Description : stringNullable
+  \+ DisplayOrder : int
+  \+ Status : string
+  \+ UserLearningProfiles : ICollectionOfUserLearningProfile
 }
 class AdminStatsRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  \- _dbContext : VocaNovaDbContext
   --
-  + GetDemographicsAsync(cancellationToken: CancellationToken) : TaskOfAdminDemographicsModel
-  + GetTopWrongWordsAsync(limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminWrongWordModel
-  + GetSessionAccuracyRowsAsync(fromInclusiveUtc: DateTime, toExclusiveUtc: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminSessionAccuracyRow
+  \+ GetDemographicsAsync(cancellationToken: CancellationToken) : TaskOfAdminDemographicsModel
+  \+ GetTopWrongWordsAsync(limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminWrongWordModel
+  \+ GetSessionAccuracyRowsAsync(fromInclusiveUtc: DateTime, toExclusiveUtc: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminSessionAccuracyRow
 }
 class VocaNovaDbContext <<dbcontext>> {
-  + AgeRanges : DbSetOfAgeRange
-  + AiGradingCaches : DbSetOfAiGradingCache
-  + AuditLogs : DbSetOfAuditLog
-  + EducationLevels : DbSetOfEducationLevel
-  + LearningPurposes : DbSetOfLearningPurpose
-  + Occupations : DbSetOfOccupation
-  + OtpVerifications : DbSetOfOtpVerification
-  + RefreshTokens : DbSetOfRefreshToken
-  + Regions : DbSetOfRegion
-  + Roles : DbSetOfRole
-  + TestAnswers : DbSetOfTestAnswer
-  + TestSessions : DbSetOfTestSession
+  \+ AgeRanges : DbSetOfAgeRange
+  \+ AiGradingCaches : DbSetOfAiGradingCache
+  \+ AuditLogs : DbSetOfAuditLog
+  \+ EducationLevels : DbSetOfEducationLevel
+  \+ LearningPurposes : DbSetOfLearningPurpose
+  \+ Occupations : DbSetOfOccupation
+  \+ OtpVerifications : DbSetOfOtpVerification
+  \+ RefreshTokens : DbSetOfRefreshToken
+  \+ Regions : DbSetOfRegion
+  \+ Roles : DbSetOfRole
+  \+ TestAnswers : DbSetOfTestAnswer
+  \+ TestSessions : DbSetOfTestSession
   --
-  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  \+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
 }
 class MySQL_Database <<database>> {
 

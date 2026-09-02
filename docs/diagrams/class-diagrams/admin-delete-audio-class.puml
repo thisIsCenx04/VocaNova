@@ -10,58 +10,58 @@ Generated from admin-delete-audio-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 class VocabularyController <<frontend_controller>> {
-  - _apiClient : IVocaNovaApiClient
-  - _translator : ITranslator
+  \- _apiClient : IVocaNovaApiClient
+  \- _translator : ITranslator
   --
-  + Delete(id: uint, returnUrl: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
-  + DeleteAudio(id: uint, audioId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
-  + DeleteImage(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+  \+ Delete(id: uint, returnUrl: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
+  \+ DeleteAudio(id: uint, audioId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+  \+ DeleteImage(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class AdminWordsController <<backend_controller>> {
-  - _service : IWordAdminService
+  \- _service : IWordAdminService
   --
-  + SoftDeleteAudio(id: uint, audioId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
-  + SoftDelete(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+  \+ SoftDeleteAudio(id: uint, audioId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+  \+ SoftDelete(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class WordAdminService <<service>> {
-  - _repository : IWordAdminRepository
-  - _audioStorage : IWordAudioStorageNullable
-  - _imageStorage : IWordImageStorageNullable
-  - _wordDetailCache : IWordDetailCacheNullable
-  - _userListCache : IUserListCacheNullable
+  \- _repository : IWordAdminRepository
+  \- _audioStorage : IWordAudioStorageNullable
+  \- _imageStorage : IWordImageStorageNullable
+  \- _wordDetailCache : IWordDetailCacheNullable
+  \- _userListCache : IUserListCacheNullable
   --
-  + SoftDeleteAudioAsync(wordId: uint, audioId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryBool
+  \+ SoftDeleteAudioAsync(wordId: uint, audioId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryBool
 }
 class WordAdminRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  \- _dbContext : VocaNovaDbContext
   --
-  + SetAudioStatusAsync(wordId: uint, audioId: uint, status: string, cancellationToken: CancellationToken) : TaskOfBool
+  \+ SetAudioStatusAsync(wordId: uint, audioId: uint, status: string, cancellationToken: CancellationToken) : TaskOfBool
 }
 class WordAudioAsset <<entity>> {
-  + AudioId : uint
-  + WordId : uint
-  + Accent : string
-  + Source : string
-  + StorageUrl : stringNullable
-  + Status : string
-  + CreatedAt : DateTime
-  + Word : Word
+  \+ AudioId : uint
+  \+ WordId : uint
+  \+ Accent : string
+  \+ Source : string
+  \+ StorageUrl : stringNullable
+  \+ Status : string
+  \+ CreatedAt : DateTime
+  \+ Word : Word
 }
 class VocaNovaDbContext <<dbcontext>> {
-  + AgeRanges : DbSetOfAgeRange
-  + AiGradingCaches : DbSetOfAiGradingCache
-  + AuditLogs : DbSetOfAuditLog
-  + EducationLevels : DbSetOfEducationLevel
-  + LearningPurposes : DbSetOfLearningPurpose
-  + Occupations : DbSetOfOccupation
-  + OtpVerifications : DbSetOfOtpVerification
-  + RefreshTokens : DbSetOfRefreshToken
-  + Regions : DbSetOfRegion
-  + Roles : DbSetOfRole
-  + TestAnswers : DbSetOfTestAnswer
-  + TestSessions : DbSetOfTestSession
+  \+ AgeRanges : DbSetOfAgeRange
+  \+ AiGradingCaches : DbSetOfAiGradingCache
+  \+ AuditLogs : DbSetOfAuditLog
+  \+ EducationLevels : DbSetOfEducationLevel
+  \+ LearningPurposes : DbSetOfLearningPurpose
+  \+ Occupations : DbSetOfOccupation
+  \+ OtpVerifications : DbSetOfOtpVerification
+  \+ RefreshTokens : DbSetOfRefreshToken
+  \+ Regions : DbSetOfRegion
+  \+ Roles : DbSetOfRole
+  \+ TestAnswers : DbSetOfTestAnswer
+  \+ TestSessions : DbSetOfTestSession
   --
-  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  \+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
 }
 class MySQL_Database <<database>> {
 

@@ -10,179 +10,179 @@ Generated from mobile-add-vocabulary-from-search-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 class WordSearchNotifier <<service>> {
-  + search() : FutureOfvoid
+  \+ search() : FutureOfvoid
 }
 class WordSearchApiService <<service>> {
-  + _dio : Dio
+  \+ _dio : Dio
   --
-  + search() : FutureOfListOfWordSummary
+  \+ search() : FutureOfListOfWordSummary
 }
 class ListDetailNotifier <<service>> {
-  + addWord() : FutureOfbool
+  \+ addWord() : FutureOfbool
 }
 class ListsApiService <<service>> {
-  + _dio : Dio
+  \+ _dio : Dio
   --
-  + addWord() : FutureOfListWord
+  \+ addWord() : FutureOfListWord
 }
 class WordSummaryDto <<dto>> {
-  + wordId : int
-  + word : String
-  + phonetic : StringNullable
-  + cefr : StringNullable
-  + primaryMeaning : StringNullable
-  + imageUrl : StringNullable
-  + topicIds : SetOfint
-  + learningStatus : String
-  + masteryScore : double
+  \+ wordId : int
+  \+ word : String
+  \+ phonetic : StringNullable
+  \+ cefr : StringNullable
+  \+ primaryMeaning : StringNullable
+  \+ imageUrl : StringNullable
+  \+ topicIds : SetOfint
+  \+ learningStatus : String
+  \+ masteryScore : double
 }
 class ListWordDto <<dto>> {
-  + wordId : int
-  + word : String
-  + primaryMeaning : StringNullable
-  + correctCount : int
-  + wrongCount : int
-  + note : StringNullable
-  + addedAt : DateTime
+  \+ wordId : int
+  \+ word : String
+  \+ primaryMeaning : StringNullable
+  \+ correctCount : int
+  \+ wrongCount : int
+  \+ note : StringNullable
+  \+ addedAt : DateTime
 }
 class WordSearchRequest <<dto>> {
-  + Q : stringNullable
-  + Page : int
-  + Limit : int
-  + Cefr : stringNullable
-  + TopicId : uintNullable
-  + IsPhrase : boolNullable
+  \+ Q : stringNullable
+  \+ Page : int
+  \+ Limit : int
+  \+ Cefr : stringNullable
+  \+ TopicId : uintNullable
+  \+ IsPhrase : boolNullable
 }
 class WordSummaryResponse <<dto>> {
-  + WordId : uint
-  + Word : string
-  + Phonetic : stringNullable
-  + Cefr : stringNullable
-  + PrimaryMeaning : stringNullable
-  + ImageUrl : stringNullable
+  \+ WordId : uint
+  \+ Word : string
+  \+ Phonetic : stringNullable
+  \+ Cefr : stringNullable
+  \+ PrimaryMeaning : stringNullable
+  \+ ImageUrl : stringNullable
 }
 class AddListWordRequest <<dto>> {
-  + WordId : uint
-  + AddMethod : stringNullable
-  + Note : stringNullable
+  \+ WordId : uint
+  \+ AddMethod : stringNullable
+  \+ Note : stringNullable
 }
 class ListWordResponse <<dto>> {
-  + WordId : uint
-  + Word : string
-  + PrimaryMeaning : stringNullable
-  + CorrectCount : int
-  + WrongCount : int
-  + Note : stringNullable
-  + AddedAt : DateTime
+  \+ WordId : uint
+  \+ Word : string
+  \+ PrimaryMeaning : stringNullable
+  \+ CorrectCount : int
+  \+ WrongCount : int
+  \+ Note : stringNullable
+  \+ AddedAt : DateTime
 }
 class WordsController <<backend_controller>> {
-  - _wordService : IWordReadService
+  \- _wordService : IWordReadService
   --
-  + Search(request: WordSearchRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  \+ Search(request: WordSearchRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class ListsController <<backend_controller>> {
-  - _queryService : IListQueryService
-  - _mutationService : IListMutationService
+  \- _queryService : IListQueryService
+  \- _mutationService : IListMutationService
   --
-  + AddWord(id: uint, request: AddListWordRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  \+ AddWord(id: uint, request: AddListWordRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class WordReadService <<service>> {
-  - _wordRepository : IWordReadRepository
-  - _wordSearchCache : IWordSearchCacheNullable
-  - _wordDetailCache : IWordDetailCacheNullable
+  \- _wordRepository : IWordReadRepository
+  \- _wordSearchCache : IWordSearchCacheNullable
+  \- _wordDetailCache : IWordDetailCacheNullable
   --
-  + SearchAsync(query: WordSearchQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfPagedCollectionOfWordSummary
+  \+ SearchAsync(query: WordSearchQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfPagedCollectionOfWordSummary
 }
 class ListMutationService <<service>> {
-  - _repository : IListMutationRepository
-  - _cache : IUserListCacheNullable
+  \- _repository : IListMutationRepository
+  \- _cache : IUserListCacheNullable
   --
-  + AddWordAsync(userId: uint, listId: uint, command: AddListWordCommand, cancellationToken: CancellationToken) : TaskOfListResultOfListWord
+  \+ AddWordAsync(userId: uint, listId: uint, command: AddListWordCommand, cancellationToken: CancellationToken) : TaskOfListResultOfListWord
 }
 class Word <<entity>> {
-  + WordId : uint
-  + Word1 : string
-  + WordKey : string
-  + CefrLevel : stringNullable
-  + PhoneticUk : stringNullable
-  + PhoneticUs : stringNullable
-  + ImageUrl : stringNullable
-  + IsPhrase : bool
-  + Status : string
-  + CreatedAt : DateTime
-  + UpdatedAt : DateTime
-  + AiGradingCaches : ICollectionOfAiGradingCache
+  \+ WordId : uint
+  \+ Word1 : string
+  \+ WordKey : string
+  \+ CefrLevel : stringNullable
+  \+ PhoneticUk : stringNullable
+  \+ PhoneticUs : stringNullable
+  \+ ImageUrl : stringNullable
+  \+ IsPhrase : bool
+  \+ Status : string
+  \+ CreatedAt : DateTime
+  \+ UpdatedAt : DateTime
+  \+ AiGradingCaches : ICollectionOfAiGradingCache
 }
 class WordSense <<entity>> {
-  + SenseId : uint
-  + WordId : uint
-  + SenseOrder : int
-  + WordClass : string
-  + EnglishDefinition : string
-  + VietnameseMeaning : stringNullable
-  + Status : string
-  + TestAnswers : ICollectionOfTestAnswer
-  + Word : Word
-  + WordExamples : ICollectionOfWordExample
-  + WordRelations : ICollectionOfWordRelation
+  \+ SenseId : uint
+  \+ WordId : uint
+  \+ SenseOrder : int
+  \+ WordClass : string
+  \+ EnglishDefinition : string
+  \+ VietnameseMeaning : stringNullable
+  \+ Status : string
+  \+ TestAnswers : ICollectionOfTestAnswer
+  \+ Word : Word
+  \+ WordExamples : ICollectionOfWordExample
+  \+ WordRelations : ICollectionOfWordRelation
 }
 class WordTopic <<dto>> {
-  + WordId : uint
-  + TopicId : uint
-  + IsPrimary : bool
-  + Topic : Topic
-  + Word : Word
+  \+ WordId : uint
+  \+ TopicId : uint
+  \+ IsPrimary : bool
+  \+ Topic : Topic
+  \+ Word : Word
 }
 class UserList <<entity>> {
-  + ListId : uint
-  + UserId : uint
-  + ListName : string
-  + Status : string
-  + CreatedAt : DateTime
-  + User : User
-  + UserListWordStats : ICollectionOfUserListWordStat
-  + UserListWords : ICollectionOfUserListWord
+  \+ ListId : uint
+  \+ UserId : uint
+  \+ ListName : string
+  \+ Status : string
+  \+ CreatedAt : DateTime
+  \+ User : User
+  \+ UserListWordStats : ICollectionOfUserListWordStat
+  \+ UserListWords : ICollectionOfUserListWord
 }
 class UserListWord <<entity>> {
-  + UserId : uint
-  + ListId : uint
-  + WordId : uint
-  + AddMethod : string
-  + Note : stringNullable
-  + AddedAt : DateTime
-  + Status : string
-  + List : UserList
-  + User : User
-  + Word : Word
+  \+ UserId : uint
+  \+ ListId : uint
+  \+ WordId : uint
+  \+ AddMethod : string
+  \+ Note : stringNullable
+  \+ AddedAt : DateTime
+  \+ Status : string
+  \+ List : UserList
+  \+ User : User
+  \+ Word : Word
 }
 class WordReadRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  \- _dbContext : VocaNovaDbContext
   --
-  + SearchAsync(normalizedQuery: stringNullable, page: int, limit: int, cefr: stringNullable, topicId: uintNullable, isPhrase: boolNullable, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfWordSummary
+  \+ SearchAsync(normalizedQuery: stringNullable, page: int, limit: int, cefr: stringNullable, topicId: uintNullable, isPhrase: boolNullable, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfWordSummary
 }
 class ListMutationRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  \- _dbContext : VocaNovaDbContext
   --
-  + GetOwnershipAsync(userId: uint, listId: uint, cancellationToken: CancellationToken) : TaskOfListLookupResultOfListOwnership
-  + ActiveWordExistsAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfBool
-  + FindListWordAsync(userId: uint, listId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfListWordState
-  + AddWordAsync(userId: uint, listId: uint, command: AddListWordCommand, cancellationToken: CancellationToken) : TaskOfListWord
+  \+ GetOwnershipAsync(userId: uint, listId: uint, cancellationToken: CancellationToken) : TaskOfListLookupResultOfListOwnership
+  \+ ActiveWordExistsAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfBool
+  \+ FindListWordAsync(userId: uint, listId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfListWordState
+  \+ AddWordAsync(userId: uint, listId: uint, command: AddListWordCommand, cancellationToken: CancellationToken) : TaskOfListWord
 }
 class VocaNovaDbContext <<dbcontext>> {
-  + AgeRanges : DbSetOfAgeRange
-  + AiGradingCaches : DbSetOfAiGradingCache
-  + AuditLogs : DbSetOfAuditLog
-  + EducationLevels : DbSetOfEducationLevel
-  + LearningPurposes : DbSetOfLearningPurpose
-  + Occupations : DbSetOfOccupation
-  + OtpVerifications : DbSetOfOtpVerification
-  + RefreshTokens : DbSetOfRefreshToken
-  + Regions : DbSetOfRegion
-  + Roles : DbSetOfRole
-  + TestAnswers : DbSetOfTestAnswer
-  + TestSessions : DbSetOfTestSession
+  \+ AgeRanges : DbSetOfAgeRange
+  \+ AiGradingCaches : DbSetOfAiGradingCache
+  \+ AuditLogs : DbSetOfAuditLog
+  \+ EducationLevels : DbSetOfEducationLevel
+  \+ LearningPurposes : DbSetOfLearningPurpose
+  \+ Occupations : DbSetOfOccupation
+  \+ OtpVerifications : DbSetOfOtpVerification
+  \+ RefreshTokens : DbSetOfRefreshToken
+  \+ Regions : DbSetOfRegion
+  \+ Roles : DbSetOfRole
+  \+ TestAnswers : DbSetOfTestAnswer
+  \+ TestSessions : DbSetOfTestSession
   --
-  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  \+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
 }
 class MySQL_Database <<database>> {
 

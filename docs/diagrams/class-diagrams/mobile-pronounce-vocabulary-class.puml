@@ -10,22 +10,22 @@ Generated from mobile-pronounce-vocabulary-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 class AudioPlaybackService <<service>> {
-  + _player : AudioPlayer
-  + _textToSpeech : FlutterTts
+  \+ _player : AudioPlayer
+  \+ _textToSpeech : FlutterTts
   --
-  + playPronunciation() : FutureOfvoid
-  + play() : FutureOfvoid
-  + speak() : FutureOfvoid
+  \+ playPronunciation() : FutureOfvoid
+  \+ play() : FutureOfvoid
+  \+ speak() : FutureOfvoid
 }
 class AudioPlayer <<service>> {
-  + play(UrlSource(audioUrl)
-  + stop()
+  \+ play(UrlSource(audioUrl)
+  \+ stop()
 }
 class FlutterTts <<service>> {
-  + setLanguage(en-US/en-GB)
-  + setSpeechRate(0.42)
-  + speak(testVoiceText)
-  + stop()
+  \+ setLanguage(en-US/en-GB)
+  \+ setSpeechRate(0.42)
+  \+ speak(testVoiceText)
+  \+ stop()
 }
 AudioPlaybackService ..> AudioPlayer : stop()
 AudioPlaybackService ..> FlutterTts : stop()

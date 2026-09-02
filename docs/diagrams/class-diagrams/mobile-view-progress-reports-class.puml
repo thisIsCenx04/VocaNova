@@ -10,91 +10,91 @@ Generated from mobile-view-progress-reports-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 class WordProgressResponse <<dto>> {
-  + WordId : uint
-  + Word : string
-  + PrimaryMeaning : stringNullable
-  + TestCount : int
-  + CorrectCount : int
-  + WrongCount : int
-  + AccuracyRate : float
-  + ConsecutiveCorrect : int
-  + IsInWrongList : bool
-  + MasteryLevel : int
-  + SrsInterval : int
-  + EaseFactor : float
+  \+ WordId : uint
+  \+ Word : string
+  \+ PrimaryMeaning : stringNullable
+  \+ TestCount : int
+  \+ CorrectCount : int
+  \+ WrongCount : int
+  \+ AccuracyRate : float
+  \+ ConsecutiveCorrect : int
+  \+ IsInWrongList : bool
+  \+ MasteryLevel : int
+  \+ SrsInterval : int
+  \+ EaseFactor : float
 }
 class ProgressController <<backend_controller>> {
-  - _progressSummaryService : IProgressSummaryService
-  - _progressAnalyticsService : IProgressAnalyticsService
+  \- _progressSummaryService : IProgressSummaryService
+  \- _progressAnalyticsService : IProgressAnalyticsService
   --
-  + GetWordProgress(wordId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+  \+ GetWordProgress(wordId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class ProgressAnalyticsService <<service>> {
-  - _progressAnalyticsRepository : IProgressAnalyticsRepository
+  \- _progressAnalyticsRepository : IProgressAnalyticsRepository
   --
-  + GetWordProgressAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfWordProgress
+  \+ GetWordProgressAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfWordProgress
 }
 class UserWordProgress <<entity>> {
-  + ProgressId : uint
-  + UserId : uint
-  + WordId : uint
-  + TestCount : int
-  + CorrectCount : int
-  + WrongCount : int
-  + ConsecutiveCorrect : int
-  + IsInWrongList : bool
-  + MasteryLevel : int
-  + SrsInterval : int
-  + EaseFactor : float
-  + LastTestedAt : DateTimeNullable
+  \+ ProgressId : uint
+  \+ UserId : uint
+  \+ WordId : uint
+  \+ TestCount : int
+  \+ CorrectCount : int
+  \+ WrongCount : int
+  \+ ConsecutiveCorrect : int
+  \+ IsInWrongList : bool
+  \+ MasteryLevel : int
+  \+ SrsInterval : int
+  \+ EaseFactor : float
+  \+ LastTestedAt : DateTimeNullable
 }
 class Word <<entity>> {
-  + WordId : uint
-  + Word1 : string
-  + WordKey : string
-  + CefrLevel : stringNullable
-  + PhoneticUk : stringNullable
-  + PhoneticUs : stringNullable
-  + ImageUrl : stringNullable
-  + IsPhrase : bool
-  + Status : string
-  + CreatedAt : DateTime
-  + UpdatedAt : DateTime
-  + AiGradingCaches : ICollectionOfAiGradingCache
+  \+ WordId : uint
+  \+ Word1 : string
+  \+ WordKey : string
+  \+ CefrLevel : stringNullable
+  \+ PhoneticUk : stringNullable
+  \+ PhoneticUs : stringNullable
+  \+ ImageUrl : stringNullable
+  \+ IsPhrase : bool
+  \+ Status : string
+  \+ CreatedAt : DateTime
+  \+ UpdatedAt : DateTime
+  \+ AiGradingCaches : ICollectionOfAiGradingCache
 }
 class WordSense <<entity>> {
-  + SenseId : uint
-  + WordId : uint
-  + SenseOrder : int
-  + WordClass : string
-  + EnglishDefinition : string
-  + VietnameseMeaning : stringNullable
-  + Status : string
-  + TestAnswers : ICollectionOfTestAnswer
-  + Word : Word
-  + WordExamples : ICollectionOfWordExample
-  + WordRelations : ICollectionOfWordRelation
+  \+ SenseId : uint
+  \+ WordId : uint
+  \+ SenseOrder : int
+  \+ WordClass : string
+  \+ EnglishDefinition : string
+  \+ VietnameseMeaning : stringNullable
+  \+ Status : string
+  \+ TestAnswers : ICollectionOfTestAnswer
+  \+ Word : Word
+  \+ WordExamples : ICollectionOfWordExample
+  \+ WordRelations : ICollectionOfWordRelation
 }
 class ProgressAnalyticsRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  \- _dbContext : VocaNovaDbContext
   --
-  + GetWordProgressStatisticsAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfWordProgressStatistics
+  \+ GetWordProgressStatisticsAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfWordProgressStatistics
 }
 class VocaNovaDbContext <<dbcontext>> {
-  + AgeRanges : DbSetOfAgeRange
-  + AiGradingCaches : DbSetOfAiGradingCache
-  + AuditLogs : DbSetOfAuditLog
-  + EducationLevels : DbSetOfEducationLevel
-  + LearningPurposes : DbSetOfLearningPurpose
-  + Occupations : DbSetOfOccupation
-  + OtpVerifications : DbSetOfOtpVerification
-  + RefreshTokens : DbSetOfRefreshToken
-  + Regions : DbSetOfRegion
-  + Roles : DbSetOfRole
-  + TestAnswers : DbSetOfTestAnswer
-  + TestSessions : DbSetOfTestSession
+  \+ AgeRanges : DbSetOfAgeRange
+  \+ AiGradingCaches : DbSetOfAiGradingCache
+  \+ AuditLogs : DbSetOfAuditLog
+  \+ EducationLevels : DbSetOfEducationLevel
+  \+ LearningPurposes : DbSetOfLearningPurpose
+  \+ Occupations : DbSetOfOccupation
+  \+ OtpVerifications : DbSetOfOtpVerification
+  \+ RefreshTokens : DbSetOfRefreshToken
+  \+ Regions : DbSetOfRegion
+  \+ Roles : DbSetOfRole
+  \+ TestAnswers : DbSetOfTestAnswer
+  \+ TestSessions : DbSetOfTestSession
   --
-  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  \+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
 }
 class MySQL_Database <<database>> {
 
