@@ -43,17 +43,17 @@ class ProgressController <<backend_controller>> {
   "+ GetChart(request: ProgressChartRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
-class ProgressAnalyticsService <<service>> {
-  "- _progressAnalyticsRepository : IProgressAnalyticsRepository"
-  --
-  "+ GetChartAsync(userId: uint, query: ProgressChartQuery, cancellationToken: CancellationToken) : TaskOfProgressResultOfProgressChart"
-}
-
 class IProgressAnalyticsService <<service_interface>> {
   "+ GetChartAsync(userId: uint, query: ProgressChartQuery, cancellationToken: CancellationToken) : TaskOfProgressResultOfProgressChart"
   "+ GetMasteryBreakdownAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfIReadOnlyCollectionOfMasteryBreakdown"
   "+ GetWeakestWordsAsync(userId: uint, query: WeakestWordsQuery, cancellationToken: CancellationToken) : TaskOfProgressResultOfIReadOnlyCollectionOfWeakestWord"
   "+ GetWordProgressAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfWordProgress"
+}
+
+class ProgressAnalyticsService <<service>> {
+  "- _progressAnalyticsRepository : IProgressAnalyticsRepository"
+  --
+  "+ GetChartAsync(userId: uint, query: ProgressChartQuery, cancellationToken: CancellationToken) : TaskOfProgressResultOfProgressChart"
 }
 
 class TestSession <<entity>> {
@@ -86,19 +86,19 @@ class TestAnswer <<entity>> {
   "+ AiScore : floatNullable"
 }
 
-class ProgressAnalyticsRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ GetSessionTimesAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfDateTime"
-  "+ GetAnswerStatisticsAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfProgressAnswerStatistics"
-}
-
 class IProgressAnalyticsRepository <<repository_interface>> {
   "+ GetSessionTimesAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfDateTime"
   "+ GetAnswerStatisticsAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfProgressAnswerStatistics"
   "+ GetMasteryLevelCountsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfMasteryLevelCount"
   "+ GetWeakestWordStatisticsAsync(userId: uint, limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfWeakestWordStatistics"
   "+ GetWordProgressStatisticsAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfWordProgressStatisticsNullable"
+}
+
+class ProgressAnalyticsRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ GetSessionTimesAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfDateTime"
+  "+ GetAnswerStatisticsAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfProgressAnswerStatistics"
 }
 
 class VocaNovaDbContext <<dbcontext>> {

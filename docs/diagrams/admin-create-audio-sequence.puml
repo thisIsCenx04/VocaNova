@@ -10,13 +10,13 @@ entity "WordDetail\n(FE Response DTO)" as FeWordDetailDto
 entity "UploadWordAudioRequest\n(BE Request DTO)" as AudioRequestDto
 entity "WordAudioResponse\n(BE Response DTO)" as AudioResponseDto
 control "AdminWordsController\n(BE API)" as ApiController
-control "WordAdminService" as WordService
 control "IWordAdminService" as IWordAdminService
+control "WordAdminService" as WordService
 control "IWordAudioStorage" as IWordAudioStorage
 entity "Word" as WordEntity
 entity "WordAudioAsset" as WordAudioAsset
-control "WordAdminRepository" as WordRepository
 control "IWordAdminRepository" as IWordAdminRepository
+control "WordAdminRepository" as WordRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over VocabularyPage, MySQL
@@ -26,7 +26,7 @@ Dashboard currently sends accent = "us" for the upload.
 API endpoint is POST /api/admin/words/{id}/audio.
 API uses UploadWordAudioRequest and returns WordAudioResponse.
 FE response DTO exists: WordDetail when Dashboard reloads word detail.
-Interfaces used in code: IWordAdminService, IWordAdminRepository, IWordAudioStorage.
+Interfaces used in code: IWordAdminService, IWordAudioStorage, IWordAdminRepository.
 end note
 Admin -> VocabularyPage: Choose audio file for word
 Admin -> VocabularyPage: Click Upload audio
@@ -41,7 +41,8 @@ ApiController -> ApiController: Check admin authorization
 ApiController -> ApiController: Bind UploadWordAudioRequest
 ApiController -> IWordAdminService: UploadAudioAsync(wordId, accent, file)
 IWordAdminService -> WordService: UploadAudioAsync(wordId, accent, file)
-WordService -> WordService: Normalize accent\nand validate audio file
+WordService -> IWordAdminService: Normalize accent\nand validate audio file
+IWordAdminService -> WordService: Normalize accent\nand validate audio file
 alt Accent or audio file invalid
 WordService --> ApiController: Validation failure
 ApiController --> DashboardController: HTTP 400 error

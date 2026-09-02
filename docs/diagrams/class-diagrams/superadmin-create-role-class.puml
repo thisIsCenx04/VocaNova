@@ -33,6 +33,9 @@ class RoleResponse <<dto>> {
   "+ RoleName : string"
 }
 
+class IRoleManagementService <<service_interface>> {
+}
+
 class RoleManagementService <<service>> {
   "- _repository : IRoleManagementRepository"
   "- _transactionManager : IApplicationTransactionManager"
@@ -45,13 +48,6 @@ class Role <<entity>> {
   "+ RoleId : uint"
   "+ RoleName : string"
   "+ Users : ICollectionOfUser"
-}
-
-class RoleManagementRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ RoleExistsAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfBool"
-  "+ AddRoleAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfRoleModel"
 }
 
 class IRoleManagementRepository <<repository_interface>> {
@@ -70,6 +66,13 @@ class IRoleManagementRepository <<repository_interface>> {
   "+ GetRoleIdByNameAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfuintNullable"
   "+ HasUsersWithRoleAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfbool"
   "+ RevokeActiveRefreshTokensAsync(userId: uint, now: DateTime, cancellationToken: CancellationToken) : Task"
+}
+
+class RoleManagementRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ RoleExistsAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ AddRoleAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfRoleModel"
 }
 
 class VocaNovaDbContext <<dbcontext>> {
@@ -103,4 +106,5 @@ BackendRolesController ..> RoleResponse
 SaveRoleRequest ..> BackendRolesController
 IRoleManagementRepository <|.. RoleManagementRepository
 RoleManagementService ..> IRoleManagementRepository : RoleExistsAsync()
+IRoleManagementService <|.. RoleManagementService
 @enduml

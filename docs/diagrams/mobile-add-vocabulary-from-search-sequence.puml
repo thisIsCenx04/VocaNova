@@ -19,19 +19,19 @@ entity "AddListWordRequest\n(BE Request DTO)" as BeAddListWordDto
 entity "ListWordResponse\n(BE Response DTO)" as BeListWordDto
 control "WordsController\n(BE API)" as WordsController
 control "ListsController\n(BE API)" as ListsController
-control "WordReadService" as WordService
 control "IWordReadService" as IWordReadService
-control "ListMutationService" as ListService
+control "WordReadService" as WordService
 control "IListMutationService" as IListMutationService
+control "ListMutationService" as ListService
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "WordTopic" as WordTopicEntity
 entity "UserList" as UserListEntity
 entity "UserListWord" as UserListWordEntity
-control "WordReadRepository" as WordRepository
 control "IWordReadRepository" as IWordReadRepository
-control "ListMutationRepository" as ListRepository
+control "WordReadRepository" as WordRepository
 control "IListMutationRepository" as IListMutationRepository
+control "ListMutationRepository" as ListRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -56,7 +56,8 @@ WordsController -> BeWordSearchDto: Bind query string
 BeWordSearchDto --> WordsController: WordSearchRequest
 WordsController -> IWordReadService: SearchAsync(query)
 IWordReadService -> WordService: SearchAsync(query)
-WordService -> WordService: Validate page, limit and CEFR
+WordService -> IWordReadService: Validate page, limit and CEFR
+IWordReadService -> WordService: Validate page, limit and CEFR
 
 alt Search validation fails
     WordService --> WordsController: Validation failure

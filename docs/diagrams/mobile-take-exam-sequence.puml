@@ -15,12 +15,12 @@ entity "CreateSessionRequest\n(BE Request DTO)" as BeCreateSessionDto
 entity "CreateSessionResponse\n(BE Response DTO)" as BeCreateSessionResponseDto
 entity "QuestionResponse\n(BE Response DTO)" as BeQuestionDto
 control "QuizSessionsController\n(BE API)" as BeController
-control "QuizSessionService" as SessionService
 control "IQuizSessionService" as IQuizSessionService
-control "QuizSessionBuilder" as SessionBuilder
+control "QuizSessionService" as SessionService
 control "IQuizSessionBuilder" as IQuizSessionBuilder
-control "QuizQuestionBuilder" as QuestionBuilder
+control "QuizSessionBuilder" as SessionBuilder
 control "IQuizQuestionBuilder" as IQuizQuestionBuilder
+control "QuizQuestionBuilder" as QuestionBuilder
 entity "UserList" as UserListEntity
 entity "UserListWord" as UserListWordEntity
 entity "UserWordProgress" as UserWordProgressEntity
@@ -29,12 +29,12 @@ entity "WordSense" as WordSenseEntity
 entity "WordTopic" as WordTopicEntity
 entity "TestSession" as TestSessionEntity
 entity "TestSessionTopic" as TestSessionTopicEntity
-control "QuizPoolRepository" as PoolRepository
 control "IQuizPoolRepository" as IQuizPoolRepository
-control "QuizQuestionRepository" as QuestionRepository
+control "QuizPoolRepository" as PoolRepository
 control "IQuizQuestionRepository" as IQuizQuestionRepository
-control "QuizSessionRepository" as SessionRepository
+control "QuizQuestionRepository" as QuestionRepository
 control "IQuizSessionRepository" as IQuizSessionRepository
+control "QuizSessionRepository" as SessionRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -49,8 +49,8 @@ Endpoint is POST /api/quiz/sessions.
 Entities exist: UserList, UserListWord, UserWordProgress, Word,
 WordSense, WordTopic, TestSession and TestSessionTopic.
 Interfaces used in code: IQuizSessionService, IQuizSessionBuilder, IQuizQuestionBuilder,
-  IQuizSessionRepository, IQuizPoolRepository,
-  IQuizQuestionRepository.
+  IQuizPoolRepository, IQuizQuestionRepository,
+  IQuizSessionRepository.
 end note
 
 Learner -> TakeExamUi: Configure exam
@@ -69,7 +69,8 @@ else Mobile validation success
     BeController -> BeController: Check authenticated user
     BeController -> IQuizSessionService: CreateSessionAsync(userId, command)
     IQuizSessionService -> SessionService: CreateSessionAsync(userId, command)
-    SessionService -> SessionService: Validate mode, question type,\nscope, order and answer method
+    SessionService -> IQuizSessionService: Validate mode, question type,\nscope, order and answer method
+    IQuizSessionService -> SessionService: Validate mode, question type,\nscope, order and answer method
 
     alt Request invalid
         SessionService --> BeController: Validation failure
@@ -96,7 +97,8 @@ else Mobile validation success
         UserWordProgressEntity --> DbContext: Wrong counts
         DbContext --> PoolRepository: Quiz pool words
         PoolRepository --> SessionBuilder: Candidate pool
-        SessionBuilder -> SessionBuilder: Apply word order\nand word limit
+        SessionBuilder -> IQuizSessionBuilder: Apply word order\nand word limit
+        IQuizSessionBuilder -> SessionBuilder: Apply word order\nand word limit
         SessionBuilder --> SessionService: Quiz pool
 
         alt Not enough words

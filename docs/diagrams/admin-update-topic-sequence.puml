@@ -11,13 +11,13 @@ entity "WordListItem\n(FE Response DTO)" as FeWordDto
 entity "UpdateTopicRequest\n(BE Request DTO)" as TopicRequestDto
 entity "TopicSummaryResponse\n(BE Response DTO)" as TopicResponseDto
 control "AdminTopicsController\n(BE API)" as ApiController
-control "TopicAdminService" as TopicService
 control "ITopicAdminService" as ITopicAdminService
+control "TopicAdminService" as TopicService
 entity "Topic" as TopicEntity
 entity "Word" as WordEntity
 entity "WordTopic" as WordTopicEntity
-control "TopicAdminRepository" as TopicRepository
 control "ITopicAdminRepository" as ITopicAdminRepository
+control "TopicAdminRepository" as TopicRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over EditTopicPage, MySQL
@@ -63,7 +63,8 @@ DashboardController --> EditTopicPage: Show error message
 else Request validation success
 ApiController -> ITopicAdminService: UpdateAsync(id, update data)
 ITopicAdminService -> TopicService: UpdateAsync(id, update data)
-TopicService -> TopicService: Normalize topic data
+TopicService -> ITopicAdminService: Normalize topic data
+ITopicAdminService -> TopicService: Normalize topic data
 TopicService -> ITopicAdminRepository: NameExistsAsync(topicName, topicNameVi, id)
 ITopicAdminRepository -> TopicRepository: NameExistsAsync(topicName, topicNameVi, id)
 TopicRepository -> DbContext: Query duplicate topic name

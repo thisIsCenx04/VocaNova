@@ -9,8 +9,8 @@ actor Learner
 boundary "Vocabulary Recommendation UI" as RecommendationUi
 control "RecommendationsController\n(BE API)" as BeController
 entity "WordRecommendationResponse\n(BE Response DTO)" as BeWordRecommendationDto
-control "KnnLearningService" as KnnLearningService
 control "IKnnLearningService" as IKnnLearningService
+control "KnnLearningService" as KnnLearningService
 entity "TestSession" as TestSessionEntity
 entity "Topic" as TopicEntity
 entity "TestAnswer" as TestAnswerEntity
@@ -26,10 +26,10 @@ entity "EducationLevel" as EducationLevelEntity
 entity "LearningPurpose" as LearningPurposeEntity
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
-control "KnnLearningRepository" as KnnLearningRepository
 control "IKnnLearningRepository" as IKnnLearningRepository
-control "KnnProfileRepository" as KnnProfileRepository
+control "KnnLearningRepository" as KnnLearningRepository
 control "IKnnProfileRepository" as IKnnProfileRepository
+control "KnnProfileRepository" as KnnProfileRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -58,16 +58,19 @@ alt User id missing
 else User authenticated
     BeController -> IKnnLearningService: GetWordRecommendationsAsync(userId, limit)
     IKnnLearningService -> KnnLearningService: GetWordRecommendationsAsync(userId, limit)
-    KnnLearningService -> KnnLearningService: Validate limit
+    KnnLearningService -> IKnnLearningService: Validate limit
+    IKnnLearningService -> KnnLearningService: Validate limit
 
     alt Limit invalid
         KnnLearningService --> BeController: Validation failure
         BeController --> RecommendationUi: HTTP 400 error
     else Limit valid
-        KnnLearningService -> KnnLearningService: Load existing word scores if available
+        KnnLearningService -> IKnnLearningService: Load existing word scores if available
+        IKnnLearningService -> KnnLearningService: Load existing word scores if available
 
         alt No existing word scores
-            KnnLearningService -> KnnLearningService: GenerateWordRecommendationsAsync(userId)
+            KnnLearningService -> IKnnLearningService: GenerateWordRecommendationsAsync(userId)
+            IKnnLearningService -> KnnLearningService: GenerateWordRecommendationsAsync(userId)
             KnnLearningService -> IKnnLearningRepository: GetSessionCountAsync(userId)
             IKnnLearningRepository -> KnnLearningRepository: GetSessionCountAsync(userId)
             KnnLearningRepository -> DbContext: Count test sessions
@@ -92,7 +95,8 @@ else User authenticated
                 KnnProfileRepository --> KnnLearningService: Profile vector source or null
 
                 alt Profile data missing
-                    KnnLearningService -> KnnLearningService: No candidate word scores
+                    KnnLearningService -> IKnnLearningService: No candidate word scores
+                    IKnnLearningService -> KnnLearningService: No candidate word scores
                 else Profile data available
                     KnnLearningService -> IKnnProfileRepository: GetActiveLookupDimensionsAsync()
                     IKnnProfileRepository -> KnnProfileRepository: GetActiveLookupDimensionsAsync()
@@ -125,10 +129,12 @@ else User authenticated
                     UserTopicPreferenceEntity --> DbContext: Candidate topic rows
                     DbContext --> KnnProfileRepository: Candidate profile sources
                     KnnProfileRepository --> KnnLearningService: Candidate profile sources
-                    KnnLearningService -> KnnLearningService: Build profile vectors\nand find nearest neighbors
+                    KnnLearningService -> IKnnLearningService: Build profile vectors\nand find nearest neighbors
+                    IKnnLearningService -> KnnLearningService: Build profile vectors\nand find nearest neighbors
 
                     alt No nearest neighbors
-                        KnnLearningService -> KnnLearningService: No candidate word scores
+                        KnnLearningService -> IKnnLearningService: No candidate word scores
+                        IKnnLearningService -> KnnLearningService: No candidate word scores
                     else Nearest neighbors found
                         KnnLearningService -> IKnnProfileRepository: GetActiveTopicIdsAsync(userId)
                         IKnnProfileRepository -> KnnProfileRepository: GetActiveTopicIdsAsync(userId)
@@ -185,10 +191,12 @@ else User authenticated
                 TestSessionEntity --> DbContext: Eligible user ids
                 DbContext --> KnnLearningRepository: Eligible user ids
                 KnnLearningRepository --> KnnLearningService: Eligible user ids
-                KnnLearningService -> KnnLearningService: Compute neighbor vectors\nand cosine similarity
+                KnnLearningService -> IKnnLearningService: Compute neighbor vectors\nand cosine similarity
+                IKnnLearningService -> KnnLearningService: Compute neighbor vectors\nand cosine similarity
 
                 alt No nearest neighbors
-                    KnnLearningService -> KnnLearningService: No candidate word scores
+                    KnnLearningService -> IKnnLearningService: No candidate word scores
+                    IKnnLearningService -> KnnLearningService: No candidate word scores
                 else Nearest neighbors found
                     KnnLearningService -> IKnnLearningRepository: GetMasteredWordsAsync(neighborIds,\nminMasteryLevel)
                     IKnnLearningRepository -> KnnLearningRepository: GetMasteredWordsAsync(neighborIds,\nminMasteryLevel)
@@ -211,7 +219,8 @@ else User authenticated
             UserListWordEntity --> DbContext: Current word ids
             DbContext --> KnnLearningRepository: Current word ids
             KnnLearningRepository --> KnnLearningService: Current word ids
-            KnnLearningService -> KnnLearningService: Score candidate words\nand remove current words
+            KnnLearningService -> IKnnLearningService: Score candidate words\nand remove current words
+            IKnnLearningService -> KnnLearningService: Score candidate words\nand remove current words
         end
 
         alt No candidate word scores

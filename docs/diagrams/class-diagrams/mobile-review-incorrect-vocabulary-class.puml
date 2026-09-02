@@ -58,15 +58,15 @@ class QuizSessionsController <<backend_controller>> {
   "+ ClearWrongWord(wordId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
-class QuizHistoryService <<service>> {
-  "- _repository : IQuizHistoryRepository"
-  --
+class IQuizHistoryService <<service_interface>> {
+  "+ GetHistoryAsync(userId: uint, query: QuizHistoryQuery, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfPagedCollectionOfQuizHistoryItem"
   "+ GetWrongWordsAsync(userId: uint, query: WrongWordsQuery, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfPagedCollectionOfWrongWord"
   "+ ClearWrongWordAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfbool"
 }
 
-class IQuizHistoryService <<service_interface>> {
-  "+ GetHistoryAsync(userId: uint, query: QuizHistoryQuery, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfPagedCollectionOfQuizHistoryItem"
+class QuizHistoryService <<service>> {
+  "- _repository : IQuizHistoryRepository"
+  --
   "+ GetWrongWordsAsync(userId: uint, query: WrongWordsQuery, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfPagedCollectionOfWrongWord"
   "+ ClearWrongWordAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfbool"
 }
@@ -115,17 +115,17 @@ class WordSense <<entity>> {
   "+ WordRelations : ICollectionOfWordRelation"
 }
 
+class IQuizHistoryRepository <<repository_interface>> {
+  "+ GetHistoryAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfQuizHistoryItem"
+  "+ GetWrongWordsAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfWrongWord"
+  "+ ClearWrongWordAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfbool"
+}
+
 class QuizHistoryRepository <<repository>> {
   "- _dbContext : VocaNovaDbContext"
   --
   "+ GetWrongWordsAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfWrongWord"
   "+ ClearWrongWordAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfBool"
-}
-
-class IQuizHistoryRepository <<repository_interface>> {
-  "+ GetHistoryAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfQuizHistoryItem"
-  "+ GetWrongWordsAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfWrongWord"
-  "+ ClearWrongWordAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfbool"
 }
 
 class VocaNovaDbContext <<dbcontext>> {

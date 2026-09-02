@@ -50,14 +50,14 @@ class ProgressController <<backend_controller>> {
   "+ GetSummary(cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
+class IProgressSummaryService <<service_interface>> {
+  "+ GetSummaryAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfProgressSummary"
+}
+
 class ProgressSummaryService <<service>> {
   "- _progressSummaryRepository : IProgressSummaryRepository"
   "- _progressSummaryCache : IProgressSummaryCacheNullable"
   --
-  "+ GetSummaryAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfProgressSummary"
-}
-
-class IProgressSummaryService <<service_interface>> {
   "+ GetSummaryAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfProgressSummary"
 }
 
@@ -106,13 +106,13 @@ class UserWordProgress <<entity>> {
   "+ LastTestedAt : DateTimeNullable"
 }
 
-class ProgressSummaryRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
+class IProgressSummaryRepository <<repository_interface>> {
   "+ GetSummaryStatisticsAsync(userId: uint, query: ProgressSummaryQuery, cancellationToken: CancellationToken) : TaskOfProgressSummaryStatistics"
 }
 
-class IProgressSummaryRepository <<repository_interface>> {
+class ProgressSummaryRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
   "+ GetSummaryStatisticsAsync(userId: uint, query: ProgressSummaryQuery, cancellationToken: CancellationToken) : TaskOfProgressSummaryStatistics"
 }
 

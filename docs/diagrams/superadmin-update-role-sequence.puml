@@ -12,10 +12,11 @@ control "RolesController\n(BE API)" as BeController
 entity "ManagedRole\n(FE Response DTO)" as FeRoleDto
 entity "SaveRoleRequest\n(BE Request DTO)" as BeRequestDto
 entity "RoleResponse\n(BE Response DTO)" as BeResponseDto
+control "IRoleManagementService" as IRoleManagementService
 control "RoleManagementService" as RoleService
 entity "Role" as RoleEntity
-control "RoleManagementRepository" as RoleRepository
 control "IRoleManagementRepository" as IRoleManagementRepository
+control "RoleManagementRepository" as RoleRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -27,13 +28,14 @@ BE controller exists: RolesController.
 BE DTOs exist: SaveRoleRequest and RoleResponse.
 Entity exists: Role.
 System role names cannot be changed.
-Interfaces used in code: IRoleManagementRepository.
+Interfaces used in code: IRoleManagementService, IRoleManagementRepository.
 end note
 
 SuperAdmin -> EditRolePage: Open edit role page
 EditRolePage -> FeController: GET /roles/{roleId}/edit
 FeController -> BeController: VocaNovaApiClient.GetRolesAsync\nGET /api/superadmin/roles
-BeController -> RoleService: GetRolesAsync(query)
+BeController -> IRoleManagementService: GetRolesAsync(query)
+IRoleManagementService -> RoleService: GetRolesAsync(query)
 RoleService -> IRoleManagementRepository: GetRolesAsync(query)
 IRoleManagementRepository -> RoleRepository: GetRolesAsync(query)
 RoleRepository -> DbContext: Query roles
@@ -72,8 +74,10 @@ else Form input valid
         BeController --> FeController: HTTP 400 error
         FeController --> EditRolePage: Show error message
     else Request validation success
-        BeController -> RoleService: UpdateAsync(roleId, role data)
-        RoleService -> RoleService: Normalize and validate role name
+        BeController -> IRoleManagementService: UpdateAsync(roleId, role data)
+        IRoleManagementService -> RoleService: UpdateAsync(roleId, role data)
+        RoleService -> IRoleManagementService: Normalize and validate role name
+        IRoleManagementService -> RoleService: Normalize and validate role name
 
         alt Role name invalid
             RoleService --> BeController: Validation failure
@@ -110,7 +114,8 @@ else Form input valid
                     BeController --> FeController: HTTP 409 error
                     FeController --> EditRolePage: Show error message
                 else Role name is available
-                    RoleService -> RoleService: Begin transaction
+                    RoleService -> IRoleManagementService: Begin transaction
+                    IRoleManagementService -> RoleService: Begin transaction
                     RoleService -> IRoleManagementRepository: UpdateRoleAsync(roleId, roleName)
                     IRoleManagementRepository -> RoleRepository: UpdateRoleAsync(roleId, roleName)
                     RoleRepository -> RoleEntity: Update Role

@@ -13,15 +13,15 @@ entity "BulkImportResult\n(FE Response DTO)" as FeBulkImportDto
 entity "ImportWordsRequest\n(BE Request DTO)" as BeImportRequestDto
 entity "BulkImportResponse\n(BE Response DTO)" as BeBulkImportDto
 entity "BulkImportErrorResponse\n(BE Response DTO)" as BeBulkImportErrorDto
-control "WordAdminService" as WordService
 control "IWordAdminService" as IWordAdminService
+control "WordAdminService" as WordService
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "WordExample" as WordExampleEntity
 entity "Topic" as TopicEntity
 entity "WordTopic" as WordTopicEntity
-control "WordAdminRepository" as WordRepository
 control "IWordAdminRepository" as IWordAdminRepository
+control "WordAdminRepository" as WordRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -51,7 +51,8 @@ else CSV selected
     BeController -> BeController: Check admin authorization
     BeController -> IWordAdminService: ImportCsvAsync(uploaded content)
     IWordAdminService -> WordService: ImportCsvAsync(uploaded content)
-    WordService -> WordService: Validate CSV file,\nheader and rows
+    WordService -> IWordAdminService: Validate CSV file,\nheader and rows
+    IWordAdminService -> WordService: Validate CSV file,\nheader and rows
 
     alt CSV invalid
         WordService --> BeController: Validation failure

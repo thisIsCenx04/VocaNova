@@ -43,14 +43,6 @@ class AdminAccountResponse <<dto>> {
   "+ LastLoginAt : DateTimeNullable"
 }
 
-class SuperAdminAccountService <<service>> {
-  "- _repository : ISuperAdminAccountRepository"
-  "- _transactionManager : IApplicationTransactionManager"
-  "- _userProfileCache : IUserProfileCacheNullable"
-  --
-  "+ CreateAsync(request: CreateAdminAccountModel, cancellationToken: CancellationToken) : TaskOfResultOfAdminAccountModel"
-}
-
 class ISuperAdminAccountService <<service_interface>> {
   "+ GetAccountsAsync(query: AdminAccountQuery, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfAdminAccountModel"
   "+ GetAccountAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfAdminAccountModel"
@@ -59,6 +51,14 @@ class ISuperAdminAccountService <<service_interface>> {
   "+ LockAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
   "+ UnlockAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
   "+ DeleteAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+}
+
+class SuperAdminAccountService <<service>> {
+  "- _repository : ISuperAdminAccountRepository"
+  "- _transactionManager : IApplicationTransactionManager"
+  "- _userProfileCache : IUserProfileCacheNullable"
+  --
+  "+ CreateAsync(request: CreateAdminAccountModel, cancellationToken: CancellationToken) : TaskOfResultOfAdminAccountModel"
 }
 
 class User <<entity>> {
@@ -102,14 +102,6 @@ class Role <<entity>> {
   "+ Users : ICollectionOfUser"
 }
 
-class SuperAdminAccountRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ FindDuplicateAsync(phone: string, email: string, excludedUserId: uintNullable, cancellationToken: CancellationToken) : TaskOfstring"
-  "+ GetAdminRoleIdAsync(cancellationToken: CancellationToken) : TaskOfuint"
-  "+ AddAccountAsync(request: CreateAdminAccountModel, passwordHash: string, roleId: uint, cancellationToken: CancellationToken) : TaskOfAdminAccountModel"
-}
-
 class ISuperAdminAccountRepository <<repository_interface>> {
   "+ GetAccountsAsync(query: AdminAccountQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfAdminAccountModel"
   "+ GetAccountAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfAdminAccountModelNullable"
@@ -121,6 +113,14 @@ class ISuperAdminAccountRepository <<repository_interface>> {
   "+ DeleteAccountAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfbool"
   "+ RevokeActiveRefreshTokensAsync(adminId: uint, now: DateTime, cancellationToken: CancellationToken) : Task"
   "+ GetAccountStatusAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfstringNullable"
+}
+
+class SuperAdminAccountRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ FindDuplicateAsync(phone: string, email: string, excludedUserId: uintNullable, cancellationToken: CancellationToken) : TaskOfstring"
+  "+ GetAdminRoleIdAsync(cancellationToken: CancellationToken) : TaskOfuint"
+  "+ AddAccountAsync(request: CreateAdminAccountModel, passwordHash: string, roleId: uint, cancellationToken: CancellationToken) : TaskOfAdminAccountModel"
 }
 
 class VocaNovaDbContext <<dbcontext>> {

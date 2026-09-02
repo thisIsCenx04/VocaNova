@@ -46,13 +46,6 @@ class AdminDemographicsResponse <<dto>> {
   "+ EducationLevels : IReadOnlyCollectionOfAdminDemographicGroupResponse"
 }
 
-class AdminStatsService <<service>> {
-  "- _repository : IAdminStatsRepository"
-  --
-  "+ GetDemographicsAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminDemographicsModel"
-  "+ GetLearningStatsAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminLearningStatsModel"
-}
-
 class IAdminStatsService <<service_interface>> {
   "+ GetDashboardAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminDashboardStatsModel"
   "+ GetDemographicsAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminDemographicsModel"
@@ -61,6 +54,13 @@ class IAdminStatsService <<service_interface>> {
   "+ GetMasteryDistributionAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminMasteryDistributionModel"
   "+ GetActivityTrendAsync(granularity: string, cancellationToken: CancellationToken) : TaskOfResultOfAdminActivityTrendModel"
   "+ GetAuditLogsAsync(query: AdminAuditLogQuery, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfAdminAuditLogModel"
+}
+
+class AdminStatsService <<service>> {
+  "- _repository : IAdminStatsRepository"
+  --
+  "+ GetDemographicsAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminDemographicsModel"
+  "+ GetLearningStatsAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminLearningStatsModel"
 }
 
 class TestAnswer <<entity>> {
@@ -165,14 +165,6 @@ class EducationLevel <<entity>> {
   "+ UserLearningProfiles : ICollectionOfUserLearningProfile"
 }
 
-class AdminStatsRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ GetDemographicsAsync(cancellationToken: CancellationToken) : TaskOfAdminDemographicsModel"
-  "+ GetTopWrongWordsAsync(limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminWrongWordModel"
-  "+ GetSessionAccuracyRowsAsync(fromInclusiveUtc: DateTime, toExclusiveUtc: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminSessionAccuracyRow"
-}
-
 class IAdminStatsRepository <<repository_interface>> {
   "+ GetDashboardStatsAsync(todayUtc: DateTime, tomorrowUtc: DateTime, sevenDayStartUtc: DateTime, cancellationToken: CancellationToken) : TaskOfAdminDashboardStatsModel"
   "+ GetDemographicsAsync(cancellationToken: CancellationToken) : TaskOfAdminDemographicsModel"
@@ -181,6 +173,14 @@ class IAdminStatsRepository <<repository_interface>> {
   "+ GetSessionCountsByDayAsync(fromInclusiveUtc: DateTime, toExclusiveUtc: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminSessionCountRow"
   "+ GetMasteryDistributionAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminMasteryCountRow"
   "+ GetAuditLogsAsync(query: AdminAuditLogQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfAdminAuditLogModel"
+}
+
+class AdminStatsRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ GetDemographicsAsync(cancellationToken: CancellationToken) : TaskOfAdminDemographicsModel"
+  "+ GetTopWrongWordsAsync(limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminWrongWordModel"
+  "+ GetSessionAccuracyRowsAsync(fromInclusiveUtc: DateTime, toExclusiveUtc: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminSessionAccuracyRow"
 }
 
 class VocaNovaDbContext <<dbcontext>> {

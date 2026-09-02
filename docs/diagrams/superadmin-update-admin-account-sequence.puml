@@ -10,14 +10,14 @@ control "SuperAdminAccountsController\n(BE API)" as BeController
 entity "AdminAccount\n(FE Response DTO)" as FeResponseDto
 entity "UpdateAdminAccountRequest\n(BE Request DTO)" as BeRequestDto
 entity "AdminAccountResponse\n(BE Response DTO)" as BeResponseDto
-control "SuperAdminAccountService" as AccountService
 control "ISuperAdminAccountService" as ISuperAdminAccountService
+control "SuperAdminAccountService" as AccountService
 entity "User" as UserEntity
 entity "UserAuth" as UserAuthEntity
 entity "UserProfile" as UserProfileEntity
 entity "RefreshToken" as RefreshTokenEntity
-control "SuperAdminAccountRepository" as AccountRepository
 control "ISuperAdminAccountRepository" as ISuperAdminAccountRepository
+control "SuperAdminAccountRepository" as AccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over EditPage, MySQL
@@ -95,7 +95,8 @@ else Form input valid
                 BeController --> FeController: HTTP 404 error
                 FeController --> EditPage: Return Edit.cshtml\nwith error message
             else Admin account can be updated
-                AccountService -> AccountService: Hash password if supplied\nand begin transaction
+                AccountService -> ISuperAdminAccountService: Hash password if supplied\nand begin transaction
+                ISuperAdminAccountService -> AccountService: Hash password if supplied\nand begin transaction
                 opt Password changed or status becomes locked
                     AccountService -> ISuperAdminAccountRepository: RevokeActiveRefreshTokensAsync(id)
                     ISuperAdminAccountRepository -> AccountRepository: RevokeActiveRefreshTokensAsync(id)
@@ -128,7 +129,8 @@ else Form input valid
                     MySQL --> DbContext: Update result
                     DbContext --> AccountRepository: Tracking state
                     AccountRepository --> AccountService: Updated admin account
-                    AccountService -> AccountService: Save changes\nand commit transaction
+                    AccountService -> ISuperAdminAccountService: Save changes\nand commit transaction
+                    ISuperAdminAccountService -> AccountService: Save changes\nand commit transaction
                     AccountService --> BeController: Updated admin result
                     BeController -> BeResponseDto: Create AdminAccountResponse
                     BeResponseDto --> BeController: AdminAccountResponse

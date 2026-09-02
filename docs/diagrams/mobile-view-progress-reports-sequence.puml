@@ -9,13 +9,13 @@ actor Learner
 boundary "Progress Reports UI" as ProgressReportsUi
 entity "WordProgressResponse\n(BE Response DTO)" as BeWordProgressDto
 control "ProgressController\n(BE API)" as BeController
-control "ProgressAnalyticsService" as AnalyticsService
 control "IProgressAnalyticsService" as IProgressAnalyticsService
+control "ProgressAnalyticsService" as AnalyticsService
 entity "UserWordProgress" as UserWordProgressEntity
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
-control "ProgressAnalyticsRepository" as AnalyticsRepository
 control "IProgressAnalyticsRepository" as IProgressAnalyticsRepository
+control "ProgressAnalyticsRepository" as AnalyticsRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -38,7 +38,8 @@ alt User id missing
 else User authenticated
     BeController -> IProgressAnalyticsService: GetWordProgressAsync(userId, wordId)
     IProgressAnalyticsService -> AnalyticsService: GetWordProgressAsync(userId, wordId)
-    AnalyticsService -> AnalyticsService: Validate wordId
+    AnalyticsService -> IProgressAnalyticsService: Validate wordId
+    IProgressAnalyticsService -> AnalyticsService: Validate wordId
 
     alt Word id invalid
         AnalyticsService --> BeController: NotFound result

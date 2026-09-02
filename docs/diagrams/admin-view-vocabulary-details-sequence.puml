@@ -11,8 +11,8 @@ control "VocabularyController\n(FE Dashboard)" as FeController
 control "WordsController\n(BE API)" as BeController
 entity "WordDetail\n(FE Response DTO)" as FeWordDetailDto
 entity "WordDetailResponse\n(BE Response DTO)" as BeWordDetailDto
-control "WordReadService" as WordService
 control "IWordReadService" as IWordReadService
+control "WordReadService" as WordService
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "WordExample" as WordExampleEntity
@@ -22,8 +22,8 @@ entity "WordDerivedForm" as WordDerivedFormEntity
 entity "WordIdiom" as WordIdiomEntity
 entity "WordTopic" as WordTopicEntity
 entity "Topic" as TopicEntity
-control "WordReadRepository" as WordRepository
 control "IWordReadRepository" as IWordReadRepository
+control "WordReadRepository" as WordRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 

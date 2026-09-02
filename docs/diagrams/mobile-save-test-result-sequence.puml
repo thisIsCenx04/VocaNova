@@ -15,27 +15,27 @@ entity "SubmitAnswerRequest\n(BE Request DTO)" as BeSubmitAnswerDto
 entity "AnswerResponse\n(BE Response DTO)" as BeAnswerDto
 entity "QuizResultResponse\n(BE Response DTO)" as BeResultDto
 control "QuizSessionsController\n(BE API)" as BeController
-control "QuizSubmissionService" as SubmissionService
 control "IQuizSubmissionService" as IQuizSubmissionService
-control "QuizResultService" as ResultService
+control "QuizSubmissionService" as SubmissionService
 control "IQuizResultService" as IQuizResultService
-control "QuizQuestionBuilder" as QuestionBuilder
+control "QuizResultService" as ResultService
 control "IQuizQuestionBuilder" as IQuizQuestionBuilder
-control "SrsService" as SrsService
+control "QuizQuestionBuilder" as QuestionBuilder
 control "ISrsService" as ISrsService
+control "SrsService" as SrsService
 entity "TestSession" as TestSessionEntity
 entity "TestAnswer" as TestAnswerEntity
 entity "UserWordProgress" as UserWordProgressEntity
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
-control "QuizSubmissionRepository" as SubmissionRepository
 control "IQuizSubmissionRepository" as IQuizSubmissionRepository
-control "QuizQuestionRepository" as QuestionRepository
+control "QuizSubmissionRepository" as SubmissionRepository
 control "IQuizQuestionRepository" as IQuizQuestionRepository
-control "SrsRepository" as SrsRepository
+control "QuizQuestionRepository" as QuestionRepository
 control "ISrsRepository" as ISrsRepository
-control "QuizResultRepository" as ResultRepository
+control "SrsRepository" as SrsRepository
 control "IQuizResultRepository" as IQuizResultRepository
+control "QuizResultRepository" as ResultRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -50,9 +50,9 @@ Endpoints are POST /api/quiz/sessions/{id}/answer,
 POST /api/quiz/sessions/{id}/finish and GET /api/quiz/sessions/{id}/result.
 Entities exist: TestSession, TestAnswer, UserWordProgress, Word and WordSense.
 Interfaces used in code: IQuizSubmissionService, IQuizResultService,
-  IQuizSubmissionRepository, IQuizQuestionBuilder, ISrsService,
-  IQuizResultRepository, IQuizQuestionRepository,
-  ISrsRepository.
+  IQuizQuestionBuilder, ISrsService, IQuizSubmissionRepository,
+  IQuizQuestionRepository, ISrsRepository,
+  IQuizResultRepository.
 end note
 
 Learner -> QuizSessionUi: Submit answer
@@ -96,7 +96,8 @@ else Session in progress
     DbContext --> QuestionRepository: Question word
     QuestionRepository --> QuestionBuilder: Question data
     QuestionBuilder --> SubmissionService: Question
-    SubmissionService -> SubmissionService: Grade answer
+    SubmissionService -> IQuizSubmissionService: Grade answer
+    IQuizSubmissionService -> SubmissionService: Grade answer
     SubmissionService -> ISrsService: UpdateProgressAsync(userId, wordId, isCorrect)
     ISrsService -> SrsService: UpdateProgressAsync(userId, wordId, isCorrect)
     SrsService -> ISrsRepository: FindAsync(userId, wordId)
@@ -154,7 +155,8 @@ opt Learner finishes early or time/lives end
     MySQL --> DbContext: Session row or null
     DbContext -> TestSessionEntity: Read TestSession?
     TestSessionEntity --> DbContext: TestSession or null
-    ResultService -> ResultService: Build finish changes
+    ResultService -> IQuizResultService: Build finish changes
+    IQuizResultService -> ResultService: Build finish changes
     ResultService -> IQuizResultRepository: SaveFinishAsync(changes)
     IQuizResultRepository -> ResultRepository: SaveFinishAsync(changes)
     ResultRepository -> TestSessionEntity: Set status abandoned\nand ended_at

@@ -15,22 +15,22 @@ entity "PersonalTopicResponse\n(BE Response DTO)" as BePersonalTopicDto
 entity "ListWordResponse\n(BE Response DTO)" as BeListWordDto
 entity "AddPersonalTopicWordRequest\n(BE Request DTO)" as BeAddTopicWordDto
 control "PersonalTopicsController\n(BE API)" as PersonalTopicsController
-control "PersonalTopicQueryService" as TopicQueryService
 control "IPersonalTopicQueryService" as IPersonalTopicQueryService
-control "PersonalTopicMutationService" as TopicMutationService
+control "PersonalTopicQueryService" as TopicQueryService
 control "IPersonalTopicMutationService" as IPersonalTopicMutationService
+control "PersonalTopicMutationService" as TopicMutationService
 entity "Topic" as TopicEntity
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "WordTopic" as WordTopicEntity
 entity "UserList" as UserListEntity
 entity "UserListWord" as UserListWordEntity
-control "PersonalTopicQueryRepository" as TopicQueryRepository
 control "IPersonalTopicQueryRepository" as IPersonalTopicQueryRepository
-control "PersonalTopicMutationRepository" as TopicMutationRepository
+control "PersonalTopicQueryRepository" as TopicQueryRepository
 control "IPersonalTopicMutationRepository" as IPersonalTopicMutationRepository
-control "ListMutationRepository" as ListRepository
+control "PersonalTopicMutationRepository" as TopicMutationRepository
 control "IListMutationRepository" as IListMutationRepository
+control "ListMutationRepository" as ListRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 

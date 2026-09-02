@@ -16,17 +16,17 @@ entity "UpdateWordRequest\n(BE Request DTO)" as BeUpdateWordRequestDto
 entity "UpdateSenseRequest\n(BE Request DTO)" as BeUpdateSenseRequestDto
 entity "CreateSenseRequest\n(BE Request DTO)" as BeCreateSenseRequestDto
 entity "WordSenseResponse\n(BE Response DTO)" as BeWordSenseDto
-control "WordReadService" as WordReadService
 control "IWordReadService" as IWordReadService
-control "WordAdminService" as WordAdminService
+control "WordReadService" as WordReadService
 control "IWordAdminService" as IWordAdminService
+control "WordAdminService" as WordAdminService
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "WordExample" as WordExampleEntity
-control "WordReadRepository" as WordReadRepository
 control "IWordReadRepository" as IWordReadRepository
-control "WordAdminRepository" as WordAdminRepository
+control "WordReadRepository" as WordReadRepository
 control "IWordAdminRepository" as IWordAdminRepository
+control "WordAdminRepository" as WordAdminRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -98,7 +98,8 @@ else Word input valid
     else Request validation success
         AdminController -> IWordAdminService: UpdateAsync(id, update word data)
         IWordAdminService -> WordAdminService: UpdateAsync(id, update word data)
-        WordAdminService -> WordAdminService: Normalize word, word_key,\nCEFR and phonetics
+        WordAdminService -> IWordAdminService: Normalize word, word_key,\nCEFR and phonetics
+        IWordAdminService -> WordAdminService: Normalize word, word_key,\nCEFR and phonetics
         WordAdminService -> IWordAdminRepository: WordExistsAsync(wordKey, id)
         IWordAdminRepository -> WordAdminRepository: WordExistsAsync(wordKey, id)
         WordAdminRepository -> DbContext: Query duplicate word
@@ -161,7 +162,8 @@ else Word input valid
         else Sense request validation success
             AdminController -> IWordAdminService: UpdateSenseAsync(id, senseId, sense data)
             IWordAdminService -> WordAdminService: UpdateSenseAsync(id, senseId, sense data)
-            WordAdminService -> WordAdminService: Normalize sense data
+            WordAdminService -> IWordAdminService: Normalize sense data
+            IWordAdminService -> WordAdminService: Normalize sense data
             WordAdminService -> IWordAdminRepository: UpdateSenseAsync(id, senseId, sense data)
             IWordAdminRepository -> WordAdminRepository: UpdateSenseAsync(id, senseId, sense data)
             WordAdminRepository -> DbContext: Find WordSense with examples

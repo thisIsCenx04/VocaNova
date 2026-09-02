@@ -13,13 +13,13 @@ entity "WordDetailDto\n(FE Response DTO)" as FeWordDetailDto
 entity "WordRelationDto\n(FE Response DTO)" as FeRelationDto
 entity "WordDetailResponse\n(BE Response DTO)" as BeWordDetailDto
 control "WordsController\n(BE API)" as BeController
-control "WordReadService" as WordService
 control "IWordReadService" as IWordReadService
+control "WordReadService" as WordService
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "WordRelation" as WordRelationEntity
-control "WordReadRepository" as WordRepository
 control "IWordReadRepository" as IWordReadRepository
+control "WordReadRepository" as WordRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 

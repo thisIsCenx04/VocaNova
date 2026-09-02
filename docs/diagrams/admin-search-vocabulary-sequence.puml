@@ -15,17 +15,18 @@ entity "TopicSummary\n(FE Response DTO)" as FeTopicSummaryDto
 entity "AdminWordQueryRequest\n(BE Request DTO)" as BeWordQueryDto
 entity "AdminWordListItemResponse\n(BE Response DTO)" as BeWordListDto
 entity "TopicSummaryResponse\n(BE Response DTO)" as BeTopicSummaryDto
-control "WordAdminService" as WordService
 control "IWordAdminService" as IWordAdminService
+control "WordAdminService" as WordService
+control "ITopicReadService" as ITopicReadService
 control "TopicReadService" as TopicService
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "WordTopic" as WordTopicEntity
 entity "Topic" as TopicEntity
-control "WordAdminRepository" as WordRepository
 control "IWordAdminRepository" as IWordAdminRepository
-control "TopicReadRepository" as TopicRepository
+control "WordAdminRepository" as WordRepository
 control "ITopicReadRepository" as ITopicReadRepository
+control "TopicReadRepository" as TopicRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -41,7 +42,8 @@ FE response DTOs exist: WordListItem and TopicSummary.
 BE request DTO exists: AdminWordQueryRequest.
 BE response DTOs exist: AdminWordListItemResponse and TopicSummaryResponse.
 Entities exist: Word, WordSense, WordTopic and Topic.
-Interfaces used in code: IWordAdminService, IWordAdminRepository, ITopicReadRepository.
+Interfaces used in code: IWordAdminService, ITopicReadService, IWordAdminRepository,
+  ITopicReadRepository.
 end note
 
 Admin -> VocabularyUi: Enter search/filter values
@@ -55,14 +57,16 @@ BeWordQueryDto --> AdminWordsController: AdminWordQueryRequest
 AdminWordsController -> AdminWordsController: Check admin authorization
 AdminWordsController -> IWordAdminService: SearchAsync(query)
 IWordAdminService -> WordService: SearchAsync(query)
-WordService -> WordService: Validate page, limit,\nCEFR, status and sort
+WordService -> IWordAdminService: Validate page, limit,\nCEFR, status and sort
+IWordAdminService -> WordService: Validate page, limit,\nCEFR, status and sort
 
 alt Query validation fails
     WordService --> AdminWordsController: Validation failure
     AdminWordsController --> FeController: HTTP 400 error
     FeController --> VocabularyUi: Show empty list or error
 else Query validation success
-    WordService -> WordService: Normalize q, CEFR,\nstatus, wordType and sort
+    WordService -> IWordAdminService: Normalize q, CEFR,\nstatus, wordType and sort
+    IWordAdminService -> WordService: Normalize q, CEFR,\nstatus, wordType and sort
     WordService -> IWordAdminRepository: SearchAsync(normalized query)
     IWordAdminRepository -> WordRepository: SearchAsync(normalized query)
     WordRepository -> DbContext: Build word search query
@@ -92,7 +96,8 @@ else Query validation success
 end
 
 FeController -> TopicsController: VocaNovaApiClient.GetTopicsAsync\nGET /api/topics
-TopicsController -> TopicService: GetTopicsAsync()
+TopicsController -> ITopicReadService: GetTopicsAsync()
+ITopicReadService -> TopicService: GetTopicsAsync()
 TopicService -> ITopicReadRepository: GetTopicsAsync()
 ITopicReadRepository -> TopicRepository: GetTopicsAsync()
 TopicRepository -> DbContext: Query topics

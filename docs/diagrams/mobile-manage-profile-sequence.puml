@@ -12,14 +12,15 @@ control "AuthApiService\n(FE Mobile)" as FeApiService
 entity "UserProfileDto\n(FE Response DTO)" as FeProfileDto
 entity "UserProfileResponse\n(BE Response DTO)" as BeProfileDto
 control "AuthController\n(BE API)" as BeController
+control "IAuthService" as IAuthService
 control "AuthService" as AuthService
 entity "User" as UserEntity
 entity "UserAuth" as UserAuthEntity
 entity "UserProfile" as UserProfileEntity
 entity "Role" as RoleEntity
 entity "UserLearningProfile" as LearningProfileEntity
-control "AuthAccountRepository" as AccountRepository
 control "IAuthAccountRepository" as IAuthAccountRepository
+control "AuthAccountRepository" as AccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -32,7 +33,7 @@ BE controller exists: AuthController.
 BE response DTO exists: UserProfileResponse.
 Endpoint is GET /api/auth/me; no request DTO body is used.
 Entities exist: User, UserAuth, UserProfile, Role and UserLearningProfile.
-Interfaces used in code: IAuthAccountRepository.
+Interfaces used in code: IAuthService, IAuthAccountRepository.
 end note
 
 Learner -> ProfileUi: Open profile
@@ -46,7 +47,8 @@ alt User id missing
     FeApiService --> FeController: Action failed
     FeController --> ProfileUi: Show profile error
 else User authenticated
-    BeController -> AuthService: GetProfileAsync(userId)
+    BeController -> IAuthService: GetProfileAsync(userId)
+    IAuthService -> AuthService: GetProfileAsync(userId)
     AuthService -> IAuthAccountRepository: GetProfileAsync(userId)
     IAuthAccountRepository -> AccountRepository: GetProfileAsync(userId)
     AccountRepository -> DbContext: Query user aggregate

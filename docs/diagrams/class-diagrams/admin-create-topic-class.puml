@@ -47,13 +47,6 @@ class AdminTopicsController <<backend_controller>> {
   "+ Create(request: CreateTopicRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
-class TopicAdminService <<service>> {
-  "- _repository : ITopicAdminRepository"
-  "- _cache : ITopicCacheNullable"
-  --
-  "+ CreateAsync(command: CreateTopicCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfTopicSummary"
-}
-
 class ITopicAdminService <<service_interface>> {
   "+ ListAsync(query: AdminTopicQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfIReadOnlyCollectionOfAdminTopic"
   "+ CreateAsync(command: CreateTopicCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfTopicSummary"
@@ -61,6 +54,13 @@ class ITopicAdminService <<service_interface>> {
   "+ UpdateAsync(topicId: uint, command: UpdateTopicCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfTopicSummary"
   "+ SoftDeleteAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
   "+ RestoreAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
+}
+
+class TopicAdminService <<service>> {
+  "- _repository : ITopicAdminRepository"
+  "- _cache : ITopicCacheNullable"
+  --
+  "+ CreateAsync(command: CreateTopicCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfTopicSummary"
 }
 
 class Topic <<entity>> {
@@ -97,14 +97,6 @@ class WordTopic <<dto>> {
   "+ Word : Word"
 }
 
-class TopicAdminRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ NameExistsAsync(name: string, nameVi: stringNullable, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfBool"
-  "+ WordIdsExistAsync(wordIds: ListOfUint, cancellationToken: CancellationToken) : TaskOfBool"
-  "+ CreateAsync(command: CreateTopicCommand, cancellationToken: CancellationToken) : TaskOfTopicSummary"
-}
-
 class ITopicAdminRepository <<repository_interface>> {
   "+ ListAsync(query: AdminTopicQuery, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminTopic"
   "+ ExistsAsync(topicId: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfbool"
@@ -115,6 +107,14 @@ class ITopicAdminRepository <<repository_interface>> {
   "+ AddWordsAsync(topicId: uint, wordIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : TaskOfint"
   "+ HasActiveWordsAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfbool"
   "+ SetStatusAsync(topicId: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool"
+}
+
+class TopicAdminRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ NameExistsAsync(name: string, nameVi: stringNullable, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ WordIdsExistAsync(wordIds: ListOfUint, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ CreateAsync(command: CreateTopicCommand, cancellationToken: CancellationToken) : TaskOfTopicSummary"
 }
 
 class VocaNovaDbContext <<dbcontext>> {

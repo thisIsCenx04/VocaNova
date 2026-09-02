@@ -16,16 +16,16 @@ entity "AdminUserSummary\n(FE Response DTO)" as FeSummaryDto
 entity "AdminUserDetail\n(FE Response DTO)" as FeDetailDto
 entity "AdminUserTopics\n(FE Response DTO)" as FeTopicsDto
 entity "AdminUserTestSession\n(FE Response DTO)" as FeTestSessionDto
-control "AdminUserService" as AdminUserService
 control "IAdminUserService" as IAdminUserService
+control "AdminUserService" as AdminUserService
 entity "User" as UserEntity
 entity "UserProfile" as UserProfileEntity
 entity "Role" as RoleEntity
 entity "Topic" as TopicEntity
 entity "TestSession" as TestSessionEntity
 entity "RefreshToken" as RefreshTokenEntity
-control "AdminUserRepository" as AdminUserRepository
 control "IAdminUserRepository" as IAdminUserRepository
+control "AdminUserRepository" as AdminUserRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over UsersPage, MySQL

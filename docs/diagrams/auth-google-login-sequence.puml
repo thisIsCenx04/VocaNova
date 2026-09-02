@@ -10,21 +10,22 @@ entity "GoogleLoginRequest\n(BE Request DTO)" as GoogleLoginRequestDto
 entity "TokenResponse\n(BE Response DTO)" as GoogleLoginResponseDto
 entity "AuthTokensDto\n(FE Response DTO)" as FeTokensDto
 control "AuthController" as AuthController
+control "IAuthService" as IAuthService
 control "AuthService" as AuthService
 entity "User" as UserEntity
 entity "UserAuth" as UserAuthEntity
 entity "UserProfile" as UserProfileEntity
 entity "Role" as RoleEntity
 entity "RefreshToken" as RefreshTokenEntity
-control "AuthAccountRepository" as AuthAccountRepository
 control "IAuthAccountRepository" as IAuthAccountRepository
+control "AuthAccountRepository" as AuthAccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over LoginScreen, MySQL
 BE DTOs exist: GoogleLoginRequest and TokenResponse.
 FE response DTO exists: AuthTokensDto.
 Mobile GoogleAuthService gets the id_token before the API call.
-Interfaces used in code: IAuthAccountRepository.
+Interfaces used in code: IAuthService, IAuthAccountRepository.
 end note
 Guest -> LoginScreen: Access login page
 Guest -> LoginScreen: Click Login with Google
@@ -40,8 +41,10 @@ alt Request validation or rate limit fails
 AuthController --> LoginScreen: HTTP 400/429 error
 LoginScreen --> Guest: Show error message
 else Request validation success
-AuthController -> AuthService: GoogleLoginAsync(login data)
-AuthService -> AuthService: Verify id_token
+AuthController -> IAuthService: GoogleLoginAsync(login data)
+IAuthService -> AuthService: GoogleLoginAsync(login data)
+AuthService -> IAuthService: Verify id_token
+IAuthService -> AuthService: Verify id_token
 alt id_token invalid
 AuthService --> AuthController: Unauthorized result
 AuthController --> LoginScreen: HTTP 401 Invalid Google id token

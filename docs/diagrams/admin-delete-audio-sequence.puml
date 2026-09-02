@@ -7,10 +7,10 @@ actor Admin
 boundary "Vocabulary UI" as VocabularyPage
 control "VocabularyController\n(FE Dashboard)" as DashboardController
 control "AdminWordsController\n(BE API)" as ApiController
-control "WordAdminService" as WordService
 control "IWordAdminService" as IWordAdminService
-control "WordAdminRepository" as WordRepository
+control "WordAdminService" as WordService
 control "IWordAdminRepository" as IWordAdminRepository
+control "WordAdminRepository" as WordRepository
 entity "WordAudioAsset" as WordAudioAsset
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL

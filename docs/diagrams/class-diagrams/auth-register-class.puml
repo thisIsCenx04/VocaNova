@@ -36,11 +36,45 @@ class AuthTokensDto <<dto>> {
 }
 
 class AuthController <<backend_controller>> {
-  "- _authService : IDashboardAuthService"
+  "- _authService : IAuthService"
+  "- _authRateLimiter : IAuthRateLimiterNullable"
+  "- _rateLimitOptions : AuthRateLimitOptions"
   --
-  "+ Login(returnUrl: stringNullable) : IActionResult"
-  "+ Login(model: LoginViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult"
-  "+ Logout(cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ Register(request: RegisterRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ Login(request: LoginRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ GoogleLogin(request: GoogleLoginRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ RefreshToken(request: RefreshTokenRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ Logout(request: RefreshTokenRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ SendOtp(request: OtpSendRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ VerifyOtp(request: OtpVerifyRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ ForgotPassword(request: ForgotPasswordRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ VerifyResetOtp(request: OtpVerifyRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ ResetPassword(request: ResetPasswordRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ ChangePassword(request: ChangePasswordRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ GetMe(cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ DeleteMe(cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ UpdateProfile(request: UpdateProfileRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ UploadAvatar(request: UploadAvatarRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ UpdateLearningProfile(request: UpdateLearningProfileRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+}
+
+class IAuthService <<service_interface>> {
+  "+ RegisterAsync(command: RegisterCommand, signInContext: SignInContext, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfAuthTokenPair"
+  "+ LoginAsync(command: LoginCommand, signInContext: SignInContext, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfAuthTokenPair"
+  "+ GoogleLoginAsync(command: GoogleLoginCommand, signInContext: SignInContext, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfAuthTokenPair"
+  "+ RefreshTokenAsync(command: RefreshTokenCommand, signInContext: SignInContext, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfAuthTokenPair"
+  "+ LogoutAsync(command: RefreshTokenCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfbool"
+  "+ GetProfileAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfUserProfile"
+  "+ UpdateProfileAsync(userId: uint, command: UpdateProfileCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfUserProfile"
+  "+ UploadAvatarAsync(userId: uint, command: UploadAvatarCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfUserProfile"
+  "+ UpdateLearningProfileAsync(userId: uint, command: UpdateLearningProfileCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfUserProfile"
+  "+ SendOtpAsync(command: OtpSendCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfOtpSendResult"
+  "+ VerifyOtpAsync(command: OtpVerifyCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfOtpVerificationResult"
+  "+ ForgotPasswordAsync(command: ForgotPasswordCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfOtpSendResult"
+  "+ VerifyResetOtpAsync(command: OtpVerifyCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfOtpVerificationResult"
+  "+ ResetPasswordAsync(command: ResetPasswordCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfbool"
+  "+ ChangePasswordAsync(userId: uint, command: ChangePasswordCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfbool"
+  "+ DeleteAccountAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfbool"
 }
 
 class AuthService <<service>> {
@@ -141,21 +175,13 @@ class RefreshToken <<entity>> {
   "+ User : User"
 }
 
-class BcryptPasswordHasher <<service>> {
-  "+ Hash(password: string) : string"
-}
-
 class IPasswordHasher <<service_interface>> {
   "+ Hash(password: string) : string"
   "+ Verify(password: string, passwordHash: string) : bool"
 }
 
-class AuthAccountRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ FindByPhoneAsync(phone: string, cancellationToken: CancellationToken) : TaskOfAuthAccount"
-  "+ FindRoleByNameAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfAuthRole"
-  "+ StageCreateAsync(account: CreateAuthAccount, cancellationToken: CancellationToken) : Task"
+class BcryptPasswordHasher <<service>> {
+  "+ Hash(password: string) : string"
 }
 
 class IAuthAccountRepository <<repository_interface>> {
@@ -180,6 +206,14 @@ class IAuthAccountRepository <<repository_interface>> {
   "+ StageSoftDeleteAsync(userId: uint, now: DateTime, cancellationToken: CancellationToken) : TaskOfbool"
 }
 
+class AuthAccountRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ FindByPhoneAsync(phone: string, cancellationToken: CancellationToken) : TaskOfAuthAccount"
+  "+ FindRoleByNameAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfAuthRole"
+  "+ StageCreateAsync(account: CreateAuthAccount, cancellationToken: CancellationToken) : Task"
+}
+
 class VocaNovaDbContext <<dbcontext>> {
   "+ AgeRanges : DbSetOfAgeRange"
   "+ AiGradingCaches : DbSetOfAiGradingCache"
@@ -200,7 +234,6 @@ class VocaNovaDbContext <<dbcontext>> {
 class MySQL_Database <<database>> {
 
 }
-AuthController ..> AuthService : RegisterAsync()
 AuthAccountRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 VocaNovaDbContext ..> User
@@ -218,6 +251,8 @@ AuthAccountRepository ..> RefreshToken
 AuthController ..> TokenResponse
 AuthController ..> AuthTokensDto
 RegisterRequest ..> AuthController
+IAuthService <|.. AuthService
+AuthController ..> IAuthService : RegisterAsync()
 IPasswordHasher <|.. BcryptPasswordHasher
 AuthService ..> IPasswordHasher : Hash()
 IAuthAccountRepository <|.. AuthAccountRepository

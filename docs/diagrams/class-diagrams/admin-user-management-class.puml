@@ -130,6 +130,15 @@ class AdminUserTestSession <<dto>> {
   "+ StartedAt : DateTime"
 }
 
+class IAdminUserService <<service_interface>> {
+  "+ GetUsersAsync(query: AdminUserQuery, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfAdminUserSummaryModel"
+  "+ GetUserDetailAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfAdminUserDetailModel"
+  "+ GetTestHistoryAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfAdminUserTestSessionModel"
+  "+ GetUserTopicsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfAdminUserTopicsModel"
+  "+ DeactivateAsync(userId: uint, actorRole: string, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+  "+ RestoreAsync(userId: uint, actorRole: string, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+}
+
 class AdminUserService <<service>> {
   "- _repository : IAdminUserRepository"
   "- _userProfileCache : IUserProfileCacheNullable"
@@ -139,15 +148,6 @@ class AdminUserService <<service>> {
   "+ GetTestHistoryAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfAdminUserTestSessionModel"
   "+ GetUserTopicsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfAdminUserTopicsModel"
   "+ DeactivateAsync(userId: uint, actorRole: string, cancellationToken: CancellationToken) : TaskOfResultOfbool"
-}
-
-class IAdminUserService <<service_interface>> {
-  "+ GetUsersAsync(query: AdminUserQuery, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfAdminUserSummaryModel"
-  "+ GetUserDetailAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfAdminUserDetailModel"
-  "+ GetTestHistoryAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfAdminUserTestSessionModel"
-  "+ GetUserTopicsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfAdminUserTopicsModel"
-  "+ DeactivateAsync(userId: uint, actorRole: string, cancellationToken: CancellationToken) : TaskOfResultOfbool"
-  "+ RestoreAsync(userId: uint, actorRole: string, cancellationToken: CancellationToken) : TaskOfResultOfbool"
 }
 
 class User <<entity>> {
@@ -217,6 +217,18 @@ class RefreshToken <<entity>> {
   "+ User : User"
 }
 
+class IAdminUserRepository <<repository_interface>> {
+  "+ GetUsersAsync(query: AdminUserQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfAdminUserSummaryModel"
+  "+ GetUserDetailAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserDetailModelNullable"
+  "+ UserExistsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ GetUserTopicsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserTopicsModel"
+  "+ GetTestHistoryAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedResultOfAdminUserTestSessionModel"
+  "+ GetStatusTargetAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserStatusTargetNullable"
+  "+ StageStatusAsync(userId: uint, status: string, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ RevokeActiveRefreshTokensAsync(userId: uint, revokedAt: DateTime, cancellationToken: CancellationToken) : TaskOfint"
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : Task"
+}
+
 class AdminUserRepository <<repository>> {
   "- _dbContext : VocaNovaDbContext"
   --
@@ -227,18 +239,6 @@ class AdminUserRepository <<repository>> {
   "+ GetStatusTargetAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserStatusTarget"
   "+ StageStatusAsync(userId: uint, status: string, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfBool"
   "+ RevokeActiveRefreshTokensAsync(userId: uint, revokedAt: DateTime, cancellationToken: CancellationToken) : TaskOfInt"
-  "+ SaveChangesAsync(cancellationToken: CancellationToken) : Task"
-}
-
-class IAdminUserRepository <<repository_interface>> {
-  "+ GetUsersAsync(query: AdminUserQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfAdminUserSummaryModel"
-  "+ GetUserDetailAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserDetailModelNullable"
-  "+ UserExistsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfbool"
-  "+ GetUserTopicsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserTopicsModel"
-  "+ GetTestHistoryAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedResultOfAdminUserTestSessionModel"
-  "+ GetStatusTargetAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserStatusTargetNullable"
-  "+ StageStatusAsync(userId: uint, status: string, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfbool"
-  "+ RevokeActiveRefreshTokensAsync(userId: uint, revokedAt: DateTime, cancellationToken: CancellationToken) : TaskOfint"
   "+ SaveChangesAsync(cancellationToken: CancellationToken) : Task"
 }
 

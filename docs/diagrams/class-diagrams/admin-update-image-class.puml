@@ -61,19 +61,6 @@ class AdminWordsController <<backend_controller>> {
   "+ UpdateSense(id: uint, senseId: uint, request: UpdateSenseRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
-class WordAdminService <<service>> {
-  "- _repository : IWordAdminRepository"
-  "- _audioStorage : IWordAudioStorageNullable"
-  "- _imageStorage : IWordImageStorageNullable"
-  "- _wordDetailCache : IWordDetailCacheNullable"
-  "- _userListCache : IUserListCacheNullable"
-  --
-  "+ UpdateAsync(wordId: uint, command: UpdateWordCommand, cancellationToken: CancellationToken) : TaskOfDictionaryWordDetail"
-  "+ UploadImageAsync(wordId: uint, content: UploadedContentNullable, cancellationToken: CancellationToken) : TaskOfDictionaryWordDetail"
-  "+ UpdateImageUrlAsync(wordId: uint, imageUrl: stringNullable, cancellationToken: CancellationToken) : TaskOfDictionaryWordDetail"
-  "+ UpdateSenseAsync(wordId: uint, senseId: uint, command: UpdateSenseCommand, cancellationToken: CancellationToken) : TaskOfDictionaryWordSense"
-}
-
 class IWordAdminService <<service_interface>> {
   "+ SearchAsync(query: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfPagedCollectionOfAdminWordListItem"
   "+ CreateAsync(command: CreateWordCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordDetail"
@@ -91,8 +78,17 @@ class IWordAdminService <<service_interface>> {
   "+ RestoreSenseAsync(wordId: uint, senseId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
 }
 
-class IWordImageStorage <<service_interface>> {
-  "+ UploadAsync(content: UploadedContent, cancellationToken: CancellationToken) : TaskOfStoredMedia"
+class WordAdminService <<service>> {
+  "- _repository : IWordAdminRepository"
+  "- _audioStorage : IWordAudioStorageNullable"
+  "- _imageStorage : IWordImageStorageNullable"
+  "- _wordDetailCache : IWordDetailCacheNullable"
+  "- _userListCache : IUserListCacheNullable"
+  --
+  "+ UpdateAsync(wordId: uint, command: UpdateWordCommand, cancellationToken: CancellationToken) : TaskOfDictionaryWordDetail"
+  "+ UploadImageAsync(wordId: uint, content: UploadedContentNullable, cancellationToken: CancellationToken) : TaskOfDictionaryWordDetail"
+  "+ UpdateImageUrlAsync(wordId: uint, imageUrl: stringNullable, cancellationToken: CancellationToken) : TaskOfDictionaryWordDetail"
+  "+ UpdateSenseAsync(wordId: uint, senseId: uint, command: UpdateSenseCommand, cancellationToken: CancellationToken) : TaskOfDictionaryWordSense"
 }
 
 class Word <<entity>> {
@@ -108,15 +104,6 @@ class Word <<entity>> {
   "+ CreatedAt : DateTime"
   "+ UpdatedAt : DateTime"
   "+ AiGradingCaches : ICollectionOfAiGradingCache"
-}
-
-class WordAdminRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ WordExistsAsync(wordId: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfBool"
-  "+ UpdateMetadataAsync(wordId: uint, command: UpdateWordCommand, cancellationToken: CancellationToken) : TaskOfWordDetailNullable"
-  "+ UpdateMissingImportMetadataAsync(wordId: uint, metadata: ImportWordMetadata, cancellationToken: CancellationToken) : TaskOfbool"
-  "+ SetImageUrlAsync(wordId: uint, url: stringNullable, cancellationToken: CancellationToken) : TaskOfWordDetailNullable"
 }
 
 class IWordAdminRepository <<repository_interface>> {
@@ -142,6 +129,15 @@ class IWordAdminRepository <<repository_interface>> {
   "+ AddTopicsAsync(wordId: uint, topicIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : TaskOfint"
 }
 
+class WordAdminRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ WordExistsAsync(wordId: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ UpdateMetadataAsync(wordId: uint, command: UpdateWordCommand, cancellationToken: CancellationToken) : TaskOfWordDetailNullable"
+  "+ UpdateMissingImportMetadataAsync(wordId: uint, metadata: ImportWordMetadata, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ SetImageUrlAsync(wordId: uint, url: stringNullable, cancellationToken: CancellationToken) : TaskOfWordDetailNullable"
+}
+
 class VocaNovaDbContext <<dbcontext>> {
   "+ AgeRanges : DbSetOfAgeRange"
   "+ AiGradingCaches : DbSetOfAiGradingCache"
@@ -161,6 +157,10 @@ class VocaNovaDbContext <<dbcontext>> {
 
 class MySQL_Database <<database>> {
 
+}
+
+class IWordImageStorage <<service_interface>> {
+  "+ UploadAsync(content: UploadedContent, cancellationToken: CancellationToken) : TaskOfStoredMedia"
 }
 VocabularyController ..> UploadWordImageRequest
 UploadWordImageRequest ..> AdminWordsController

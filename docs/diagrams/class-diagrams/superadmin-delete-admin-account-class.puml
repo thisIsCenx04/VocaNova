@@ -22,14 +22,6 @@ class SuperAdminAccountsController <<backend_controller>> {
   "+ Delete(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
-class SuperAdminAccountService <<service>> {
-  "- _repository : ISuperAdminAccountRepository"
-  "- _transactionManager : IApplicationTransactionManager"
-  "- _userProfileCache : IUserProfileCacheNullable"
-  --
-  "+ DeleteAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
-}
-
 class ISuperAdminAccountService <<service_interface>> {
   "+ GetAccountsAsync(query: AdminAccountQuery, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfAdminAccountModel"
   "+ GetAccountAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfAdminAccountModel"
@@ -37,6 +29,14 @@ class ISuperAdminAccountService <<service_interface>> {
   "+ UpdateAsync(adminId: uint, request: UpdateAdminAccountModel, cancellationToken: CancellationToken) : TaskOfResultOfAdminAccountModel"
   "+ LockAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
   "+ UnlockAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+  "+ DeleteAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+}
+
+class SuperAdminAccountService <<service>> {
+  "- _repository : ISuperAdminAccountRepository"
+  "- _transactionManager : IApplicationTransactionManager"
+  "- _userProfileCache : IUserProfileCacheNullable"
+  --
   "+ DeleteAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
 }
 
@@ -79,14 +79,6 @@ class RefreshToken <<entity>> {
   "+ User : User"
 }
 
-class SuperAdminAccountRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ DeleteAccountAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfBool"
-  "+ RevokeActiveRefreshTokensAsync(adminId: uint, now: DateTime, cancellationToken: CancellationToken) : Task"
-  "+ GetAccountStatusAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfstring"
-}
-
 class ISuperAdminAccountRepository <<repository_interface>> {
   "+ GetAccountsAsync(query: AdminAccountQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfAdminAccountModel"
   "+ GetAccountAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfAdminAccountModelNullable"
@@ -98,6 +90,14 @@ class ISuperAdminAccountRepository <<repository_interface>> {
   "+ DeleteAccountAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfbool"
   "+ RevokeActiveRefreshTokensAsync(adminId: uint, now: DateTime, cancellationToken: CancellationToken) : Task"
   "+ GetAccountStatusAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfstringNullable"
+}
+
+class SuperAdminAccountRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ DeleteAccountAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ RevokeActiveRefreshTokensAsync(adminId: uint, now: DateTime, cancellationToken: CancellationToken) : Task"
+  "+ GetAccountStatusAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfstring"
 }
 
 class VocaNovaDbContext <<dbcontext>> {

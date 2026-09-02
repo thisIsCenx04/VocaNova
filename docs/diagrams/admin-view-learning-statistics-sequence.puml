@@ -13,8 +13,8 @@ entity "LearningStats\n(FE Response DTO)" as FeLearningStatsDto
 entity "Demographics\n(FE Response DTO)" as FeDemographicsDto
 entity "AdminLearningStatsResponse\n(BE Response DTO)" as BeLearningStatsDto
 entity "AdminDemographicsResponse\n(BE Response DTO)" as BeDemographicsDto
-control "AdminStatsService" as StatsService
 control "IAdminStatsService" as IAdminStatsService
+control "AdminStatsService" as StatsService
 entity "TestAnswer" as TestAnswerEntity
 entity "Word" as WordEntity
 entity "TestSession" as TestSessionEntity
@@ -23,8 +23,8 @@ entity "User" as UserEntity
 entity "AgeRange" as AgeRangeEntity
 entity "Occupation" as OccupationEntity
 entity "EducationLevel" as EducationLevelEntity
-control "AdminStatsRepository" as StatsRepository
 control "IAdminStatsRepository" as IAdminStatsRepository
+control "AdminStatsRepository" as StatsRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -48,7 +48,8 @@ FeController -> BeController: VocaNovaApiClient.GetLearningStatsAsync\nGET /api/
 BeController -> BeController: Check admin authorization
 BeController -> IAdminStatsService: GetLearningStatsAsync()
 IAdminStatsService -> StatsService: GetLearningStatsAsync()
-StatsService -> StatsService: Calculate today, tomorrow,\ntrend window and top wrong word limit
+StatsService -> IAdminStatsService: Calculate today, tomorrow,\ntrend window and top wrong word limit
+IAdminStatsService -> StatsService: Calculate today, tomorrow,\ntrend window and top wrong word limit
 
 StatsService -> IAdminStatsRepository: GetTopWrongWordsAsync(limit)
 IAdminStatsRepository -> StatsRepository: GetTopWrongWordsAsync(limit)

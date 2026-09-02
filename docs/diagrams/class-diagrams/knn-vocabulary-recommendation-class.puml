@@ -28,6 +28,12 @@ class WordRecommendationResponse <<dto>> {
   "+ Score : double"
 }
 
+class IKnnLearningService <<service_interface>> {
+  "+ FindKNearestAsync(userId: uint, vector: double[], k: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnNeighbor"
+  "+ GenerateWordRecommendationsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfIReadOnlyCollectionOfWordRecommendationItem"
+  "+ GetWordRecommendationsAsync(userId: uint, limit: intNullable, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfIReadOnlyCollectionOfWordRecommendation"
+}
+
 class KnnLearningService <<service>> {
   "- _knnLearningRepository : IKnnLearningRepository"
   "- _knnProfileRepository : IKnnProfileRepositoryNullable"
@@ -36,12 +42,6 @@ class KnnLearningService <<service>> {
   "- _options : KnnOptions"
   "- _logger : ILoggerOfKnnLearningServiceNullable"
   --
-  "+ GetWordRecommendationsAsync(userId: uint, limit: intNullable, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfIReadOnlyCollectionOfWordRecommendation"
-}
-
-class IKnnLearningService <<service_interface>> {
-  "+ FindKNearestAsync(userId: uint, vector: double[], k: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnNeighbor"
-  "+ GenerateWordRecommendationsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfIReadOnlyCollectionOfWordRecommendationItem"
   "+ GetWordRecommendationsAsync(userId: uint, limit: intNullable, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfIReadOnlyCollectionOfWordRecommendation"
 }
 
@@ -222,19 +222,6 @@ class WordSense <<entity>> {
   "+ WordRelations : ICollectionOfWordRelation"
 }
 
-class KnnLearningRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ GetSessionCountAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfInt"
-  "+ GetActiveTopicIdsAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyListOfuint"
-  "+ GetTopicAnswerStatsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnTopicAnswerStatistics"
-  "+ GetEligibleUserIdsAsync(minSessions: int, excludingUserId: uint, cancellationToken: CancellationToken) : TaskOfListOfUint"
-  "+ GetMasteredWordsAsync(userIds: ListOfUint, minMasteryLevel: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnMasteredWord"
-  "+ GetNeighborStudiedWordsAsync(userIds: ListOfUint, topicIds: ListOfUint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnNeighborWord"
-  "+ GetActiveListWordIdsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfListOfUint"
-  "+ GetWordRecommendationsAsync(scoresByWordId: IReadOnlyDictionaryOfuint_double, limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfWordRecommendation"
-}
-
 class IKnnLearningRepository <<repository_interface>> {
   "+ GetSessionCountAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfint"
   "+ GetActiveTopicIdsAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyListOfuint"
@@ -247,13 +234,17 @@ class IKnnLearningRepository <<repository_interface>> {
   "+ GetWordRecommendationsAsync(scoresByWordId: IReadOnlyDictionaryOfuintdouble, limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfWordRecommendation"
 }
 
-class KnnProfileRepository <<repository>> {
+class KnnLearningRepository <<repository>> {
   "- _dbContext : VocaNovaDbContext"
   --
-  "+ GetProfileVectorSourceAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfKnnProfileVectorSource"
-  "+ GetActiveLookupDimensionsAsync(cancellationToken: CancellationToken) : TaskOfKnnLookupDimensions"
-  "+ GetCandidateProfileSourcesAsync(excludingUserId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnProfileVectorSource"
-  "+ GetActiveTopicIdsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfListOfUint"
+  "+ GetSessionCountAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfInt"
+  "+ GetActiveTopicIdsAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyListOfuint"
+  "+ GetTopicAnswerStatsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnTopicAnswerStatistics"
+  "+ GetEligibleUserIdsAsync(minSessions: int, excludingUserId: uint, cancellationToken: CancellationToken) : TaskOfListOfUint"
+  "+ GetMasteredWordsAsync(userIds: ListOfUint, minMasteryLevel: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnMasteredWord"
+  "+ GetNeighborStudiedWordsAsync(userIds: ListOfUint, topicIds: ListOfUint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnNeighborWord"
+  "+ GetActiveListWordIdsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfListOfUint"
+  "+ GetWordRecommendationsAsync(scoresByWordId: IReadOnlyDictionaryOfuint_double, limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfWordRecommendation"
 }
 
 class IKnnProfileRepository <<repository_interface>> {
@@ -270,6 +261,15 @@ class IKnnProfileRepository <<repository_interface>> {
   "+ GetTopicRecommendationsByScoreAsync(scoresByTopicId: IReadOnlyDictionaryOfuintdouble, limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfTopicRecommendation"
   "+ UpsertTopicPreferenceAsync(userId: uint, topicId: uint, source: string, now: DateTime, cancellationToken: CancellationToken) : TaskOfbool"
   "+ ReplaceOnboardingTopicPreferencesAsync(userId: uint, topicIds: IReadOnlyCollectionOfuint, now: DateTime, cancellationToken: CancellationToken) : summaryTaskOfintNullable"
+}
+
+class KnnProfileRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ GetProfileVectorSourceAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfKnnProfileVectorSource"
+  "+ GetActiveLookupDimensionsAsync(cancellationToken: CancellationToken) : TaskOfKnnLookupDimensions"
+  "+ GetCandidateProfileSourcesAsync(excludingUserId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnProfileVectorSource"
+  "+ GetActiveTopicIdsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfListOfUint"
 }
 
 class VocaNovaDbContext <<dbcontext>> {

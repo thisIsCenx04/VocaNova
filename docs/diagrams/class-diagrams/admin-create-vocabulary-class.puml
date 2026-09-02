@@ -68,17 +68,6 @@ class WordSenseResponse <<dto>> {
   "+ Relations : ListOfWordRelationResponse"
 }
 
-class WordAdminService <<service>> {
-  "- _repository : IWordAdminRepository"
-  "- _audioStorage : IWordAudioStorageNullable"
-  "- _imageStorage : IWordImageStorageNullable"
-  "- _wordDetailCache : IWordDetailCacheNullable"
-  "- _userListCache : IUserListCacheNullable"
-  --
-  "+ CreateAsync(command: CreateWordCommand, cancellationToken: CancellationToken) : TaskOfDictionaryWordDetail"
-  "+ CreateSenseAsync(wordId: uint, command: CreateSenseCommand, cancellationToken: CancellationToken) : TaskOfDictionaryWordSense"
-}
-
 class IWordAdminService <<service_interface>> {
   "+ SearchAsync(query: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfPagedCollectionOfAdminWordListItem"
   "+ CreateAsync(command: CreateWordCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordDetail"
@@ -94,6 +83,17 @@ class IWordAdminService <<service_interface>> {
   "+ UpdateSenseAsync(wordId: uint, senseId: uint, command: UpdateSenseCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordSense"
   "+ SoftDeleteSenseAsync(wordId: uint, senseId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
   "+ RestoreSenseAsync(wordId: uint, senseId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
+}
+
+class WordAdminService <<service>> {
+  "- _repository : IWordAdminRepository"
+  "- _audioStorage : IWordAudioStorageNullable"
+  "- _imageStorage : IWordImageStorageNullable"
+  "- _wordDetailCache : IWordDetailCacheNullable"
+  "- _userListCache : IUserListCacheNullable"
+  --
+  "+ CreateAsync(command: CreateWordCommand, cancellationToken: CancellationToken) : TaskOfDictionaryWordDetail"
+  "+ CreateSenseAsync(wordId: uint, command: CreateSenseCommand, cancellationToken: CancellationToken) : TaskOfDictionaryWordSense"
 }
 
 class Word <<entity>> {
@@ -136,15 +136,6 @@ class WordExample <<entity>> {
   "+ Word : Word"
 }
 
-class WordAdminRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ WordExistsAsync(wordId: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfBool"
-  "+ CreateAsync(command: CreateWordCommand, cancellationToken: CancellationToken) : TaskOfWordDetail"
-  "+ CreateWithSenseAsync(command: CreateWordCommand, senseCommand: CreateSenseCommand, cancellationToken: CancellationToken) : TaskOfWordDetail"
-  "+ CreateSenseAsync(wordId: uint, command: CreateSenseCommand, cancellationToken: CancellationToken) : TaskOfAdminWordSenseNullable"
-}
-
 class IWordAdminRepository <<repository_interface>> {
   "+ SearchAsync(query: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfAdminWordListItem"
   "+ WordKeyExistsAsync(wordKey: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool"
@@ -166,6 +157,15 @@ class IWordAdminRepository <<repository_interface>> {
   "+ SetSenseStatusAsync(wordId: uint, senseId: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool"
   "+ FindActiveTopicIdsByNamesAsync(names: IReadOnlyCollectionOfstring, cancellationToken: CancellationToken) : TaskOfIReadOnlyDictionaryOfstringuint"
   "+ AddTopicsAsync(wordId: uint, topicIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : TaskOfint"
+}
+
+class WordAdminRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ WordExistsAsync(wordId: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ CreateAsync(command: CreateWordCommand, cancellationToken: CancellationToken) : TaskOfWordDetail"
+  "+ CreateWithSenseAsync(command: CreateWordCommand, senseCommand: CreateSenseCommand, cancellationToken: CancellationToken) : TaskOfWordDetail"
+  "+ CreateSenseAsync(wordId: uint, command: CreateSenseCommand, cancellationToken: CancellationToken) : TaskOfAdminWordSenseNullable"
 }
 
 class VocaNovaDbContext <<dbcontext>> {

@@ -11,10 +11,11 @@ control "RolesController\n(FE Dashboard)" as FeController
 control "RolesController\n(BE API)" as BeController
 entity "SaveRoleRequest\n(BE Request DTO)" as BeRequestDto
 entity "RoleResponse\n(BE Response DTO)" as BeResponseDto
+control "IRoleManagementService" as IRoleManagementService
 control "RoleManagementService" as RoleService
 entity "Role" as RoleEntity
-control "RoleManagementRepository" as RoleRepository
 control "IRoleManagementRepository" as IRoleManagementRepository
+control "RoleManagementRepository" as RoleRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -25,7 +26,7 @@ BE controller exists: RolesController.
 BE DTOs exist: SaveRoleRequest and RoleResponse.
 Entity exists: Role.
 Dashboard calls API through VocaNovaApiClient.CreateRoleAsync.
-Interfaces used in code: IRoleManagementRepository.
+Interfaces used in code: IRoleManagementService, IRoleManagementRepository.
 end note
 
 SuperAdmin -> CreateRolePage: Open create role page
@@ -47,8 +48,10 @@ else Form input valid
         BeController --> FeController: HTTP 400 error
         FeController --> CreateRolePage: Show error message
     else Request validation success
-        BeController -> RoleService: CreateAsync(role data)
-        RoleService -> RoleService: Normalize and validate role name
+        BeController -> IRoleManagementService: CreateAsync(role data)
+        IRoleManagementService -> RoleService: CreateAsync(role data)
+        RoleService -> IRoleManagementService: Normalize and validate role name
+        IRoleManagementService -> RoleService: Normalize and validate role name
 
         alt Role name invalid
             RoleService --> BeController: Validation failure
@@ -70,7 +73,8 @@ else Form input valid
                 BeController --> FeController: HTTP 409 error
                 FeController --> CreateRolePage: Show error message
             else Role can be created
-                RoleService -> RoleService: Begin transaction
+                RoleService -> IRoleManagementService: Begin transaction
+                IRoleManagementService -> RoleService: Begin transaction
                 RoleService -> IRoleManagementRepository: AddRoleAsync(roleName)
                 IRoleManagementRepository -> RoleRepository: AddRoleAsync(roleName)
                 RoleRepository -> RoleEntity: Create Role

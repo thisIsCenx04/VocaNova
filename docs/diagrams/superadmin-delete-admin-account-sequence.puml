@@ -7,13 +7,13 @@ actor SuperAdmin
 boundary "Admin Accounts UI" as AdminAccountsPage
 control "AdminAccountsController\n(FE Dashboard)" as DashboardController
 control "SuperAdminAccountsController\n(BE API)" as ApiController
-control "SuperAdminAccountService" as AccountService
 control "ISuperAdminAccountService" as ISuperAdminAccountService
+control "SuperAdminAccountService" as AccountService
 entity "User" as UserEntity
 entity "UserAuth" as UserAuthEntity
 entity "RefreshToken" as RefreshTokenEntity
-control "SuperAdminAccountRepository" as AccountRepository
 control "ISuperAdminAccountRepository" as ISuperAdminAccountRepository
+control "SuperAdminAccountRepository" as AccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over AdminAccountsPage, MySQL
@@ -44,7 +44,8 @@ AccountService --> ApiController: NotFound result
 ApiController --> DashboardController: HTTP 404 error
 DashboardController --> AdminAccountsPage: Show feedback
 else Admin account can be deleted
-AccountService -> AccountService: Begin transaction
+AccountService -> ISuperAdminAccountService: Begin transaction
+ISuperAdminAccountService -> AccountService: Begin transaction
 AccountService -> ISuperAdminAccountRepository: RevokeActiveRefreshTokensAsync(id)
 ISuperAdminAccountRepository -> AccountRepository: RevokeActiveRefreshTokensAsync(id)
 AccountRepository -> RefreshTokenEntity: Set RevokedAt

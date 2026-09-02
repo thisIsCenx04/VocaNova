@@ -10,11 +10,11 @@ boundary "Review Test History UI" as HistoryUi
 control "QuizSessionsController\n(BE API)" as BeController
 entity "QuizHistoryRequest\n(BE Request DTO)" as BeHistoryRequestDto
 entity "QuizHistoryItemResponse\n(BE Response DTO)" as BeHistoryResponseDto
-control "QuizHistoryService" as HistoryService
 control "IQuizHistoryService" as IQuizHistoryService
+control "QuizHistoryService" as HistoryService
 entity "TestSession" as TestSessionEntity
-control "QuizHistoryRepository" as HistoryRepository
 control "IQuizHistoryRepository" as IQuizHistoryRepository
+control "QuizHistoryRepository" as HistoryRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -40,7 +40,8 @@ alt User id missing
 else User authenticated
     BeController -> IQuizHistoryService: GetHistoryAsync(userId, query)
     IQuizHistoryService -> HistoryService: GetHistoryAsync(userId, query)
-    HistoryService -> HistoryService: Validate page and limit
+    HistoryService -> IQuizHistoryService: Validate page and limit
+    IQuizHistoryService -> HistoryService: Validate page and limit
 
     alt Query validation fails
         HistoryService --> BeController: Validation failure

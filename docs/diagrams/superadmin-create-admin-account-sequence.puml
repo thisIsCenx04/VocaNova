@@ -9,14 +9,14 @@ control "AdminAccountsController\n(FE Dashboard)" as FeController
 control "SuperAdminAccountsController\n(BE API)" as BeController
 entity "CreateAdminAccountRequest\n(BE Request DTO)" as BeRequestDto
 entity "AdminAccountResponse\n(BE Response DTO)" as BeResponseDto
-control "SuperAdminAccountService" as AccountService
 control "ISuperAdminAccountService" as ISuperAdminAccountService
+control "SuperAdminAccountService" as AccountService
 entity "User" as UserEntity
 entity "UserAuth" as UserAuthEntity
 entity "UserProfile" as UserProfileEntity
 entity "Role" as RoleEntity
-control "SuperAdminAccountRepository" as AccountRepository
 control "ISuperAdminAccountRepository" as ISuperAdminAccountRepository
+control "SuperAdminAccountRepository" as AccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over CreatePage, MySQL
@@ -48,7 +48,8 @@ else Form input valid
     else Request validation success
         BeController -> ISuperAdminAccountService: CreateAsync(create data)
         ISuperAdminAccountService -> AccountService: CreateAsync(create data)
-        AccountService -> AccountService: Normalize phone/email\nand hash password
+        AccountService -> ISuperAdminAccountService: Normalize phone/email\nand hash password
+        ISuperAdminAccountService -> AccountService: Normalize phone/email\nand hash password
         AccountService -> ISuperAdminAccountRepository: FindDuplicateAsync(phone, email)
         ISuperAdminAccountRepository -> AccountRepository: FindDuplicateAsync(phone, email)
         AccountRepository -> DbContext: Query UserAuth
@@ -74,7 +75,8 @@ else Form input valid
                 BeController --> FeController: HTTP 400 error
                 FeController --> CreatePage: Return Create.cshtml\nwith error message
             else Admin role exists
-                AccountService -> AccountService: Begin transaction
+                AccountService -> ISuperAdminAccountService: Begin transaction
+                ISuperAdminAccountService -> AccountService: Begin transaction
                 AccountService -> ISuperAdminAccountRepository: AddAccountAsync(create data,\npasswordHash, roleId)
                 ISuperAdminAccountRepository -> AccountRepository: AddAccountAsync(create data,\npasswordHash, roleId)
                 AccountRepository -> DbContext: Find Role
@@ -96,7 +98,8 @@ else Form input valid
                 MySQL --> DbContext: Insert result
                 DbContext --> AccountRepository: Tracking state
                 AccountRepository --> AccountService: Created admin account
-                AccountService -> AccountService: Save changes\nand commit transaction
+                AccountService -> ISuperAdminAccountService: Save changes\nand commit transaction
+                ISuperAdminAccountService -> AccountService: Save changes\nand commit transaction
                 AccountService --> BeController: Created admin result
                 BeController -> BeResponseDto: Create AdminAccountResponse
                 BeResponseDto --> BeController: AdminAccountResponse

@@ -9,15 +9,15 @@ actor Admin
 boundary "Delete KNN UI" as DeleteKnnUi
 control "KnnController\n(FE Dashboard)" as FeController
 control "AdminKnnController\n(BE API)" as BeController
-control "AdminKnnLookupService" as LookupService
 control "IAdminKnnLookupService" as IAdminKnnLookupService
+control "AdminKnnLookupService" as LookupService
 entity "AgeRange" as AgeRangeEntity
 entity "Region" as RegionEntity
 entity "Occupation" as OccupationEntity
 entity "EducationLevel" as EducationLevelEntity
 entity "LearningPurpose" as LearningPurposeEntity
-control "AdminKnnLookupRepository" as LookupRepository
 control "IAdminKnnLookupRepository" as IAdminKnnLookupRepository
+control "AdminKnnLookupRepository" as LookupRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 

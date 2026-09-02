@@ -7,11 +7,12 @@ actor SuperAdmin
 boundary "Roles UI" as RolesPage
 control "RolesController\n(FE Dashboard)" as DashboardController
 control "RolesController\n(BE API)" as ApiController
+control "IRoleManagementService" as IRoleManagementService
 control "RoleManagementService" as RoleService
 entity "Role" as RoleEntity
 entity "User" as UserEntity
-control "RoleManagementRepository" as RoleRepository
 control "IRoleManagementRepository" as IRoleManagementRepository
+control "RoleManagementRepository" as RoleRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over RolesPage, MySQL
@@ -20,13 +21,14 @@ Dashboard calls DeleteRoleAsync through VocaNovaApiClient.
 API endpoint is DELETE /api/superadmin/roles/{roleId}.
 No request DTO body is used; API returns bool in the response envelope.
 System roles cannot be deleted, and roles assigned to users cannot be deleted.
-Interfaces used in code: IRoleManagementRepository.
+Interfaces used in code: IRoleManagementService, IRoleManagementRepository.
 end note
 SuperAdmin -> RolesPage: Click Delete role
 RolesPage -> DashboardController: POST /roles/{roleId}/delete
 DashboardController -> ApiController: VocaNovaApiClient.DeleteRoleAsync(roleId)\nDELETE /api/superadmin/roles/{roleId}
 ApiController -> ApiController: Check super admin authorization
-ApiController -> RoleService: DeleteAsync(roleId)
+ApiController -> IRoleManagementService: DeleteAsync(roleId)
+IRoleManagementService -> RoleService: DeleteAsync(roleId)
 RoleService -> IRoleManagementRepository: GetRoleNameAsync(roleId)
 IRoleManagementRepository -> RoleRepository: GetRoleNameAsync(roleId)
 RoleRepository -> DbContext: Query role name
@@ -59,7 +61,8 @@ RoleService --> ApiController: Conflict result
 ApiController --> DashboardController: HTTP 409 error
 DashboardController --> RolesPage: Show error message
 else Role can be deleted
-RoleService -> RoleService: Begin transaction
+RoleService -> IRoleManagementService: Begin transaction
+IRoleManagementService -> RoleService: Begin transaction
 RoleService -> IRoleManagementRepository: DeleteRoleAsync(roleId)
 IRoleManagementRepository -> RoleRepository: DeleteRoleAsync(roleId)
 RoleRepository -> RoleEntity: Remove Role

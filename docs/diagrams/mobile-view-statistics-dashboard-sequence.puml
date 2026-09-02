@@ -12,13 +12,13 @@ control "ProgressApiService\n(FE Mobile)" as FeApiService
 entity "ProgressSummaryDto\n(FE Response DTO)" as FeSummaryDto
 entity "ProgressSummaryResponse\n(BE Response DTO)" as BeSummaryDto
 control "ProgressController\n(BE API)" as BeController
-control "ProgressSummaryService" as SummaryService
 control "IProgressSummaryService" as IProgressSummaryService
+control "ProgressSummaryService" as SummaryService
 entity "TestSession" as TestSessionEntity
 entity "TestAnswer" as TestAnswerEntity
 entity "UserWordProgress" as UserWordProgressEntity
-control "ProgressSummaryRepository" as SummaryRepository
 control "IProgressSummaryRepository" as IProgressSummaryRepository
+control "ProgressSummaryRepository" as SummaryRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -47,7 +47,8 @@ alt User id missing
 else User authenticated
     BeController -> IProgressSummaryService: GetSummaryAsync(userId)
     IProgressSummaryService -> SummaryService: GetSummaryAsync(userId)
-    SummaryService -> SummaryService: Build seven-day and month query
+    SummaryService -> IProgressSummaryService: Build seven-day and month query
+    IProgressSummaryService -> SummaryService: Build seven-day and month query
     SummaryService -> IProgressSummaryRepository: GetSummaryStatisticsAsync(userId, query)
     IProgressSummaryRepository -> SummaryRepository: GetSummaryStatisticsAsync(userId, query)
     SummaryRepository -> DbContext: Query session dates
@@ -78,7 +79,8 @@ else User authenticated
 
     DbContext --> SummaryRepository: Summary statistics
     SummaryRepository --> SummaryService: Summary statistics
-    SummaryService -> SummaryService: Calculate streaks\nand accuracy
+    SummaryService -> IProgressSummaryService: Calculate streaks\nand accuracy
+    IProgressSummaryService -> SummaryService: Calculate streaks\nand accuracy
     SummaryService --> BeController: Summary result
     BeController -> BeSummaryDto: Create ProgressSummaryResponse
     BeSummaryDto --> BeController: ProgressSummaryResponse

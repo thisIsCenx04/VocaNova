@@ -7,13 +7,13 @@ actor Admin
 boundary "Users UI" as UsersPage
 control "UsersController\n(FE Dashboard)" as DashboardUsersController
 control "AdminUsersController\n(BE API)" as AdminUsersController
-control "AdminUserService" as AdminUserService
 control "IAdminUserService" as IAdminUserService
+control "AdminUserService" as AdminUserService
 entity "User" as UserEntity
 entity "Role" as RoleEntity
 entity "RefreshToken" as RefreshTokenEntity
-control "AdminUserRepository" as AdminUserRepository
 control "IAdminUserRepository" as IAdminUserRepository
+control "AdminUserRepository" as AdminUserRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over UsersPage, MySQL

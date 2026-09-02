@@ -7,11 +7,11 @@ actor Admin
 boundary "Topics UI" as TopicsPage
 control "TopicsController\n(FE Dashboard)" as DashboardController
 control "AdminTopicsController\n(BE API)" as ApiController
-control "TopicAdminService" as TopicService
 control "ITopicAdminService" as ITopicAdminService
+control "TopicAdminService" as TopicService
 entity "Topic" as TopicEntity
-control "TopicAdminRepository" as TopicRepository
 control "ITopicAdminRepository" as ITopicAdminRepository
+control "TopicAdminRepository" as TopicRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over TopicsPage, MySQL

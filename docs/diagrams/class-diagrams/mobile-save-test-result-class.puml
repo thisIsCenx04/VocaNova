@@ -94,6 +94,10 @@ class QuizSessionsController <<backend_controller>> {
   "+ GetResult(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
+class IQuizSubmissionService <<service_interface>> {
+  "+ SubmitAnswerAsync(userId: uint, sessionId: uint, command: SubmitAnswerCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizAnswer"
+}
+
 class QuizSubmissionService <<service>> {
   "- _repository : IQuizSubmissionRepository"
   "- _sessionBuilder : IQuizSessionBuilder"
@@ -107,8 +111,9 @@ class QuizSubmissionService <<service>> {
   "+ SubmitAnswerAsync(userId: uint, sessionId: uint, command: SubmitAnswerCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizAnswer"
 }
 
-class IQuizSubmissionService <<service_interface>> {
-  "+ SubmitAnswerAsync(userId: uint, sessionId: uint, command: SubmitAnswerCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizAnswer"
+class IQuizResultService <<service_interface>> {
+  "+ FinishSessionAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizResult"
+  "+ GetResultAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizResult"
 }
 
 class QuizResultService <<service>> {
@@ -118,9 +123,8 @@ class QuizResultService <<service>> {
   "+ GetResultAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizResult"
 }
 
-class IQuizResultService <<service_interface>> {
-  "+ FinishSessionAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizResult"
-  "+ GetResultAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizResult"
+class IQuizQuestionBuilder <<service_interface>> {
+  "+ BuildQuestionAsync(wordId: uint, questionType: int, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizQuestion"
 }
 
 class QuizQuestionBuilder <<entity>> {
@@ -130,17 +134,13 @@ class QuizQuestionBuilder <<entity>> {
   "+ BuildNextQuestionAsync()"
 }
 
-class IQuizQuestionBuilder <<service_interface>> {
-  "+ BuildQuestionAsync(wordId: uint, questionType: int, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizQuestion"
+class ISrsService <<service_interface>> {
+  "+ UpdateProgressAsync(userId: uint, wordId: uint, isCorrect: bool, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfUserWordProgress"
 }
 
 class SrsService <<service>> {
   "- _repository : ISrsRepository"
   --
-  "+ UpdateProgressAsync(userId: uint, wordId: uint, isCorrect: bool, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfUserWordProgress"
-}
-
-class ISrsService <<service_interface>> {
   "+ UpdateProgressAsync(userId: uint, wordId: uint, isCorrect: bool, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfUserWordProgress"
 }
 
@@ -218,6 +218,11 @@ class WordSense <<entity>> {
   "+ WordRelations : ICollectionOfWordRelation"
 }
 
+class IQuizSubmissionRepository <<repository_interface>> {
+  "+ GetStateAsync(userId: uint, sessionId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizSubmissionStateNullable"
+  "+ SaveSubmissionAsync(changes: QuizSubmissionChanges, cancellationToken: CancellationToken) : Task"
+}
+
 class QuizSubmissionRepository <<repository>> {
   "- _dbContext : VocaNovaDbContext"
   --
@@ -225,9 +230,9 @@ class QuizSubmissionRepository <<repository>> {
   "+ SaveSubmissionAsync(changes: QuizSubmissionChanges, cancellationToken: CancellationToken) : Task"
 }
 
-class IQuizSubmissionRepository <<repository_interface>> {
-  "+ GetStateAsync(userId: uint, sessionId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizSubmissionStateNullable"
-  "+ SaveSubmissionAsync(changes: QuizSubmissionChanges, cancellationToken: CancellationToken) : Task"
+class IQuizQuestionRepository <<repository_interface>> {
+  "+ FindQuestionWordAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizQuestionWordNullable"
+  "+ GetDistractorsAsync(excludedWordId: uint, wordClass: string, topicIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfQuizQuestionWord"
 }
 
 class QuizQuestionRepository <<repository>> {
@@ -236,9 +241,9 @@ class QuizQuestionRepository <<repository>> {
   "+ FindQuestionWordAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizQuestionWord"
 }
 
-class IQuizQuestionRepository <<repository_interface>> {
-  "+ FindQuestionWordAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizQuestionWordNullable"
-  "+ GetDistractorsAsync(excludedWordId: uint, wordClass: string, topicIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfQuizQuestionWord"
+class ISrsRepository <<repository_interface>> {
+  "+ FindAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfUserWordProgressNullable"
+  "+ Stage(progress: UserWordProgress) : void"
 }
 
 class SrsRepository <<repository>> {
@@ -247,21 +252,16 @@ class SrsRepository <<repository>> {
   "+ FindAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfUserWordProgress"
 }
 
-class ISrsRepository <<repository_interface>> {
-  "+ FindAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfUserWordProgressNullable"
-  "+ Stage(progress: UserWordProgress) : void"
+class IQuizResultRepository <<repository_interface>> {
+  "+ GetSessionAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizResultStateNullable"
+  "+ SaveFinishAsync(changes: QuizFinishChanges, cancellationToken: CancellationToken) : Task"
+  "+ GetAnswersAsync(sessionId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfTestAnswerResult"
 }
 
 class QuizResultRepository <<repository>> {
   "- _dbContext : VocaNovaDbContext"
   --
   "+ GetSessionAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizResultState"
-  "+ SaveFinishAsync(changes: QuizFinishChanges, cancellationToken: CancellationToken) : Task"
-  "+ GetAnswersAsync(sessionId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfTestAnswerResult"
-}
-
-class IQuizResultRepository <<repository_interface>> {
-  "+ GetSessionAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizResultStateNullable"
   "+ SaveFinishAsync(changes: QuizFinishChanges, cancellationToken: CancellationToken) : Task"
   "+ GetAnswersAsync(sessionId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfTestAnswerResult"
 }

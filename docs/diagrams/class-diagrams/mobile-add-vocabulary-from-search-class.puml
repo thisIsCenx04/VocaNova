@@ -99,25 +99,18 @@ class ListsController <<backend_controller>> {
   "+ AddWord(id: uint, request: AddListWordRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
-class WordReadService <<service>> {
-  "- _wordRepository : IWordReadRepository"
-  "- _wordSearchCache : IWordSearchCacheNullable"
-  "- _wordDetailCache : IWordDetailCacheNullable"
-  --
-  "+ SearchAsync(query: WordSearchQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfPagedCollectionOfWordSummary"
-}
-
 class IWordReadService <<service_interface>> {
   "+ SearchAsync(query: WordSearchQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfPagedCollectionOfWordSummary"
   "+ GetByIdAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordDetail"
   "+ GetDailyAsync(cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordDetail"
 }
 
-class ListMutationService <<service>> {
-  "- _repository : IListMutationRepository"
-  "- _cache : IUserListCacheNullable"
+class WordReadService <<service>> {
+  "- _wordRepository : IWordReadRepository"
+  "- _wordSearchCache : IWordSearchCacheNullable"
+  "- _wordDetailCache : IWordDetailCacheNullable"
   --
-  "+ AddWordAsync(userId: uint, listId: uint, command: AddListWordCommand, cancellationToken: CancellationToken) : TaskOfListResultOfListWord"
+  "+ SearchAsync(query: WordSearchQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfPagedCollectionOfWordSummary"
 }
 
 class IListMutationService <<service_interface>> {
@@ -128,6 +121,13 @@ class IListMutationService <<service_interface>> {
   "+ AddRandomWordsAsync(userId: uint, listId: uint, command: AddRandomListWordsCommand, cancellationToken: CancellationToken) : TaskOfListResultOfAddRandomListWordsResult"
   "+ RemoveWordAsync(userId: uint, listId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfListResultOfbool"
   "+ UpdateWordNoteAsync(userId: uint, listId: uint, wordId: uint, command: UpdateListWordNoteCommand, cancellationToken: CancellationToken) : TaskOfListResultOfListWord"
+}
+
+class ListMutationService <<service>> {
+  "- _repository : IListMutationRepository"
+  "- _cache : IUserListCacheNullable"
+  --
+  "+ AddWordAsync(userId: uint, listId: uint, command: AddListWordCommand, cancellationToken: CancellationToken) : TaskOfListResultOfListWord"
 }
 
 class Word <<entity>> {
@@ -191,25 +191,16 @@ class UserListWord <<entity>> {
   "+ Word : Word"
 }
 
-class WordReadRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ SearchAsync(normalizedQuery: stringNullable, page: int, limit: int, cefr: stringNullable, topicId: uintNullable, isPhrase: boolNullable, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfWordSummary"
-}
-
 class IWordReadRepository <<repository_interface>> {
   "+ SearchAsync(normalizedQuery: stringNullable, page: int, limit: int, cefr: stringNullable, topicId: uintNullable, isPhrase: boolNullable, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfWordSummary"
   "+ FindDetailAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfWordDetailNullable"
   "+ GetDailyCandidateWordIdsAsync(requirePlayableAudio: bool, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfuint"
 }
 
-class ListMutationRepository <<repository>> {
+class WordReadRepository <<repository>> {
   "- _dbContext : VocaNovaDbContext"
   --
-  "+ GetOwnershipAsync(userId: uint, listId: uint, cancellationToken: CancellationToken) : TaskOfListLookupResultOfListOwnership"
-  "+ ActiveWordExistsAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfBool"
-  "+ FindListWordAsync(userId: uint, listId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfListWordState"
-  "+ AddWordAsync(userId: uint, listId: uint, command: AddListWordCommand, cancellationToken: CancellationToken) : TaskOfListWord"
+  "+ SearchAsync(normalizedQuery: stringNullable, page: int, limit: int, cefr: stringNullable, topicId: uintNullable, isPhrase: boolNullable, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfWordSummary"
 }
 
 class IListMutationRepository <<repository_interface>> {
@@ -227,6 +218,15 @@ class IListMutationRepository <<repository_interface>> {
   "+ GetRandomRelationWordIdsAsync(userId: uint, listId: uint, relationType: string, count: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfuint"
   "+ RemoveWordAsync(userId: uint, listId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfbool"
   "+ UpdateNoteAsync(userId: uint, listId: uint, wordId: uint, note: stringNullable, cancellationToken: CancellationToken) : TaskOfListWordNullable"
+}
+
+class ListMutationRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ GetOwnershipAsync(userId: uint, listId: uint, cancellationToken: CancellationToken) : TaskOfListLookupResultOfListOwnership"
+  "+ ActiveWordExistsAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ FindListWordAsync(userId: uint, listId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfListWordState"
+  "+ AddWordAsync(userId: uint, listId: uint, command: AddListWordCommand, cancellationToken: CancellationToken) : TaskOfListWord"
 }
 
 class VocaNovaDbContext <<dbcontext>> {

@@ -9,13 +9,13 @@ actor Admin
 boundary "Vocabulary UI" as VocabularyUi
 control "VocabularyController\n(FE Dashboard)" as FeController
 control "AdminWordsController\n(BE API)" as BeController
-control "WordAdminService" as WordService
 control "IWordAdminService" as IWordAdminService
+control "WordAdminService" as WordService
 entity "Word" as WordEntity
 entity "UserListWord" as UserListWordEntity
 entity "UserWordProgress" as UserWordProgressEntity
-control "WordAdminRepository" as WordRepository
 control "IWordAdminRepository" as IWordAdminRepository
+control "WordAdminRepository" as WordRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 

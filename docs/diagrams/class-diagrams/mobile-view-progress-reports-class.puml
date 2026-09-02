@@ -32,16 +32,16 @@ class ProgressController <<backend_controller>> {
   "+ GetWordProgress(wordId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
-class ProgressAnalyticsService <<service>> {
-  "- _progressAnalyticsRepository : IProgressAnalyticsRepository"
-  --
-  "+ GetWordProgressAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfWordProgress"
-}
-
 class IProgressAnalyticsService <<service_interface>> {
   "+ GetChartAsync(userId: uint, query: ProgressChartQuery, cancellationToken: CancellationToken) : TaskOfProgressResultOfProgressChart"
   "+ GetMasteryBreakdownAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfIReadOnlyCollectionOfMasteryBreakdown"
   "+ GetWeakestWordsAsync(userId: uint, query: WeakestWordsQuery, cancellationToken: CancellationToken) : TaskOfProgressResultOfIReadOnlyCollectionOfWeakestWord"
+  "+ GetWordProgressAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfWordProgress"
+}
+
+class ProgressAnalyticsService <<service>> {
+  "- _progressAnalyticsRepository : IProgressAnalyticsRepository"
+  --
   "+ GetWordProgressAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfWordProgress"
 }
 
@@ -89,18 +89,18 @@ class WordSense <<entity>> {
   "+ WordRelations : ICollectionOfWordRelation"
 }
 
-class ProgressAnalyticsRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ GetWordProgressStatisticsAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfWordProgressStatistics"
-}
-
 class IProgressAnalyticsRepository <<repository_interface>> {
   "+ GetSessionTimesAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfDateTime"
   "+ GetAnswerStatisticsAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfProgressAnswerStatistics"
   "+ GetMasteryLevelCountsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfMasteryLevelCount"
   "+ GetWeakestWordStatisticsAsync(userId: uint, limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfWeakestWordStatistics"
   "+ GetWordProgressStatisticsAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfWordProgressStatisticsNullable"
+}
+
+class ProgressAnalyticsRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ GetWordProgressStatisticsAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfWordProgressStatistics"
 }
 
 class VocaNovaDbContext <<dbcontext>> {

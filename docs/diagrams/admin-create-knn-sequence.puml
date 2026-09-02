@@ -12,15 +12,15 @@ control "AdminKnnController\n(BE API)" as BeController
 entity "AgeRange / Region /\nOccupation / EducationLevel /\nLearningPurpose\n(FE Response DTO)" as FeLookupDto
 entity "CreateAgeRangeRequest / CreateRegionRequest /\nCreateOccupationRequest / CreateEducationLevelRequest /\nCreateLearningPurposeRequest\n(BE Request DTO)" as BeCreateDto
 entity "AgeRangeResponse / RegionResponse /\nOccupationResponse / EducationLevelResponse /\nLearningPurposeResponse\n(BE Response DTO)" as BeLookupResponseDto
-control "AdminKnnLookupService" as LookupService
 control "IAdminKnnLookupService" as IAdminKnnLookupService
+control "AdminKnnLookupService" as LookupService
 entity "AgeRange" as AgeRangeEntity
 entity "Region" as RegionEntity
 entity "Occupation" as OccupationEntity
 entity "EducationLevel" as EducationLevelEntity
 entity "LearningPurpose" as LearningPurposeEntity
-control "AdminKnnLookupRepository" as LookupRepository
 control "IAdminKnnLookupRepository" as IAdminKnnLookupRepository
+control "AdminKnnLookupRepository" as LookupRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -53,7 +53,8 @@ alt Request invalid
 else Request valid
     BeController -> IAdminKnnLookupService: Create{LookupType}Async(command)
     IAdminKnnLookupService -> LookupService: Create{LookupType}Async(command)
-    LookupService -> LookupService: Normalize and validate fields
+    LookupService -> IAdminKnnLookupService: Normalize and validate fields
+    IAdminKnnLookupService -> LookupService: Normalize and validate fields
     LookupService -> IAdminKnnLookupRepository: Check duplicate name/code
     IAdminKnnLookupRepository -> LookupRepository: Check duplicate name/code
     LookupRepository -> DbContext: Query lookup table

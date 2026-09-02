@@ -9,23 +9,24 @@ entity "LoginRequest\n(BE Request DTO)" as LoginRequestDto
 entity "TokenResponse\n(BE Response DTO)" as LoginResponseDto
 entity "AuthTokensDto\n(FE Response DTO)" as FeTokensDto
 control "AuthController" as AuthController
+control "IAuthService" as IAuthService
 control "AuthService" as AuthService
 entity "User" as UserEntity
 entity "UserAuth" as UserAuthEntity
 entity "RefreshToken" as RefreshTokenEntity
-control "BcryptPasswordHasher" as PasswordHasher
 control "IPasswordHasher" as IPasswordHasher
-control "AuthAccountRepository" as AuthAccountRepository
+control "BcryptPasswordHasher" as PasswordHasher
 control "IAuthAccountRepository" as IAuthAccountRepository
-control "RefreshTokenRepository" as RefreshTokenRepository
+control "AuthAccountRepository" as AuthAccountRepository
 control "IRefreshTokenRepository" as IRefreshTokenRepository
+control "RefreshTokenRepository" as RefreshTokenRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over LoginScreen, MySQL
 BE DTOs exist: LoginRequest and TokenResponse.
 FE response DTO exists: AuthTokensDto.
-Interfaces used in code: IAuthAccountRepository, IRefreshTokenRepository,
-  IPasswordHasher.
+Interfaces used in code: IAuthService, IPasswordHasher, IAuthAccountRepository,
+  IRefreshTokenRepository.
 end note
 Guest -> LoginScreen: Access login page
 Guest -> LoginScreen: Enter phone and password
@@ -41,7 +42,8 @@ alt Request validation or rate limit fails
 AuthController --> LoginScreen: HTTP 400/429 error
 LoginScreen --> Guest: Show error message
 else Request validation success
-AuthController -> AuthService: LoginAsync(login data)
+AuthController -> IAuthService: LoginAsync(login data)
+IAuthService -> AuthService: LoginAsync(login data)
 AuthService -> IAuthAccountRepository: FindByPhoneAsync(phone)
 IAuthAccountRepository -> AuthAccountRepository: FindByPhoneAsync(phone)
 AuthAccountRepository -> DbContext: Query user by phone

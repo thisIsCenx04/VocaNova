@@ -13,13 +13,13 @@ entity "CreateWordRequest\n(BE Request DTO)" as BeCreateWordRequestDto
 entity "WordDetailResponse\n(BE Response DTO)" as BeWordDetailResponseDto
 entity "CreateSenseRequest\n(BE Request DTO)" as BeCreateSenseRequestDto
 entity "WordSenseResponse\n(BE Response DTO)" as BeWordSenseResponseDto
-control "WordAdminService" as WordService
 control "IWordAdminService" as IWordAdminService
+control "WordAdminService" as WordService
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "WordExample" as WordExampleEntity
-control "WordAdminRepository" as WordRepository
 control "IWordAdminRepository" as IWordAdminRepository
+control "WordAdminRepository" as WordRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -60,7 +60,8 @@ else Word input valid
     else Request validation success
         BeController -> IWordAdminService: CreateAsync(create word data)
         IWordAdminService -> WordService: CreateAsync(create word data)
-        WordService -> WordService: Normalize word, word_key,\nCEFR and phonetics
+        WordService -> IWordAdminService: Normalize word, word_key,\nCEFR and phonetics
+        IWordAdminService -> WordService: Normalize word, word_key,\nCEFR and phonetics
 
         alt Word data invalid
             WordService --> BeController: Validation failure
@@ -121,7 +122,8 @@ else Word input valid
             else Sense request validation success
                 BeController -> IWordAdminService: CreateSenseAsync(wordId, sense data)
                 IWordAdminService -> WordService: CreateSenseAsync(wordId, sense data)
-                WordService -> WordService: Normalize sense data
+                WordService -> IWordAdminService: Normalize sense data
+                IWordAdminService -> WordService: Normalize sense data
                 WordService -> IWordAdminRepository: CreateSenseAsync(wordId, sense data)
                 IWordAdminRepository -> WordRepository: CreateSenseAsync(wordId, sense data)
                 WordRepository -> DbContext: Check word exists

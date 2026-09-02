@@ -56,18 +56,6 @@ class AdminWordsController <<backend_controller>> {
   "+ CreateSense(id: uint, request: CreateSenseRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
-class WordAdminService <<service>> {
-  "- _repository : IWordAdminRepository"
-  "- _audioStorage : IWordAudioStorageNullable"
-  "- _imageStorage : IWordImageStorageNullable"
-  "- _wordDetailCache : IWordDetailCacheNullable"
-  "- _userListCache : IUserListCacheNullable"
-  --
-  "+ CreateAsync(command: CreateWordCommand, cancellationToken: CancellationToken) : TaskOfDictionaryWordDetail"
-  "+ UploadAudioAsync(wordId: uint, accent: stringNullable, content: UploadedContentNullable, cancellationToken: CancellationToken) : TaskOfDictionaryWordAudio"
-  "+ CreateSenseAsync(wordId: uint, command: CreateSenseCommand, cancellationToken: CancellationToken) : TaskOfDictionaryWordSense"
-}
-
 class IWordAdminService <<service_interface>> {
   "+ SearchAsync(query: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfPagedCollectionOfAdminWordListItem"
   "+ CreateAsync(command: CreateWordCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordDetail"
@@ -85,8 +73,16 @@ class IWordAdminService <<service_interface>> {
   "+ RestoreSenseAsync(wordId: uint, senseId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
 }
 
-class IWordAudioStorage <<service_interface>> {
-  "+ UploadAsync(content: UploadedContent, accent: stringNullable, cancellationToken: CancellationToken) : TaskOfStoredMedia"
+class WordAdminService <<service>> {
+  "- _repository : IWordAdminRepository"
+  "- _audioStorage : IWordAudioStorageNullable"
+  "- _imageStorage : IWordImageStorageNullable"
+  "- _wordDetailCache : IWordDetailCacheNullable"
+  "- _userListCache : IUserListCacheNullable"
+  --
+  "+ CreateAsync(command: CreateWordCommand, cancellationToken: CancellationToken) : TaskOfDictionaryWordDetail"
+  "+ UploadAudioAsync(wordId: uint, accent: stringNullable, content: UploadedContentNullable, cancellationToken: CancellationToken) : TaskOfDictionaryWordAudio"
+  "+ CreateSenseAsync(wordId: uint, command: CreateSenseCommand, cancellationToken: CancellationToken) : TaskOfDictionaryWordSense"
 }
 
 class Word <<entity>> {
@@ -115,16 +111,6 @@ class WordAudioAsset <<entity>> {
   "+ Word : Word"
 }
 
-class WordAdminRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ WordExistsAsync(wordId: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfBool"
-  "+ CreateAsync(command: CreateWordCommand, cancellationToken: CancellationToken) : TaskOfWordDetail"
-  "+ CreateWithSenseAsync(command: CreateWordCommand, senseCommand: CreateSenseCommand, cancellationToken: CancellationToken) : TaskOfWordDetail"
-  "+ UpsertAudioAsync(wordId: uint, media: StoredMedia, accent: stringNullable, cancellationToken: CancellationToken) : TaskOfAdminWordAudioNullable"
-  "+ CreateSenseAsync(wordId: uint, command: CreateSenseCommand, cancellationToken: CancellationToken) : TaskOfAdminWordSenseNullable"
-}
-
 class IWordAdminRepository <<repository_interface>> {
   "+ SearchAsync(query: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfAdminWordListItem"
   "+ WordKeyExistsAsync(wordKey: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool"
@@ -148,6 +134,16 @@ class IWordAdminRepository <<repository_interface>> {
   "+ AddTopicsAsync(wordId: uint, topicIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : TaskOfint"
 }
 
+class WordAdminRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ WordExistsAsync(wordId: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ CreateAsync(command: CreateWordCommand, cancellationToken: CancellationToken) : TaskOfWordDetail"
+  "+ CreateWithSenseAsync(command: CreateWordCommand, senseCommand: CreateSenseCommand, cancellationToken: CancellationToken) : TaskOfWordDetail"
+  "+ UpsertAudioAsync(wordId: uint, media: StoredMedia, accent: stringNullable, cancellationToken: CancellationToken) : TaskOfAdminWordAudioNullable"
+  "+ CreateSenseAsync(wordId: uint, command: CreateSenseCommand, cancellationToken: CancellationToken) : TaskOfAdminWordSenseNullable"
+}
+
 class VocaNovaDbContext <<dbcontext>> {
   "+ AgeRanges : DbSetOfAgeRange"
   "+ AiGradingCaches : DbSetOfAiGradingCache"
@@ -167,6 +163,10 @@ class VocaNovaDbContext <<dbcontext>> {
 
 class MySQL_Database <<database>> {
 
+}
+
+class IWordAudioStorage <<service_interface>> {
+  "+ UploadAsync(content: UploadedContent, accent: stringNullable, cancellationToken: CancellationToken) : TaskOfStoredMedia"
 }
 VocabularyController ..> UploadWordAudioRequest
 UploadWordAudioRequest ..> AdminWordsController

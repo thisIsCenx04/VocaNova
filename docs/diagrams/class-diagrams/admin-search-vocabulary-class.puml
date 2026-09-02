@@ -76,16 +76,6 @@ class TopicSummaryResponse <<dto>> {
   "+ WordCount : int"
 }
 
-class WordAdminService <<service>> {
-  "- _repository : IWordAdminRepository"
-  "- _audioStorage : IWordAudioStorageNullable"
-  "- _imageStorage : IWordImageStorageNullable"
-  "- _wordDetailCache : IWordDetailCacheNullable"
-  "- _userListCache : IUserListCacheNullable"
-  --
-  "+ SearchAsync(query: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfPagedCollectionOfAdminWordListItem"
-}
-
 class IWordAdminService <<service_interface>> {
   "+ SearchAsync(query: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfPagedCollectionOfAdminWordListItem"
   "+ CreateAsync(command: CreateWordCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordDetail"
@@ -101,6 +91,19 @@ class IWordAdminService <<service_interface>> {
   "+ UpdateSenseAsync(wordId: uint, senseId: uint, command: UpdateSenseCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordSense"
   "+ SoftDeleteSenseAsync(wordId: uint, senseId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
   "+ RestoreSenseAsync(wordId: uint, senseId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
+}
+
+class WordAdminService <<service>> {
+  "- _repository : IWordAdminRepository"
+  "- _audioStorage : IWordAudioStorageNullable"
+  "- _imageStorage : IWordImageStorageNullable"
+  "- _wordDetailCache : IWordDetailCacheNullable"
+  "- _userListCache : IUserListCacheNullable"
+  --
+  "+ SearchAsync(query: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfPagedCollectionOfAdminWordListItem"
+}
+
+class ITopicReadService <<service_interface>> {
 }
 
 class TopicReadService <<service>> {
@@ -159,12 +162,6 @@ class Topic <<entity>> {
   "+ WordTopics : ICollectionOfWordTopic"
 }
 
-class WordAdminRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ SearchAsync(filter: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfPagedAdminWordListItem"
-}
-
 class IWordAdminRepository <<repository_interface>> {
   "+ SearchAsync(query: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfAdminWordListItem"
   "+ WordKeyExistsAsync(wordKey: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool"
@@ -188,15 +185,21 @@ class IWordAdminRepository <<repository_interface>> {
   "+ AddTopicsAsync(wordId: uint, topicIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : TaskOfint"
 }
 
-class TopicReadRepository <<repository>> {
+class WordAdminRepository <<repository>> {
   "- _dbContext : VocaNovaDbContext"
   --
-  "+ GetTopicsAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfTopicSummary"
+  "+ SearchAsync(filter: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfPagedAdminWordListItem"
 }
 
 class ITopicReadRepository <<repository_interface>> {
   "+ GetTopicsAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfTopicSummary"
   "+ ExistsAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfbool"
+}
+
+class TopicReadRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ GetTopicsAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfTopicSummary"
 }
 
 class VocaNovaDbContext <<dbcontext>> {
@@ -241,4 +244,5 @@ IWordAdminRepository <|.. WordAdminRepository
 WordAdminService ..> IWordAdminRepository : SearchAsync()
 ITopicReadRepository <|.. TopicReadRepository
 TopicReadService ..> ITopicReadRepository : GetTopicsAsync()
+ITopicReadService <|.. TopicReadService
 @enduml

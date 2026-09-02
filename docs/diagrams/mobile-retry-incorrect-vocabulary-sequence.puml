@@ -19,25 +19,26 @@ entity "CreateSessionRequest\n(BE Request DTO)" as BeCreateSessionDto
 entity "CreateSessionResponse\n(BE Response DTO)" as BeCreateSessionResponseDto
 entity "QuestionResponse\n(BE Response DTO)" as BeQuestionDto
 control "QuizSessionsController\n(BE API)" as BeController
-control "QuizHistoryService" as HistoryService
 control "IQuizHistoryService" as IQuizHistoryService
-control "QuizSessionService" as SessionService
+control "QuizHistoryService" as HistoryService
 control "IQuizSessionService" as IQuizSessionService
-control "QuizSessionBuilder" as SessionBuilder
+control "QuizSessionService" as SessionService
 control "IQuizSessionBuilder" as IQuizSessionBuilder
+control "QuizSessionBuilder" as SessionBuilder
+control "IQuizQuestionBuilder" as IQuizQuestionBuilder
 control "QuizQuestionBuilder" as QuestionBuilder
 entity "UserWordProgress" as UserWordProgressEntity
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "TestSession" as TestSessionEntity
-control "QuizHistoryRepository" as HistoryRepository
 control "IQuizHistoryRepository" as IQuizHistoryRepository
-control "QuizPoolRepository" as PoolRepository
+control "QuizHistoryRepository" as HistoryRepository
 control "IQuizPoolRepository" as IQuizPoolRepository
-control "QuizQuestionRepository" as QuestionRepository
+control "QuizPoolRepository" as PoolRepository
 control "IQuizQuestionRepository" as IQuizQuestionRepository
-control "QuizSessionRepository" as SessionRepository
+control "QuizQuestionRepository" as QuestionRepository
 control "IQuizSessionRepository" as IQuizSessionRepository
+control "QuizSessionRepository" as SessionRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -51,10 +52,10 @@ BE DTOs exist: WrongWordsRequest, WrongWordResponse,
 CreateSessionRequest, CreateSessionResponse and QuestionResponse.
 Retry incorrect vocabulary is implemented by creating a quiz session with scope_type = "wrong_words".
 Entities exist: UserWordProgress, Word, WordSense and TestSession.
-Interfaces used in code: IQuizSessionService, IQuizHistoryService,
-  IQuizHistoryRepository, IQuizSessionBuilder,
-  IQuizSessionRepository, IQuizPoolRepository,
-  IQuizQuestionRepository.
+Interfaces used in code: IQuizHistoryService, IQuizSessionService, IQuizSessionBuilder,
+  IQuizQuestionBuilder, IQuizHistoryRepository,
+  IQuizPoolRepository, IQuizQuestionRepository,
+  IQuizSessionRepository.
 end note
 
 Learner -> RetryIncorrectUi: Open incorrect vocabulary list
@@ -129,7 +130,8 @@ else Request valid
         FeApiService --> QuizConfigController: Action failed
         QuizConfigController --> RetryIncorrectUi: Show no words message
     else Candidates available
-        SessionBuilder -> QuestionBuilder: Build first question
+        SessionBuilder -> IQuizQuestionBuilder: Build first question
+        IQuizQuestionBuilder -> QuestionBuilder: Build first question
         QuestionBuilder -> IQuizQuestionRepository: FindQuestionWordAsync(wordId)
         IQuizQuestionRepository -> QuestionRepository: FindQuestionWordAsync(wordId)
         QuestionRepository -> DbContext: Query Word with senses

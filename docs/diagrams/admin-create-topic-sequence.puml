@@ -10,13 +10,13 @@ entity "AdminTopic\n(FE Response DTO)" as FeTopicDto
 entity "CreateTopicRequest\n(BE Request DTO)" as TopicRequestDto
 entity "TopicSummaryResponse\n(BE Response DTO)" as TopicResponseDto
 control "AdminTopicsController\n(BE API)" as ApiController
-control "TopicAdminService" as TopicService
 control "ITopicAdminService" as ITopicAdminService
+control "TopicAdminService" as TopicService
 entity "Topic" as TopicEntity
 entity "Word" as WordEntity
 entity "WordTopic" as WordTopicEntity
-control "TopicAdminRepository" as TopicRepository
 control "ITopicAdminRepository" as ITopicAdminRepository
+control "TopicAdminRepository" as TopicRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over CreateTopicPage, MySQL
@@ -51,7 +51,8 @@ DashboardController --> CreateTopicPage: Show error message
 else Request validation success
 ApiController -> ITopicAdminService: CreateAsync(create data)
 ITopicAdminService -> TopicService: CreateAsync(create data)
-TopicService -> TopicService: Normalize topic data
+TopicService -> ITopicAdminService: Normalize topic data
+ITopicAdminService -> TopicService: Normalize topic data
 TopicService -> ITopicAdminRepository: NameExistsAsync(topicName, topicNameVi)
 ITopicAdminRepository -> TopicRepository: NameExistsAsync(topicName, topicNameVi)
 TopicRepository -> DbContext: Query duplicate topic name

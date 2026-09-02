@@ -13,13 +13,13 @@ entity "WrongWordDto\n(FE Response DTO)" as FeWrongWordDto
 entity "WrongWordsRequest\n(BE Request DTO)" as BeWrongWordsRequestDto
 entity "WrongWordResponse\n(BE Response DTO)" as BeWrongWordResponseDto
 control "QuizSessionsController\n(BE API)" as BeController
-control "QuizHistoryService" as HistoryService
 control "IQuizHistoryService" as IQuizHistoryService
+control "QuizHistoryService" as HistoryService
 entity "UserWordProgress" as UserWordProgressEntity
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
-control "QuizHistoryRepository" as HistoryRepository
 control "IQuizHistoryRepository" as IQuizHistoryRepository
+control "QuizHistoryRepository" as HistoryRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -43,7 +43,8 @@ BeWrongWordsRequestDto --> BeController: WrongWordsRequest
 BeController -> BeController: Check authenticated user
 BeController -> IQuizHistoryService: GetWrongWordsAsync(userId, query)
 IQuizHistoryService -> HistoryService: GetWrongWordsAsync(userId, query)
-HistoryService -> HistoryService: Validate page and limit
+HistoryService -> IQuizHistoryService: Validate page and limit
+IQuizHistoryService -> HistoryService: Validate page and limit
 
 alt Query validation fails
     HistoryService --> BeController: Validation failure

@@ -9,6 +9,7 @@ entity "RegisterRequest\n(BE Request DTO)" as RegisterRequestDto
 entity "TokenResponse\n(BE Response DTO)" as RegisterResponseDto
 entity "AuthTokensDto\n(FE Response DTO)" as FeTokensDto
 control "AuthController" as AuthController
+control "IAuthService" as IAuthService
 control "AuthService" as AuthService
 entity "User" as UserEntity
 entity "UserAuth" as UserAuthEntity
@@ -17,16 +18,16 @@ entity "UserLearningProfile" as UserLearningProfileEntity
 entity "Role" as RoleEntity
 entity "OtpVerification" as OtpEntity
 entity "RefreshToken" as RefreshTokenEntity
-control "BcryptPasswordHasher" as PasswordHasher
 control "IPasswordHasher" as IPasswordHasher
-control "AuthAccountRepository" as AuthAccountRepository
+control "BcryptPasswordHasher" as PasswordHasher
 control "IAuthAccountRepository" as IAuthAccountRepository
+control "AuthAccountRepository" as AuthAccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over RegisterScreen, MySQL
 BE DTOs exist: RegisterRequest and TokenResponse.
 FE response DTO exists: AuthTokensDto.
-Interfaces used in code: IAuthAccountRepository, IPasswordHasher.
+Interfaces used in code: IAuthService, IPasswordHasher, IAuthAccountRepository.
 end note
 Guest -> RegisterScreen: Access page
 Guest -> RegisterScreen: Enter information
@@ -42,7 +43,8 @@ alt Request validation fails
 AuthController --> RegisterScreen: HTTP 400 with validation errors
 RegisterScreen --> Guest: Show error message
 else Request validation success
-AuthController -> AuthService: RegisterAsync(register data)
+AuthController -> IAuthService: RegisterAsync(register data)
+IAuthService -> AuthService: RegisterAsync(register data)
 AuthService -> IAuthAccountRepository: FindByPhoneAsync(phone)
 IAuthAccountRepository -> AuthAccountRepository: FindByPhoneAsync(phone)
 AuthAccountRepository -> DbContext: Query user by phone

@@ -22,13 +22,6 @@ class AdminUsersController <<backend_controller>> {
   "+ Deactivate(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
-class AdminUserService <<service>> {
-  "- _repository : IAdminUserRepository"
-  "- _userProfileCache : IUserProfileCacheNullable"
-  --
-  "+ DeactivateAsync(userId: uint, actorRole: string, cancellationToken: CancellationToken) : TaskOfResultOfbool"
-}
-
 class IAdminUserService <<service_interface>> {
   "+ GetUsersAsync(query: AdminUserQuery, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfAdminUserSummaryModel"
   "+ GetUserDetailAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfAdminUserDetailModel"
@@ -36,6 +29,13 @@ class IAdminUserService <<service_interface>> {
   "+ GetUserTopicsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfAdminUserTopicsModel"
   "+ DeactivateAsync(userId: uint, actorRole: string, cancellationToken: CancellationToken) : TaskOfResultOfbool"
   "+ RestoreAsync(userId: uint, actorRole: string, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+}
+
+class AdminUserService <<service>> {
+  "- _repository : IAdminUserRepository"
+  "- _userProfileCache : IUserProfileCacheNullable"
+  --
+  "+ DeactivateAsync(userId: uint, actorRole: string, cancellationToken: CancellationToken) : TaskOfResultOfbool"
 }
 
 class User <<entity>> {
@@ -71,15 +71,6 @@ class RefreshToken <<entity>> {
   "+ User : User"
 }
 
-class AdminUserRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ GetStatusTargetAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserStatusTarget"
-  "+ StageStatusAsync(userId: uint, status: string, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfBool"
-  "+ RevokeActiveRefreshTokensAsync(userId: uint, revokedAt: DateTime, cancellationToken: CancellationToken) : TaskOfInt"
-  "+ SaveChangesAsync(cancellationToken: CancellationToken) : Task"
-}
-
 class IAdminUserRepository <<repository_interface>> {
   "+ GetUsersAsync(query: AdminUserQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfAdminUserSummaryModel"
   "+ GetUserDetailAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserDetailModelNullable"
@@ -89,6 +80,15 @@ class IAdminUserRepository <<repository_interface>> {
   "+ GetStatusTargetAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserStatusTargetNullable"
   "+ StageStatusAsync(userId: uint, status: string, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfbool"
   "+ RevokeActiveRefreshTokensAsync(userId: uint, revokedAt: DateTime, cancellationToken: CancellationToken) : TaskOfint"
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : Task"
+}
+
+class AdminUserRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ GetStatusTargetAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserStatusTarget"
+  "+ StageStatusAsync(userId: uint, status: string, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ RevokeActiveRefreshTokensAsync(userId: uint, revokedAt: DateTime, cancellationToken: CancellationToken) : TaskOfInt"
   "+ SaveChangesAsync(cancellationToken: CancellationToken) : Task"
 }
 

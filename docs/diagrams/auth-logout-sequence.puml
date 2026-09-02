@@ -7,18 +7,19 @@ actor User
 boundary "ProfileScreen UI" as ProfileScreen
 entity "RefreshTokenRequest\n(BE Request DTO)" as RefreshTokenRequest
 control "AuthController" as AuthController
+control "IAuthService" as IAuthService
 control "AuthService" as AuthService
 control "IPasswordHasher" as IPasswordHasher
 entity "RefreshToken" as RefreshTokenEntity
-control "RefreshTokenRepository" as RefreshTokenRepository
 control "IRefreshTokenRepository" as IRefreshTokenRepository
+control "RefreshTokenRepository" as RefreshTokenRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 collections "LocalStorage" as LocalStorage
 note over ProfileScreen, MySQL
 RefreshTokenRequest exists in API Contracts and is reused by logout.
 SecureStorage and Google sign-out are handled in mobile code, but are not drawn as lifelines here.
-Interfaces used in code: IRefreshTokenRepository, IPasswordHasher.
+Interfaces used in code: IAuthService, IPasswordHasher, IRefreshTokenRepository.
 end note
 User -> ProfileScreen: Click Logout button
 ProfileScreen -> ProfileScreen: Get refresh token
@@ -29,7 +30,8 @@ AuthController -> AuthController: Validate RefreshTokenRequest
 alt Request validation fails
 AuthController --> ProfileScreen: HTTP 400 error
 else Request validation success
-AuthController -> AuthService: LogoutAsync(refresh token)
+AuthController -> IAuthService: LogoutAsync(refresh token)
+IAuthService -> AuthService: LogoutAsync(refresh token)
 AuthService -> IPasswordHasher: Hash refresh token
 AuthService -> IRefreshTokenRepository: StageRevokeAsync(tokenHash)
 IRefreshTokenRepository -> RefreshTokenRepository: StageRevokeAsync(tokenHash)

@@ -22,6 +22,9 @@ class BackendRolesController <<backend_controller>> {
   "+ Delete(roleId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
+class IRoleManagementService <<service_interface>> {
+}
+
 class RoleManagementService <<service>> {
   "- _repository : IRoleManagementRepository"
   "- _transactionManager : IApplicationTransactionManager"
@@ -51,14 +54,6 @@ class User <<entity>> {
   "+ UserAuth : UserAuthNullable"
 }
 
-class RoleManagementRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ DeleteRoleAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfBool"
-  "+ GetRoleNameAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfstring"
-  "+ HasUsersWithRoleAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfBool"
-}
-
 class IRoleManagementRepository <<repository_interface>> {
   "+ GetRolesAsync(query: RoleQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfRoleModel"
   "+ RoleExistsAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfbool"
@@ -75,6 +70,14 @@ class IRoleManagementRepository <<repository_interface>> {
   "+ GetRoleIdByNameAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfuintNullable"
   "+ HasUsersWithRoleAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfbool"
   "+ RevokeActiveRefreshTokensAsync(userId: uint, now: DateTime, cancellationToken: CancellationToken) : Task"
+}
+
+class RoleManagementRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ DeleteRoleAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ GetRoleNameAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfstring"
+  "+ HasUsersWithRoleAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfBool"
 }
 
 class VocaNovaDbContext <<dbcontext>> {
@@ -106,4 +109,5 @@ VocaNovaDbContext ..> User
 RoleManagementRepository ..> Role
 IRoleManagementRepository <|.. RoleManagementRepository
 RoleManagementService ..> IRoleManagementRepository : GetRoleNameAsync()
+IRoleManagementService <|.. RoleManagementService
 @enduml

@@ -8,17 +8,18 @@ boundary "OtpScreen UI" as OtpScreen
 entity "OtpVerifyRequest\n(BE Request DTO)" as OtpVerifyRequestDto
 entity "OtpVerifyResponse\n(BE Response DTO)" as OtpVerifyResponseDto
 control "AuthController" as AuthController
+control "IAuthService" as IAuthService
 control "AuthService" as AuthService
 entity "OtpVerification" as OtpEntity
-control "OtpRepository" as OtpRepository
 control "IOtpRepository" as IOtpRepository
+control "OtpRepository" as OtpRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over OtpScreen, MySQL
 Current code has OTP verification by phone.
 OtpVerifyRequest and OtpVerifyResponse exist in API Contracts.
 No separate verify-email flow was found in Auth code.
-Interfaces used in code: IOtpRepository.
+Interfaces used in code: IAuthService, IOtpRepository.
 end note
 Guest -> OtpScreen: Enter OTP code
 Guest -> OtpScreen: Click Verify button
@@ -33,7 +34,8 @@ alt Request validation fails
 AuthController --> OtpScreen: HTTP 400 error
 OtpScreen --> Guest: Show error message
 else Request validation success
-AuthController -> AuthService: VerifyOtpAsync(otp data)
+AuthController -> IAuthService: VerifyOtpAsync(otp data)
+IAuthService -> AuthService: VerifyOtpAsync(otp data)
 AuthService -> IOtpRepository: FindLatestAsync(phone, userId=null)
 IOtpRepository -> OtpRepository: FindLatestAsync(phone, userId=null)
 OtpRepository -> DbContext: Query latest active OTP

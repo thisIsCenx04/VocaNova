@@ -27,14 +27,6 @@ class AdminKnnController <<backend_controller>> {
   "+ DeleteRegion(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
-class AdminKnnLookupService <<service>> {
-  "- _repository : IAdminKnnLookupRepository"
-  "- _topicRecommendationCache : IKnnTopicRecommendationCacheNullable"
-  --
-  "+ DeleteAgeRangeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool"
-  "+ DeleteRegionAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool"
-}
-
 class IAdminKnnLookupService <<service_interface>> {
   "+ GetAgeRangesAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfPagedResultOfAgeRangeLookup"
   "+ GetAgeRangeAsync(id: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfAgeRangeLookup"
@@ -66,6 +58,14 @@ class IAdminKnnLookupService <<service_interface>> {
   "+ UpdateLearningPurposeAsync(id: uint, command: SaveLearningPurposeCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfLearningPurposeLookup"
   "+ DeleteLearningPurposeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool"
   "+ RestoreLearningPurposeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool"
+}
+
+class AdminKnnLookupService <<service>> {
+  "- _repository : IAdminKnnLookupRepository"
+  "- _topicRecommendationCache : IKnnTopicRecommendationCacheNullable"
+  --
+  "+ DeleteAgeRangeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool"
+  "+ DeleteRegionAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool"
 }
 
 class AgeRange <<entity>> {
@@ -114,13 +114,6 @@ class LearningPurpose <<entity>> {
   "+ UserLearningProfiles : ICollectionOfUserLearningProfile"
 }
 
-class AdminKnnLookupRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ GetAgeRangesAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfAgeRangeLookup"
-  "+ FindAgeRangeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfAgeRangeLookup"
-}
-
 class IAdminKnnLookupRepository <<repository_interface>> {
   "+ GetAgeRangesAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfAgeRangeLookup"
   "+ FindAgeRangeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfAgeRangeLookupNullable"
@@ -154,6 +147,13 @@ class IAdminKnnLookupRepository <<repository_interface>> {
   "+ UpdateLearningPurposeAsync(id: uint, name: string, description: stringNullable, cancellationToken: CancellationToken) : TaskOfLearningPurposeLookupNullable"
   "+ SetLearningPurposeStatusAsync(id: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool"
   "+ GetLearningProfileUserIdsAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfuint"
+}
+
+class AdminKnnLookupRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ GetAgeRangesAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfAgeRangeLookup"
+  "+ FindAgeRangeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfAgeRangeLookup"
 }
 
 class VocaNovaDbContext <<dbcontext>> {

@@ -76,6 +76,11 @@ class PersonalTopicsController <<backend_controller>> {
   "+ RemoveWord(topicId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
+class IPersonalTopicQueryService <<service_interface>> {
+  "+ GetTopicsAsync(userId: uint, query: PersonalTopicQuery, cancellationToken: CancellationToken) : TaskOfListResultOfIReadOnlyCollectionOfPersonalTopic"
+  "+ GetWordsAsync(userId: uint, topicId: uint, query: ListWordsQuery, cancellationToken: CancellationToken) : TaskOfListResultOfPagedCollectionOfListWord"
+}
+
 class PersonalTopicQueryService <<service>> {
   "- _repository : IPersonalTopicQueryRepository"
   --
@@ -83,9 +88,9 @@ class PersonalTopicQueryService <<service>> {
   "+ GetWordsAsync(userId: uint, topicId: uint, query: ListWordsQuery, cancellationToken: CancellationToken) : TaskOfListResultOfPagedCollectionOfListWord"
 }
 
-class IPersonalTopicQueryService <<service_interface>> {
-  "+ GetTopicsAsync(userId: uint, query: PersonalTopicQuery, cancellationToken: CancellationToken) : TaskOfListResultOfIReadOnlyCollectionOfPersonalTopic"
-  "+ GetWordsAsync(userId: uint, topicId: uint, query: ListWordsQuery, cancellationToken: CancellationToken) : TaskOfListResultOfPagedCollectionOfListWord"
+class IPersonalTopicMutationService <<service_interface>> {
+  "+ AddWordAsync(userId: uint, topicId: uint, command: AddPersonalTopicWordCommand, cancellationToken: CancellationToken) : TaskOfListResultOfPersonalTopic"
+  "+ RemoveWordAsync(userId: uint, topicId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfListResultOfbool"
 }
 
 class PersonalTopicMutationService <<service>> {
@@ -93,11 +98,6 @@ class PersonalTopicMutationService <<service>> {
   "- _listRepository : IListMutationRepository"
   "- _cache : IUserListCacheNullable"
   --
-  "+ AddWordAsync(userId: uint, topicId: uint, command: AddPersonalTopicWordCommand, cancellationToken: CancellationToken) : TaskOfListResultOfPersonalTopic"
-  "+ RemoveWordAsync(userId: uint, topicId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfListResultOfbool"
-}
-
-class IPersonalTopicMutationService <<service_interface>> {
   "+ AddWordAsync(userId: uint, topicId: uint, command: AddPersonalTopicWordCommand, cancellationToken: CancellationToken) : TaskOfListResultOfPersonalTopic"
   "+ RemoveWordAsync(userId: uint, topicId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfListResultOfbool"
 }
@@ -174,26 +174,16 @@ class UserListWord <<entity>> {
   "+ Word : Word"
 }
 
-class PersonalTopicQueryRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ GetTopicsAsync(userId: uint, containsWordId: uintNullable, cancellationToken: CancellationToken) : TaskOfListLookupResultOfIReadOnlyCollectionOfPersonalTopic"
-  "+ GetTopicWordsAsync(userId: uint, topicId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfListLookupResultOfPagedCollectionOfListWord"
-}
-
 class IPersonalTopicQueryRepository <<repository_interface>> {
   "+ GetTopicsAsync(userId: uint, containsWordId: uintNullable, cancellationToken: CancellationToken) : TaskOfListLookupResultOfIReadOnlyCollectionOfPersonalTopic"
   "+ GetTopicWordsAsync(userId: uint, topicId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfListLookupResultOfPagedCollectionOfListWord"
 }
 
-class PersonalTopicMutationRepository <<repository>> {
+class PersonalTopicQueryRepository <<repository>> {
   "- _dbContext : VocaNovaDbContext"
   --
-  "+ GetTopicsAsync(userId: uint, wordId: uintNullable, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfPersonalTopic"
-  "+ TopicExistsAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfBool"
-  "+ WordBelongsToTopicAsync(topicId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfBool"
-  "+ FindActiveListIdAsync(userId: uint, topicId: uint, cancellationToken: CancellationToken) : TaskOfuint"
-  "+ GetOrCreateListIdAsync(userId: uint, topicId: uint, cancellationToken: CancellationToken) : TaskOfuint"
+  "+ GetTopicsAsync(userId: uint, containsWordId: uintNullable, cancellationToken: CancellationToken) : TaskOfListLookupResultOfIReadOnlyCollectionOfPersonalTopic"
+  "+ GetTopicWordsAsync(userId: uint, topicId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfListLookupResultOfPagedCollectionOfListWord"
 }
 
 class IPersonalTopicMutationRepository <<repository_interface>> {
@@ -204,11 +194,14 @@ class IPersonalTopicMutationRepository <<repository_interface>> {
   "+ GetOrCreateListIdAsync(userId: uint, topicId: uint, cancellationToken: CancellationToken) : TaskOfuint"
 }
 
-class ListMutationRepository <<repository>> {
+class PersonalTopicMutationRepository <<repository>> {
   "- _dbContext : VocaNovaDbContext"
   --
-  "+ AddWordAsync(userId: uint, listId: uint, command: AddListWordCommand, cancellationToken: CancellationToken) : TaskOfListWord"
-  "+ RemoveWordAsync(userId: uint, listId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ GetTopicsAsync(userId: uint, wordId: uintNullable, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfPersonalTopic"
+  "+ TopicExistsAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ WordBelongsToTopicAsync(topicId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ FindActiveListIdAsync(userId: uint, topicId: uint, cancellationToken: CancellationToken) : TaskOfuint"
+  "+ GetOrCreateListIdAsync(userId: uint, topicId: uint, cancellationToken: CancellationToken) : TaskOfuint"
 }
 
 class IListMutationRepository <<repository_interface>> {
@@ -226,6 +219,13 @@ class IListMutationRepository <<repository_interface>> {
   "+ GetRandomRelationWordIdsAsync(userId: uint, listId: uint, relationType: string, count: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfuint"
   "+ RemoveWordAsync(userId: uint, listId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfbool"
   "+ UpdateNoteAsync(userId: uint, listId: uint, wordId: uint, note: stringNullable, cancellationToken: CancellationToken) : TaskOfListWordNullable"
+}
+
+class ListMutationRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ AddWordAsync(userId: uint, listId: uint, command: AddListWordCommand, cancellationToken: CancellationToken) : TaskOfListWord"
+  "+ RemoveWordAsync(userId: uint, listId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfBool"
 }
 
 class VocaNovaDbContext <<dbcontext>> {

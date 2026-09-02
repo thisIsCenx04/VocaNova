@@ -22,13 +22,6 @@ class AdminTopicsController <<backend_controller>> {
   "+ SoftDelete(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
-class TopicAdminService <<service>> {
-  "- _repository : ITopicAdminRepository"
-  "- _cache : ITopicCacheNullable"
-  --
-  "+ SoftDeleteAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryBool"
-}
-
 class ITopicAdminService <<service_interface>> {
   "+ ListAsync(query: AdminTopicQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfIReadOnlyCollectionOfAdminTopic"
   "+ CreateAsync(command: CreateTopicCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfTopicSummary"
@@ -36,6 +29,13 @@ class ITopicAdminService <<service_interface>> {
   "+ UpdateAsync(topicId: uint, command: UpdateTopicCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfTopicSummary"
   "+ SoftDeleteAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
   "+ RestoreAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
+}
+
+class TopicAdminService <<service>> {
+  "- _repository : ITopicAdminRepository"
+  "- _cache : ITopicCacheNullable"
+  --
+  "+ SoftDeleteAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryBool"
 }
 
 class Topic <<entity>> {
@@ -49,12 +49,6 @@ class Topic <<entity>> {
   "+ WordTopics : ICollectionOfWordTopic"
 }
 
-class TopicAdminRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ SetStatusAsync(topicId: uint, status: string, cancellationToken: CancellationToken) : TaskOfBool"
-}
-
 class ITopicAdminRepository <<repository_interface>> {
   "+ ListAsync(query: AdminTopicQuery, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminTopic"
   "+ ExistsAsync(topicId: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfbool"
@@ -65,6 +59,12 @@ class ITopicAdminRepository <<repository_interface>> {
   "+ AddWordsAsync(topicId: uint, wordIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : TaskOfint"
   "+ HasActiveWordsAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfbool"
   "+ SetStatusAsync(topicId: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool"
+}
+
+class TopicAdminRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ SetStatusAsync(topicId: uint, status: string, cancellationToken: CancellationToken) : TaskOfBool"
 }
 
 class VocaNovaDbContext <<dbcontext>> {

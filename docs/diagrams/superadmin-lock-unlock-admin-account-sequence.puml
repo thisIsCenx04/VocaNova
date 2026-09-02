@@ -7,12 +7,12 @@ actor SuperAdmin
 boundary "Admin Accounts UI" as AdminAccountsPage
 control "AdminAccountsController\n(FE Dashboard)" as DashboardController
 control "SuperAdminAccountsController\n(BE API)" as ApiController
-control "SuperAdminAccountService" as AccountService
 control "ISuperAdminAccountService" as ISuperAdminAccountService
+control "SuperAdminAccountService" as AccountService
 entity "User" as UserEntity
 entity "RefreshToken" as RefreshTokenEntity
-control "SuperAdminAccountRepository" as AccountRepository
 control "ISuperAdminAccountRepository" as ISuperAdminAccountRepository
+control "SuperAdminAccountRepository" as AccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over AdminAccountsPage, MySQL
@@ -47,7 +47,8 @@ AccountService --> ApiController: Conflict result
 ApiController --> DashboardController: HTTP 409 error
 DashboardController --> AdminAccountsPage: Show feedback
 else Admin account can be changed
-AccountService -> AccountService: Begin transaction
+AccountService -> ISuperAdminAccountService: Begin transaction
+ISuperAdminAccountService -> AccountService: Begin transaction
 opt Lock admin account
 AccountService -> ISuperAdminAccountRepository: RevokeActiveRefreshTokensAsync(id)
 ISuperAdminAccountRepository -> AccountRepository: RevokeActiveRefreshTokensAsync(id)

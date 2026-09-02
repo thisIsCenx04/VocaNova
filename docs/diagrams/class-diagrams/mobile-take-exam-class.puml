@@ -84,6 +84,10 @@ class QuizSessionsController <<backend_controller>> {
   "+ Create(request: CreateSessionRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
+class IQuizSessionService <<service_interface>> {
+  "+ CreateSessionAsync(userId: uint, command: CreateQuizSessionCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfCreatedQuizSession"
+}
+
 class QuizSessionService <<service>> {
   "- _sessionBuilder : IQuizSessionBuilder"
   "- _questionBuilder : IQuizQuestionBuilder"
@@ -93,8 +97,8 @@ class QuizSessionService <<service>> {
   "+ CreateSessionAsync(userId: uint, command: CreateQuizSessionCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfCreatedQuizSession"
 }
 
-class IQuizSessionService <<service_interface>> {
-  "+ CreateSessionAsync(userId: uint, command: CreateQuizSessionCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfCreatedQuizSession"
+class IQuizSessionBuilder <<service_interface>> {
+  "+ BuildPoolAsync(userId: uint, command: BuildQuizPoolCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfIReadOnlyCollectionOfQuizPoolWord"
 }
 
 class QuizSessionBuilder <<entity>> {
@@ -103,17 +107,13 @@ class QuizSessionBuilder <<entity>> {
   "+ BuildPoolAsync(userId: uint, request: BuildQuizPoolCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfIReadOnlyCollectionOfQuizPoolWord"
 }
 
-class IQuizSessionBuilder <<service_interface>> {
-  "+ BuildPoolAsync(userId: uint, command: BuildQuizPoolCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfIReadOnlyCollectionOfQuizPoolWord"
+class IQuizQuestionBuilder <<service_interface>> {
+  "+ BuildQuestionAsync(wordId: uint, questionType: int, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizQuestion"
 }
 
 class QuizQuestionBuilder <<entity>> {
   "- _quizQuestionRepository : IQuizQuestionRepository"
   --
-  "+ BuildQuestionAsync(wordId: uint, questionType: int, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizQuestion"
-}
-
-class IQuizQuestionBuilder <<service_interface>> {
   "+ BuildQuestionAsync(wordId: uint, questionType: int, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizQuestion"
 }
 
@@ -215,14 +215,19 @@ class TestSessionTopic <<entity>> {
   "+ Topic : Topic"
 }
 
+class IQuizPoolRepository <<repository_interface>> {
+  "+ GetCandidatesAsync(userId: uint, command: BuildQuizPoolCommand, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfQuizPoolWord"
+}
+
 class QuizPoolRepository <<repository>> {
   "- _dbContext : VocaNovaDbContext"
   --
   "+ GetCandidatesAsync(userId: uint, command: BuildQuizPoolCommand, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfQuizPoolWord"
 }
 
-class IQuizPoolRepository <<repository_interface>> {
-  "+ GetCandidatesAsync(userId: uint, command: BuildQuizPoolCommand, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfQuizPoolWord"
+class IQuizQuestionRepository <<repository_interface>> {
+  "+ FindQuestionWordAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizQuestionWordNullable"
+  "+ GetDistractorsAsync(excludedWordId: uint, wordClass: string, topicIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfQuizQuestionWord"
 }
 
 class QuizQuestionRepository <<repository>> {
@@ -232,19 +237,14 @@ class QuizQuestionRepository <<repository>> {
   "+ GetDistractorsAsync(excludingWordId: uint, wordClass: string, topicIds: ListOfUint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfQuizQuestionWord"
 }
 
-class IQuizQuestionRepository <<repository_interface>> {
-  "+ FindQuestionWordAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizQuestionWordNullable"
-  "+ GetDistractorsAsync(excludedWordId: uint, wordClass: string, topicIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfQuizQuestionWord"
+class IQuizSessionRepository <<repository_interface>> {
+  "+ CreateAsync(userId: uint, command: CreateQuizSessionCommand, topicIds: IReadOnlyCollectionOfuint, questionCount: int, cancellationToken: CancellationToken) : TaskOfQuizSession"
 }
 
 class QuizSessionRepository <<repository>> {
   "- _dbContext : VocaNovaDbContext"
   --
   "+ CreateAsync(userId: uint, command: CreateQuizSessionCommand, topicIds: ListOfUint, questionCount: int, cancellationToken: CancellationToken) : TaskOfQuizSession"
-}
-
-class IQuizSessionRepository <<repository_interface>> {
-  "+ CreateAsync(userId: uint, command: CreateQuizSessionCommand, topicIds: IReadOnlyCollectionOfuint, questionCount: int, cancellationToken: CancellationToken) : TaskOfQuizSession"
 }
 
 class VocaNovaDbContext <<dbcontext>> {

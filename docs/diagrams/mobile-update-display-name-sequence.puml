@@ -13,11 +13,12 @@ entity "UserProfileDto\n(FE Response DTO)" as FeProfileDto
 entity "UpdateUserProfileRequest\n(BE Request DTO)" as BeUpdateProfileDto
 entity "UserProfileResponse\n(BE Response DTO)" as BeProfileDto
 control "AuthController\n(BE API)" as BeController
+control "IAuthService" as IAuthService
 control "AuthService" as AuthService
 entity "User" as UserEntity
 entity "UserProfile" as UserProfileEntity
-control "AuthAccountRepository" as AccountRepository
 control "IAuthAccountRepository" as IAuthAccountRepository
+control "AuthAccountRepository" as AccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -29,7 +30,7 @@ FE response DTO exists: UserProfileDto.
 BE DTOs exist: UpdateUserProfileRequest and UserProfileResponse.
 Endpoint is PUT /api/auth/me/profile.
 Entities exist: User and UserProfile.
-Interfaces used in code: IAuthAccountRepository.
+Interfaces used in code: IAuthService, IAuthAccountRepository.
 end note
 
 Learner -> DisplayNameUi: Enter new display name
@@ -47,7 +48,8 @@ alt Request invalid
     FeApiService --> FeController: Action failed
     FeController --> DisplayNameUi: Show update error
 else Request valid
-    BeController -> AuthService: UpdateProfileAsync(userId, command)
+    BeController -> IAuthService: UpdateProfileAsync(userId, command)
+    IAuthService -> AuthService: UpdateProfileAsync(userId, command)
     AuthService -> IAuthAccountRepository: UpdateProfileAsync(userId, command)
     IAuthAccountRepository -> AccountRepository: UpdateProfileAsync(userId, command)
     AccountRepository -> DbContext: Find user aggregate

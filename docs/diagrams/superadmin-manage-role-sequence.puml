@@ -11,11 +11,12 @@ entity "RoleQueryRequest\n(BE Request DTO)" as RoleQueryRequestDto
 entity "SaveRoleRequest\n(BE Request DTO)" as SaveRoleRequestDto
 entity "RoleResponse\n(BE Response DTO)" as RoleResponseDto
 control "RolesController\n(BE API)" as ApiController
+control "IRoleManagementService" as IRoleManagementService
 control "RoleManagementService" as RoleService
 entity "Role" as RoleEntity
 entity "User" as UserEntity
-control "RoleManagementRepository" as RoleRepository
 control "IRoleManagementRepository" as IRoleManagementRepository
+control "RoleManagementRepository" as RoleRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over RolesPage, MySQL
@@ -25,7 +26,7 @@ API uses RoleQueryRequest, SaveRoleRequest, and RoleResponse.
 FE response DTO exists: ManagedRole for role list data.
 Delete uses route id only and returns bool in the API envelope.
 Assign/Remove role also exist in API, but Dashboard calls them from AdminAccountsController role assignment.
-Interfaces used in code: IRoleManagementRepository.
+Interfaces used in code: IRoleManagementService, IRoleManagementRepository.
 end note
 SuperAdmin -> RolesPage: Open role management
 RolesPage -> DashboardController: GET /roles(search, type, sort)
@@ -38,7 +39,8 @@ alt Request validation fails
 ApiController --> DashboardController: HTTP 400 error
 DashboardController --> RolesPage: Show error message
 else Request validation success
-ApiController -> RoleService: GetRolesAsync(query)
+ApiController -> IRoleManagementService: GetRolesAsync(query)
+IRoleManagementService -> RoleService: GetRolesAsync(query)
 RoleService -> IRoleManagementRepository: GetRolesAsync(query)
 IRoleManagementRepository -> RoleRepository: GetRolesAsync(query)
 RoleRepository -> DbContext: Query roles
@@ -65,8 +67,10 @@ else Form input valid
 DashboardController -> SaveRoleRequestDto: VocaNovaApiClient.CreateRoleAsync(roleName)\nCreate request data(role_name)
 SaveRoleRequestDto -> ApiController: POST /api/superadmin/roles\nSaveRoleRequest
 ApiController -> ApiController: Validate SaveRoleRequest
-ApiController -> RoleService: CreateAsync(role data)
-RoleService -> RoleService: Normalize and validate role name
+ApiController -> IRoleManagementService: CreateAsync(role data)
+IRoleManagementService -> RoleService: CreateAsync(role data)
+RoleService -> IRoleManagementService: Normalize and validate role name
+IRoleManagementService -> RoleService: Normalize and validate role name
 RoleService -> IRoleManagementRepository: RoleExistsAsync(roleName)
 IRoleManagementRepository -> RoleRepository: RoleExistsAsync(roleName)
 RoleRepository -> DbContext: Query role by name
@@ -81,7 +85,8 @@ RoleService --> ApiController: Conflict result
 ApiController --> DashboardController: HTTP 409 error
 DashboardController --> RolesPage: Show error message
 else Role can be created
-RoleService -> RoleService: Begin transaction
+RoleService -> IRoleManagementService: Begin transaction
+IRoleManagementService -> RoleService: Begin transaction
 RoleService -> IRoleManagementRepository: AddRoleAsync(roleName)
 IRoleManagementRepository -> RoleRepository: AddRoleAsync(roleName)
 RoleRepository -> RoleEntity: Create Role
@@ -107,7 +112,8 @@ else Form input valid
 DashboardController -> SaveRoleRequestDto: VocaNovaApiClient.UpdateRoleAsync(roleId, roleName)\nCreate request data(role_name)
 SaveRoleRequestDto -> ApiController: PUT /api/superadmin/roles/{roleId}SaveRoleRequest
 ApiController -> ApiController: Validate SaveRoleRequest
-ApiController -> RoleService: UpdateAsync(roleId, role data)
+ApiController -> IRoleManagementService: UpdateAsync(roleId, role data)
+IRoleManagementService -> RoleService: UpdateAsync(roleId, role data)
 RoleService -> IRoleManagementRepository: GetRoleNameAsync(roleId)
 IRoleManagementRepository -> RoleRepository: GetRoleNameAsync(roleId)
 RoleRepository -> DbContext: Query current role name
@@ -136,7 +142,8 @@ RoleService --> ApiController: Conflict result
 ApiController --> DashboardController: HTTP 409 error
 DashboardController --> RolesPage: Show error message
 else Role name is available
-RoleService -> RoleService: Begin transaction
+RoleService -> IRoleManagementService: Begin transaction
+IRoleManagementService -> RoleService: Begin transaction
 RoleService -> IRoleManagementRepository: UpdateRoleAsync(roleId, roleName)
 IRoleManagementRepository -> RoleRepository: UpdateRoleAsync(roleId, roleName)
 RoleRepository -> RoleEntity: Update role_name
@@ -158,7 +165,8 @@ SuperAdmin -> RolesPage: Click Delete role
 RolesPage -> DashboardController: POST /roles/{roleId}/delete
 DashboardController -> ApiController: VocaNovaApiClient.DeleteRoleAsync(roleId)\nDELETE /api/superadmin/roles/{roleId}
 ApiController -> ApiController: Check super admin authorization
-ApiController -> RoleService: DeleteAsync(roleId)
+ApiController -> IRoleManagementService: DeleteAsync(roleId)
+IRoleManagementService -> RoleService: DeleteAsync(roleId)
 RoleService -> IRoleManagementRepository: GetRoleNameAsync(roleId)
 IRoleManagementRepository -> RoleRepository: GetRoleNameAsync(roleId)
 RoleRepository -> DbContext: Query role name
@@ -187,7 +195,8 @@ RoleService --> ApiController: Conflict result
 ApiController --> DashboardController: HTTP 409 error
 DashboardController --> RolesPage: Show error message
 else Role can be deleted
-RoleService -> RoleService: Begin transaction
+RoleService -> IRoleManagementService: Begin transaction
+IRoleManagementService -> RoleService: Begin transaction
 RoleService -> IRoleManagementRepository: DeleteRoleAsync(roleId)
 IRoleManagementRepository -> RoleRepository: DeleteRoleAsync(roleId)
 RoleRepository -> RoleEntity: Remove Role

@@ -17,15 +17,15 @@ entity "AdminDashboardStatsResponse\n(BE Response DTO)" as BeDashboardStatsDto
 entity "AdminLearningStatsResponse\n(BE Response DTO)" as BeLearningStatsDto
 entity "AdminMasteryDistributionResponse\n(BE Response DTO)" as BeMasteryDto
 entity "AdminActivityTrendResponse\n(BE Response DTO)" as BeActivityDto
-control "AdminStatsService" as StatsService
 control "IAdminStatsService" as IAdminStatsService
+control "AdminStatsService" as StatsService
 entity "User" as UserEntity
 entity "Word" as WordEntity
 entity "TestSession" as TestSessionEntity
 entity "TestAnswer" as TestAnswerEntity
 entity "UserWordProgress" as UserWordProgressEntity
-control "AdminStatsRepository" as StatsRepository
 control "IAdminStatsRepository" as IAdminStatsRepository
+control "AdminStatsRepository" as StatsRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -49,7 +49,8 @@ FeController -> BeController: VocaNovaApiClient.GetDashboardStatsAsync\nGET /api
 BeController -> BeController: Check admin authorization
 BeController -> IAdminStatsService: GetDashboardAsync()
 IAdminStatsService -> StatsService: GetDashboardAsync()
-StatsService -> StatsService: Calculate today, tomorrow,\nand seven-day window
+StatsService -> IAdminStatsService: Calculate today, tomorrow,\nand seven-day window
+IAdminStatsService -> StatsService: Calculate today, tomorrow,\nand seven-day window
 StatsService -> IAdminStatsRepository: GetDashboardStatsAsync(today,\ntomorrow, sevenDayStart)
 IAdminStatsRepository -> StatsRepository: GetDashboardStatsAsync(today,\ntomorrow, sevenDayStart)
 StatsRepository -> DbContext: Count active users
@@ -81,7 +82,8 @@ FeController -> BeController: VocaNovaApiClient.GetLearningStatsAsync\nGET /api/
 BeController -> BeController: Check admin authorization
 BeController -> IAdminStatsService: GetLearningStatsAsync()
 IAdminStatsService -> StatsService: GetLearningStatsAsync()
-StatsService -> StatsService: Calculate trend window\nand top wrong word limit
+StatsService -> IAdminStatsService: Calculate trend window\nand top wrong word limit
+IAdminStatsService -> StatsService: Calculate trend window\nand top wrong word limit
 StatsService -> IAdminStatsRepository: GetTopWrongWordsAsync(limit)
 IAdminStatsRepository -> StatsRepository: GetTopWrongWordsAsync(limit)
 StatsRepository -> DbContext: Query wrong answers by word
@@ -126,7 +128,8 @@ UserWordProgressEntity --> DbContext: Mastery aggregate
 UserEntity --> DbContext: Active users
 DbContext --> StatsRepository: Mastery count rows
 StatsRepository --> StatsService: Mastery distribution rows
-StatsService -> StatsService: Fill levels 0..5
+StatsService -> IAdminStatsService: Fill levels 0..5
+IAdminStatsService -> StatsService: Fill levels 0..5
 StatsService --> BeController: Mastery distribution result
 BeController -> BeMasteryDto: Create AdminMasteryDistributionResponse
 BeMasteryDto --> BeController: AdminMasteryDistributionResponse
@@ -137,7 +140,8 @@ FeController -> BeController: VocaNovaApiClient.GetActivityTrendAsync("daily")\n
 BeController -> BeController: Check admin authorization
 BeController -> IAdminStatsService: GetActivityTrendAsync(granularity)
 IAdminStatsService -> StatsService: GetActivityTrendAsync(granularity)
-StatsService -> StatsService: Validate granularity\nand build buckets
+StatsService -> IAdminStatsService: Validate granularity\nand build buckets
+IAdminStatsService -> StatsService: Validate granularity\nand build buckets
 
 alt Granularity invalid
     StatsService --> BeController: Validation failure
@@ -162,7 +166,8 @@ else Granularity valid
     TestSessionEntity --> DbContext: Session count rows
     DbContext --> StatsRepository: Session count rows
     StatsRepository --> StatsService: Activity source rows
-    StatsService -> StatsService: Build activity points
+    StatsService -> IAdminStatsService: Build activity points
+    IAdminStatsService -> StatsService: Build activity points
     StatsService --> BeController: Activity trend result
     BeController -> BeActivityDto: Create AdminActivityTrendResponse
     BeActivityDto --> BeController: AdminActivityTrendResponse

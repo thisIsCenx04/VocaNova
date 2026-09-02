@@ -64,18 +64,18 @@ class WordsController <<backend_controller>> {
   "+ GetById(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
+class IWordReadService <<service_interface>> {
+  "+ SearchAsync(query: WordSearchQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfPagedCollectionOfWordSummary"
+  "+ GetByIdAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordDetail"
+  "+ GetDailyAsync(cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordDetail"
+}
+
 class WordReadService <<service>> {
   "- _wordRepository : IWordReadRepository"
   "- _wordSearchCache : IWordSearchCacheNullable"
   "- _wordDetailCache : IWordDetailCacheNullable"
   --
   "+ GetByIdAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryWordDetail"
-}
-
-class IWordReadService <<service_interface>> {
-  "+ SearchAsync(query: WordSearchQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfPagedCollectionOfWordSummary"
-  "+ GetByIdAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordDetail"
-  "+ GetDailyAsync(cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordDetail"
 }
 
 class Word <<entity>> {
@@ -120,16 +120,16 @@ class WordRelation <<entity>> {
   "+ Word : Word"
 }
 
-class WordReadRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
-  --
-  "+ FindDetailAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfWordDetailNullable"
-}
-
 class IWordReadRepository <<repository_interface>> {
   "+ SearchAsync(normalizedQuery: stringNullable, page: int, limit: int, cefr: stringNullable, topicId: uintNullable, isPhrase: boolNullable, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfWordSummary"
   "+ FindDetailAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfWordDetailNullable"
   "+ GetDailyCandidateWordIdsAsync(requirePlayableAudio: bool, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfuint"
+}
+
+class WordReadRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ FindDetailAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfWordDetailNullable"
 }
 
 class VocaNovaDbContext <<dbcontext>> {

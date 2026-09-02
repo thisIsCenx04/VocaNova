@@ -7,13 +7,13 @@ actor Admin
 boundary "Vocabulary UI" as VocabularyPage
 control "VocabularyController\n(FE Dashboard)" as DashboardController
 entity "UpdateWordImageRequest\n(BE Request DTO)" as ImageRequestDto
-entity "WordDetailResponse\n(BE Response DTO)" as ImageResponseDto
 control "AdminWordsController\n(BE API)" as ApiController
-control "WordAdminService" as WordService
+entity "WordDetailResponse\n(BE Response DTO)" as ImageResponseDto
 control "IWordAdminService" as IWordAdminService
+control "WordAdminService" as WordService
 entity "Word" as WordEntity
-control "WordAdminRepository" as WordRepository
 control "IWordAdminRepository" as IWordAdminRepository
+control "WordAdminRepository" as WordRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over VocabularyPage, MySQL
@@ -36,7 +36,8 @@ DashboardController --> VocabularyPage: Show error message
 else Request validation success
 ApiController -> IWordAdminService: UpdateImageUrlAsync(wordId, null)
 IWordAdminService -> WordService: UpdateImageUrlAsync(wordId, null)
-WordService -> WordService: Normalize image URL
+WordService -> IWordAdminService: Normalize image URL
+IWordAdminService -> WordService: Normalize image URL
 WordService -> IWordAdminRepository: SetImageUrlAsync(wordId, null)
 IWordAdminRepository -> WordRepository: SetImageUrlAsync(wordId, null)
 WordRepository -> DbContext: Find word

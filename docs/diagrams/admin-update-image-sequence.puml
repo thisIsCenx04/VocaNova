@@ -6,16 +6,16 @@ skinparam sequenceMessageAlign center
 actor Admin
 boundary "Vocabulary UI" as VocabularyPage
 control "VocabularyController\n(FE Dashboard)" as DashboardController
-entity "WordDetail\n(FE Response DTO)" as FeWordDetailDto
 entity "UploadWordImageRequest\n(BE Request DTO)" as ImageRequestDto
-entity "WordDetailResponse\n(BE Response DTO)" as ImageResponseDto
+entity "WordDetail\n(FE Response DTO)" as FeWordDetailDto
 control "AdminWordsController\n(BE API)" as ApiController
-control "WordAdminService" as WordService
+entity "WordDetailResponse\n(BE Response DTO)" as ImageResponseDto
 control "IWordAdminService" as IWordAdminService
+control "WordAdminService" as WordService
 control "IWordImageStorage" as IWordImageStorage
 entity "Word" as WordEntity
-control "WordAdminRepository" as WordRepository
 control "IWordAdminRepository" as IWordAdminRepository
+control "WordAdminRepository" as WordRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over VocabularyPage, MySQL
@@ -24,7 +24,7 @@ Dashboard VocabularyController uploads image file through VocaNovaApiClient.
 API endpoint is POST /api/admin/words/{id}/image.
 API uses UploadWordImageRequest and returns WordDetailResponse.
 FE response DTO exists: WordDetail when Dashboard reloads word detail.
-Interfaces used in code: IWordAdminService, IWordAdminRepository, IWordImageStorage.
+Interfaces used in code: IWordAdminService, IWordImageStorage, IWordAdminRepository.
 end note
 Admin -> VocabularyPage: Choose image file
 Admin -> VocabularyPage: Click Upload image
@@ -39,7 +39,8 @@ ApiController -> ApiController: Check admin authorization
 ApiController -> ApiController: Bind UploadWordImageRequest
 ApiController -> IWordAdminService: UploadImageAsync(wordId, file)
 IWordAdminService -> WordService: UploadImageAsync(wordId, file)
-WordService -> WordService: Validate image file(type and size)
+WordService -> IWordAdminService: Validate image file(type and size)
+IWordAdminService -> WordService: Validate image file(type and size)
 alt Image file invalid
 WordService --> ApiController: Validation failure
 ApiController --> DashboardController: HTTP 400 error
