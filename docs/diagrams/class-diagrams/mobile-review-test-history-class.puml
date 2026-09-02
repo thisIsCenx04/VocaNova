@@ -1,0 +1,88 @@
+@startuml
+title Review Test History Class Diagram (/api/quiz/history)
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from mobile-review-test-history-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+class QuizSessionsController <<backend_controller>> {
+  - _sessionService : IQuizSessionService
+  - _submissionService : IQuizSubmissionService
+  - _resultService : IQuizResultService
+  - _historyService : IQuizHistoryService
+  --
+  + GetHistory(request: QuizHistoryRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+}
+class QuizHistoryRequest <<dto>> {
+  + Page : int
+  + Limit : int
+}
+class QuizHistoryItemResponse <<dto>> {
+  + SessionId : uint
+  + AnswerMethod : string
+  + Mode : string
+  + QuestionType : int
+  + QuestionCount : int
+  + CorrectCount : int
+  + WrongCount : int
+  + Accuracy : float
+  + Score : float
+  + MaxStreak : int
+  + Status : string
+  + StartedAt : DateTime
+}
+class QuizHistoryService <<service>> {
+  - _repository : IQuizHistoryRepository
+  --
+  + GetHistoryAsync(userId: uint, query: QuizHistoryQuery, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfPagedCollectionOfQuizHistoryItem
+}
+class TestSession <<entity>> {
+  + SessionId : uint
+  + UserId : uint
+  + TestType : string
+  + Mode : string
+  + QuestionType : int
+  + ScopeType : string
+  + ScopeDateFrom : DateOnlyNullable
+  + ScopeDateTo : DateOnlyNullable
+  + WordOrder : string
+  + WordLimit : intNullable
+  + TimeLimitSec : intNullable
+  + Lives : intNullable
+}
+class QuizHistoryRepository <<repository>> {
+  - _dbContext : VocaNovaDbContext
+  --
+  + GetHistoryAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfQuizHistoryItem
+}
+class VocaNovaDbContext <<dbcontext>> {
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
+  --
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+}
+class MySQL_Database <<database>> {
+
+}
+QuizSessionsController ..> QuizHistoryRequest
+QuizSessionsController ..> QuizHistoryService : GetHistoryAsync()
+QuizHistoryService ..> QuizHistoryRepository : GetHistoryAsync()
+QuizHistoryRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+VocaNovaDbContext ..> TestSession
+QuizSessionsController ..> QuizHistoryItemResponse
+@enduml

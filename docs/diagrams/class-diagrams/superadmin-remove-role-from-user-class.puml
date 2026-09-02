@@ -1,0 +1,95 @@
+@startuml
+title Remove Role From User Class Diagram (/api/superadmin/roles/{roleId}/users/{userId})
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from superadmin-remove-role-from-user-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+class RolesController <<backend_controller>> {
+  - _apiClient : IVocaNovaApiClient
+  --
+  + Index(search: stringNullable, type: stringNullable, sortBy: stringNullable, sortDirection: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + Create() : IActionResult
+}
+class RoleManagementService <<service>> {
+  - _repository : IRoleManagementRepository
+  - _transactionManager : IApplicationTransactionManager
+  - _profileCache : IUserProfileCacheNullable
+  --
+  + RemoveRoleAsync(roleId: uint, userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool
+}
+class Role <<entity>> {
+  + RoleId : uint
+  + RoleName : string
+  + Users : ICollectionOfUser
+}
+class User <<entity>> {
+  + UserId : uint
+  + RoleId : uint
+  + Status : string
+  + LastLoginAt : DateTimeNullable
+  + CreatedAt : DateTime
+  + UpdatedAt : DateTime
+  + AuditLogs : ICollectionOfAuditLog
+  + OtpVerifications : ICollectionOfOtpVerification
+  + RefreshTokens : ICollectionOfRefreshToken
+  + Role : Role
+  + TestSessions : ICollectionOfTestSession
+  + UserAuth : UserAuthNullable
+}
+class RefreshToken <<entity>> {
+  + TokenId : uint
+  + UserId : uint
+  + TokenHash : string
+  + DeviceInfo : stringNullable
+  + IpAddress : stringNullable
+  + ExpiresAt : DateTime
+  + CreatedAt : DateTime
+  + RevokedAt : DateTimeNullable
+  + User : User
+}
+class RoleManagementRepository <<repository>> {
+  - _dbContext : VocaNovaDbContext
+  --
+  + GetRoleNameAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfstring
+  + GetUserRoleNameAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfstring
+  + RemoveRoleAsync(roleId: uint, userId: uint, defaultRoleId: uint, cancellationToken: CancellationToken) : TaskOfBool
+  + GetRoleIdByNameAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfuint
+  + RevokeActiveRefreshTokensAsync(userId: uint, now: DateTime, cancellationToken: CancellationToken) : Task
+}
+class VocaNovaDbContext <<dbcontext>> {
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
+  --
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+}
+class MySQL_Database <<database>> {
+
+}
+RolesController ..> RoleManagementService : RemoveRoleAsync()
+RoleManagementService ..> RoleManagementRepository : GetRoleNameAsync()
+RoleManagementRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+VocaNovaDbContext ..> Role
+RoleManagementService ..> RoleManagementRepository : GetRoleIdByNameAsync()
+RoleManagementService ..> RoleManagementRepository : GetUserRoleNameAsync()
+VocaNovaDbContext ..> User
+RoleManagementService ..> RoleManagementRepository : RemoveRoleAsync()
+RoleManagementRepository ..> User
+RoleManagementService ..> RoleManagementRepository : RevokeActiveRefreshTokensAsync()
+RoleManagementRepository ..> RefreshToken
+@enduml

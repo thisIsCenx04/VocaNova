@@ -1,0 +1,69 @@
+@startuml
+title Delete Topic Class Diagram (/api/admin/topics/{id})
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from admin-delete-topic-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+class TopicsController <<frontend_controller>> {
+  - _apiClient : IVocaNovaApiClient
+  --
+  + Delete(id: uint, returnUrl: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
+}
+class AdminTopicsController <<backend_controller>> {
+  - _service : ITopicAdminService
+  --
+  + SoftDelete(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+}
+class TopicAdminService <<service>> {
+  - _repository : ITopicAdminRepository
+  - _cache : ITopicCacheNullable
+  --
+  + SoftDeleteAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryBool
+}
+class Topic <<entity>> {
+  + TopicId : uint
+  + TopicName : string
+  + TopicNameVi : stringNullable
+  + Icon : stringNullable
+  + Status : string
+  + TestSessionTopics : ICollectionOfTestSessionTopic
+  + UserTopicPreferences : ICollectionOfUserTopicPreference
+  + WordTopics : ICollectionOfWordTopic
+}
+class TopicAdminRepository <<repository>> {
+  - _dbContext : VocaNovaDbContext
+  --
+  + SetStatusAsync(topicId: uint, status: string, cancellationToken: CancellationToken) : TaskOfBool
+}
+class VocaNovaDbContext <<dbcontext>> {
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
+  --
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+}
+class MySQL_Database <<database>> {
+
+}
+TopicsController ..> AdminTopicsController
+AdminTopicsController ..> TopicAdminService : SoftDeleteAsync()
+TopicAdminService ..> TopicAdminRepository : SetStatusAsync()
+TopicAdminRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+VocaNovaDbContext ..> Topic
+TopicAdminRepository ..> Topic
+@enduml

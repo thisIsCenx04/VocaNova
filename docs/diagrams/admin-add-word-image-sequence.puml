@@ -12,7 +12,6 @@ entity "WordDetailResponse\n(BE Response DTO)" as ImageResponseDto
 control "AdminWordsController\n(BE API)" as ApiController
 control "WordAdminService" as WordService
 entity "Word" as WordEntity
-control "IWordImageStorage" as ImageStorage
 control "WordAdminRepository" as WordRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
@@ -23,7 +22,6 @@ Dashboard VocabularyController uploads image file through VocaNovaApiClient.
 API endpoint is POST /api/admin/words/{id}/image.
 API uses UploadWordImageRequest and returns WordDetailResponse.
 FE response DTO exists: WordDetail when Dashboard reloads word detail.
-IWordImageStorage is implemented by CloudinaryWordImageStorage.
 end note
 Admin -> VocabularyPage: Choose image file for word
 Admin -> VocabularyPage: Click Add image
@@ -56,8 +54,7 @@ WordService --> ApiController: NotFound result
 ApiController --> DashboardController: HTTP 404 error
 DashboardController --> VocabularyPage: Show error message
 else Word exists
-WordService -> ImageStorage: UploadAsync(file)
-ImageStorage --> WordService: uploaded image URL
+WordService -> WordService: UploadAsync(file)
 WordService -> WordRepository: SetImageUrlAsync(wordId, imageUrl)
 WordRepository -> WordEntity: Set ImageUrl
 WordEntity --> WordRepository: Word updated

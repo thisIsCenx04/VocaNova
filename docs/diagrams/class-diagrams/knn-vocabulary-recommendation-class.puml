@@ -1,0 +1,271 @@
+@startuml
+title KNN Vocabulary Recommendation Class Diagram (/api/recommendations/words)
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from knn-vocabulary-recommendation-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+class RecommendationsController <<backend_controller>> {
+  - _knnOnboardingService : IKnnOnboardingService
+  - _knnLearningService : IKnnLearningService
+  --
+  + GetTopics(limit: intNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + GetWords(limit: intNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
+}
+class WordRecommendationResponse <<dto>> {
+  + WordId : uint
+  + Word : string
+  + PhoneticUk : stringNullable
+  + PrimaryMeaning : stringNullable
+  + ImageUrl : stringNullable
+  + CefrLevel : stringNullable
+  + Score : double
+}
+class KnnLearningService <<service>> {
+  - _knnLearningRepository : IKnnLearningRepository
+  - _knnProfileRepository : IKnnProfileRepositoryNullable
+  - _runtimeConfig : IKnnRuntimeConfigurationServiceNullable
+  - _wordRecommendationCache : IKnnWordRecommendationCacheNullable
+  - _options : KnnOptions
+  - _logger : ILoggerOfKnnLearningServiceNullable
+  --
+  + GetWordRecommendationsAsync(userId: uint, limit: intNullable, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfIReadOnlyCollectionOfWordRecommendation
+}
+class TestSession <<entity>> {
+  + SessionId : uint
+  + UserId : uint
+  + TestType : string
+  + Mode : string
+  + QuestionType : int
+  + ScopeType : string
+  + ScopeDateFrom : DateOnlyNullable
+  + ScopeDateTo : DateOnlyNullable
+  + WordOrder : string
+  + WordLimit : intNullable
+  + TimeLimitSec : intNullable
+  + Lives : intNullable
+}
+class Topic <<entity>> {
+  + TopicId : uint
+  + TopicName : string
+  + TopicNameVi : stringNullable
+  + Icon : stringNullable
+  + Status : string
+  + TestSessionTopics : ICollectionOfTestSessionTopic
+  + UserTopicPreferences : ICollectionOfUserTopicPreference
+  + WordTopics : ICollectionOfWordTopic
+}
+class TestAnswer <<entity>> {
+  + AnswerId : uint
+  + SessionId : uint
+  + WordId : uint
+  + SenseId : uintNullable
+  + QuestionNumber : int
+  + QuestionType : int
+  + DisplayContent : string
+  + ExpectedAnswer : string
+  + AcceptedAnswers : stringNullable
+  + UserAnswer : stringNullable
+  + IsCorrect : boolNullable
+  + AiScore : floatNullable
+}
+class WordTopic <<dto>> {
+  + WordId : uint
+  + TopicId : uint
+  + IsPrimary : bool
+  + Topic : Topic
+  + Word : Word
+}
+class UserWordProgress <<entity>> {
+  + ProgressId : uint
+  + UserId : uint
+  + WordId : uint
+  + TestCount : int
+  + CorrectCount : int
+  + WrongCount : int
+  + ConsecutiveCorrect : int
+  + IsInWrongList : bool
+  + MasteryLevel : int
+  + SrsInterval : int
+  + EaseFactor : float
+  + LastTestedAt : DateTimeNullable
+}
+class UserListWord <<entity>> {
+  + UserId : uint
+  + ListId : uint
+  + WordId : uint
+  + AddMethod : string
+  + Note : stringNullable
+  + AddedAt : DateTime
+  + Status : string
+  + List : UserList
+  + User : User
+  + Word : Word
+}
+class UserLearningProfile <<entity>> {
+  + UserId : uint
+  + AgeRangeId : uintNullable
+  + RegionId : uintNullable
+  + OccupationId : uintNullable
+  + EducationLevelId : uintNullable
+  + LearningPurposeId : uintNullable
+  + CreatedAt : DateTime
+  + UpdatedAt : DateTime
+  + AgeRange : AgeRangeNullable
+  + EducationLevel : EducationLevelNullable
+  + LearningPurpose : LearningPurposeNullable
+  + Occupation : OccupationNullable
+}
+class UserTopicPreference <<entity>> {
+  + UserId : uint
+  + TopicId : uint
+  + Source : string
+  + Status : string
+  + CreatedAt : DateTime
+  + Topic : Topic
+  + User : User
+}
+class AgeRange <<entity>> {
+  + AgeRangeId : uint
+  + Name : string
+  + MinAge : intNullable
+  + MaxAge : intNullable
+  + DisplayOrder : int
+  + Status : string
+  + UserLearningProfiles : ICollectionOfUserLearningProfile
+}
+class Region <<entity>> {
+  + RegionId : uint
+  + Name : string
+  + Code : string
+  + ParentId : uintNullable
+  + Status : string
+  + Inverseparent : ICollectionOfRegion
+  + Parent : RegionNullable
+  + UserLearningProfiles : ICollectionOfUserLearningProfile
+}
+class Occupation <<entity>> {
+  + OccupationId : uint
+  + Name : string
+  + Description : stringNullable
+  + Status : string
+  + UserLearningProfiles : ICollectionOfUserLearningProfile
+}
+class EducationLevel <<entity>> {
+  + EducationLevelId : uint
+  + Name : string
+  + Description : stringNullable
+  + DisplayOrder : int
+  + Status : string
+  + UserLearningProfiles : ICollectionOfUserLearningProfile
+}
+class LearningPurpose <<entity>> {
+  + LearningPurposeId : uint
+  + Name : string
+  + Description : stringNullable
+  + Status : string
+  + UserLearningProfiles : ICollectionOfUserLearningProfile
+}
+class Word <<entity>> {
+  + WordId : uint
+  + Word1 : string
+  + WordKey : string
+  + CefrLevel : stringNullable
+  + PhoneticUk : stringNullable
+  + PhoneticUs : stringNullable
+  + ImageUrl : stringNullable
+  + IsPhrase : bool
+  + Status : string
+  + CreatedAt : DateTime
+  + UpdatedAt : DateTime
+  + AiGradingCaches : ICollectionOfAiGradingCache
+}
+class WordSense <<entity>> {
+  + SenseId : uint
+  + WordId : uint
+  + SenseOrder : int
+  + WordClass : string
+  + EnglishDefinition : string
+  + VietnameseMeaning : stringNullable
+  + Status : string
+  + TestAnswers : ICollectionOfTestAnswer
+  + Word : Word
+  + WordExamples : ICollectionOfWordExample
+  + WordRelations : ICollectionOfWordRelation
+}
+class KnnLearningRepository <<repository>> {
+  - _dbContext : VocaNovaDbContext
+  --
+  + GetSessionCountAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfInt
+  + GetActiveTopicIdsAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyListOfuint
+  + GetTopicAnswerStatsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnTopicAnswerStatistics
+  + GetEligibleUserIdsAsync(minSessions: int, excludingUserId: uint, cancellationToken: CancellationToken) : TaskOfListOfUint
+  + GetMasteredWordsAsync(userIds: ListOfUint, minMasteryLevel: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnMasteredWord
+  + GetNeighborStudiedWordsAsync(userIds: ListOfUint, topicIds: ListOfUint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnNeighborWord
+  + GetActiveListWordIdsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfListOfUint
+  + GetWordRecommendationsAsync(scoresByWordId: IReadOnlyDictionaryOfuint_double, limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfWordRecommendation
+}
+class KnnProfileRepository <<repository>> {
+  - _dbContext : VocaNovaDbContext
+  --
+  + GetProfileVectorSourceAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfKnnProfileVectorSource
+  + GetActiveLookupDimensionsAsync(cancellationToken: CancellationToken) : TaskOfKnnLookupDimensions
+  + GetCandidateProfileSourcesAsync(excludingUserId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnProfileVectorSource
+  + GetActiveTopicIdsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfListOfUint
+}
+class VocaNovaDbContext <<dbcontext>> {
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
+  --
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+}
+class MySQL_Database <<database>> {
+
+}
+RecommendationsController ..> KnnLearningService : GetWordRecommendationsAsync()
+KnnLearningService ..> KnnLearningRepository : GetSessionCountAsync()
+KnnLearningRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+VocaNovaDbContext ..> TestSession
+KnnLearningService ..> KnnProfileRepository : GetProfileVectorSourceAsync()
+KnnProfileRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> UserLearningProfile
+VocaNovaDbContext ..> UserTopicPreference
+KnnLearningService ..> KnnProfileRepository : GetActiveLookupDimensionsAsync()
+VocaNovaDbContext ..> AgeRange
+VocaNovaDbContext ..> Region
+VocaNovaDbContext ..> Occupation
+VocaNovaDbContext ..> EducationLevel
+VocaNovaDbContext ..> LearningPurpose
+VocaNovaDbContext ..> Topic
+KnnLearningService ..> KnnProfileRepository : GetCandidateProfileSourcesAsync()
+KnnLearningService ..> KnnProfileRepository : GetActiveTopicIdsAsync()
+KnnLearningService ..> KnnLearningRepository : GetNeighborStudiedWordsAsync()
+VocaNovaDbContext ..> UserListWord
+VocaNovaDbContext ..> WordTopic
+KnnLearningService ..> KnnLearningRepository : GetActiveTopicIdsAsync()
+KnnLearningService ..> KnnLearningRepository : GetTopicAnswerStatsAsync()
+VocaNovaDbContext ..> TestAnswer
+KnnLearningService ..> KnnLearningRepository : GetEligibleUserIdsAsync()
+KnnLearningService ..> KnnLearningRepository : GetMasteredWordsAsync()
+VocaNovaDbContext ..> UserWordProgress
+KnnLearningService ..> KnnLearningRepository : GetActiveListWordIdsAsync()
+RecommendationsController ..> WordRecommendationResponse
+KnnLearningService ..> KnnLearningRepository : GetWordRecommendationsAsync()
+VocaNovaDbContext ..> Word
+VocaNovaDbContext ..> WordSense
+@enduml

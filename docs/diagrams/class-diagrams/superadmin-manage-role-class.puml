@@ -1,0 +1,129 @@
+@startuml
+title Manage Role Class Diagram (/roles and /api/superadmin/roles)
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from superadmin-manage-role-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+class RolesController <<frontend_controller>> {
+  - _apiClient : IVocaNovaApiClient
+  --
+  + Create() : IActionResult
+  + Create(model: SaveRoleViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + Delete(roleId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+}
+class ManagedRole <<dto>> {
+  + RoleId : uint
+  + RoleName : string
+}
+class RoleQueryRequest <<dto>> {
+  + Page : int
+  + Limit : int
+  + Search : stringNullable
+  + Type : stringNullable
+  + SortBy : stringNullable
+  + SortDirection : stringNullable
+}
+class SaveRoleRequest <<dto>> {
+  + RoleName : stringNullable
+}
+class RoleResponse <<dto>> {
+  + RoleId : uint
+  + RoleName : string
+}
+class BackendRolesController <<backend_controller>> {
+  - _apiClient : IVocaNovaApiClient
+  --
+  + Create() : IActionResult
+  + Create(model: SaveRoleViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + Delete(roleId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+}
+class RoleManagementService <<service>> {
+  - _repository : IRoleManagementRepository
+  - _transactionManager : IApplicationTransactionManager
+  - _profileCache : IUserProfileCacheNullable
+  --
+  + GetRolesAsync(query: RoleQuery, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfRoleModel
+  + CreateAsync(request: SaveRoleModel, cancellationToken: CancellationToken) : TaskOfResultOfRoleModel
+  + UpdateAsync(roleId: uint, request: SaveRoleModel, cancellationToken: CancellationToken) : TaskOfResultOfRoleModel
+  + DeleteAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool
+}
+class Role <<entity>> {
+  + RoleId : uint
+  + RoleName : string
+  + Users : ICollectionOfUser
+}
+class User <<entity>> {
+  + UserId : uint
+  + RoleId : uint
+  + Status : string
+  + LastLoginAt : DateTimeNullable
+  + CreatedAt : DateTime
+  + UpdatedAt : DateTime
+  + AuditLogs : ICollectionOfAuditLog
+  + OtpVerifications : ICollectionOfOtpVerification
+  + RefreshTokens : ICollectionOfRefreshToken
+  + Role : Role
+  + TestSessions : ICollectionOfTestSession
+  + UserAuth : UserAuthNullable
+}
+class RoleManagementRepository <<repository>> {
+  - _dbContext : VocaNovaDbContext
+  --
+  + GetRolesAsync(query: RoleQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfRoleModel
+  + RoleExistsAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfBool
+  + RoleExistsExcludeAsync(roleId: uint, roleName: string, cancellationToken: CancellationToken) : TaskOfBool
+  + AddRoleAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfRoleModel
+  + UpdateRoleAsync(roleId: uint, roleName: string, cancellationToken: CancellationToken) : TaskOfRoleModel
+  + DeleteRoleAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfBool
+  + GetRoleNameAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfstring
+  + HasUsersWithRoleAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfBool
+}
+class VocaNovaDbContext <<dbcontext>> {
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
+  --
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+}
+class MySQL_Database <<database>> {
+
+}
+RolesController ..> RoleQueryRequest
+RoleQueryRequest ..> RolesController_2
+RolesController_2 ..> RoleManagementService : GetRolesAsync()
+RoleManagementService ..> RoleManagementRepository : GetRolesAsync()
+RoleManagementRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+VocaNovaDbContext ..> Role
+RolesController_2 ..> RoleResponse
+RolesController_2 ..> ManagedRole
+RolesController ..> SaveRoleRequest
+SaveRoleRequest ..> RolesController_2
+RolesController_2 ..> RoleManagementService : CreateAsync()
+RoleManagementService ..> RoleManagementRepository : RoleExistsAsync()
+RoleManagementService ..> RoleManagementRepository : AddRoleAsync()
+RoleManagementRepository ..> Role
+RolesController_2 ..> RoleManagementService : UpdateAsync()
+RoleManagementService ..> RoleManagementRepository : GetRoleNameAsync()
+RoleManagementService ..> RoleManagementRepository : RoleExistsExcludeAsync()
+RoleManagementService ..> RoleManagementRepository : UpdateRoleAsync()
+RolesController ..> RolesController_2
+RolesController_2 ..> RoleManagementService : DeleteAsync()
+RoleManagementService ..> RoleManagementRepository : HasUsersWithRoleAsync()
+VocaNovaDbContext ..> User
+RoleManagementService ..> RoleManagementRepository : DeleteRoleAsync()
+@enduml

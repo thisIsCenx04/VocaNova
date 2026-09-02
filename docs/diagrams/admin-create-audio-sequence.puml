@@ -13,7 +13,6 @@ control "AdminWordsController\n(BE API)" as ApiController
 control "WordAdminService" as WordService
 entity "Word" as WordEntity
 entity "WordAudioAsset" as WordAudioAsset
-control "IWordAudioStorage" as AudioStorage
 control "WordAdminRepository" as WordRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
@@ -24,7 +23,6 @@ Dashboard currently sends accent = "us" for the upload.
 API endpoint is POST /api/admin/words/{id}/audio.
 API uses UploadWordAudioRequest and returns WordAudioResponse.
 FE response DTO exists: WordDetail when Dashboard reloads word detail.
-IWordAudioStorage is implemented by CloudinaryWordAudioStorage.
 end note
 Admin -> VocabularyPage: Choose audio file for word
 Admin -> VocabularyPage: Click Upload audio
@@ -57,8 +55,7 @@ WordService --> ApiController: NotFound result
 ApiController --> DashboardController: HTTP 404 error
 DashboardController --> VocabularyPage: Show error message
 else Word exists
-WordService -> AudioStorage: UploadAsync(file, accent)
-AudioStorage --> WordService: uploaded audio URL
+WordService -> WordService: UploadAsync(file, accent)
 WordService -> WordRepository: UpsertAudioAsync(wordId, uploaded audio, accent)
 WordRepository -> WordAudioAsset: Create or update audio asset
 WordAudioAsset --> WordRepository: WordAudioAsset

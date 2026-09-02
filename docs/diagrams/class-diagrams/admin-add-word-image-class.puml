@@ -1,0 +1,113 @@
+@startuml
+title Add Word Image Class Diagram (/api/admin/words/{id}/image)
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from admin-add-word-image-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+class VocabularyController <<frontend_controller>> {
+  - _apiClient : IVocaNovaApiClient
+  - _translator : ITranslator
+  --
+  + UploadImage(id: uint, file: IFormFileNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
+}
+class WordDetail <<dto>> {
+  + WordId : uint
+  + Word : string
+  + WordKey : string
+  + Cefr : stringNullable
+  + PhoneticUk : stringNullable
+  + PhoneticUs : stringNullable
+  + ImageUrl : stringNullable
+  + IsPhrase : bool
+  + Senses : ListOfWordSense
+  + Examples : ListOfWordExample
+  + Relations : ListOfWordRelation
+  + Audio : ListOfWordAudio
+}
+class UploadWordImageRequest <<dto>> {
+  + File : IFormFileNullable
+}
+class WordDetailResponse <<dto>> {
+  + WordId : uint
+  + Word : string
+  + WordKey : string
+  + Cefr : stringNullable
+  + PhoneticUk : stringNullable
+  + PhoneticUs : stringNullable
+  + ImageUrl : stringNullable
+  + IsPhrase : bool
+  + Senses : ListOfWordSenseResponse
+  + Examples : ListOfWordExampleResponse
+  + Relations : ListOfWordRelationResponse
+  + Audio : ListOfWordAudioResponse
+}
+class AdminWordsController <<backend_controller>> {
+  - _service : IWordAdminService
+  --
+  + UploadImage(id: uint, request: UploadWordImageRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+}
+class WordAdminService <<service>> {
+  - _repository : IWordAdminRepository
+  - _audioStorage : IWordAudioStorageNullable
+  - _imageStorage : IWordImageStorageNullable
+  - _wordDetailCache : IWordDetailCacheNullable
+  - _userListCache : IUserListCacheNullable
+  --
+  + UploadImageAsync(wordId: uint, content: UploadedContentNullable, cancellationToken: CancellationToken) : TaskOfDictionaryWordDetail
+}
+class Word <<entity>> {
+  + WordId : uint
+  + Word1 : string
+  + WordKey : string
+  + CefrLevel : stringNullable
+  + PhoneticUk : stringNullable
+  + PhoneticUs : stringNullable
+  + ImageUrl : stringNullable
+  + IsPhrase : bool
+  + Status : string
+  + CreatedAt : DateTime
+  + UpdatedAt : DateTime
+  + AiGradingCaches : ICollectionOfAiGradingCache
+}
+class WordAdminRepository <<repository>> {
+  - _dbContext : VocaNovaDbContext
+  --
+  + WordExistsAsync(wordId: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfBool
+  + SetImageUrlAsync(wordId: uint, url: stringNullable, cancellationToken: CancellationToken) : TaskOfWordDetailNullable
+}
+class VocaNovaDbContext <<dbcontext>> {
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
+  --
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+}
+class MySQL_Database <<database>> {
+
+}
+VocabularyController ..> UploadWordImageRequest
+UploadWordImageRequest ..> AdminWordsController
+AdminWordsController ..> WordAdminService : UploadImageAsync()
+WordAdminService ..> WordAdminRepository : WordExistsAsync()
+WordAdminRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+VocaNovaDbContext ..> Word
+WordAdminService ..> WordAdminRepository : SetImageUrlAsync()
+WordAdminRepository ..> Word
+AdminWordsController ..> WordDetailResponse
+VocabularyController ..> WordDetail
+@enduml

@@ -1,0 +1,196 @@
+@startuml
+title View Word Details Class Diagram (/api/words/{id})
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from mobile-view-word-details-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+class WordDetailNotifier <<service>> {
+  + build() : WordDetailState
+  + saveToWordBook() : FutureOfvoid
+  + load(wordId)
+}
+class WordDetailApiService <<service>> {
+  + _dio : Dio
+  --
+  + getWord() : FutureOfWordDetail
+}
+class WordDetailDto <<dto>> {
+  + wordId : int
+  + word : String
+  + isPhrase : bool
+  + cefr : StringNullable
+  + phoneticUk : StringNullable
+  + phoneticUs : StringNullable
+  + imageUrl : StringNullable
+  + senses : ListOfWordSenseDto
+  + examples : ListOfWordExampleDto
+  + relations : ListOfWordRelationDto
+  + audio : ListOfWordAudioDto
+  + topics : ListOfWordTopicDto
+}
+class WordDetailResponse <<dto>> {
+  + WordId : uint
+  + Word : string
+  + WordKey : string
+  + Cefr : stringNullable
+  + PhoneticUk : stringNullable
+  + PhoneticUs : stringNullable
+  + ImageUrl : stringNullable
+  + IsPhrase : bool
+  + Senses : ListOfWordSenseResponse
+  + Examples : ListOfWordExampleResponse
+  + Relations : ListOfWordRelationResponse
+  + Audio : ListOfWordAudioResponse
+}
+class WordsController <<backend_controller>> {
+  - _wordService : IWordReadService
+  --
+  + GetById(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+}
+class WordReadService <<service>> {
+  - _wordRepository : IWordReadRepository
+  - _wordSearchCache : IWordSearchCacheNullable
+  - _wordDetailCache : IWordDetailCacheNullable
+  --
+  + GetByIdAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryWordDetail
+}
+class Word <<entity>> {
+  + WordId : uint
+  + Word1 : string
+  + WordKey : string
+  + CefrLevel : stringNullable
+  + PhoneticUk : stringNullable
+  + PhoneticUs : stringNullable
+  + ImageUrl : stringNullable
+  + IsPhrase : bool
+  + Status : string
+  + CreatedAt : DateTime
+  + UpdatedAt : DateTime
+  + AiGradingCaches : ICollectionOfAiGradingCache
+}
+class WordSense <<entity>> {
+  + SenseId : uint
+  + WordId : uint
+  + SenseOrder : int
+  + WordClass : string
+  + EnglishDefinition : string
+  + VietnameseMeaning : stringNullable
+  + Status : string
+  + TestAnswers : ICollectionOfTestAnswer
+  + Word : Word
+  + WordExamples : ICollectionOfWordExample
+  + WordRelations : ICollectionOfWordRelation
+}
+class WordExample <<entity>> {
+  + ExampleId : uint
+  + WordId : uint
+  + SenseId : uintNullable
+  + ExampleEn : string
+  + ExampleVi : stringNullable
+  + OrderIndex : int
+  + Sense : WordSenseNullable
+  + Word : Word
+}
+class WordRelation <<entity>> {
+  + RelationId : uint
+  + WordId : uint
+  + SenseId : uintNullable
+  + RelationType : string
+  + RelatedWord : string
+  + RelatedWordId : uintNullable
+  + IsQuizEligible : boolNullable
+  + RelatedWordNavigation : WordNullable
+  + Sense : WordSenseNullable
+  + Word : Word
+}
+class WordAudioAsset <<entity>> {
+  + AudioId : uint
+  + WordId : uint
+  + Accent : string
+  + Source : string
+  + StorageUrl : stringNullable
+  + Status : string
+  + CreatedAt : DateTime
+  + Word : Word
+}
+class WordDerivedForm <<entity>> {
+  + DerivedId : uint
+  + WordId : uint
+  + DerivedWord : string
+  + DerivedWordId : uintNullable
+  + WordClass : stringNullable
+  + DerivedWordNavigation : WordNullable
+  + Word : Word
+}
+class WordIdiom <<entity>> {
+  + IdiomId : uint
+  + WordId : uint
+  + IdiomText : string
+  + MeaningEn : stringNullable
+  + MeaningVi : stringNullable
+  + Word : Word
+}
+class WordTopic <<dto>> {
+  + WordId : uint
+  + TopicId : uint
+  + IsPrimary : bool
+  + Topic : Topic
+  + Word : Word
+}
+class Topic <<entity>> {
+  + TopicId : uint
+  + TopicName : string
+  + TopicNameVi : stringNullable
+  + Icon : stringNullable
+  + Status : string
+  + TestSessionTopics : ICollectionOfTestSessionTopic
+  + UserTopicPreferences : ICollectionOfUserTopicPreference
+  + WordTopics : ICollectionOfWordTopic
+}
+class WordReadRepository <<repository>> {
+  - _dbContext : VocaNovaDbContext
+  --
+  + FindDetailAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfWordDetailNullable
+}
+class VocaNovaDbContext <<dbcontext>> {
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
+  --
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+}
+class MySQL_Database <<database>> {
+
+}
+WordDetailNotifier ..> WordDetailApiService : getWord()
+WordDetailApiService ..> WordsController
+WordsController ..> WordReadService : GetByIdAsync()
+WordReadService ..> WordReadRepository : FindDetailAsync()
+WordReadRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+VocaNovaDbContext ..> Word
+VocaNovaDbContext ..> WordSense
+VocaNovaDbContext ..> WordExample
+VocaNovaDbContext ..> WordRelation
+VocaNovaDbContext ..> WordAudioAsset
+VocaNovaDbContext ..> WordDerivedForm
+VocaNovaDbContext ..> WordIdiom
+VocaNovaDbContext ..> WordTopic
+VocaNovaDbContext ..> Topic
+WordsController ..> WordDetailResponse
+WordDetailApiService ..> WordDetailDto
+@enduml

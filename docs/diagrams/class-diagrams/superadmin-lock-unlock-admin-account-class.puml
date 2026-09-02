@@ -1,0 +1,90 @@
+@startuml
+title Lock / Unlock Admin Account Class Diagram (/api/superadmin/admins/{id}/lock or unlock)
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from superadmin-lock-unlock-admin-account-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+class AdminAccountsController <<frontend_controller>> {
+  - _apiClient : IVocaNovaApiClient
+  --
+  + Lock(id: uint, returnUrl: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
+}
+class SuperAdminAccountsController <<backend_controller>> {
+  - _service : ISuperAdminAccountService
+  --
+  + Lock(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+}
+class SuperAdminAccountService <<service>> {
+  - _repository : ISuperAdminAccountRepository
+  - _transactionManager : IApplicationTransactionManager
+  - _userProfileCache : IUserProfileCacheNullable
+  --
+  + LockAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool
+}
+class User <<entity>> {
+  + UserId : uint
+  + RoleId : uint
+  + Status : string
+  + LastLoginAt : DateTimeNullable
+  + CreatedAt : DateTime
+  + UpdatedAt : DateTime
+  + AuditLogs : ICollectionOfAuditLog
+  + OtpVerifications : ICollectionOfOtpVerification
+  + RefreshTokens : ICollectionOfRefreshToken
+  + Role : Role
+  + TestSessions : ICollectionOfTestSession
+  + UserAuth : UserAuthNullable
+}
+class RefreshToken <<entity>> {
+  + TokenId : uint
+  + UserId : uint
+  + TokenHash : string
+  + DeviceInfo : stringNullable
+  + IpAddress : stringNullable
+  + ExpiresAt : DateTime
+  + CreatedAt : DateTime
+  + RevokedAt : DateTimeNullable
+  + User : User
+}
+class SuperAdminAccountRepository <<repository>> {
+  - _dbContext : VocaNovaDbContext
+  --
+  + ChangeStatusAsync(adminId: uint, newStatus: string, cancellationToken: CancellationToken) : TaskOfBool
+  + RevokeActiveRefreshTokensAsync(adminId: uint, now: DateTime, cancellationToken: CancellationToken) : Task
+  + GetAccountStatusAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfstring
+}
+class VocaNovaDbContext <<dbcontext>> {
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
+  --
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+}
+class MySQL_Database <<database>> {
+
+}
+AdminAccountsController ..> SuperAdminAccountsController
+SuperAdminAccountsController ..> SuperAdminAccountService : LockAsync()
+SuperAdminAccountService ..> SuperAdminAccountRepository : GetAccountStatusAsync()
+SuperAdminAccountRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+VocaNovaDbContext ..> User
+SuperAdminAccountService ..> SuperAdminAccountRepository : RevokeActiveRefreshTokensAsync()
+SuperAdminAccountRepository ..> RefreshToken
+SuperAdminAccountService ..> SuperAdminAccountRepository : ChangeStatusAsync()
+SuperAdminAccountRepository ..> User
+@enduml

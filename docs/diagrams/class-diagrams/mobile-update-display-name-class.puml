@@ -1,0 +1,125 @@
+@startuml
+title Update Display Name Class Diagram (/api/auth/me/profile)
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from mobile-update-display-name-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+class AuthNotifier <<service>> {
+  + updateProfile() : FutureOfbool
+}
+class AuthApiService <<service>> {
+  + _dio : Dio
+  --
+  + updateProfile() : FutureOfUserProfile
+}
+class UserProfileDto <<dto>> {
+  + userId : int
+  + phone : StringNullable
+  + displayName : String
+  + avatarUrl : StringNullable
+  + role : String
+  + status : String
+  + learningProfile : LearningProfileDtoNullable
+}
+class UpdateUserProfileRequest <<dto>> {
+  + DisplayName : stringNullable
+  + AvatarUrl : stringNullable
+}
+class UserProfileResponse <<dto>> {
+  + UserId : uint
+  + Phone : stringNullable
+  + FullName : string
+  + AvatarUrl : stringNullable
+  + Role : string
+  + Status : string
+  + LearningProfile : LearningProfileResponseNullable
+}
+class AuthController <<backend_controller>> {
+  - _authService : IDashboardAuthService
+  --
+  + Login(returnUrl: stringNullable) : IActionResult
+  + Login(model: LoginViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + Logout(cancellationToken: CancellationToken) : TaskOfIActionResult
+}
+class AuthService <<service>> {
+  - _accountRepository : IAuthAccountRepository
+  - _refreshTokenRepository : IRefreshTokenRepository
+  - _otpRepository : IOtpRepository
+  - _transactionManager : IApplicationTransactionManager
+  - _jwtTokenService : IJwtTokenService
+  - _googleIdentityProvider : IGoogleIdentityProvider
+  - _userProfileCache : IUserProfileCacheNullable
+  - _knnTopicRecommendationCache : IKnnTopicRecommendationCacheNullable
+  - _otpCodeGenerator : IOtpCodeGenerator
+  - _smsSender : ISmsSender
+  - _passwordHasher : IPasswordHasher
+  - _refreshTokenHasher : IRefreshTokenHasher
+  --
+  + UpdateProfileAsync(userId: uint, command: UpdateProfileCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfUserProfile
+  + UpdateLearningProfileAsync(userId: uint, command: UpdateLearningProfileCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfUserProfile
+}
+class User <<entity>> {
+  + UserId : uint
+  + RoleId : uint
+  + Status : string
+  + LastLoginAt : DateTimeNullable
+  + CreatedAt : DateTime
+  + UpdatedAt : DateTime
+  + AuditLogs : ICollectionOfAuditLog
+  + OtpVerifications : ICollectionOfOtpVerification
+  + RefreshTokens : ICollectionOfRefreshToken
+  + Role : Role
+  + TestSessions : ICollectionOfTestSession
+  + UserAuth : UserAuthNullable
+}
+class UserProfile <<entity>> {
+  + UserId : uint
+  + FullName : string
+  + AvatarUrl : stringNullable
+  + UpdatedAt : DateTime
+  + User : User
+}
+class AuthAccountRepository <<repository>> {
+  - _dbContext : VocaNovaDbContext
+  --
+  + UpdateProfileAsync(userId: uint, command: UpdateProfileCommand, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfAuthUserProfile
+  + UpdateAvatarAsync(userId: uint, avatarUrl: string, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfAuthUserProfile
+}
+class VocaNovaDbContext <<dbcontext>> {
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
+  --
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+}
+class MySQL_Database <<database>> {
+
+}
+AuthNotifier ..> AuthApiService : updateProfile()
+AuthApiService ..> AuthController
+AuthController ..> UpdateUserProfileRequest
+AuthController ..> AuthService : UpdateProfileAsync()
+AuthService ..> AuthAccountRepository : UpdateProfileAsync()
+AuthAccountRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+VocaNovaDbContext ..> User
+VocaNovaDbContext ..> UserProfile
+AuthAccountRepository ..> UserProfile
+AuthAccountRepository ..> User
+AuthController ..> UserProfileResponse
+AuthApiService ..> UserProfileDto
+@enduml

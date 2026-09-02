@@ -1,0 +1,130 @@
+@startuml
+title Update KNN Lookup Class Diagram (/knn/{slug}/save and /api/admin/knn/{slug}/{id})
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from admin-update-knn-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+class KnnController <<frontend_controller>> {
+  - _apiClient : IVocaNovaApiClient
+  --
+  + Index(cancellationToken: CancellationToken) : TaskOfIActionResult
+  + TriggerRebuild(cancellationToken: CancellationToken) : TaskOfIActionResult
+}
+class AdminKnnController <<backend_controller>> {
+  - _lookupService : IAdminKnnLookupService
+  - _rebuildService : IKnnRebuildService
+  - _runtimeConfigService : IKnnRuntimeConfigurationService
+  - _triggerRateLimiter : IAdminKnnTriggerRateLimiter
+  - _options : KnnOptions
+  --
+  + UpdateVectorWeights(request: UpdateKnnVectorWeightsRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + UpdateAgeRange(id: uint, request: UpdateAgeRangeRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + UpdateRegion(id: uint, request: UpdateRegionRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+}
+class AgeRange_Region_Occupation_EducationLevel_LearningPurpose <<dto>> {
+
+}
+class UpdateAgeRangeRequest_UpdateRegionRequest_UpdateOccupationRequest_UpdateEducationLevelRequest_UpdateLearningPurposeRequest <<dto>> {
+
+}
+class AgeRangeResponse_RegionResponse_OccupationResponse_EducationLevelResponse_LearningPurposeResponse <<dto>> {
+
+}
+class AdminKnnLookupService <<service>> {
+  - _repository : IAdminKnnLookupRepository
+  - _topicRecommendationCache : IKnnTopicRecommendationCacheNullable
+  --
+  + UpdateAgeRangeAsync(id: uint, command: SaveAgeRangeCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfAgeRangeLookup
+  + UpdateRegionAsync(id: uint, command: SaveRegionCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfRegionLookup
+  + UpdateOccupationAsync(id: uint, command: SaveOccupationCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfOccupationLookup
+}
+class AgeRange <<entity>> {
+  + AgeRangeId : uint
+  + Name : string
+  + MinAge : intNullable
+  + MaxAge : intNullable
+  + DisplayOrder : int
+  + Status : string
+  + UserLearningProfiles : ICollectionOfUserLearningProfile
+}
+class Region <<entity>> {
+  + RegionId : uint
+  + Name : string
+  + Code : string
+  + ParentId : uintNullable
+  + Status : string
+  + Inverseparent : ICollectionOfRegion
+  + Parent : RegionNullable
+  + UserLearningProfiles : ICollectionOfUserLearningProfile
+}
+class Occupation <<entity>> {
+  + OccupationId : uint
+  + Name : string
+  + Description : stringNullable
+  + Status : string
+  + UserLearningProfiles : ICollectionOfUserLearningProfile
+}
+class EducationLevel <<entity>> {
+  + EducationLevelId : uint
+  + Name : string
+  + Description : stringNullable
+  + DisplayOrder : int
+  + Status : string
+  + UserLearningProfiles : ICollectionOfUserLearningProfile
+}
+class LearningPurpose <<entity>> {
+  + LearningPurposeId : uint
+  + Name : string
+  + Description : stringNullable
+  + Status : string
+  + UserLearningProfiles : ICollectionOfUserLearningProfile
+}
+class AdminKnnLookupRepository <<repository>> {
+  - _dbContext : VocaNovaDbContext
+  --
+  + UpdateAgeRangeAsync(id: uint, command: SaveAgeRangeCommand, cancellationToken: CancellationToken) : TaskOfAgeRangeLookup
+  + UpdateRegionAsync(id: uint, name: string, code: string, parentId: uintNullable, cancellationToken: CancellationToken) : TaskOfRegionLookup
+}
+class VocaNovaDbContext <<dbcontext>> {
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
+  --
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+}
+class MySQL_Database <<database>> {
+
+}
+KnnController ..> AdminKnnController
+AdminKnnController ..> UpdateAgeRangeRequest_UpdateRegionRequest_UpdateOccupationRequest_UpdateEducationLevelRequest_UpdateLearningPurposeRequest
+AdminKnnController ..> AdminKnnLookupService
+AdminKnnLookupService ..> AdminKnnLookupRepository
+AdminKnnLookupRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+VocaNovaDbContext ..> AgeRange
+VocaNovaDbContext ..> Region
+VocaNovaDbContext ..> Occupation
+VocaNovaDbContext ..> EducationLevel
+VocaNovaDbContext ..> LearningPurpose
+AdminKnnLookupRepository ..> AgeRange
+AdminKnnLookupRepository ..> Region
+AdminKnnLookupRepository ..> Occupation
+AdminKnnLookupRepository ..> EducationLevel
+AdminKnnLookupRepository ..> LearningPurpose
+AdminKnnController ..> AgeRangeResponse_RegionResponse_OccupationResponse_EducationLevelResponse_LearningPurposeResponse
+AdminKnnController ..> AgeRange_Region_Occupation_EducationLevel_LearningPurpose
+@enduml

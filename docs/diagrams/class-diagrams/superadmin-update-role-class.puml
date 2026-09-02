@@ -1,0 +1,89 @@
+@startuml
+title Update Role Class Diagram (/api/superadmin/roles/{roleId})
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from superadmin-update-role-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+class RolesController <<frontend_controller>> {
+  - _apiClient : IVocaNovaApiClient
+  --
+  + Index(search: stringNullable, type: stringNullable, sortBy: stringNullable, sortDirection: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + Create() : IActionResult
+}
+class BackendRolesController <<backend_controller>> {
+  - _apiClient : IVocaNovaApiClient
+  --
+  + Index(search: stringNullable, type: stringNullable, sortBy: stringNullable, sortDirection: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + Create() : IActionResult
+}
+class ManagedRole <<dto>> {
+  + RoleId : uint
+  + RoleName : string
+}
+class SaveRoleRequest <<dto>> {
+  + RoleName : stringNullable
+}
+class RoleResponse <<dto>> {
+  + RoleId : uint
+  + RoleName : string
+}
+class RoleManagementService <<service>> {
+  - _repository : IRoleManagementRepository
+  - _transactionManager : IApplicationTransactionManager
+  - _profileCache : IUserProfileCacheNullable
+  --
+  + GetRolesAsync(query: RoleQuery, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfRoleModel
+  + UpdateAsync(roleId: uint, request: SaveRoleModel, cancellationToken: CancellationToken) : TaskOfResultOfRoleModel
+}
+class Role <<entity>> {
+  + RoleId : uint
+  + RoleName : string
+  + Users : ICollectionOfUser
+}
+class RoleManagementRepository <<repository>> {
+  - _dbContext : VocaNovaDbContext
+  --
+  + GetRolesAsync(query: RoleQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfRoleModel
+  + RoleExistsExcludeAsync(roleId: uint, roleName: string, cancellationToken: CancellationToken) : TaskOfBool
+  + UpdateRoleAsync(roleId: uint, roleName: string, cancellationToken: CancellationToken) : TaskOfRoleModel
+  + GetRoleNameAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfstring
+}
+class VocaNovaDbContext <<dbcontext>> {
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
+  --
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+}
+class MySQL_Database <<database>> {
+
+}
+RolesController ..> RolesController_2
+RolesController_2 ..> RoleManagementService : GetRolesAsync()
+RoleManagementService ..> RoleManagementRepository : GetRolesAsync()
+RoleManagementRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+VocaNovaDbContext ..> Role
+RolesController_2 ..> RoleResponse
+RolesController_2 ..> ManagedRole
+RolesController_2 ..> SaveRoleRequest
+RolesController_2 ..> RoleManagementService : UpdateAsync()
+RoleManagementService ..> RoleManagementRepository : GetRoleNameAsync()
+RoleManagementService ..> RoleManagementRepository : RoleExistsExcludeAsync()
+RoleManagementService ..> RoleManagementRepository : UpdateRoleAsync()
+RoleManagementRepository ..> Role
+@enduml
