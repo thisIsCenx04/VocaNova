@@ -10,63 +10,63 @@ Generated from superadmin-delete-role-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 class RolesController <<frontend_controller>> {
-  \- _apiClient : IVocaNovaApiClient
+  - _apiClient : IVocaNovaApiClient
   --
-  \+ Delete(roleId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + Delete(roleId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class BackendRolesController <<backend_controller>> {
-  \- _apiClient : IVocaNovaApiClient
+  - _apiClient : IVocaNovaApiClient
   --
-  \+ Delete(roleId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + Delete(roleId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class RoleManagementService <<service>> {
-  \- _repository : IRoleManagementRepository
-  \- _transactionManager : IApplicationTransactionManager
-  \- _profileCache : IUserProfileCacheNullable
+  - _repository : IRoleManagementRepository
+  - _transactionManager : IApplicationTransactionManager
+  - _profileCache : IUserProfileCacheNullable
   --
-  \+ DeleteAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool
+  + DeleteAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool
 }
 class Role <<entity>> {
-  \+ RoleId : uint
-  \+ RoleName : string
-  \+ Users : ICollectionOfUser
+  + RoleId : uint
+  + RoleName : string
+  + Users : ICollectionOfUser
 }
 class User <<entity>> {
-  \+ UserId : uint
-  \+ RoleId : uint
-  \+ Status : string
-  \+ LastLoginAt : DateTimeNullable
-  \+ CreatedAt : DateTime
-  \+ UpdatedAt : DateTime
-  \+ AuditLogs : ICollectionOfAuditLog
-  \+ OtpVerifications : ICollectionOfOtpVerification
-  \+ RefreshTokens : ICollectionOfRefreshToken
-  \+ Role : Role
-  \+ TestSessions : ICollectionOfTestSession
-  \+ UserAuth : UserAuthNullable
+  + UserId : uint
+  + RoleId : uint
+  + Status : string
+  + LastLoginAt : DateTimeNullable
+  + CreatedAt : DateTime
+  + UpdatedAt : DateTime
+  + AuditLogs : ICollectionOfAuditLog
+  + OtpVerifications : ICollectionOfOtpVerification
+  + RefreshTokens : ICollectionOfRefreshToken
+  + Role : Role
+  + TestSessions : ICollectionOfTestSession
+  + UserAuth : UserAuthNullable
 }
 class RoleManagementRepository <<repository>> {
-  \- _dbContext : VocaNovaDbContext
+  - _dbContext : VocaNovaDbContext
   --
-  \+ DeleteRoleAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfBool
-  \+ GetRoleNameAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfstring
-  \+ HasUsersWithRoleAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfBool
+  + DeleteRoleAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfBool
+  + GetRoleNameAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfstring
+  + HasUsersWithRoleAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfBool
 }
 class VocaNovaDbContext <<dbcontext>> {
-  \+ AgeRanges : DbSetOfAgeRange
-  \+ AiGradingCaches : DbSetOfAiGradingCache
-  \+ AuditLogs : DbSetOfAuditLog
-  \+ EducationLevels : DbSetOfEducationLevel
-  \+ LearningPurposes : DbSetOfLearningPurpose
-  \+ Occupations : DbSetOfOccupation
-  \+ OtpVerifications : DbSetOfOtpVerification
-  \+ RefreshTokens : DbSetOfRefreshToken
-  \+ Regions : DbSetOfRegion
-  \+ Roles : DbSetOfRole
-  \+ TestAnswers : DbSetOfTestAnswer
-  \+ TestSessions : DbSetOfTestSession
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
   --
-  \+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
 }
 class MySQL_Database <<database>> {
 

@@ -10,179 +10,179 @@ Generated from mobile-organize-by-topic-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 class WordSearchApiService <<service>> {
-  \+ _dio : Dio
+  + _dio : Dio
   --
-  \+ search() : FutureOfListOfWordSummary
-  \+ getTopics() : FutureOfListOfTopicSummary
+  + search() : FutureOfListOfWordSummary
+  + getTopics() : FutureOfListOfTopicSummary
 }
 class WordDetailApiService <<service>> {
-  \+ _dio : Dio
+  + _dio : Dio
   --
-  \+ getWord() : FutureOfWordDetail
-  \+ getDailyWord() : FutureOfWordDetail
+  + getWord() : FutureOfWordDetail
+  + getDailyWord() : FutureOfWordDetail
 }
 class PersonalTopicSummaryDto <<dto>> {
-  \+ listId : intNullable
-  \+ containsWord : bool
+  + listId : intNullable
+  + containsWord : bool
 }
 class WordSummaryDto <<dto>> {
-  \+ wordId : int
-  \+ word : String
-  \+ phonetic : StringNullable
-  \+ cefr : StringNullable
-  \+ primaryMeaning : StringNullable
-  \+ imageUrl : StringNullable
-  \+ topicIds : SetOfint
-  \+ learningStatus : String
-  \+ masteryScore : double
+  + wordId : int
+  + word : String
+  + phonetic : StringNullable
+  + cefr : StringNullable
+  + primaryMeaning : StringNullable
+  + imageUrl : StringNullable
+  + topicIds : SetOfint
+  + learningStatus : String
+  + masteryScore : double
 }
 class PersonalTopicResponse <<dto>> {
-  \+ TopicId : uint
-  \+ ListId : uintNullable
-  \+ Name : string
-  \+ NameVi : stringNullable
-  \+ Icon : stringNullable
-  \+ WordCount : int
-  \+ ContainsWord : bool
+  + TopicId : uint
+  + ListId : uintNullable
+  + Name : string
+  + NameVi : stringNullable
+  + Icon : stringNullable
+  + WordCount : int
+  + ContainsWord : bool
 }
 class ListWordResponse <<dto>> {
-  \+ WordId : uint
-  \+ Word : string
-  \+ PrimaryMeaning : stringNullable
-  \+ CorrectCount : int
-  \+ WrongCount : int
-  \+ Note : stringNullable
-  \+ AddedAt : DateTime
+  + WordId : uint
+  + Word : string
+  + PrimaryMeaning : stringNullable
+  + CorrectCount : int
+  + WrongCount : int
+  + Note : stringNullable
+  + AddedAt : DateTime
 }
 class AddPersonalTopicWordRequest <<dto>> {
-  \+ WordId : uint
-  \+ Note : stringNullable
+  + WordId : uint
+  + Note : stringNullable
 }
 class PersonalTopicsController <<backend_controller>> {
-  \- _queryService : IPersonalTopicQueryService
-  \- _mutationService : IPersonalTopicMutationService
+  - _queryService : IPersonalTopicQueryService
+  - _mutationService : IPersonalTopicMutationService
   --
-  \+ GetTopics(request: PersonalTopicListRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
-  \+ GetWords(topicId: uint, request: ListWordsRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
-  \+ AddWord(topicId: uint, request: AddPersonalTopicWordRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
-  \+ RemoveWord(topicId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + GetTopics(request: PersonalTopicListRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + GetWords(topicId: uint, request: ListWordsRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + AddWord(topicId: uint, request: AddPersonalTopicWordRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + RemoveWord(topicId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class PersonalTopicQueryService <<service>> {
-  \- _repository : IPersonalTopicQueryRepository
+  - _repository : IPersonalTopicQueryRepository
   --
-  \+ GetTopicsAsync(userId: uint, query: PersonalTopicQuery, cancellationToken: CancellationToken) : TaskOfListResultOfIReadOnlyCollectionOfPersonalTopic
-  \+ GetWordsAsync(userId: uint, topicId: uint, query: ListWordsQuery, cancellationToken: CancellationToken) : TaskOfListResultOfPagedCollectionOfListWord
+  + GetTopicsAsync(userId: uint, query: PersonalTopicQuery, cancellationToken: CancellationToken) : TaskOfListResultOfIReadOnlyCollectionOfPersonalTopic
+  + GetWordsAsync(userId: uint, topicId: uint, query: ListWordsQuery, cancellationToken: CancellationToken) : TaskOfListResultOfPagedCollectionOfListWord
 }
 class PersonalTopicMutationService <<service>> {
-  \- _personalTopicRepository : IPersonalTopicMutationRepository
-  \- _listRepository : IListMutationRepository
-  \- _cache : IUserListCacheNullable
+  - _personalTopicRepository : IPersonalTopicMutationRepository
+  - _listRepository : IListMutationRepository
+  - _cache : IUserListCacheNullable
   --
-  \+ AddWordAsync(userId: uint, topicId: uint, command: AddPersonalTopicWordCommand, cancellationToken: CancellationToken) : TaskOfListResultOfPersonalTopic
-  \+ RemoveWordAsync(userId: uint, topicId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfListResultOfbool
+  + AddWordAsync(userId: uint, topicId: uint, command: AddPersonalTopicWordCommand, cancellationToken: CancellationToken) : TaskOfListResultOfPersonalTopic
+  + RemoveWordAsync(userId: uint, topicId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfListResultOfbool
 }
 class Topic <<entity>> {
-  \+ TopicId : uint
-  \+ TopicName : string
-  \+ TopicNameVi : stringNullable
-  \+ Icon : stringNullable
-  \+ Status : string
-  \+ TestSessionTopics : ICollectionOfTestSessionTopic
-  \+ UserTopicPreferences : ICollectionOfUserTopicPreference
-  \+ WordTopics : ICollectionOfWordTopic
+  + TopicId : uint
+  + TopicName : string
+  + TopicNameVi : stringNullable
+  + Icon : stringNullable
+  + Status : string
+  + TestSessionTopics : ICollectionOfTestSessionTopic
+  + UserTopicPreferences : ICollectionOfUserTopicPreference
+  + WordTopics : ICollectionOfWordTopic
 }
 class Word <<entity>> {
-  \+ WordId : uint
-  \+ Word1 : string
-  \+ WordKey : string
-  \+ CefrLevel : stringNullable
-  \+ PhoneticUk : stringNullable
-  \+ PhoneticUs : stringNullable
-  \+ ImageUrl : stringNullable
-  \+ IsPhrase : bool
-  \+ Status : string
-  \+ CreatedAt : DateTime
-  \+ UpdatedAt : DateTime
-  \+ AiGradingCaches : ICollectionOfAiGradingCache
+  + WordId : uint
+  + Word1 : string
+  + WordKey : string
+  + CefrLevel : stringNullable
+  + PhoneticUk : stringNullable
+  + PhoneticUs : stringNullable
+  + ImageUrl : stringNullable
+  + IsPhrase : bool
+  + Status : string
+  + CreatedAt : DateTime
+  + UpdatedAt : DateTime
+  + AiGradingCaches : ICollectionOfAiGradingCache
 }
 class WordSense <<entity>> {
-  \+ SenseId : uint
-  \+ WordId : uint
-  \+ SenseOrder : int
-  \+ WordClass : string
-  \+ EnglishDefinition : string
-  \+ VietnameseMeaning : stringNullable
-  \+ Status : string
-  \+ TestAnswers : ICollectionOfTestAnswer
-  \+ Word : Word
-  \+ WordExamples : ICollectionOfWordExample
-  \+ WordRelations : ICollectionOfWordRelation
+  + SenseId : uint
+  + WordId : uint
+  + SenseOrder : int
+  + WordClass : string
+  + EnglishDefinition : string
+  + VietnameseMeaning : stringNullable
+  + Status : string
+  + TestAnswers : ICollectionOfTestAnswer
+  + Word : Word
+  + WordExamples : ICollectionOfWordExample
+  + WordRelations : ICollectionOfWordRelation
 }
 class WordTopic <<dto>> {
-  \+ WordId : uint
-  \+ TopicId : uint
-  \+ IsPrimary : bool
-  \+ Topic : Topic
-  \+ Word : Word
+  + WordId : uint
+  + TopicId : uint
+  + IsPrimary : bool
+  + Topic : Topic
+  + Word : Word
 }
 class UserList <<entity>> {
-  \+ ListId : uint
-  \+ UserId : uint
-  \+ ListName : string
-  \+ Status : string
-  \+ CreatedAt : DateTime
-  \+ User : User
-  \+ UserListWordStats : ICollectionOfUserListWordStat
-  \+ UserListWords : ICollectionOfUserListWord
+  + ListId : uint
+  + UserId : uint
+  + ListName : string
+  + Status : string
+  + CreatedAt : DateTime
+  + User : User
+  + UserListWordStats : ICollectionOfUserListWordStat
+  + UserListWords : ICollectionOfUserListWord
 }
 class UserListWord <<entity>> {
-  \+ UserId : uint
-  \+ ListId : uint
-  \+ WordId : uint
-  \+ AddMethod : string
-  \+ Note : stringNullable
-  \+ AddedAt : DateTime
-  \+ Status : string
-  \+ List : UserList
-  \+ User : User
-  \+ Word : Word
+  + UserId : uint
+  + ListId : uint
+  + WordId : uint
+  + AddMethod : string
+  + Note : stringNullable
+  + AddedAt : DateTime
+  + Status : string
+  + List : UserList
+  + User : User
+  + Word : Word
 }
 class PersonalTopicQueryRepository <<repository>> {
-  \- _dbContext : VocaNovaDbContext
+  - _dbContext : VocaNovaDbContext
   --
-  \+ GetTopicsAsync(userId: uint, containsWordId: uintNullable, cancellationToken: CancellationToken) : TaskOfListLookupResultOfIReadOnlyCollectionOfPersonalTopic
-  \+ GetTopicWordsAsync(userId: uint, topicId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfListLookupResultOfPagedCollectionOfListWord
+  + GetTopicsAsync(userId: uint, containsWordId: uintNullable, cancellationToken: CancellationToken) : TaskOfListLookupResultOfIReadOnlyCollectionOfPersonalTopic
+  + GetTopicWordsAsync(userId: uint, topicId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfListLookupResultOfPagedCollectionOfListWord
 }
 class PersonalTopicMutationRepository <<repository>> {
-  \- _dbContext : VocaNovaDbContext
+  - _dbContext : VocaNovaDbContext
   --
-  \+ GetTopicsAsync(userId: uint, wordId: uintNullable, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfPersonalTopic
-  \+ TopicExistsAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfBool
-  \+ WordBelongsToTopicAsync(topicId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfBool
-  \+ FindActiveListIdAsync(userId: uint, topicId: uint, cancellationToken: CancellationToken) : TaskOfuint
-  \+ GetOrCreateListIdAsync(userId: uint, topicId: uint, cancellationToken: CancellationToken) : TaskOfuint
+  + GetTopicsAsync(userId: uint, wordId: uintNullable, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfPersonalTopic
+  + TopicExistsAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfBool
+  + WordBelongsToTopicAsync(topicId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfBool
+  + FindActiveListIdAsync(userId: uint, topicId: uint, cancellationToken: CancellationToken) : TaskOfuint
+  + GetOrCreateListIdAsync(userId: uint, topicId: uint, cancellationToken: CancellationToken) : TaskOfuint
 }
 class ListMutationRepository <<repository>> {
-  \- _dbContext : VocaNovaDbContext
+  - _dbContext : VocaNovaDbContext
   --
-  \+ AddWordAsync(userId: uint, listId: uint, command: AddListWordCommand, cancellationToken: CancellationToken) : TaskOfListWord
-  \+ RemoveWordAsync(userId: uint, listId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfBool
+  + AddWordAsync(userId: uint, listId: uint, command: AddListWordCommand, cancellationToken: CancellationToken) : TaskOfListWord
+  + RemoveWordAsync(userId: uint, listId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfBool
 }
 class VocaNovaDbContext <<dbcontext>> {
-  \+ AgeRanges : DbSetOfAgeRange
-  \+ AiGradingCaches : DbSetOfAiGradingCache
-  \+ AuditLogs : DbSetOfAuditLog
-  \+ EducationLevels : DbSetOfEducationLevel
-  \+ LearningPurposes : DbSetOfLearningPurpose
-  \+ Occupations : DbSetOfOccupation
-  \+ OtpVerifications : DbSetOfOtpVerification
-  \+ RefreshTokens : DbSetOfRefreshToken
-  \+ Regions : DbSetOfRegion
-  \+ Roles : DbSetOfRole
-  \+ TestAnswers : DbSetOfTestAnswer
-  \+ TestSessions : DbSetOfTestSession
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
   --
-  \+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
 }
 class MySQL_Database <<database>> {
 

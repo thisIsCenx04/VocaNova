@@ -10,57 +10,57 @@ Generated from superadmin-create-role-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 class RolesController <<frontend_controller>> {
-  \- _apiClient : IVocaNovaApiClient
+  - _apiClient : IVocaNovaApiClient
   --
-  \+ Create() : IActionResult
-  \+ Create(model: SaveRoleViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + Create() : IActionResult
+  + Create(model: SaveRoleViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class BackendRolesController <<backend_controller>> {
-  \- _apiClient : IVocaNovaApiClient
+  - _apiClient : IVocaNovaApiClient
   --
-  \+ Create() : IActionResult
-  \+ Create(model: SaveRoleViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + Create() : IActionResult
+  + Create(model: SaveRoleViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class SaveRoleRequest <<dto>> {
-  \+ RoleName : stringNullable
+  + RoleName : stringNullable
 }
 class RoleResponse <<dto>> {
-  \+ RoleId : uint
-  \+ RoleName : string
+  + RoleId : uint
+  + RoleName : string
 }
 class RoleManagementService <<service>> {
-  \- _repository : IRoleManagementRepository
-  \- _transactionManager : IApplicationTransactionManager
-  \- _profileCache : IUserProfileCacheNullable
+  - _repository : IRoleManagementRepository
+  - _transactionManager : IApplicationTransactionManager
+  - _profileCache : IUserProfileCacheNullable
   --
-  \+ CreateAsync(request: SaveRoleModel, cancellationToken: CancellationToken) : TaskOfResultOfRoleModel
+  + CreateAsync(request: SaveRoleModel, cancellationToken: CancellationToken) : TaskOfResultOfRoleModel
 }
 class Role <<entity>> {
-  \+ RoleId : uint
-  \+ RoleName : string
-  \+ Users : ICollectionOfUser
+  + RoleId : uint
+  + RoleName : string
+  + Users : ICollectionOfUser
 }
 class RoleManagementRepository <<repository>> {
-  \- _dbContext : VocaNovaDbContext
+  - _dbContext : VocaNovaDbContext
   --
-  \+ RoleExistsAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfBool
-  \+ AddRoleAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfRoleModel
+  + RoleExistsAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfBool
+  + AddRoleAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfRoleModel
 }
 class VocaNovaDbContext <<dbcontext>> {
-  \+ AgeRanges : DbSetOfAgeRange
-  \+ AiGradingCaches : DbSetOfAiGradingCache
-  \+ AuditLogs : DbSetOfAuditLog
-  \+ EducationLevels : DbSetOfEducationLevel
-  \+ LearningPurposes : DbSetOfLearningPurpose
-  \+ Occupations : DbSetOfOccupation
-  \+ OtpVerifications : DbSetOfOtpVerification
-  \+ RefreshTokens : DbSetOfRefreshToken
-  \+ Regions : DbSetOfRegion
-  \+ Roles : DbSetOfRole
-  \+ TestAnswers : DbSetOfTestAnswer
-  \+ TestSessions : DbSetOfTestSession
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
   --
-  \+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
 }
 class MySQL_Database <<database>> {
 

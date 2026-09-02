@@ -10,148 +10,148 @@ Generated from admin-search-vocabulary-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 class VocabularyController <<frontend_controller>> {
-  \- _apiClient : IVocaNovaApiClient
-  \- _translator : ITranslator
+  - _apiClient : IVocaNovaApiClient
+  - _translator : ITranslator
   --
-  \+ Index(q: stringNullable, cefr: stringNullable, topicId: uintNullable, status: stringNullable, wordType: stringNullable, sortBy: stringNullable, sortDirection: stringNullable, includeDeleted: bool, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfIActionResult
-  \+ Create() : IActionResult
+  + Index(q: stringNullable, cefr: stringNullable, topicId: uintNullable, status: stringNullable, wordType: stringNullable, sortBy: stringNullable, sortDirection: stringNullable, includeDeleted: bool, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + Create() : IActionResult
 }
 class AdminWordsController <<backend_controller>> {
-  \- _service : IWordAdminService
+  - _service : IWordAdminService
   --
-  \+ List(request: AdminWordQueryRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
-  \+ Create(request: CreateWordRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + List(request: AdminWordQueryRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + Create(request: CreateWordRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class TopicsController <<backend_controller>> {
-  \- _apiClient : IVocaNovaApiClient
+  - _apiClient : IVocaNovaApiClient
   --
-  \+ Index(q: stringNullable, status: stringNullable, includeDeleted: bool, page: int, pageSize: int, sortBy: stringNullable, sortDirection: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
-  \+ Detail(id: uint, q: stringNullable, cefr: stringNullable, status: stringNullable, wordType: stringNullable, includeDeleted: bool, page: int, limit: int, sortBy: stringNullable, sortDirection: stringNullable, addWord: bool, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + Index(q: stringNullable, status: stringNullable, includeDeleted: bool, page: int, pageSize: int, sortBy: stringNullable, sortDirection: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + Detail(id: uint, q: stringNullable, cefr: stringNullable, status: stringNullable, wordType: stringNullable, includeDeleted: bool, page: int, limit: int, sortBy: stringNullable, sortDirection: stringNullable, addWord: bool, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class WordListItem <<dto>> {
-  \+ WordId : uint
-  \+ Word : string
-  \+ Cefr : stringNullable
-  \+ Phonetic : stringNullable
-  \+ Status : string
-  \+ ImageUrl : stringNullable
-  \+ PrimaryMeaning : stringNullable
-  \+ Topics : IReadOnlyListOfWordTopic
-  \+ WordType : stringNullable
+  + WordId : uint
+  + Word : string
+  + Cefr : stringNullable
+  + Phonetic : stringNullable
+  + Status : string
+  + ImageUrl : stringNullable
+  + PrimaryMeaning : stringNullable
+  + Topics : IReadOnlyListOfWordTopic
+  + WordType : stringNullable
 }
 class TopicSummary <<dto>> {
-  \+ TopicId : uint
-  \+ Name : string
-  \+ NameVi : stringNullable
-  \+ Icon : stringNullable
-  \+ WordCount : int
+  + TopicId : uint
+  + Name : string
+  + NameVi : stringNullable
+  + Icon : stringNullable
+  + WordCount : int
 }
 class AdminWordQueryRequest <<dto>> {
 
 }
 class AdminWordListItemResponse <<dto>> {
-  \+ WordId : uint
-  \+ Word : string
-  \+ Cefr : stringNullable
-  \+ Phonetic : stringNullable
-  \+ Status : string
-  \+ ImageUrl : stringNullable
-  \+ PrimaryMeaning : stringNullable
-  \+ Topics : ListOfWordTopicResponse
-  \+ WordType : stringNullable
+  + WordId : uint
+  + Word : string
+  + Cefr : stringNullable
+  + Phonetic : stringNullable
+  + Status : string
+  + ImageUrl : stringNullable
+  + PrimaryMeaning : stringNullable
+  + Topics : ListOfWordTopicResponse
+  + WordType : stringNullable
 }
 class TopicSummaryResponse <<dto>> {
-  \+ TopicId : uint
-  \+ Name : string
-  \+ NameVi : stringNullable
-  \+ Icon : stringNullable
-  \+ WordCount : int
+  + TopicId : uint
+  + Name : string
+  + NameVi : stringNullable
+  + Icon : stringNullable
+  + WordCount : int
 }
 class WordAdminService <<service>> {
-  \- _repository : IWordAdminRepository
-  \- _audioStorage : IWordAudioStorageNullable
-  \- _imageStorage : IWordImageStorageNullable
-  \- _wordDetailCache : IWordDetailCacheNullable
-  \- _userListCache : IUserListCacheNullable
+  - _repository : IWordAdminRepository
+  - _audioStorage : IWordAudioStorageNullable
+  - _imageStorage : IWordImageStorageNullable
+  - _wordDetailCache : IWordDetailCacheNullable
+  - _userListCache : IUserListCacheNullable
   --
-  \+ SearchAsync(query: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfPagedCollectionOfAdminWordListItem
+  + SearchAsync(query: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfPagedCollectionOfAdminWordListItem
 }
 class TopicReadService <<service>> {
-  \- _topicRepository : ITopicReadRepository
-  \- _wordRepository : IWordReadRepository
-  \- _topicCache : ITopicCacheNullable
+  - _topicRepository : ITopicReadRepository
+  - _wordRepository : IWordReadRepository
+  - _topicCache : ITopicCacheNullable
   --
-  \+ GetTopicsAsync(cancellationToken: CancellationToken) : TaskOfDictionaryResultOfIReadOnlyCollectionOfTopicSummary
+  + GetTopicsAsync(cancellationToken: CancellationToken) : TaskOfDictionaryResultOfIReadOnlyCollectionOfTopicSummary
 }
 class Word <<entity>> {
-  \+ WordId : uint
-  \+ Word1 : string
-  \+ WordKey : string
-  \+ CefrLevel : stringNullable
-  \+ PhoneticUk : stringNullable
-  \+ PhoneticUs : stringNullable
-  \+ ImageUrl : stringNullable
-  \+ IsPhrase : bool
-  \+ Status : string
-  \+ CreatedAt : DateTime
-  \+ UpdatedAt : DateTime
-  \+ AiGradingCaches : ICollectionOfAiGradingCache
+  + WordId : uint
+  + Word1 : string
+  + WordKey : string
+  + CefrLevel : stringNullable
+  + PhoneticUk : stringNullable
+  + PhoneticUs : stringNullable
+  + ImageUrl : stringNullable
+  + IsPhrase : bool
+  + Status : string
+  + CreatedAt : DateTime
+  + UpdatedAt : DateTime
+  + AiGradingCaches : ICollectionOfAiGradingCache
 }
 class WordSense <<entity>> {
-  \+ SenseId : uint
-  \+ WordId : uint
-  \+ SenseOrder : int
-  \+ WordClass : string
-  \+ EnglishDefinition : string
-  \+ VietnameseMeaning : stringNullable
-  \+ Status : string
-  \+ TestAnswers : ICollectionOfTestAnswer
-  \+ Word : Word
-  \+ WordExamples : ICollectionOfWordExample
-  \+ WordRelations : ICollectionOfWordRelation
+  + SenseId : uint
+  + WordId : uint
+  + SenseOrder : int
+  + WordClass : string
+  + EnglishDefinition : string
+  + VietnameseMeaning : stringNullable
+  + Status : string
+  + TestAnswers : ICollectionOfTestAnswer
+  + Word : Word
+  + WordExamples : ICollectionOfWordExample
+  + WordRelations : ICollectionOfWordRelation
 }
 class WordTopic <<dto>> {
-  \+ WordId : uint
-  \+ TopicId : uint
-  \+ IsPrimary : bool
-  \+ Topic : Topic
-  \+ Word : Word
+  + WordId : uint
+  + TopicId : uint
+  + IsPrimary : bool
+  + Topic : Topic
+  + Word : Word
 }
 class Topic <<entity>> {
-  \+ TopicId : uint
-  \+ TopicName : string
-  \+ TopicNameVi : stringNullable
-  \+ Icon : stringNullable
-  \+ Status : string
-  \+ TestSessionTopics : ICollectionOfTestSessionTopic
-  \+ UserTopicPreferences : ICollectionOfUserTopicPreference
-  \+ WordTopics : ICollectionOfWordTopic
+  + TopicId : uint
+  + TopicName : string
+  + TopicNameVi : stringNullable
+  + Icon : stringNullable
+  + Status : string
+  + TestSessionTopics : ICollectionOfTestSessionTopic
+  + UserTopicPreferences : ICollectionOfUserTopicPreference
+  + WordTopics : ICollectionOfWordTopic
 }
 class WordAdminRepository <<repository>> {
-  \- _dbContext : VocaNovaDbContext
+  - _dbContext : VocaNovaDbContext
   --
-  \+ SearchAsync(filter: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfPagedAdminWordListItem
+  + SearchAsync(filter: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfPagedAdminWordListItem
 }
 class TopicReadRepository <<repository>> {
-  \- _dbContext : VocaNovaDbContext
+  - _dbContext : VocaNovaDbContext
   --
-  \+ GetTopicsAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfTopicSummary
+  + GetTopicsAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfTopicSummary
 }
 class VocaNovaDbContext <<dbcontext>> {
-  \+ AgeRanges : DbSetOfAgeRange
-  \+ AiGradingCaches : DbSetOfAiGradingCache
-  \+ AuditLogs : DbSetOfAuditLog
-  \+ EducationLevels : DbSetOfEducationLevel
-  \+ LearningPurposes : DbSetOfLearningPurpose
-  \+ Occupations : DbSetOfOccupation
-  \+ OtpVerifications : DbSetOfOtpVerification
-  \+ RefreshTokens : DbSetOfRefreshToken
-  \+ Regions : DbSetOfRegion
-  \+ Roles : DbSetOfRole
-  \+ TestAnswers : DbSetOfTestAnswer
-  \+ TestSessions : DbSetOfTestSession
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
   --
-  \+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
 }
 class MySQL_Database <<database>> {
 

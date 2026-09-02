@@ -10,122 +10,122 @@ Generated from auth-google-login-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 class GoogleAuthService <<service>> {
-  \+ _googleSignIn : GoogleSignIn
-  \+ serverClientId : String
+  + _googleSignIn : GoogleSignIn
+  + serverClientId : String
   --
-  \+ getIdToken() : FutureOfString
-  \+ signOut() : FutureOfvoid
+  + getIdToken() : FutureOfString
+  + signOut() : FutureOfvoid
 }
 class GoogleLoginRequest <<dto>> {
-  \+ IdToken : stringNullable
+  + IdToken : stringNullable
 }
 class TokenResponse <<dto>> {
-  \+ AccessToken : string
-  \+ RefreshToken : string
-  \+ ExpiresIn : int
-  \+ TokenType : string
+  + AccessToken : string
+  + RefreshToken : string
+  + ExpiresIn : int
+  + TokenType : string
 }
 class AuthTokensDto <<dto>> {
-  \+ accessToken : String
-  \+ refreshToken : String
-  \+ expiresIn : int
-  \+ tokenType : String
+  + accessToken : String
+  + refreshToken : String
+  + expiresIn : int
+  + tokenType : String
 }
 class AuthController <<backend_controller>> {
-  \- _authService : IDashboardAuthService
+  - _authService : IDashboardAuthService
   --
-  \+ Login(returnUrl: stringNullable) : IActionResult
-  \+ Login(model: LoginViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + Login(returnUrl: stringNullable) : IActionResult
+  + Login(model: LoginViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class AuthService <<service>> {
-  \- _accountRepository : IAuthAccountRepository
-  \- _refreshTokenRepository : IRefreshTokenRepository
-  \- _otpRepository : IOtpRepository
-  \- _transactionManager : IApplicationTransactionManager
-  \- _jwtTokenService : IJwtTokenService
-  \- _googleIdentityProvider : IGoogleIdentityProvider
-  \- _userProfileCache : IUserProfileCacheNullable
-  \- _knnTopicRecommendationCache : IKnnTopicRecommendationCacheNullable
-  \- _otpCodeGenerator : IOtpCodeGenerator
-  \- _smsSender : ISmsSender
-  \- _passwordHasher : IPasswordHasher
-  \- _refreshTokenHasher : IRefreshTokenHasher
+  - _accountRepository : IAuthAccountRepository
+  - _refreshTokenRepository : IRefreshTokenRepository
+  - _otpRepository : IOtpRepository
+  - _transactionManager : IApplicationTransactionManager
+  - _jwtTokenService : IJwtTokenService
+  - _googleIdentityProvider : IGoogleIdentityProvider
+  - _userProfileCache : IUserProfileCacheNullable
+  - _knnTopicRecommendationCache : IKnnTopicRecommendationCacheNullable
+  - _otpCodeGenerator : IOtpCodeGenerator
+  - _smsSender : ISmsSender
+  - _passwordHasher : IPasswordHasher
+  - _refreshTokenHasher : IRefreshTokenHasher
   --
-  \+ LoginAsync(command: LoginCommand, signInContext: SignInContext, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfAuthTokenPair
-  \+ GoogleLoginAsync(command: GoogleLoginCommand, signInContext: SignInContext, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfAuthTokenPair
+  + LoginAsync(command: LoginCommand, signInContext: SignInContext, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfAuthTokenPair
+  + GoogleLoginAsync(command: GoogleLoginCommand, signInContext: SignInContext, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfAuthTokenPair
 }
 class User <<entity>> {
-  \+ UserId : uint
-  \+ RoleId : uint
-  \+ Status : string
-  \+ LastLoginAt : DateTimeNullable
-  \+ CreatedAt : DateTime
-  \+ UpdatedAt : DateTime
-  \+ AuditLogs : ICollectionOfAuditLog
-  \+ OtpVerifications : ICollectionOfOtpVerification
-  \+ RefreshTokens : ICollectionOfRefreshToken
-  \+ Role : Role
-  \+ TestSessions : ICollectionOfTestSession
-  \+ UserAuth : UserAuthNullable
+  + UserId : uint
+  + RoleId : uint
+  + Status : string
+  + LastLoginAt : DateTimeNullable
+  + CreatedAt : DateTime
+  + UpdatedAt : DateTime
+  + AuditLogs : ICollectionOfAuditLog
+  + OtpVerifications : ICollectionOfOtpVerification
+  + RefreshTokens : ICollectionOfRefreshToken
+  + Role : Role
+  + TestSessions : ICollectionOfTestSession
+  + UserAuth : UserAuthNullable
 }
 class UserAuth <<entity>> {
-  \+ UserId : uint
-  \+ Phone : stringNullable
-  \+ IsPhoneVerified : bool
-  \+ GoogleUid : stringNullable
-  \+ GoogleEmail : stringNullable
-  \+ Username : stringNullable
-  \+ PasswordHash : stringNullable
-  \+ UpdatedAt : DateTime
-  \+ User : User
+  + UserId : uint
+  + Phone : stringNullable
+  + IsPhoneVerified : bool
+  + GoogleUid : stringNullable
+  + GoogleEmail : stringNullable
+  + Username : stringNullable
+  + PasswordHash : stringNullable
+  + UpdatedAt : DateTime
+  + User : User
 }
 class UserProfile <<entity>> {
-  \+ UserId : uint
-  \+ FullName : string
-  \+ AvatarUrl : stringNullable
-  \+ UpdatedAt : DateTime
-  \+ User : User
+  + UserId : uint
+  + FullName : string
+  + AvatarUrl : stringNullable
+  + UpdatedAt : DateTime
+  + User : User
 }
 class Role <<entity>> {
-  \+ RoleId : uint
-  \+ RoleName : string
-  \+ Users : ICollectionOfUser
+  + RoleId : uint
+  + RoleName : string
+  + Users : ICollectionOfUser
 }
 class RefreshToken <<entity>> {
-  \+ TokenId : uint
-  \+ UserId : uint
-  \+ TokenHash : string
-  \+ DeviceInfo : stringNullable
-  \+ IpAddress : stringNullable
-  \+ ExpiresAt : DateTime
-  \+ CreatedAt : DateTime
-  \+ RevokedAt : DateTimeNullable
-  \+ User : User
+  + TokenId : uint
+  + UserId : uint
+  + TokenHash : string
+  + DeviceInfo : stringNullable
+  + IpAddress : stringNullable
+  + ExpiresAt : DateTime
+  + CreatedAt : DateTime
+  + RevokedAt : DateTimeNullable
+  + User : User
 }
 class AuthAccountRepository <<repository>> {
-  \- _dbContext : VocaNovaDbContext
+  - _dbContext : VocaNovaDbContext
   --
-  \+ FindByGoogleSubjectAsync(googleSubject: string, cancellationToken: CancellationToken) : TaskOfAuthAccount
-  \+ FindByGoogleEmailAsync(googleEmail: string, cancellationToken: CancellationToken) : TaskOfAuthAccount
-  \+ FindRoleByNameAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfAuthRole
-  \+ StageCreateAsync(account: CreateAuthAccount, cancellationToken: CancellationToken) : Task
-  \+ StageLastLoginAsync(userId: uint, updatedAt: DateTime, cancellationToken: CancellationToken) : Task
+  + FindByGoogleSubjectAsync(googleSubject: string, cancellationToken: CancellationToken) : TaskOfAuthAccount
+  + FindByGoogleEmailAsync(googleEmail: string, cancellationToken: CancellationToken) : TaskOfAuthAccount
+  + FindRoleByNameAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfAuthRole
+  + StageCreateAsync(account: CreateAuthAccount, cancellationToken: CancellationToken) : Task
+  + StageLastLoginAsync(userId: uint, updatedAt: DateTime, cancellationToken: CancellationToken) : Task
 }
 class VocaNovaDbContext <<dbcontext>> {
-  \+ AgeRanges : DbSetOfAgeRange
-  \+ AiGradingCaches : DbSetOfAiGradingCache
-  \+ AuditLogs : DbSetOfAuditLog
-  \+ EducationLevels : DbSetOfEducationLevel
-  \+ LearningPurposes : DbSetOfLearningPurpose
-  \+ Occupations : DbSetOfOccupation
-  \+ OtpVerifications : DbSetOfOtpVerification
-  \+ RefreshTokens : DbSetOfRefreshToken
-  \+ Regions : DbSetOfRegion
-  \+ Roles : DbSetOfRole
-  \+ TestAnswers : DbSetOfTestAnswer
-  \+ TestSessions : DbSetOfTestSession
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
   --
-  \+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
 }
 class MySQL_Database <<database>> {
 

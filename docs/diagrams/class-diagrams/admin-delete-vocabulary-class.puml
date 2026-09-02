@@ -10,88 +10,88 @@ Generated from admin-delete-vocabulary-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 class VocabularyController <<frontend_controller>> {
-  \- _apiClient : IVocaNovaApiClient
-  \- _translator : ITranslator
+  - _apiClient : IVocaNovaApiClient
+  - _translator : ITranslator
   --
-  \+ Delete(id: uint, returnUrl: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
-  \+ DeleteAudio(id: uint, audioId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
-  \+ DeleteImage(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + Delete(id: uint, returnUrl: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + DeleteAudio(id: uint, audioId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + DeleteImage(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class AdminWordsController <<backend_controller>> {
-  \- _service : IWordAdminService
+  - _service : IWordAdminService
   --
-  \+ SoftDelete(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+  + SoftDelete(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 class WordAdminService <<service>> {
-  \- _repository : IWordAdminRepository
-  \- _audioStorage : IWordAudioStorageNullable
-  \- _imageStorage : IWordImageStorageNullable
-  \- _wordDetailCache : IWordDetailCacheNullable
-  \- _userListCache : IUserListCacheNullable
+  - _repository : IWordAdminRepository
+  - _audioStorage : IWordAudioStorageNullable
+  - _imageStorage : IWordImageStorageNullable
+  - _wordDetailCache : IWordDetailCacheNullable
+  - _userListCache : IUserListCacheNullable
   --
-  \+ SoftDeleteAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryBool
+  + SoftDeleteAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryBool
 }
 class Word <<entity>> {
-  \+ WordId : uint
-  \+ Word1 : string
-  \+ WordKey : string
-  \+ CefrLevel : stringNullable
-  \+ PhoneticUk : stringNullable
-  \+ PhoneticUs : stringNullable
-  \+ ImageUrl : stringNullable
-  \+ IsPhrase : bool
-  \+ Status : string
-  \+ CreatedAt : DateTime
-  \+ UpdatedAt : DateTime
-  \+ AiGradingCaches : ICollectionOfAiGradingCache
+  + WordId : uint
+  + Word1 : string
+  + WordKey : string
+  + CefrLevel : stringNullable
+  + PhoneticUk : stringNullable
+  + PhoneticUs : stringNullable
+  + ImageUrl : stringNullable
+  + IsPhrase : bool
+  + Status : string
+  + CreatedAt : DateTime
+  + UpdatedAt : DateTime
+  + AiGradingCaches : ICollectionOfAiGradingCache
 }
 class UserListWord <<entity>> {
-  \+ UserId : uint
-  \+ ListId : uint
-  \+ WordId : uint
-  \+ AddMethod : string
-  \+ Note : stringNullable
-  \+ AddedAt : DateTime
-  \+ Status : string
-  \+ List : UserList
-  \+ User : User
-  \+ Word : Word
+  + UserId : uint
+  + ListId : uint
+  + WordId : uint
+  + AddMethod : string
+  + Note : stringNullable
+  + AddedAt : DateTime
+  + Status : string
+  + List : UserList
+  + User : User
+  + Word : Word
 }
 class UserWordProgress <<entity>> {
-  \+ ProgressId : uint
-  \+ UserId : uint
-  \+ WordId : uint
-  \+ TestCount : int
-  \+ CorrectCount : int
-  \+ WrongCount : int
-  \+ ConsecutiveCorrect : int
-  \+ IsInWrongList : bool
-  \+ MasteryLevel : int
-  \+ SrsInterval : int
-  \+ EaseFactor : float
-  \+ LastTestedAt : DateTimeNullable
+  + ProgressId : uint
+  + UserId : uint
+  + WordId : uint
+  + TestCount : int
+  + CorrectCount : int
+  + WrongCount : int
+  + ConsecutiveCorrect : int
+  + IsInWrongList : bool
+  + MasteryLevel : int
+  + SrsInterval : int
+  + EaseFactor : float
+  + LastTestedAt : DateTimeNullable
 }
 class WordAdminRepository <<repository>> {
-  \- _dbContext : VocaNovaDbContext
+  - _dbContext : VocaNovaDbContext
   --
-  \+ SetWordStatusAsync(wordId: uint, status: string, cancellationToken: CancellationToken) : TaskOfBool
-  \+ GetReferencingUserIdsAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfListOfUint
+  + SetWordStatusAsync(wordId: uint, status: string, cancellationToken: CancellationToken) : TaskOfBool
+  + GetReferencingUserIdsAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfListOfUint
 }
 class VocaNovaDbContext <<dbcontext>> {
-  \+ AgeRanges : DbSetOfAgeRange
-  \+ AiGradingCaches : DbSetOfAiGradingCache
-  \+ AuditLogs : DbSetOfAuditLog
-  \+ EducationLevels : DbSetOfEducationLevel
-  \+ LearningPurposes : DbSetOfLearningPurpose
-  \+ Occupations : DbSetOfOccupation
-  \+ OtpVerifications : DbSetOfOtpVerification
-  \+ RefreshTokens : DbSetOfRefreshToken
-  \+ Regions : DbSetOfRegion
-  \+ Roles : DbSetOfRole
-  \+ TestAnswers : DbSetOfTestAnswer
-  \+ TestSessions : DbSetOfTestSession
+  + AgeRanges : DbSetOfAgeRange
+  + AiGradingCaches : DbSetOfAiGradingCache
+  + AuditLogs : DbSetOfAuditLog
+  + EducationLevels : DbSetOfEducationLevel
+  + LearningPurposes : DbSetOfLearningPurpose
+  + Occupations : DbSetOfOccupation
+  + OtpVerifications : DbSetOfOtpVerification
+  + RefreshTokens : DbSetOfRefreshToken
+  + Regions : DbSetOfRegion
+  + Roles : DbSetOfRole
+  + TestAnswers : DbSetOfTestAnswer
+  + TestSessions : DbSetOfTestSession
   --
-  \+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
 }
 class MySQL_Database <<database>> {
 
