@@ -11,10 +11,12 @@ entity "CreateTopicRequest\n(BE Request DTO)" as TopicRequestDto
 entity "TopicSummaryResponse\n(BE Response DTO)" as TopicResponseDto
 control "AdminTopicsController\n(BE API)" as ApiController
 control "TopicAdminService" as TopicService
+control "ITopicAdminService" as ITopicAdminService
 entity "Topic" as TopicEntity
 entity "Word" as WordEntity
 entity "WordTopic" as WordTopicEntity
 control "TopicAdminRepository" as TopicRepository
+control "ITopicAdminRepository" as ITopicAdminRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over CreateTopicPage, MySQL
@@ -23,6 +25,7 @@ Dashboard TopicsController posts create data through VocaNovaApiClient.
 API uses CreateTopicRequest and returns TopicSummaryResponse.
 FE response DTO exists: AdminTopic for duplicate topic checks.
 CreateTopicRequest can include word_ids for initial topic vocabulary.
+Interfaces used in code: ITopicAdminService, ITopicAdminRepository.
 end note
 Admin -> CreateTopicPage: Open create topic page
 Admin -> CreateTopicPage: Enter topic name,\nVietnamese name?, icon?, words?
@@ -46,9 +49,11 @@ alt Request validation fails
 ApiController --> DashboardController: HTTP 400 error
 DashboardController --> CreateTopicPage: Show error message
 else Request validation success
-ApiController -> TopicService: CreateAsync(create data)
+ApiController -> ITopicAdminService: CreateAsync(create data)
+ITopicAdminService -> TopicService: CreateAsync(create data)
 TopicService -> TopicService: Normalize topic data
-TopicService -> TopicRepository: NameExistsAsync(topicName, topicNameVi)
+TopicService -> ITopicAdminRepository: NameExistsAsync(topicName, topicNameVi)
+ITopicAdminRepository -> TopicRepository: NameExistsAsync(topicName, topicNameVi)
 TopicRepository -> DbContext: Query duplicate topic name
 DbContext -> MySQL: SELECT topics
 MySQL --> DbContext: Topic row or null
@@ -61,7 +66,8 @@ TopicService --> ApiController: Conflict result
 ApiController --> DashboardController: HTTP 409 error
 DashboardController --> CreateTopicPage: Show error message
 else Topic name is available
-TopicService -> TopicRepository: WordIdsExistAsync(wordIds)
+TopicService -> ITopicAdminRepository: WordIdsExistAsync(wordIds)
+ITopicAdminRepository -> TopicRepository: WordIdsExistAsync(wordIds)
 TopicRepository -> DbContext: Check selected vocabulary words
 DbContext -> MySQL: SELECT words
 MySQL --> DbContext: Word rows count
@@ -74,7 +80,8 @@ TopicService --> ApiController: Validation failure
 ApiController --> DashboardController: HTTP 400 error
 DashboardController --> CreateTopicPage: Show error message
 else Selected words valid
-TopicService -> TopicRepository: CreateAsync(create data)
+TopicService -> ITopicAdminRepository: CreateAsync(create data)
+ITopicAdminRepository -> TopicRepository: CreateAsync(create data)
 TopicRepository -> TopicEntity: Create or restore Topic
 TopicEntity --> TopicRepository: Topic
 TopicRepository -> DbContext: Add or track Topic

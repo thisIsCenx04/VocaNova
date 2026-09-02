@@ -19,6 +19,7 @@ entity "UserProfile" as UserProfileEntity
 entity "Role" as RoleEntity
 entity "UserLearningProfile" as LearningProfileEntity
 control "AuthAccountRepository" as AccountRepository
+control "IAuthAccountRepository" as IAuthAccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -31,6 +32,7 @@ BE controller exists: AuthController.
 BE response DTO exists: UserProfileResponse.
 Endpoint is GET /api/auth/me; no request DTO body is used.
 Entities exist: User, UserAuth, UserProfile, Role and UserLearningProfile.
+Interfaces used in code: IAuthAccountRepository.
 end note
 
 Learner -> ProfileUi: Open profile
@@ -45,7 +47,8 @@ alt User id missing
     FeController --> ProfileUi: Show profile error
 else User authenticated
     BeController -> AuthService: GetProfileAsync(userId)
-    AuthService -> AccountRepository: GetProfileAsync(userId)
+    AuthService -> IAuthAccountRepository: GetProfileAsync(userId)
+    IAuthAccountRepository -> AccountRepository: GetProfileAsync(userId)
     AccountRepository -> DbContext: Query user aggregate
     DbContext -> MySQL: SELECT users with auth,\nprofile, role and learning profile
     MySQL --> DbContext: User profile rows or null

@@ -8,10 +8,12 @@ boundary "Admin Accounts UI" as AdminAccountsPage
 control "AdminAccountsController\n(FE Dashboard)" as DashboardController
 control "SuperAdminAccountsController\n(BE API)" as ApiController
 control "SuperAdminAccountService" as AccountService
+control "ISuperAdminAccountService" as ISuperAdminAccountService
 entity "User" as UserEntity
 entity "UserAuth" as UserAuthEntity
 entity "RefreshToken" as RefreshTokenEntity
 control "SuperAdminAccountRepository" as AccountRepository
+control "ISuperAdminAccountRepository" as ISuperAdminAccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over AdminAccountsPage, MySQL
@@ -20,13 +22,16 @@ Dashboard calls DeleteAdminAccountAsync through VocaNovaApiClient.
 API endpoint is DELETE /api/superadmin/admins/{id}.
 No request DTO body is used; API returns bool in the response envelope.
 Delete is soft delete: status becomes deleted and auth fields are cleared.
+Interfaces used in code: ISuperAdminAccountService, ISuperAdminAccountRepository.
 end note
 SuperAdmin -> AdminAccountsPage: Click Delete admin account
 AdminAccountsPage -> DashboardController: POST /admin-accounts/{id}/delete
 DashboardController -> ApiController: VocaNovaApiClient.DeleteAdminAccountAsync(id)\nDELETE /api/superadmin/admins/{id}
 ApiController -> ApiController: Check super admin authorization
-ApiController -> AccountService: DeleteAsync(id)
-AccountService -> AccountRepository: GetAccountStatusAsync(id)
+ApiController -> ISuperAdminAccountService: DeleteAsync(id)
+ISuperAdminAccountService -> AccountService: DeleteAsync(id)
+AccountService -> ISuperAdminAccountRepository: GetAccountStatusAsync(id)
+ISuperAdminAccountRepository -> AccountRepository: GetAccountStatusAsync(id)
 AccountRepository -> DbContext: Query admin account status
 DbContext -> MySQL: SELECT user status
 MySQL --> DbContext: Status row or null
@@ -40,13 +45,15 @@ ApiController --> DashboardController: HTTP 404 error
 DashboardController --> AdminAccountsPage: Show feedback
 else Admin account can be deleted
 AccountService -> AccountService: Begin transaction
-AccountService -> AccountRepository: RevokeActiveRefreshTokensAsync(id)
+AccountService -> ISuperAdminAccountRepository: RevokeActiveRefreshTokensAsync(id)
+ISuperAdminAccountRepository -> AccountRepository: RevokeActiveRefreshTokensAsync(id)
 AccountRepository -> RefreshTokenEntity: Set RevokedAt
 RefreshTokenEntity --> AccountRepository: RefreshToken updated
 AccountRepository -> DbContext: Track refresh token updates
 DbContext -> MySQL: UPDATE refresh_tokens
 MySQL --> DbContext: Update result
-AccountService -> AccountRepository: DeleteAccountAsync(id)
+AccountService -> ISuperAdminAccountRepository: DeleteAccountAsync(id)
+ISuperAdminAccountRepository -> AccountRepository: DeleteAccountAsync(id)
 AccountRepository -> UserEntity: Set status deleted
 AccountRepository -> UserAuthEntity: Clear auth fields
 UserEntity --> AccountRepository: User updated

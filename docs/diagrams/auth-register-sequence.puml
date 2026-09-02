@@ -18,12 +18,15 @@ entity "Role" as RoleEntity
 entity "OtpVerification" as OtpEntity
 entity "RefreshToken" as RefreshTokenEntity
 control "BcryptPasswordHasher" as PasswordHasher
+control "IPasswordHasher" as IPasswordHasher
 control "AuthAccountRepository" as AuthAccountRepository
+control "IAuthAccountRepository" as IAuthAccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over RegisterScreen, MySQL
 BE DTOs exist: RegisterRequest and TokenResponse.
 FE response DTO exists: AuthTokensDto.
+Interfaces used in code: IAuthAccountRepository, IPasswordHasher.
 end note
 Guest -> RegisterScreen: Access page
 Guest -> RegisterScreen: Enter information
@@ -40,7 +43,8 @@ AuthController --> RegisterScreen: HTTP 400 with validation errors
 RegisterScreen --> Guest: Show error message
 else Request validation success
 AuthController -> AuthService: RegisterAsync(register data)
-AuthService -> AuthAccountRepository: FindByPhoneAsync(phone)
+AuthService -> IAuthAccountRepository: FindByPhoneAsync(phone)
+IAuthAccountRepository -> AuthAccountRepository: FindByPhoneAsync(phone)
 AuthAccountRepository -> DbContext: Query user by phone
 DbContext -> MySQL: SELECT user account
 MySQL --> DbContext: User row or null
@@ -55,7 +59,8 @@ AuthService --> AuthController: Conflict result
 AuthController --> RegisterScreen: HTTP 409 Phone already exists
 RegisterScreen --> Guest: Show error message
 else Phone is available
-AuthService -> AuthAccountRepository: Check latest active OTP
+AuthService -> IAuthAccountRepository: Check latest active OTP
+IAuthAccountRepository -> AuthAccountRepository: Check latest active OTP
 AuthAccountRepository -> DbContext: Query latest active OTP
 DbContext -> MySQL: SELECT latest OTP
 MySQL --> DbContext: OTP row or null
@@ -68,7 +73,8 @@ AuthService --> AuthController: Unauthorized/Conflict result
 AuthController --> RegisterScreen: HTTP error
 RegisterScreen --> Guest: Show error message
 else OTP valid
-AuthService -> AuthAccountRepository: FindRoleByNameAsync("User")
+AuthService -> IAuthAccountRepository: FindRoleByNameAsync("User")
+IAuthAccountRepository -> AuthAccountRepository: FindRoleByNameAsync("User")
 AuthAccountRepository -> DbContext: Query role
 DbContext -> MySQL: SELECT roles
 MySQL --> DbContext: Role row or null
@@ -81,9 +87,11 @@ AuthService --> AuthController: Validation failure
 AuthController --> RegisterScreen: HTTP 400 error
 RegisterScreen --> Guest: Show error message
 else Role exists
-AuthService -> PasswordHasher: Hash(password)
+AuthService -> IPasswordHasher: Hash(password)
+IPasswordHasher -> PasswordHasher: Hash(password)
 PasswordHasher --> AuthService: password hash
-AuthService -> AuthAccountRepository: StageCreateAsync(CreateAuthAccount)
+AuthService -> IAuthAccountRepository: StageCreateAsync(CreateAuthAccount)
+IAuthAccountRepository -> AuthAccountRepository: StageCreateAsync(CreateAuthAccount)
 AuthAccountRepository -> UserEntity: Create User
 AuthAccountRepository -> UserAuthEntity: Create UserAuth
 AuthAccountRepository -> UserProfileEntity: Create UserProfile
@@ -96,7 +104,8 @@ AuthAccountRepository -> DbContext: Add User, UserAuth,\nUserProfile, UserLearni
 DbContext -> MySQL: INSERT account data
 MySQL --> DbContext: Insert result
 DbContext --> AuthAccountRepository: Save result
-AuthService -> AuthAccountRepository: FindByPhoneAsync(phone)
+AuthService -> IAuthAccountRepository: FindByPhoneAsync(phone)
+IAuthAccountRepository -> AuthAccountRepository: FindByPhoneAsync(phone)
 AuthAccountRepository -> DbContext: Reload created account
 DbContext -> MySQL: SELECT created user account
 MySQL --> DbContext: Created user row
@@ -110,14 +119,16 @@ UserProfileEntity --> DbContext: UserProfile
 UserLearningProfileEntity --> DbContext: UserLearningProfile?
 DbContext --> AuthAccountRepository: Result
 AuthAccountRepository --> AuthService: Created account
-AuthService -> AuthAccountRepository: Mark OTP used
+AuthService -> IAuthAccountRepository: Mark OTP used
+IAuthAccountRepository -> AuthAccountRepository: Mark OTP used
 AuthAccountRepository -> OtpEntity: Set UsedAt
 OtpEntity --> AuthAccountRepository: OtpVerification updated
 AuthAccountRepository -> DbContext: Track OTP used
 DbContext -> MySQL: UPDATE otp_verifications
 MySQL --> DbContext: Update result
 DbContext --> AuthAccountRepository: Save result
-AuthService -> AuthAccountRepository: Create refresh token
+AuthService -> IAuthAccountRepository: Create refresh token
+IAuthAccountRepository -> AuthAccountRepository: Create refresh token
 AuthAccountRepository -> RefreshTokenEntity: Create RefreshToken
 RefreshTokenEntity --> AuthAccountRepository: RefreshToken
 AuthAccountRepository -> DbContext: Add RefreshToken

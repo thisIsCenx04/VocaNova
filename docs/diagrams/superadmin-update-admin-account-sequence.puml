@@ -11,11 +11,13 @@ entity "AdminAccount\n(FE Response DTO)" as FeResponseDto
 entity "UpdateAdminAccountRequest\n(BE Request DTO)" as BeRequestDto
 entity "AdminAccountResponse\n(BE Response DTO)" as BeResponseDto
 control "SuperAdminAccountService" as AccountService
+control "ISuperAdminAccountService" as ISuperAdminAccountService
 entity "User" as UserEntity
 entity "UserAuth" as UserAuthEntity
 entity "UserProfile" as UserProfileEntity
 entity "RefreshToken" as RefreshTokenEntity
 control "SuperAdminAccountRepository" as AccountRepository
+control "ISuperAdminAccountRepository" as ISuperAdminAccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over EditPage, MySQL
@@ -27,12 +29,15 @@ BE controller exists: SuperAdminAccountsController.
 BE DTOs exist: UpdateAdminAccountRequest and AdminAccountResponse.
 Entities exist: User, UserAuth, UserProfile and RefreshToken.
 Dashboard calls API through VocaNovaApiClient.GetAdminAccountAsync and UpdateAdminAccountAsync.
+Interfaces used in code: ISuperAdminAccountService, ISuperAdminAccountRepository.
 end note
 SuperAdmin -> EditPage: Open edit admin page
 EditPage -> FeController: GET /admin-accounts/{id}/edit
 FeController -> BeController: VocaNovaApiClient.GetAdminAccountAsync\nGET /api/superadmin/admins/{id}
-BeController -> AccountService: GetAccountAsync(id)
-AccountService -> AccountRepository: GetAccountAsync(id)
+BeController -> ISuperAdminAccountService: GetAccountAsync(id)
+ISuperAdminAccountService -> AccountService: GetAccountAsync(id)
+AccountService -> ISuperAdminAccountRepository: GetAccountAsync(id)
+ISuperAdminAccountRepository -> AccountRepository: GetAccountAsync(id)
 AccountRepository -> DbContext: Query admin account
 DbContext -> MySQL: SELECT users with auth/profile/role
 MySQL --> DbContext: Admin account row or null
@@ -65,8 +70,10 @@ else Form input valid
         BeController --> FeController: HTTP 400 error
         FeController --> EditPage: Return Edit.cshtml\nwith error message
     else Request validation success
-        BeController -> AccountService: UpdateAsync(id, update data)
-        AccountService -> AccountRepository: FindDuplicateAsync(phone, email, id)
+        BeController -> ISuperAdminAccountService: UpdateAsync(id, update data)
+        ISuperAdminAccountService -> AccountService: UpdateAsync(id, update data)
+        AccountService -> ISuperAdminAccountRepository: FindDuplicateAsync(phone, email, id)
+        ISuperAdminAccountRepository -> AccountRepository: FindDuplicateAsync(phone, email, id)
         AccountRepository -> DbContext: Query UserAuth
         DbContext -> MySQL: SELECT user_auth
         MySQL --> DbContext: Duplicate row or null
@@ -77,7 +84,8 @@ else Form input valid
             BeController --> FeController: HTTP 409 error
             FeController --> EditPage: Return Edit.cshtml\nwith error message
         else Phone and email are available
-            AccountService -> AccountRepository: GetAccountStatusAsync(id)
+            AccountService -> ISuperAdminAccountRepository: GetAccountStatusAsync(id)
+            ISuperAdminAccountRepository -> AccountRepository: GetAccountStatusAsync(id)
             AccountRepository -> DbContext: Query User status
             DbContext -> MySQL: SELECT users
             MySQL --> DbContext: Status row or null
@@ -89,14 +97,16 @@ else Form input valid
             else Admin account can be updated
                 AccountService -> AccountService: Hash password if supplied\nand begin transaction
                 opt Password changed or status becomes locked
-                    AccountService -> AccountRepository: RevokeActiveRefreshTokensAsync(id)
+                    AccountService -> ISuperAdminAccountRepository: RevokeActiveRefreshTokensAsync(id)
+                    ISuperAdminAccountRepository -> AccountRepository: RevokeActiveRefreshTokensAsync(id)
                     AccountRepository -> RefreshTokenEntity: Set RevokedAt
                     RefreshTokenEntity --> AccountRepository: RefreshToken updated
                     AccountRepository -> DbContext: Track refresh token updates
                     DbContext -> MySQL: UPDATE refresh_tokens
                     MySQL --> DbContext: Update result
                 end
-                AccountService -> AccountRepository: UpdateAccountAsync(id, update data)
+                AccountService -> ISuperAdminAccountRepository: UpdateAccountAsync(id, update data)
+                ISuperAdminAccountRepository -> AccountRepository: UpdateAccountAsync(id, update data)
                 AccountRepository -> DbContext: Find admin account
                 DbContext -> MySQL: SELECT users with auth/profile/role
                 MySQL --> DbContext: Admin account row or null

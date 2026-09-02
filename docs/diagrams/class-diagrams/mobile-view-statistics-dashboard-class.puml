@@ -9,117 +9,135 @@ note top
 Generated from mobile-view-statistics-dashboard-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
+
 class ProgressOverviewNotifier <<service>> {
-  + build() : ProgressOverviewState
-  + load()
+  "+ build() : ProgressOverviewState"
+  "+ load()"
 }
+
 class ProgressApiService <<service>> {
-  + _dio : Dio
+  "+ _dio : Dio"
   --
-  + getSummary() : FutureOfProgressSummary
+  "+ getSummary() : FutureOfProgressSummary"
 }
+
 class ProgressSummaryDto <<dto>> {
-  + currentStreakDays : int
-  + longestStreakDays : int
-  + accuracy7Days : double
-  + correct7Days : int
-  + totalAnswers7Days : int
-  + totalWordsInProgress : int
-  + masteredWords : int
-  + sessionsThisMonth : int
+  "+ currentStreakDays : int"
+  "+ longestStreakDays : int"
+  "+ accuracy7Days : double"
+  "+ correct7Days : int"
+  "+ totalAnswers7Days : int"
+  "+ totalWordsInProgress : int"
+  "+ masteredWords : int"
+  "+ sessionsThisMonth : int"
 }
+
 class ProgressSummaryResponse <<dto>> {
-  + CurrentStreakDays : int
-  + LongestStreakDays : int
-  + Accuracy7Days : float
-  + Correct7Days : int
-  + TotalAnswers7Days : int
-  + TotalWordsInProgress : int
-  + MasteredWords : int
-  + SessionsThisMonth : int
+  "+ CurrentStreakDays : int"
+  "+ LongestStreakDays : int"
+  "+ Accuracy7Days : float"
+  "+ Correct7Days : int"
+  "+ TotalAnswers7Days : int"
+  "+ TotalWordsInProgress : int"
+  "+ MasteredWords : int"
+  "+ SessionsThisMonth : int"
 }
+
 class ProgressController <<backend_controller>> {
-  - _progressSummaryService : IProgressSummaryService
-  - _progressAnalyticsService : IProgressAnalyticsService
+  "- _progressSummaryService : IProgressSummaryService"
+  "- _progressAnalyticsService : IProgressAnalyticsService"
   --
-  + GetSummary(cancellationToken: CancellationToken) : TaskOfIActionResult
+  "+ GetSummary(cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
+
 class ProgressSummaryService <<service>> {
-  - _progressSummaryRepository : IProgressSummaryRepository
-  - _progressSummaryCache : IProgressSummaryCacheNullable
+  "- _progressSummaryRepository : IProgressSummaryRepository"
+  "- _progressSummaryCache : IProgressSummaryCacheNullable"
   --
-  + GetSummaryAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfProgressSummary
+  "+ GetSummaryAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfProgressSummary"
 }
+
+class IProgressSummaryService <<service_interface>> {
+  "+ GetSummaryAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfProgressSummary"
+}
+
 class TestSession <<entity>> {
-  + SessionId : uint
-  + UserId : uint
-  + TestType : string
-  + Mode : string
-  + QuestionType : int
-  + ScopeType : string
-  + ScopeDateFrom : DateOnlyNullable
-  + ScopeDateTo : DateOnlyNullable
-  + WordOrder : string
-  + WordLimit : intNullable
-  + TimeLimitSec : intNullable
-  + Lives : intNullable
+  "+ SessionId : uint"
+  "+ UserId : uint"
+  "+ TestType : string"
+  "+ Mode : string"
+  "+ QuestionType : int"
+  "+ ScopeType : string"
+  "+ ScopeDateFrom : DateOnlyNullable"
+  "+ ScopeDateTo : DateOnlyNullable"
+  "+ WordOrder : string"
+  "+ WordLimit : intNullable"
+  "+ TimeLimitSec : intNullable"
+  "+ Lives : intNullable"
 }
+
 class TestAnswer <<entity>> {
-  + AnswerId : uint
-  + SessionId : uint
-  + WordId : uint
-  + SenseId : uintNullable
-  + QuestionNumber : int
-  + QuestionType : int
-  + DisplayContent : string
-  + ExpectedAnswer : string
-  + AcceptedAnswers : stringNullable
-  + UserAnswer : stringNullable
-  + IsCorrect : boolNullable
-  + AiScore : floatNullable
+  "+ AnswerId : uint"
+  "+ SessionId : uint"
+  "+ WordId : uint"
+  "+ SenseId : uintNullable"
+  "+ QuestionNumber : int"
+  "+ QuestionType : int"
+  "+ DisplayContent : string"
+  "+ ExpectedAnswer : string"
+  "+ AcceptedAnswers : stringNullable"
+  "+ UserAnswer : stringNullable"
+  "+ IsCorrect : boolNullable"
+  "+ AiScore : floatNullable"
 }
+
 class UserWordProgress <<entity>> {
-  + ProgressId : uint
-  + UserId : uint
-  + WordId : uint
-  + TestCount : int
-  + CorrectCount : int
-  + WrongCount : int
-  + ConsecutiveCorrect : int
-  + IsInWrongList : bool
-  + MasteryLevel : int
-  + SrsInterval : int
-  + EaseFactor : float
-  + LastTestedAt : DateTimeNullable
+  "+ ProgressId : uint"
+  "+ UserId : uint"
+  "+ WordId : uint"
+  "+ TestCount : int"
+  "+ CorrectCount : int"
+  "+ WrongCount : int"
+  "+ ConsecutiveCorrect : int"
+  "+ IsInWrongList : bool"
+  "+ MasteryLevel : int"
+  "+ SrsInterval : int"
+  "+ EaseFactor : float"
+  "+ LastTestedAt : DateTimeNullable"
 }
+
 class ProgressSummaryRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  "- _dbContext : VocaNovaDbContext"
   --
-  + GetSummaryStatisticsAsync(userId: uint, query: ProgressSummaryQuery, cancellationToken: CancellationToken) : TaskOfProgressSummaryStatistics
+  "+ GetSummaryStatisticsAsync(userId: uint, query: ProgressSummaryQuery, cancellationToken: CancellationToken) : TaskOfProgressSummaryStatistics"
 }
+
+class IProgressSummaryRepository <<repository_interface>> {
+  "+ GetSummaryStatisticsAsync(userId: uint, query: ProgressSummaryQuery, cancellationToken: CancellationToken) : TaskOfProgressSummaryStatistics"
+}
+
 class VocaNovaDbContext <<dbcontext>> {
-  + AgeRanges : DbSetOfAgeRange
-  + AiGradingCaches : DbSetOfAiGradingCache
-  + AuditLogs : DbSetOfAuditLog
-  + EducationLevels : DbSetOfEducationLevel
-  + LearningPurposes : DbSetOfLearningPurpose
-  + Occupations : DbSetOfOccupation
-  + OtpVerifications : DbSetOfOtpVerification
-  + RefreshTokens : DbSetOfRefreshToken
-  + Regions : DbSetOfRegion
-  + Roles : DbSetOfRole
-  + TestAnswers : DbSetOfTestAnswer
-  + TestSessions : DbSetOfTestSession
+  "+ AgeRanges : DbSetOfAgeRange"
+  "+ AiGradingCaches : DbSetOfAiGradingCache"
+  "+ AuditLogs : DbSetOfAuditLog"
+  "+ EducationLevels : DbSetOfEducationLevel"
+  "+ LearningPurposes : DbSetOfLearningPurpose"
+  "+ Occupations : DbSetOfOccupation"
+  "+ OtpVerifications : DbSetOfOtpVerification"
+  "+ RefreshTokens : DbSetOfRefreshToken"
+  "+ Regions : DbSetOfRegion"
+  "+ Roles : DbSetOfRole"
+  "+ TestAnswers : DbSetOfTestAnswer"
+  "+ TestSessions : DbSetOfTestSession"
   --
-  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
 }
+
 class MySQL_Database <<database>> {
 
 }
 ProgressOverviewNotifier ..> ProgressApiService : getSummary()
 ProgressApiService ..> ProgressController
-ProgressController ..> ProgressSummaryService : GetSummaryAsync()
-ProgressSummaryService ..> ProgressSummaryRepository : GetSummaryStatisticsAsync()
 ProgressSummaryRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 VocaNovaDbContext ..> TestSession
@@ -127,4 +145,8 @@ VocaNovaDbContext ..> TestAnswer
 VocaNovaDbContext ..> UserWordProgress
 ProgressController ..> ProgressSummaryResponse
 ProgressApiService ..> ProgressSummaryDto
+IProgressSummaryService <|.. ProgressSummaryService
+ProgressController ..> IProgressSummaryService : GetSummaryAsync()
+IProgressSummaryRepository <|.. ProgressSummaryRepository
+ProgressSummaryService ..> IProgressSummaryRepository : GetSummaryStatisticsAsync()
 @enduml

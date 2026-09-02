@@ -17,12 +17,14 @@ entity "UserProfile" as UserProfileEntity
 entity "Role" as RoleEntity
 entity "RefreshToken" as RefreshTokenEntity
 control "AuthAccountRepository" as AuthAccountRepository
+control "IAuthAccountRepository" as IAuthAccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over LoginScreen, MySQL
 BE DTOs exist: GoogleLoginRequest and TokenResponse.
 FE response DTO exists: AuthTokensDto.
 Mobile GoogleAuthService gets the id_token before the API call.
+Interfaces used in code: IAuthAccountRepository.
 end note
 Guest -> LoginScreen: Access login page
 Guest -> LoginScreen: Click Login with Google
@@ -45,7 +47,8 @@ AuthService --> AuthController: Unauthorized result
 AuthController --> LoginScreen: HTTP 401 Invalid Google id token
 LoginScreen --> Guest: Show error message
 else id_token valid
-AuthService -> AuthAccountRepository: FindByGoogleSubjectAsync(subject)
+AuthService -> IAuthAccountRepository: FindByGoogleSubjectAsync(subject)
+IAuthAccountRepository -> AuthAccountRepository: FindByGoogleSubjectAsync(subject)
 AuthAccountRepository -> DbContext: Query user by Google subject
 DbContext -> MySQL: SELECT user account
 MySQL --> DbContext: User row or null
@@ -61,11 +64,13 @@ AuthService --> AuthController: Forbidden/Unauthorized result
 AuthController --> LoginScreen: HTTP 403/401 error
 LoginScreen --> Guest: Show error message
 else Account active
-AuthService -> AuthAccountRepository: StageLastLoginAsync(userId)
+AuthService -> IAuthAccountRepository: StageLastLoginAsync(userId)
+IAuthAccountRepository -> AuthAccountRepository: StageLastLoginAsync(userId)
 AuthAccountRepository -> DbContext: Update User.LastLoginAt
 DbContext -> MySQL: UPDATE users
 MySQL --> DbContext: Update result
-AuthService -> AuthAccountRepository: Create refresh token
+AuthService -> IAuthAccountRepository: Create refresh token
+IAuthAccountRepository -> AuthAccountRepository: Create refresh token
 AuthAccountRepository -> RefreshTokenEntity: Create RefreshToken
 RefreshTokenEntity --> AuthAccountRepository: RefreshToken
 AuthAccountRepository -> DbContext: Add RefreshToken
@@ -78,7 +83,8 @@ FeTokensDto --> LoginScreen: AuthTokens
 LoginScreen --> Guest: Navigate to app
 end
 else New Google account
-AuthService -> AuthAccountRepository: FindByGoogleEmailAsync(email)
+AuthService -> IAuthAccountRepository: FindByGoogleEmailAsync(email)
+IAuthAccountRepository -> AuthAccountRepository: FindByGoogleEmailAsync(email)
 AuthAccountRepository -> DbContext: Query user by Google email
 DbContext -> MySQL: SELECT user account
 MySQL --> DbContext: User row or null
@@ -93,7 +99,8 @@ AuthService --> AuthController: Conflict result
 AuthController --> LoginScreen: HTTP 409 Google email already exists
 LoginScreen --> Guest: Show error message
 else Email is available
-AuthService -> AuthAccountRepository: FindRoleByNameAsync("User")
+AuthService -> IAuthAccountRepository: FindRoleByNameAsync("User")
+IAuthAccountRepository -> AuthAccountRepository: FindRoleByNameAsync("User")
 AuthAccountRepository -> DbContext: Query role
 DbContext -> MySQL: SELECT roles
 MySQL --> DbContext: Role row or null
@@ -106,7 +113,8 @@ AuthService --> AuthController: Validation failure
 AuthController --> LoginScreen: HTTP 400 error
 LoginScreen --> Guest: Show error message
 else Role exists
-AuthService -> AuthAccountRepository: StageCreateAsync(CreateAuthAccount)
+AuthService -> IAuthAccountRepository: StageCreateAsync(CreateAuthAccount)
+IAuthAccountRepository -> AuthAccountRepository: StageCreateAsync(CreateAuthAccount)
 AuthAccountRepository -> UserEntity: Create User
 AuthAccountRepository -> UserAuthEntity: Create UserAuth
 AuthAccountRepository -> UserProfileEntity: Create UserProfile
@@ -117,7 +125,8 @@ AuthAccountRepository -> DbContext: Add User, UserAuth,\nUserProfile
 DbContext -> MySQL: INSERT account data
 MySQL --> DbContext: Insert result
 DbContext --> AuthAccountRepository: Save result
-AuthService -> AuthAccountRepository: FindByGoogleSubjectAsync(subject)
+AuthService -> IAuthAccountRepository: FindByGoogleSubjectAsync(subject)
+IAuthAccountRepository -> AuthAccountRepository: FindByGoogleSubjectAsync(subject)
 AuthAccountRepository -> DbContext: Reload created account
 DbContext -> MySQL: SELECT created user account
 MySQL --> DbContext: Created user row
@@ -129,7 +138,8 @@ UserAuthEntity --> DbContext: UserAuth
 UserProfileEntity --> DbContext: UserProfile
 DbContext --> AuthAccountRepository: Result
 AuthAccountRepository --> AuthService: Created account
-AuthService -> AuthAccountRepository: Create refresh token
+AuthService -> IAuthAccountRepository: Create refresh token
+IAuthAccountRepository -> AuthAccountRepository: Create refresh token
 AuthAccountRepository -> RefreshTokenEntity: Create RefreshToken
 RefreshTokenEntity --> AuthAccountRepository: RefreshToken
 AuthAccountRepository -> DbContext: Add RefreshToken

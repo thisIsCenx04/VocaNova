@@ -11,8 +11,11 @@ entity "UploadWordImageRequest\n(BE Request DTO)" as ImageRequestDto
 entity "WordDetailResponse\n(BE Response DTO)" as ImageResponseDto
 control "AdminWordsController\n(BE API)" as ApiController
 control "WordAdminService" as WordService
+control "IWordAdminService" as IWordAdminService
+control "IWordImageStorage" as IWordImageStorage
 entity "Word" as WordEntity
 control "WordAdminRepository" as WordRepository
+control "IWordAdminRepository" as IWordAdminRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over VocabularyPage, MySQL
@@ -22,6 +25,7 @@ Dashboard VocabularyController uploads image file through VocaNovaApiClient.
 API endpoint is POST /api/admin/words/{id}/image.
 API uses UploadWordImageRequest and returns WordDetailResponse.
 FE response DTO exists: WordDetail when Dashboard reloads word detail.
+Interfaces used in code: IWordAdminService, IWordAdminRepository, IWordImageStorage.
 end note
 Admin -> VocabularyPage: Choose image file for word
 Admin -> VocabularyPage: Click Add image
@@ -34,14 +38,16 @@ DashboardController -> ImageRequestDto: VocaNovaApiClient.UploadImageAsync(wordI
 ImageRequestDto -> ApiController: POST /api/admin/words/{id}/image\nUploadWordImageRequest
 ApiController -> ApiController: Check admin authorization
 ApiController -> ApiController: Bind UploadWordImageRequest
-ApiController -> WordService: UploadImageAsync(wordId, file)
+ApiController -> IWordAdminService: UploadImageAsync(wordId, file)
+IWordAdminService -> WordService: UploadImageAsync(wordId, file)
 WordService -> WordService: Validate image file(type and size)
 alt Image file invalid
 WordService --> ApiController: Validation failure
 ApiController --> DashboardController: HTTP 400 error
 DashboardController --> VocabularyPage: Show error message
 else Image file valid
-WordService -> WordRepository: WordExistsAsync(wordId)
+WordService -> IWordAdminRepository: WordExistsAsync(wordId)
+IWordAdminRepository -> WordRepository: WordExistsAsync(wordId)
 WordRepository -> DbContext: Query word
 DbContext -> MySQL: SELECT words
 MySQL --> DbContext: Word row or null
@@ -54,8 +60,9 @@ WordService --> ApiController: NotFound result
 ApiController --> DashboardController: HTTP 404 error
 DashboardController --> VocabularyPage: Show error message
 else Word exists
-WordService -> WordService: UploadAsync(file)
-WordService -> WordRepository: SetImageUrlAsync(wordId, imageUrl)
+WordService -> IWordImageStorage: UploadAsync(file)
+WordService -> IWordAdminRepository: SetImageUrlAsync(wordId, imageUrl)
+IWordAdminRepository -> WordRepository: SetImageUrlAsync(wordId, imageUrl)
 WordRepository -> WordEntity: Set ImageUrl
 WordEntity --> WordRepository: Word updated
 WordRepository -> DbContext: Track word image_url

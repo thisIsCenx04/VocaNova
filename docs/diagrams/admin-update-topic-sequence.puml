@@ -12,10 +12,12 @@ entity "UpdateTopicRequest\n(BE Request DTO)" as TopicRequestDto
 entity "TopicSummaryResponse\n(BE Response DTO)" as TopicResponseDto
 control "AdminTopicsController\n(BE API)" as ApiController
 control "TopicAdminService" as TopicService
+control "ITopicAdminService" as ITopicAdminService
 entity "Topic" as TopicEntity
 entity "Word" as WordEntity
 entity "WordTopic" as WordTopicEntity
 control "TopicAdminRepository" as TopicRepository
+control "ITopicAdminRepository" as ITopicAdminRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over EditTopicPage, MySQL
@@ -24,6 +26,7 @@ Dashboard TopicsController loads topic data, then posts update data through Voca
 API uses UpdateTopicRequest and returns TopicSummaryResponse.
 FE response DTOs exist: AdminTopic and WordListItem for loading edit data.
 UpdateTopicRequest can replace topic word links with word_ids.
+Interfaces used in code: ITopicAdminService, ITopicAdminRepository.
 end note
 Admin -> EditTopicPage: Open edit topic page
 EditTopicPage -> DashboardController: GET /topics/{id}/edit
@@ -58,9 +61,11 @@ alt Request validation fails
 ApiController --> DashboardController: HTTP 400 error
 DashboardController --> EditTopicPage: Show error message
 else Request validation success
-ApiController -> TopicService: UpdateAsync(id, update data)
+ApiController -> ITopicAdminService: UpdateAsync(id, update data)
+ITopicAdminService -> TopicService: UpdateAsync(id, update data)
 TopicService -> TopicService: Normalize topic data
-TopicService -> TopicRepository: NameExistsAsync(topicName, topicNameVi, id)
+TopicService -> ITopicAdminRepository: NameExistsAsync(topicName, topicNameVi, id)
+ITopicAdminRepository -> TopicRepository: NameExistsAsync(topicName, topicNameVi, id)
 TopicRepository -> DbContext: Query duplicate topic name
 DbContext -> MySQL: SELECT topics
 MySQL --> DbContext: Topic row or null
@@ -73,7 +78,8 @@ TopicService --> ApiController: Conflict result
 ApiController --> DashboardController: HTTP 409 error
 DashboardController --> EditTopicPage: Show error message
 else Topic name is available
-TopicService -> TopicRepository: WordIdsExistAsync(wordIds)
+TopicService -> ITopicAdminRepository: WordIdsExistAsync(wordIds)
+ITopicAdminRepository -> TopicRepository: WordIdsExistAsync(wordIds)
 TopicRepository -> DbContext: Check selected vocabulary words
 DbContext -> MySQL: SELECT words
 MySQL --> DbContext: Word rows count
@@ -86,7 +92,8 @@ TopicService --> ApiController: Validation failure
 ApiController --> DashboardController: HTTP 400 error
 DashboardController --> EditTopicPage: Show error message
 else Selected words valid
-TopicService -> TopicRepository: UpdateAsync(id, update data)
+TopicService -> ITopicAdminRepository: UpdateAsync(id, update data)
+ITopicAdminRepository -> TopicRepository: UpdateAsync(id, update data)
 TopicRepository -> TopicEntity: Update Topic
 TopicEntity --> TopicRepository: Topic
 TopicRepository -> DbContext: Track Topic update

@@ -14,12 +14,14 @@ entity "ImportWordsRequest\n(BE Request DTO)" as BeImportRequestDto
 entity "BulkImportResponse\n(BE Response DTO)" as BeBulkImportDto
 entity "BulkImportErrorResponse\n(BE Response DTO)" as BeBulkImportErrorDto
 control "WordAdminService" as WordService
+control "IWordAdminService" as IWordAdminService
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "WordExample" as WordExampleEntity
 entity "Topic" as TopicEntity
 entity "WordTopic" as WordTopicEntity
 control "WordAdminRepository" as WordRepository
+control "IWordAdminRepository" as IWordAdminRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -32,6 +34,7 @@ BE controller exists: AdminWordsController.
 BE DTOs exist: ImportWordsRequest, BulkImportResponse and BulkImportErrorResponse.
 Endpoint is POST /api/admin/words/import with multipart CSV file.
 Entities exist: Word, WordSense, WordExample, Topic and WordTopic.
+Interfaces used in code: IWordAdminService, IWordAdminRepository.
 end note
 
 Admin -> ImportUi: Choose CSV file
@@ -46,7 +49,8 @@ else CSV selected
     BeController -> BeImportRequestDto: Bind multipart form
     BeImportRequestDto --> BeController: ImportWordsRequest
     BeController -> BeController: Check admin authorization
-    BeController -> WordService: ImportCsvAsync(uploaded content)
+    BeController -> IWordAdminService: ImportCsvAsync(uploaded content)
+    IWordAdminService -> WordService: ImportCsvAsync(uploaded content)
     WordService -> WordService: Validate CSV file,\nheader and rows
 
     alt CSV invalid
@@ -55,7 +59,8 @@ else CSV selected
         FeController --> ImportUi: Show import error
     else CSV valid
         loop For each CSV row
-            WordService -> WordRepository: Find or create word data
+            WordService -> IWordAdminRepository: Find or create word data
+            IWordAdminRepository -> WordRepository: Find or create word data
             WordRepository -> DbContext: Query existing word\nand topics
             DbContext -> MySQL: SELECT words,\nSELECT topics
             MySQL --> DbContext: Existing rows

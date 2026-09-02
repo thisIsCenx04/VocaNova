@@ -16,18 +16,26 @@ entity "AnswerResponse\n(BE Response DTO)" as BeAnswerDto
 entity "QuizResultResponse\n(BE Response DTO)" as BeResultDto
 control "QuizSessionsController\n(BE API)" as BeController
 control "QuizSubmissionService" as SubmissionService
+control "IQuizSubmissionService" as IQuizSubmissionService
 control "QuizResultService" as ResultService
+control "IQuizResultService" as IQuizResultService
 control "QuizQuestionBuilder" as QuestionBuilder
+control "IQuizQuestionBuilder" as IQuizQuestionBuilder
 control "SrsService" as SrsService
+control "ISrsService" as ISrsService
 entity "TestSession" as TestSessionEntity
 entity "TestAnswer" as TestAnswerEntity
 entity "UserWordProgress" as UserWordProgressEntity
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 control "QuizSubmissionRepository" as SubmissionRepository
+control "IQuizSubmissionRepository" as IQuizSubmissionRepository
 control "QuizQuestionRepository" as QuestionRepository
+control "IQuizQuestionRepository" as IQuizQuestionRepository
 control "SrsRepository" as SrsRepository
+control "ISrsRepository" as ISrsRepository
 control "QuizResultRepository" as ResultRepository
+control "IQuizResultRepository" as IQuizResultRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -41,6 +49,10 @@ BE response DTOs exist: AnswerResponse and QuizResultResponse.
 Endpoints are POST /api/quiz/sessions/{id}/answer,
 POST /api/quiz/sessions/{id}/finish and GET /api/quiz/sessions/{id}/result.
 Entities exist: TestSession, TestAnswer, UserWordProgress, Word and WordSense.
+Interfaces used in code: IQuizSubmissionService, IQuizResultService,
+  IQuizSubmissionRepository, IQuizQuestionBuilder, ISrsService,
+  IQuizResultRepository, IQuizQuestionRepository,
+  ISrsRepository.
 end note
 
 Learner -> QuizSessionUi: Submit answer
@@ -50,8 +62,10 @@ FeApiService -> BeController: POST /api/quiz/sessions/{id}/answer\nSubmitAnswerR
 BeController -> BeSubmitAnswerDto: Bind request body
 BeSubmitAnswerDto --> BeController: SubmitAnswerRequest
 BeController -> BeController: Check authenticated user
-BeController -> SubmissionService: SubmitAnswerAsync(userId, sessionId, command)
-SubmissionService -> SubmissionRepository: GetStateAsync(userId, sessionId, wordId)
+BeController -> IQuizSubmissionService: SubmitAnswerAsync(userId, sessionId, command)
+IQuizSubmissionService -> SubmissionService: SubmitAnswerAsync(userId, sessionId, command)
+SubmissionService -> IQuizSubmissionRepository: GetStateAsync(userId, sessionId, wordId)
+IQuizSubmissionRepository -> SubmissionRepository: GetStateAsync(userId, sessionId, wordId)
 SubmissionRepository -> DbContext: Query session with answers/topics
 DbContext -> MySQL: SELECT test_sessions,\ntest_answers, test_session_topics
 MySQL --> DbContext: Session state rows
@@ -68,8 +82,10 @@ alt Session not found or not in progress
     FeApiService --> FeController: Action failed
     FeController --> QuizSessionUi: Show submit error
 else Session in progress
-    SubmissionService -> QuestionBuilder: BuildQuestionAsync(wordId, questionType)
-    QuestionBuilder -> QuestionRepository: FindQuestionWordAsync(wordId)
+    SubmissionService -> IQuizQuestionBuilder: BuildQuestionAsync(wordId, questionType)
+    IQuizQuestionBuilder -> QuestionBuilder: BuildQuestionAsync(wordId, questionType)
+    QuestionBuilder -> IQuizQuestionRepository: FindQuestionWordAsync(wordId)
+    IQuizQuestionRepository -> QuestionRepository: FindQuestionWordAsync(wordId)
     QuestionRepository -> DbContext: Query Word with senses
     DbContext -> MySQL: SELECT words,\nword_senses
     MySQL --> DbContext: Question word rows
@@ -81,8 +97,10 @@ else Session in progress
     QuestionRepository --> QuestionBuilder: Question data
     QuestionBuilder --> SubmissionService: Question
     SubmissionService -> SubmissionService: Grade answer
-    SubmissionService -> SrsService: UpdateProgressAsync(userId, wordId, isCorrect)
-    SrsService -> SrsRepository: FindAsync(userId, wordId)
+    SubmissionService -> ISrsService: UpdateProgressAsync(userId, wordId, isCorrect)
+    ISrsService -> SrsService: UpdateProgressAsync(userId, wordId, isCorrect)
+    SrsService -> ISrsRepository: FindAsync(userId, wordId)
+    ISrsRepository -> SrsRepository: FindAsync(userId, wordId)
     SrsRepository -> DbContext: Query UserWordProgress
     DbContext -> MySQL: SELECT user_word_progresses
     MySQL --> DbContext: Progress row or null
@@ -90,7 +108,8 @@ else Session in progress
     UserWordProgressEntity --> DbContext: UserWordProgress or null
     DbContext --> SrsRepository: Progress state
     SrsRepository --> SrsService: Progress state
-    SrsService -> SrsRepository: Stage progress changes
+    SrsService -> ISrsRepository: Stage progress changes
+    ISrsRepository -> SrsRepository: Stage progress changes
     SrsRepository -> UserWordProgressEntity: Create or update progress
     UserWordProgressEntity --> SrsRepository: Progress staged
 
@@ -98,11 +117,13 @@ else Session in progress
         SubmissionService -> TestSessionEntity: Set status completed
         TestSessionEntity --> SubmissionService: Session completed
     else More questions remain
-        SubmissionService -> QuestionBuilder: BuildNextQuestionAsync()
+        SubmissionService -> IQuizQuestionBuilder: BuildNextQuestionAsync()
+        IQuizQuestionBuilder -> QuestionBuilder: BuildNextQuestionAsync()
         QuestionBuilder --> SubmissionService: Next question
     end
 
-    SubmissionService -> SubmissionRepository: SaveSubmissionAsync(changes)
+    SubmissionService -> IQuizSubmissionRepository: SaveSubmissionAsync(changes)
+    IQuizSubmissionRepository -> SubmissionRepository: SaveSubmissionAsync(changes)
     SubmissionRepository -> TestAnswerEntity: Create or update TestAnswer
     TestAnswerEntity --> SubmissionRepository: TestAnswer staged
     SubmissionRepository -> DbContext: Save answer, session\nand progress
@@ -124,15 +145,18 @@ opt Learner finishes early or time/lives end
     QuizSessionUi -> FeController: finish()
     FeController -> FeApiService: finishSession(sessionId)
     FeApiService -> BeController: POST /api/quiz/sessions/{id}/finish
-    BeController -> ResultService: FinishSessionAsync(userId, sessionId)
-    ResultService -> ResultRepository: GetSessionAsync(userId, sessionId)
+    BeController -> IQuizResultService: FinishSessionAsync(userId, sessionId)
+    IQuizResultService -> ResultService: FinishSessionAsync(userId, sessionId)
+    ResultService -> IQuizResultRepository: GetSessionAsync(userId, sessionId)
+    IQuizResultRepository -> ResultRepository: GetSessionAsync(userId, sessionId)
     ResultRepository -> DbContext: Query TestSession
     DbContext -> MySQL: SELECT test_sessions
     MySQL --> DbContext: Session row or null
     DbContext -> TestSessionEntity: Read TestSession?
     TestSessionEntity --> DbContext: TestSession or null
     ResultService -> ResultService: Build finish changes
-    ResultService -> ResultRepository: SaveFinishAsync(changes)
+    ResultService -> IQuizResultRepository: SaveFinishAsync(changes)
+    IQuizResultRepository -> ResultRepository: SaveFinishAsync(changes)
     ResultRepository -> TestSessionEntity: Set status abandoned\nand ended_at
     TestSessionEntity --> ResultRepository: TestSession updated
     ResultRepository -> DbContext: Save TestSession
@@ -147,12 +171,15 @@ end
 opt Learner opens result screen
     QuizSessionUi -> FeApiService: getResult(sessionId)
     FeApiService -> BeController: GET /api/quiz/sessions/{id}/result
-    BeController -> ResultService: GetResultAsync(userId, sessionId)
-    ResultService -> ResultRepository: GetSessionAsync(userId, sessionId)
+    BeController -> IQuizResultService: GetResultAsync(userId, sessionId)
+    IQuizResultService -> ResultService: GetResultAsync(userId, sessionId)
+    ResultService -> IQuizResultRepository: GetSessionAsync(userId, sessionId)
+    IQuizResultRepository -> ResultRepository: GetSessionAsync(userId, sessionId)
     ResultRepository -> DbContext: Query TestSession
     DbContext -> MySQL: SELECT test_sessions
     MySQL --> DbContext: Session row
-    ResultService -> ResultRepository: GetAnswersAsync(sessionId)
+    ResultService -> IQuizResultRepository: GetAnswersAsync(sessionId)
+    IQuizResultRepository -> ResultRepository: GetAnswersAsync(sessionId)
     ResultRepository -> DbContext: Query TestAnswer rows
     DbContext -> MySQL: SELECT test_answers
     MySQL --> DbContext: Answer rows

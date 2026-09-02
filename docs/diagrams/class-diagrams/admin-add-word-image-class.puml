@@ -9,105 +9,161 @@ note top
 Generated from admin-add-word-image-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
+
 class VocabularyController <<frontend_controller>> {
-  - _apiClient : IVocaNovaApiClient
-  - _translator : ITranslator
+  "- _apiClient : IVocaNovaApiClient"
+  "- _translator : ITranslator"
   --
-  + UploadImage(id: uint, file: IFormFileNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
+  "+ UploadImage(id: uint, file: IFormFileNullable, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
+
 class WordDetail <<dto>> {
-  + WordId : uint
-  + Word : string
-  + WordKey : string
-  + Cefr : stringNullable
-  + PhoneticUk : stringNullable
-  + PhoneticUs : stringNullable
-  + ImageUrl : stringNullable
-  + IsPhrase : bool
-  + Senses : ListOfWordSense
-  + Examples : ListOfWordExample
-  + Relations : ListOfWordRelation
-  + Audio : ListOfWordAudio
+  "+ WordId : uint"
+  "+ Word : string"
+  "+ WordKey : string"
+  "+ Cefr : stringNullable"
+  "+ PhoneticUk : stringNullable"
+  "+ PhoneticUs : stringNullable"
+  "+ ImageUrl : stringNullable"
+  "+ IsPhrase : bool"
+  "+ Senses : ListOfWordSense"
+  "+ Examples : ListOfWordExample"
+  "+ Relations : ListOfWordRelation"
+  "+ Audio : ListOfWordAudio"
 }
+
 class UploadWordImageRequest <<dto>> {
-  + File : IFormFileNullable
+  "+ File : IFormFileNullable"
 }
+
 class WordDetailResponse <<dto>> {
-  + WordId : uint
-  + Word : string
-  + WordKey : string
-  + Cefr : stringNullable
-  + PhoneticUk : stringNullable
-  + PhoneticUs : stringNullable
-  + ImageUrl : stringNullable
-  + IsPhrase : bool
-  + Senses : ListOfWordSenseResponse
-  + Examples : ListOfWordExampleResponse
-  + Relations : ListOfWordRelationResponse
-  + Audio : ListOfWordAudioResponse
+  "+ WordId : uint"
+  "+ Word : string"
+  "+ WordKey : string"
+  "+ Cefr : stringNullable"
+  "+ PhoneticUk : stringNullable"
+  "+ PhoneticUs : stringNullable"
+  "+ ImageUrl : stringNullable"
+  "+ IsPhrase : bool"
+  "+ Senses : ListOfWordSenseResponse"
+  "+ Examples : ListOfWordExampleResponse"
+  "+ Relations : ListOfWordRelationResponse"
+  "+ Audio : ListOfWordAudioResponse"
 }
+
 class AdminWordsController <<backend_controller>> {
-  - _service : IWordAdminService
+  "- _service : IWordAdminService"
   --
-  + UploadImage(id: uint, request: UploadWordImageRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  "+ UploadImage(id: uint, request: UploadWordImageRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
+
 class WordAdminService <<service>> {
-  - _repository : IWordAdminRepository
-  - _audioStorage : IWordAudioStorageNullable
-  - _imageStorage : IWordImageStorageNullable
-  - _wordDetailCache : IWordDetailCacheNullable
-  - _userListCache : IUserListCacheNullable
+  "- _repository : IWordAdminRepository"
+  "- _audioStorage : IWordAudioStorageNullable"
+  "- _imageStorage : IWordImageStorageNullable"
+  "- _wordDetailCache : IWordDetailCacheNullable"
+  "- _userListCache : IUserListCacheNullable"
   --
-  + UploadImageAsync(wordId: uint, content: UploadedContentNullable, cancellationToken: CancellationToken) : TaskOfDictionaryWordDetail
+  "+ UploadImageAsync(wordId: uint, content: UploadedContentNullable, cancellationToken: CancellationToken) : TaskOfDictionaryWordDetail"
 }
+
+class IWordAdminService <<service_interface>> {
+  "+ SearchAsync(query: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfPagedCollectionOfAdminWordListItem"
+  "+ CreateAsync(command: CreateWordCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordDetail"
+  "+ UpdateAsync(wordId: uint, command: UpdateWordCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordDetail"
+  "+ ImportCsvAsync(content: UploadedContentNullable, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfBulkImportResult"
+  "+ SoftDeleteAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
+  "+ RestoreAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
+  "+ UploadImageAsync(wordId: uint, content: UploadedContentNullable, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordDetail"
+  "+ UpdateImageUrlAsync(wordId: uint, imageUrl: stringNullable, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordDetail"
+  "+ UploadAudioAsync(wordId: uint, accent: stringNullable, content: UploadedContentNullable, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordAudio"
+  "+ SoftDeleteAudioAsync(wordId: uint, audioId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
+  "+ CreateSenseAsync(wordId: uint, command: CreateSenseCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordSense"
+  "+ UpdateSenseAsync(wordId: uint, senseId: uint, command: UpdateSenseCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfWordSense"
+  "+ SoftDeleteSenseAsync(wordId: uint, senseId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
+  "+ RestoreSenseAsync(wordId: uint, senseId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
+}
+
+class IWordImageStorage <<service_interface>> {
+  "+ UploadAsync(content: UploadedContent, cancellationToken: CancellationToken) : TaskOfStoredMedia"
+}
+
 class Word <<entity>> {
-  + WordId : uint
-  + Word1 : string
-  + WordKey : string
-  + CefrLevel : stringNullable
-  + PhoneticUk : stringNullable
-  + PhoneticUs : stringNullable
-  + ImageUrl : stringNullable
-  + IsPhrase : bool
-  + Status : string
-  + CreatedAt : DateTime
-  + UpdatedAt : DateTime
-  + AiGradingCaches : ICollectionOfAiGradingCache
+  "+ WordId : uint"
+  "+ Word1 : string"
+  "+ WordKey : string"
+  "+ CefrLevel : stringNullable"
+  "+ PhoneticUk : stringNullable"
+  "+ PhoneticUs : stringNullable"
+  "+ ImageUrl : stringNullable"
+  "+ IsPhrase : bool"
+  "+ Status : string"
+  "+ CreatedAt : DateTime"
+  "+ UpdatedAt : DateTime"
+  "+ AiGradingCaches : ICollectionOfAiGradingCache"
 }
+
 class WordAdminRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  "- _dbContext : VocaNovaDbContext"
   --
-  + WordExistsAsync(wordId: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfBool
-  + SetImageUrlAsync(wordId: uint, url: stringNullable, cancellationToken: CancellationToken) : TaskOfWordDetailNullable
+  "+ WordExistsAsync(wordId: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ SetImageUrlAsync(wordId: uint, url: stringNullable, cancellationToken: CancellationToken) : TaskOfWordDetailNullable"
 }
+
+class IWordAdminRepository <<repository_interface>> {
+  "+ SearchAsync(query: AdminWordQuery, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfAdminWordListItem"
+  "+ WordKeyExistsAsync(wordKey: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ WordExistsAsync(wordId: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ SenseExistsAsync(wordId: uint, senseId: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ MatchingSenseExistsAsync(wordId: uint, wordClass: string, englishDefinition: string, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ FindWordIdByKeyAsync(wordKey: string, cancellationToken: CancellationToken) : TaskOfuintNullable"
+  "+ CreateAsync(command: CreateWordCommand, cancellationToken: CancellationToken) : TaskOfWordDetail"
+  "+ CreateWithSenseAsync(word: CreateWordCommand, sense: CreateSenseCommand, cancellationToken: CancellationToken) : TaskOfWordDetail"
+  "+ UpdateMetadataAsync(wordId: uint, command: UpdateWordCommand, cancellationToken: CancellationToken) : TaskOfWordDetailNullable"
+  "+ UpdateMissingImportMetadataAsync(wordId: uint, metadata: ImportWordMetadata, cancellationToken: CancellationToken) : TaskOfboolNullable"
+  "+ SetWordStatusAsync(wordId: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ GetReferencingUserIdsAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfuint"
+  "+ SetImageUrlAsync(wordId: uint, url: stringNullable, cancellationToken: CancellationToken) : TaskOfWordDetailNullable"
+  "+ UpsertAudioAsync(wordId: uint, media: StoredMedia, accent: stringNullable, cancellationToken: CancellationToken) : TaskOfWordAudioNullable"
+  "+ SetAudioStatusAsync(wordId: uint, audioId: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ CreateSenseAsync(wordId: uint, command: CreateSenseCommand, cancellationToken: CancellationToken) : TaskOfWordSenseNullable"
+  "+ UpdateSenseAsync(wordId: uint, senseId: uint, command: UpdateSenseCommand, cancellationToken: CancellationToken) : TaskOfWordSenseNullable"
+  "+ SetSenseStatusAsync(wordId: uint, senseId: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ FindActiveTopicIdsByNamesAsync(names: IReadOnlyCollectionOfstring, cancellationToken: CancellationToken) : TaskOfIReadOnlyDictionaryOfstringuint"
+  "+ AddTopicsAsync(wordId: uint, topicIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : TaskOfint"
+}
+
 class VocaNovaDbContext <<dbcontext>> {
-  + AgeRanges : DbSetOfAgeRange
-  + AiGradingCaches : DbSetOfAiGradingCache
-  + AuditLogs : DbSetOfAuditLog
-  + EducationLevels : DbSetOfEducationLevel
-  + LearningPurposes : DbSetOfLearningPurpose
-  + Occupations : DbSetOfOccupation
-  + OtpVerifications : DbSetOfOtpVerification
-  + RefreshTokens : DbSetOfRefreshToken
-  + Regions : DbSetOfRegion
-  + Roles : DbSetOfRole
-  + TestAnswers : DbSetOfTestAnswer
-  + TestSessions : DbSetOfTestSession
+  "+ AgeRanges : DbSetOfAgeRange"
+  "+ AiGradingCaches : DbSetOfAiGradingCache"
+  "+ AuditLogs : DbSetOfAuditLog"
+  "+ EducationLevels : DbSetOfEducationLevel"
+  "+ LearningPurposes : DbSetOfLearningPurpose"
+  "+ Occupations : DbSetOfOccupation"
+  "+ OtpVerifications : DbSetOfOtpVerification"
+  "+ RefreshTokens : DbSetOfRefreshToken"
+  "+ Regions : DbSetOfRegion"
+  "+ Roles : DbSetOfRole"
+  "+ TestAnswers : DbSetOfTestAnswer"
+  "+ TestSessions : DbSetOfTestSession"
   --
-  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
 }
+
 class MySQL_Database <<database>> {
 
 }
 VocabularyController ..> UploadWordImageRequest
 UploadWordImageRequest ..> AdminWordsController
-AdminWordsController ..> WordAdminService : UploadImageAsync()
-WordAdminService ..> WordAdminRepository : WordExistsAsync()
 WordAdminRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 VocaNovaDbContext ..> Word
-WordAdminService ..> WordAdminRepository : SetImageUrlAsync()
 WordAdminRepository ..> Word
 AdminWordsController ..> WordDetailResponse
 VocabularyController ..> WordDetail
+IWordAdminService <|.. WordAdminService
+AdminWordsController ..> IWordAdminService : UploadImageAsync()
+WordAdminService ..> IWordImageStorage : UploadAsync()
+IWordAdminRepository <|.. WordAdminRepository
+WordAdminService ..> IWordAdminRepository : WordExistsAsync()
 @enduml

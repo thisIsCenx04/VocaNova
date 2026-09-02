@@ -14,10 +14,12 @@ entity "WordRelationDto\n(FE Response DTO)" as FeRelationDto
 entity "WordDetailResponse\n(BE Response DTO)" as BeWordDetailDto
 control "WordsController\n(BE API)" as BeController
 control "WordReadService" as WordService
+control "IWordReadService" as IWordReadService
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "WordRelation" as WordRelationEntity
 control "WordReadRepository" as WordRepository
+control "IWordReadRepository" as IWordReadRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -31,14 +33,17 @@ BE response DTO exists: WordDetailResponse.
 There is no separate suggest-related endpoint in current code;
 related vocabulary is returned inside GET /api/words/{id}.
 Entities exist: Word, WordSense and WordRelation.
+Interfaces used in code: IWordReadService, IWordReadRepository.
 end note
 
 Learner -> RelatedUi: Open related vocabulary area
 RelatedUi -> FeController: load(wordId)
 FeController -> FeApiService: getWord(wordId)
 FeApiService -> BeController: GET /api/words/{id}
-BeController -> WordService: GetByIdAsync(id)
-WordService -> WordRepository: FindDetailAsync(id)
+BeController -> IWordReadService: GetByIdAsync(id)
+IWordReadService -> WordService: GetByIdAsync(id)
+WordService -> IWordReadRepository: FindDetailAsync(id)
+IWordReadRepository -> WordRepository: FindDetailAsync(id)
 WordRepository -> DbContext: Query word detail with relations
 DbContext -> MySQL: SELECT words with senses\nand word_relations
 MySQL --> DbContext: Word detail rows or null

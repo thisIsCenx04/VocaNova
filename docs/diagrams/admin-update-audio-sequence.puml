@@ -11,9 +11,12 @@ entity "UploadWordAudioRequest\n(BE Request DTO)" as AudioRequestDto
 entity "WordAudioResponse\n(BE Response DTO)" as AudioResponseDto
 control "AdminWordsController\n(BE API)" as ApiController
 control "WordAdminService" as WordService
+control "IWordAdminService" as IWordAdminService
+control "IWordAudioStorage" as IWordAudioStorage
 entity "Word" as WordEntity
 entity "WordAudioAsset" as WordAudioAsset
 control "WordAdminRepository" as WordRepository
+control "IWordAdminRepository" as IWordAdminRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over VocabularyPage, MySQL
@@ -24,6 +27,7 @@ Dashboard currently sends accent = "us" for the upload.
 API endpoint is POST /api/admin/words/{id}/audio.
 API uses UploadWordAudioRequest and returns WordAudioResponse.
 FE response DTO exists: WordDetail when Dashboard reloads word detail.
+Interfaces used in code: IWordAdminService, IWordAdminRepository, IWordAudioStorage.
 end note
 Admin -> VocabularyPage: Choose replacement audio file
 Admin -> VocabularyPage: Click Upload audio
@@ -36,14 +40,16 @@ DashboardController -> AudioRequestDto: VocaNovaApiClient.UploadAudioAsync(wordI
 AudioRequestDto -> ApiController: POST /api/admin/words/{id}/audio\nUploadWordAudioRequest
 ApiController -> ApiController: Check admin authorization
 ApiController -> ApiController: Bind UploadWordAudioRequest
-ApiController -> WordService: UploadAudioAsync(wordId, accent, file)
+ApiController -> IWordAdminService: UploadAudioAsync(wordId, accent, file)
+IWordAdminService -> WordService: UploadAudioAsync(wordId, accent, file)
 WordService -> WordService: Normalize accent\nand validate audio file
 alt Accent or audio file invalid
 WordService --> ApiController: Validation failure
 ApiController --> DashboardController: HTTP 400 error
 DashboardController --> VocabularyPage: Show error message
 else Audio file valid
-WordService -> WordRepository: WordExistsAsync(wordId)
+WordService -> IWordAdminRepository: WordExistsAsync(wordId)
+IWordAdminRepository -> WordRepository: WordExistsAsync(wordId)
 WordRepository -> DbContext: Query word
 DbContext -> MySQL: SELECT words
 MySQL --> DbContext: Word row or null
@@ -56,8 +62,9 @@ WordService --> ApiController: NotFound result
 ApiController --> DashboardController: HTTP 404 error
 DashboardController --> VocabularyPage: Show error message
 else Word exists
-WordService -> WordService: UploadAsync(file, accent)
-WordService -> WordRepository: UpsertAudioAsync(wordId, uploaded audio, accent)
+WordService -> IWordAudioStorage: UploadAsync(file, accent)
+WordService -> IWordAdminRepository: UpsertAudioAsync(wordId, uploaded audio, accent)
+IWordAdminRepository -> WordRepository: UpsertAudioAsync(wordId, uploaded audio, accent)
 WordRepository -> DbContext: Find audio asset by word and accent
 DbContext -> MySQL: SELECT word_audio_assets
 MySQL --> DbContext: Audio row or null

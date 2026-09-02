@@ -15,6 +15,7 @@ control "RoleManagementService" as RoleService
 entity "Role" as RoleEntity
 entity "User" as UserEntity
 control "RoleManagementRepository" as RoleRepository
+control "IRoleManagementRepository" as IRoleManagementRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over RolesPage, MySQL
@@ -24,6 +25,7 @@ API uses RoleQueryRequest, SaveRoleRequest, and RoleResponse.
 FE response DTO exists: ManagedRole for role list data.
 Delete uses route id only and returns bool in the API envelope.
 Assign/Remove role also exist in API, but Dashboard calls them from AdminAccountsController role assignment.
+Interfaces used in code: IRoleManagementRepository.
 end note
 SuperAdmin -> RolesPage: Open role management
 RolesPage -> DashboardController: GET /roles(search, type, sort)
@@ -37,7 +39,8 @@ ApiController --> DashboardController: HTTP 400 error
 DashboardController --> RolesPage: Show error message
 else Request validation success
 ApiController -> RoleService: GetRolesAsync(query)
-RoleService -> RoleRepository: GetRolesAsync(query)
+RoleService -> IRoleManagementRepository: GetRolesAsync(query)
+IRoleManagementRepository -> RoleRepository: GetRolesAsync(query)
 RoleRepository -> DbContext: Query roles
 DbContext -> MySQL: SELECT roles
 MySQL --> DbContext: Role rows
@@ -64,7 +67,8 @@ SaveRoleRequestDto -> ApiController: POST /api/superadmin/roles\nSaveRoleRequest
 ApiController -> ApiController: Validate SaveRoleRequest
 ApiController -> RoleService: CreateAsync(role data)
 RoleService -> RoleService: Normalize and validate role name
-RoleService -> RoleRepository: RoleExistsAsync(roleName)
+RoleService -> IRoleManagementRepository: RoleExistsAsync(roleName)
+IRoleManagementRepository -> RoleRepository: RoleExistsAsync(roleName)
 RoleRepository -> DbContext: Query role by name
 DbContext -> MySQL: SELECT roles
 MySQL --> DbContext: Role row or null
@@ -78,7 +82,8 @@ ApiController --> DashboardController: HTTP 409 error
 DashboardController --> RolesPage: Show error message
 else Role can be created
 RoleService -> RoleService: Begin transaction
-RoleService -> RoleRepository: AddRoleAsync(roleName)
+RoleService -> IRoleManagementRepository: AddRoleAsync(roleName)
+IRoleManagementRepository -> RoleRepository: AddRoleAsync(roleName)
 RoleRepository -> RoleEntity: Create Role
 RoleEntity --> RoleRepository: Role
 RoleRepository -> DbContext: Add Role
@@ -103,7 +108,8 @@ DashboardController -> SaveRoleRequestDto: VocaNovaApiClient.UpdateRoleAsync(rol
 SaveRoleRequestDto -> ApiController: PUT /api/superadmin/roles/{roleId}SaveRoleRequest
 ApiController -> ApiController: Validate SaveRoleRequest
 ApiController -> RoleService: UpdateAsync(roleId, role data)
-RoleService -> RoleRepository: GetRoleNameAsync(roleId)
+RoleService -> IRoleManagementRepository: GetRoleNameAsync(roleId)
+IRoleManagementRepository -> RoleRepository: GetRoleNameAsync(roleId)
 RoleRepository -> DbContext: Query current role name
 DbContext -> MySQL: SELECT roles
 MySQL --> DbContext: Role row or null
@@ -116,7 +122,8 @@ RoleService --> ApiController: NotFound/Forbidden result
 ApiController --> DashboardController: HTTP 404/403 error
 DashboardController --> RolesPage: Show error message
 else Role can be updated
-RoleService -> RoleRepository: RoleExistsExcludeAsync(roleId, roleName)
+RoleService -> IRoleManagementRepository: RoleExistsExcludeAsync(roleId, roleName)
+IRoleManagementRepository -> RoleRepository: RoleExistsExcludeAsync(roleId, roleName)
 RoleRepository -> DbContext: Query duplicate role name
 DbContext -> MySQL: SELECT roles
 MySQL --> DbContext: Duplicate row or null
@@ -130,7 +137,8 @@ ApiController --> DashboardController: HTTP 409 error
 DashboardController --> RolesPage: Show error message
 else Role name is available
 RoleService -> RoleService: Begin transaction
-RoleService -> RoleRepository: UpdateRoleAsync(roleId, roleName)
+RoleService -> IRoleManagementRepository: UpdateRoleAsync(roleId, roleName)
+IRoleManagementRepository -> RoleRepository: UpdateRoleAsync(roleId, roleName)
 RoleRepository -> RoleEntity: Update role_name
 RoleEntity --> RoleRepository: Role updated
 RoleRepository -> DbContext: Track Role
@@ -151,7 +159,8 @@ RolesPage -> DashboardController: POST /roles/{roleId}/delete
 DashboardController -> ApiController: VocaNovaApiClient.DeleteRoleAsync(roleId)\nDELETE /api/superadmin/roles/{roleId}
 ApiController -> ApiController: Check super admin authorization
 ApiController -> RoleService: DeleteAsync(roleId)
-RoleService -> RoleRepository: GetRoleNameAsync(roleId)
+RoleService -> IRoleManagementRepository: GetRoleNameAsync(roleId)
+IRoleManagementRepository -> RoleRepository: GetRoleNameAsync(roleId)
 RoleRepository -> DbContext: Query role name
 DbContext -> MySQL: SELECT roles
 MySQL --> DbContext: Role row or null
@@ -164,7 +173,8 @@ RoleService --> ApiController: NotFound/Forbidden result
 ApiController --> DashboardController: HTTP 404/403 error
 DashboardController --> RolesPage: Show error message
 else Role exists and is custom
-RoleService -> RoleRepository: HasUsersWithRoleAsync(roleId)
+RoleService -> IRoleManagementRepository: HasUsersWithRoleAsync(roleId)
+IRoleManagementRepository -> RoleRepository: HasUsersWithRoleAsync(roleId)
 RoleRepository -> DbContext: Check users with role
 DbContext -> MySQL: SELECT users
 MySQL --> DbContext: User row or null
@@ -178,7 +188,8 @@ ApiController --> DashboardController: HTTP 409 error
 DashboardController --> RolesPage: Show error message
 else Role can be deleted
 RoleService -> RoleService: Begin transaction
-RoleService -> RoleRepository: DeleteRoleAsync(roleId)
+RoleService -> IRoleManagementRepository: DeleteRoleAsync(roleId)
+IRoleManagementRepository -> RoleRepository: DeleteRoleAsync(roleId)
 RoleRepository -> RoleEntity: Remove Role
 RoleEntity --> RoleRepository: Role removed
 RoleRepository -> DbContext: Track Role removal

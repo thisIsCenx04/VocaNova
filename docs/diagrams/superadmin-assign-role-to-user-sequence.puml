@@ -15,6 +15,7 @@ entity "Role" as RoleEntity
 entity "User" as UserEntity
 entity "RefreshToken" as RefreshTokenEntity
 control "RoleManagementRepository" as RoleRepository
+control "IRoleManagementRepository" as IRoleManagementRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over RoleAssignmentPage, MySQL
@@ -24,6 +25,7 @@ VocaNovaApiClient calls POST /api/superadmin/roles/{roleId}/users/{userId}.
 FE response DTOs exist: AdminUserSummary and ManagedRole for loading assignable data.
 No request DTO body is used; API returns bool in the response envelope.
 Assigning a role revokes active refresh tokens for the user.
+Interfaces used in code: IRoleManagementRepository.
 end note
 SuperAdmin -> RoleAssignmentPage: Open role assignment page
 RoleAssignmentPage -> DashboardController: GET /admin-accounts/role-assignment(search, role, page)
@@ -39,7 +41,8 @@ DashboardController --> RoleAssignmentPage: Show error message
 else Role input valid
 DashboardController -> ApiController: VocaNovaApiClient.GetRolesAsync()\nGET /api/superadmin/roles
 ApiController -> RoleService: GetRolesAsync(query)
-RoleService -> RoleRepository: GetRolesAsync(query)
+RoleService -> IRoleManagementRepository: GetRolesAsync(query)
+IRoleManagementRepository -> RoleRepository: GetRolesAsync(query)
 RoleRepository -> DbContext: Query roles
 DbContext -> MySQL: SELECT roles
 MySQL --> DbContext: Role rows
@@ -56,7 +59,8 @@ else Target role found
 DashboardController -> ApiController: VocaNovaApiClient.AssignRoleAsync(roleId, userId)\nPOST /api/superadmin/roles/{roleId}/users/{userId}
 ApiController -> ApiController: Check super admin authorization
 ApiController -> RoleService: AssignRoleAsync(roleId, userId)
-RoleService -> RoleRepository: GetRoleNameAsync(roleId)
+RoleService -> IRoleManagementRepository: GetRoleNameAsync(roleId)
+IRoleManagementRepository -> RoleRepository: GetRoleNameAsync(roleId)
 RoleRepository -> DbContext: Query target role
 DbContext -> MySQL: SELECT roles
 MySQL --> DbContext: Role row or null
@@ -64,7 +68,8 @@ DbContext -> RoleEntity: Materialize Role?
 RoleEntity --> DbContext: Role or null
 DbContext --> RoleRepository: Result
 RoleRepository --> RoleService: role name or null
-RoleService -> RoleRepository: GetUserRoleNameAsync(userId)
+RoleService -> IRoleManagementRepository: GetUserRoleNameAsync(userId)
+IRoleManagementRepository -> RoleRepository: GetUserRoleNameAsync(userId)
 RoleRepository -> DbContext: Query current user role
 DbContext -> MySQL: SELECT user with role
 MySQL --> DbContext: User row or null
@@ -77,7 +82,8 @@ RoleService --> ApiController: NotFound/Forbidden result
 ApiController --> DashboardController: HTTP 404/403 error
 DashboardController --> RoleAssignmentPage: Show error message
 else User already has this role
-RoleService -> RoleRepository: GetRoleIdByNameAsync(currentRole)
+RoleService -> IRoleManagementRepository: GetRoleIdByNameAsync(currentRole)
+IRoleManagementRepository -> RoleRepository: GetRoleIdByNameAsync(currentRole)
 RoleRepository -> DbContext: Query current role id
 DbContext -> MySQL: SELECT roles
 MySQL --> DbContext: Role id
@@ -89,7 +95,8 @@ RoleService --> ApiController: Conflict result
 ApiController --> DashboardController: HTTP 409 error
 DashboardController --> RoleAssignmentPage: Show error message
 else Role can be assigned
-RoleService -> RoleRepository: GetRoleIdByNameAsync(currentRole)
+RoleService -> IRoleManagementRepository: GetRoleIdByNameAsync(currentRole)
+IRoleManagementRepository -> RoleRepository: GetRoleIdByNameAsync(currentRole)
 RoleRepository -> DbContext: Query current role id
 DbContext -> MySQL: SELECT roles
 MySQL --> DbContext: Role id
@@ -98,13 +105,15 @@ RoleEntity --> DbContext: Role
 DbContext --> RoleRepository: Result
 RoleRepository --> RoleService: current role id
 RoleService -> RoleService: Begin transaction
-RoleService -> RoleRepository: AssignRoleAsync(roleId, userId)
+RoleService -> IRoleManagementRepository: AssignRoleAsync(roleId, userId)
+IRoleManagementRepository -> RoleRepository: AssignRoleAsync(roleId, userId)
 RoleRepository -> UserEntity: Set RoleId
 UserEntity --> RoleRepository: User updated
 RoleRepository -> DbContext: Track user role
 DbContext -> MySQL: UPDATE users
 MySQL --> DbContext: Update result
-RoleService -> RoleRepository: RevokeActiveRefreshTokensAsync(userId)
+RoleService -> IRoleManagementRepository: RevokeActiveRefreshTokensAsync(userId)
+IRoleManagementRepository -> RoleRepository: RevokeActiveRefreshTokensAsync(userId)
 RoleRepository -> RefreshTokenEntity: Set RevokedAt
 RefreshTokenEntity --> RoleRepository: RefreshToken updated
 RoleRepository -> DbContext: Track refresh token updates

@@ -11,12 +11,14 @@ control "AuthController" as AuthController
 control "AuthService" as AuthService
 entity "OtpVerification" as OtpEntity
 control "OtpRepository" as OtpRepository
+control "IOtpRepository" as IOtpRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over OtpScreen, MySQL
 Current code has OTP verification by phone.
 OtpVerifyRequest and OtpVerifyResponse exist in API Contracts.
 No separate verify-email flow was found in Auth code.
+Interfaces used in code: IOtpRepository.
 end note
 Guest -> OtpScreen: Enter OTP code
 Guest -> OtpScreen: Click Verify button
@@ -32,7 +34,8 @@ AuthController --> OtpScreen: HTTP 400 error
 OtpScreen --> Guest: Show error message
 else Request validation success
 AuthController -> AuthService: VerifyOtpAsync(otp data)
-AuthService -> OtpRepository: FindLatestAsync(phone, userId=null)
+AuthService -> IOtpRepository: FindLatestAsync(phone, userId=null)
+IOtpRepository -> OtpRepository: FindLatestAsync(phone, userId=null)
 OtpRepository -> DbContext: Query latest active OTP
 DbContext -> MySQL: SELECT latest OTP
 MySQL --> DbContext: OTP row or null
@@ -53,7 +56,8 @@ AuthService --> AuthController: TooManyRequests result
 AuthController --> OtpScreen: HTTP 429 error
 OtpScreen --> Guest: Show error message
 else OTP code is wrong
-AuthService -> OtpRepository: StageAttemptAsync(otpId, attempt + 1)
+AuthService -> IOtpRepository: StageAttemptAsync(otpId, attempt + 1)
+IOtpRepository -> OtpRepository: StageAttemptAsync(otpId, attempt + 1)
 OtpRepository -> OtpEntity: Increment AttemptCount
 OtpEntity --> OtpRepository: OtpVerification updated
 OtpRepository -> DbContext: Track OTP attempt
@@ -65,7 +69,8 @@ AuthService --> AuthController: Unauthorized result
 AuthController --> OtpScreen: HTTP 401 Invalid OTP
 OtpScreen --> Guest: Show error message
 else OTP valid
-AuthService -> OtpRepository: StageUsedAsync(otp, userId=null)
+AuthService -> IOtpRepository: StageUsedAsync(otp, userId=null)
+IOtpRepository -> OtpRepository: StageUsedAsync(otp, userId=null)
 OtpRepository -> OtpEntity: Set UsedAt
 OtpEntity --> OtpRepository: OtpVerification updated
 OtpRepository -> DbContext: Track OTP used

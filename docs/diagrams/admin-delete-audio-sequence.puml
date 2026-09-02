@@ -8,7 +8,9 @@ boundary "Vocabulary UI" as VocabularyPage
 control "VocabularyController\n(FE Dashboard)" as DashboardController
 control "AdminWordsController\n(BE API)" as ApiController
 control "WordAdminService" as WordService
+control "IWordAdminService" as IWordAdminService
 control "WordAdminRepository" as WordRepository
+control "IWordAdminRepository" as IWordAdminRepository
 entity "WordAudioAsset" as WordAudioAsset
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
@@ -19,13 +21,16 @@ VocaNovaApiClient calls DELETE /api/admin/words/{id}/audio/{audioId}.
 No request DTO body is used; API returns bool in the response envelope.
 Delete is soft delete: audio status becomes deleted.
 WordAudioAsset is the EF entity mapped to word_audio_assets.
+Interfaces used in code: IWordAdminService, IWordAdminRepository.
 end note
 Admin -> VocabularyPage: Click Delete audio
 VocabularyPage -> DashboardController: POST /vocabulary/{id}/audio/{audioId}/delete
 DashboardController -> ApiController: VocaNovaApiClient.DeleteAudioAsync(wordId, audioId)\nDELETE /api/admin/words/{id}/audio/{audioId}
 ApiController -> ApiController: Check admin authorization
-ApiController -> WordService: SoftDeleteAudioAsync(wordId, audioId)
-WordService -> WordRepository: SetAudioStatusAsync(wordId, audioId, deleted)
+ApiController -> IWordAdminService: SoftDeleteAudioAsync(wordId, audioId)
+IWordAdminService -> WordService: SoftDeleteAudioAsync(wordId, audioId)
+WordService -> IWordAdminRepository: SetAudioStatusAsync(wordId, audioId, deleted)
+IWordAdminRepository -> WordRepository: SetAudioStatusAsync(wordId, audioId, deleted)
 WordRepository -> DbContext: Query WordAudioAsset
 DbContext -> MySQL: SELECT word_audio_assets
 MySQL --> DbContext: Audio row or null

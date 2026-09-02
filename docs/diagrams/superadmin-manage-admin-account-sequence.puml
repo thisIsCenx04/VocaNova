@@ -13,12 +13,14 @@ entity "UpdateAdminAccountRequest\n(BE Request DTO)" as UpdateAdminAccountReques
 entity "AdminAccountResponse\n(BE Response DTO)" as AdminAccountResponseDto
 control "SuperAdminAccountsController\n(BE API)" as ApiController
 control "SuperAdminAccountService" as AccountService
+control "ISuperAdminAccountService" as ISuperAdminAccountService
 entity "User" as UserEntity
 entity "UserAuth" as UserAuthEntity
 entity "UserProfile" as UserProfileEntity
 entity "Role" as RoleEntity
 entity "RefreshToken" as RefreshTokenEntity
 control "SuperAdminAccountRepository" as AccountRepository
+control "ISuperAdminAccountRepository" as ISuperAdminAccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over AdminAccountsPage, MySQL
@@ -27,6 +29,7 @@ Dashboard AdminAccountsController calls the API through VocaNovaApiClient.
 API uses AdminAccountQueryRequest, CreateAdminAccountRequest, UpdateAdminAccountRequest, and AdminAccountResponse.
 FE response DTO exists: AdminAccount for admin account list/detail data.
 Lock/Unlock/Delete use route id only and return bool in the API envelope.
+Interfaces used in code: ISuperAdminAccountService, ISuperAdminAccountRepository.
 end note
 SuperAdmin -> AdminAccountsPage: Open admin account management
 AdminAccountsPage -> DashboardController: GET /admin-accounts(search, status, paging, sort)
@@ -39,8 +42,10 @@ alt Request validation fails
 ApiController --> DashboardController: HTTP 400 error
 DashboardController --> AdminAccountsPage: Show error message
 else Request validation success
-ApiController -> AccountService: GetAccountsAsync(query)
-AccountService -> AccountRepository: GetAccountsAsync(query)
+ApiController -> ISuperAdminAccountService: GetAccountsAsync(query)
+ISuperAdminAccountService -> AccountService: GetAccountsAsync(query)
+AccountService -> ISuperAdminAccountRepository: GetAccountsAsync(query)
+ISuperAdminAccountRepository -> AccountRepository: GetAccountsAsync(query)
 AccountRepository -> DbContext: Query admin accounts
 DbContext -> MySQL: SELECT users with admin role
 MySQL --> DbContext: Admin account rows and total count
@@ -75,8 +80,10 @@ alt Request validation fails
 ApiController --> DashboardController: HTTP 400 error
 DashboardController --> AdminAccountsPage: Show error message
 else Request validation success
-ApiController -> AccountService: CreateAsync(create data)
-AccountService -> AccountRepository: FindDuplicateAsync(phone, email)
+ApiController -> ISuperAdminAccountService: CreateAsync(create data)
+ISuperAdminAccountService -> AccountService: CreateAsync(create data)
+AccountService -> ISuperAdminAccountRepository: FindDuplicateAsync(phone, email)
+ISuperAdminAccountRepository -> AccountRepository: FindDuplicateAsync(phone, email)
 AccountRepository -> DbContext: Query duplicate phone/email
 DbContext -> MySQL: SELECT user_auth
 MySQL --> DbContext: Duplicate row or null
@@ -89,7 +96,8 @@ AccountService --> ApiController: Conflict result
 ApiController --> DashboardController: HTTP 409 error
 DashboardController --> AdminAccountsPage: Show error message
 else Account can be created
-AccountService -> AccountRepository: GetAdminRoleIdAsync()
+AccountService -> ISuperAdminAccountRepository: GetAdminRoleIdAsync()
+ISuperAdminAccountRepository -> AccountRepository: GetAdminRoleIdAsync()
 AccountRepository -> DbContext: Query admin role
 DbContext -> MySQL: SELECT roles
 MySQL --> DbContext: Admin role row or null
@@ -103,7 +111,8 @@ ApiController --> DashboardController: HTTP 400 error
 DashboardController --> AdminAccountsPage: Show error message
 else Admin role exists
 AccountService -> AccountService: Hash password and begin transaction
-AccountService -> AccountRepository: AddAccountAsync(create data)
+AccountService -> ISuperAdminAccountRepository: AddAccountAsync(create data)
+ISuperAdminAccountRepository -> AccountRepository: AddAccountAsync(create data)
 AccountRepository -> UserEntity: Create User
 AccountRepository -> UserAuthEntity: Create UserAuth
 AccountRepository -> UserProfileEntity: Create UserProfile
@@ -139,8 +148,10 @@ alt Request validation fails
 ApiController --> DashboardController: HTTP 400 error
 DashboardController --> AdminAccountsPage: Show error message
 else Request validation success
-ApiController -> AccountService: UpdateAsync(id, update data)
-AccountService -> AccountRepository: FindDuplicateAsync(phone, email, id)
+ApiController -> ISuperAdminAccountService: UpdateAsync(id, update data)
+ISuperAdminAccountService -> AccountService: UpdateAsync(id, update data)
+AccountService -> ISuperAdminAccountRepository: FindDuplicateAsync(phone, email, id)
+ISuperAdminAccountRepository -> AccountRepository: FindDuplicateAsync(phone, email, id)
 AccountRepository -> DbContext: Query duplicate phone/email
 DbContext -> MySQL: SELECT user_auth
 MySQL --> DbContext: Duplicate row or null
@@ -154,7 +165,8 @@ ApiController --> DashboardController: HTTP 409/404 error
 DashboardController --> AdminAccountsPage: Show error message
 else Account can be updated
 AccountService -> AccountService: Hash password if suppliedand begin transaction
-AccountService -> AccountRepository: UpdateAccountAsync(id, update data)
+AccountService -> ISuperAdminAccountRepository: UpdateAccountAsync(id, update data)
+ISuperAdminAccountRepository -> AccountRepository: UpdateAccountAsync(id, update data)
 AccountRepository -> UserEntity: Update status
 AccountRepository -> UserAuthEntity: Update phone, email,\npassword_hash?
 AccountRepository -> UserProfileEntity: Update full_name
@@ -177,8 +189,10 @@ else SuperAdmin locks, unlocks, or deletes admin account
 SuperAdmin -> AdminAccountsPage: Click Lock/Unlock/Delete
 AdminAccountsPage -> DashboardController: POST /admin-accounts/{id}/lock\nor /unlock or /delete
 DashboardController -> ApiController: VocaNovaApiClient.Lock/Unlock/DeleteAdminAccountAsync(id)\nPATCH /api/superadmin/admins/{id}/lock\nor /unlock\nor DELETE /api/superadmin/admins/{id}
-ApiController -> AccountService: LockAsync(id), UnlockAsync(id),or DeleteAsync(id)
-AccountService -> AccountRepository: GetAccountStatusAsync(id)
+ApiController -> ISuperAdminAccountService: LockAsync(id), UnlockAsync(id),or DeleteAsync(id)
+ISuperAdminAccountService -> AccountService: LockAsync(id), UnlockAsync(id),or DeleteAsync(id)
+AccountService -> ISuperAdminAccountRepository: GetAccountStatusAsync(id)
+ISuperAdminAccountRepository -> AccountRepository: GetAccountStatusAsync(id)
 AccountRepository -> DbContext: Query admin account status
 DbContext -> MySQL: SELECT user status
 MySQL --> DbContext: Status row or null
@@ -193,14 +207,16 @@ DashboardController --> AdminAccountsPage: Show feedback
 else Status can be changed
 AccountService -> AccountService: Begin transaction
 opt Lock or Delete
-AccountService -> AccountRepository: RevokeActiveRefreshTokensAsync(id)
+AccountService -> ISuperAdminAccountRepository: RevokeActiveRefreshTokensAsync(id)
+ISuperAdminAccountRepository -> AccountRepository: RevokeActiveRefreshTokensAsync(id)
 AccountRepository -> RefreshTokenEntity: Set RevokedAt
 RefreshTokenEntity --> AccountRepository: RefreshToken updated
 AccountRepository -> DbContext: Track refresh token updates
 DbContext -> MySQL: UPDATE refresh_tokens
 MySQL --> DbContext: Update result
 end
-AccountService -> AccountRepository: ChangeStatusAsync(id, status)or DeleteAccountAsync(id)
+AccountService -> ISuperAdminAccountRepository: ChangeStatusAsync(id, status)or DeleteAccountAsync(id)
+ISuperAdminAccountRepository -> AccountRepository: ChangeStatusAsync(id, status)or DeleteAccountAsync(id)
 AccountRepository -> UserEntity: Update status
 AccountRepository -> UserAuthEntity: Clear auth fields if deleted
 UserEntity --> AccountRepository: User updated

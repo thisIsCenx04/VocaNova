@@ -9,80 +9,103 @@ note top
 Generated from mobile-review-test-history-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
+
 class QuizSessionsController <<backend_controller>> {
-  - _sessionService : IQuizSessionService
-  - _submissionService : IQuizSubmissionService
-  - _resultService : IQuizResultService
-  - _historyService : IQuizHistoryService
+  "- _sessionService : IQuizSessionService"
+  "- _submissionService : IQuizSubmissionService"
+  "- _resultService : IQuizResultService"
+  "- _historyService : IQuizHistoryService"
   --
-  + GetHistory(request: QuizHistoryRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  "+ GetHistory(request: QuizHistoryRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
+
 class QuizHistoryRequest <<dto>> {
-  + Page : int
-  + Limit : int
+  "+ Page : int"
+  "+ Limit : int"
 }
+
 class QuizHistoryItemResponse <<dto>> {
-  + SessionId : uint
-  + AnswerMethod : string
-  + Mode : string
-  + QuestionType : int
-  + QuestionCount : int
-  + CorrectCount : int
-  + WrongCount : int
-  + Accuracy : float
-  + Score : float
-  + MaxStreak : int
-  + Status : string
-  + StartedAt : DateTime
+  "+ SessionId : uint"
+  "+ AnswerMethod : string"
+  "+ Mode : string"
+  "+ QuestionType : int"
+  "+ QuestionCount : int"
+  "+ CorrectCount : int"
+  "+ WrongCount : int"
+  "+ Accuracy : float"
+  "+ Score : float"
+  "+ MaxStreak : int"
+  "+ Status : string"
+  "+ StartedAt : DateTime"
 }
+
 class QuizHistoryService <<service>> {
-  - _repository : IQuizHistoryRepository
+  "- _repository : IQuizHistoryRepository"
   --
-  + GetHistoryAsync(userId: uint, query: QuizHistoryQuery, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfPagedCollectionOfQuizHistoryItem
+  "+ GetHistoryAsync(userId: uint, query: QuizHistoryQuery, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfPagedCollectionOfQuizHistoryItem"
 }
+
+class IQuizHistoryService <<service_interface>> {
+  "+ GetHistoryAsync(userId: uint, query: QuizHistoryQuery, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfPagedCollectionOfQuizHistoryItem"
+  "+ GetWrongWordsAsync(userId: uint, query: WrongWordsQuery, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfPagedCollectionOfWrongWord"
+  "+ ClearWrongWordAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfbool"
+}
+
 class TestSession <<entity>> {
-  + SessionId : uint
-  + UserId : uint
-  + TestType : string
-  + Mode : string
-  + QuestionType : int
-  + ScopeType : string
-  + ScopeDateFrom : DateOnlyNullable
-  + ScopeDateTo : DateOnlyNullable
-  + WordOrder : string
-  + WordLimit : intNullable
-  + TimeLimitSec : intNullable
-  + Lives : intNullable
+  "+ SessionId : uint"
+  "+ UserId : uint"
+  "+ TestType : string"
+  "+ Mode : string"
+  "+ QuestionType : int"
+  "+ ScopeType : string"
+  "+ ScopeDateFrom : DateOnlyNullable"
+  "+ ScopeDateTo : DateOnlyNullable"
+  "+ WordOrder : string"
+  "+ WordLimit : intNullable"
+  "+ TimeLimitSec : intNullable"
+  "+ Lives : intNullable"
 }
+
 class QuizHistoryRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  "- _dbContext : VocaNovaDbContext"
   --
-  + GetHistoryAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfQuizHistoryItem
+  "+ GetHistoryAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfQuizHistoryItem"
 }
+
+class IQuizHistoryRepository <<repository_interface>> {
+  "+ GetHistoryAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfQuizHistoryItem"
+  "+ GetWrongWordsAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfWrongWord"
+  "+ ClearWrongWordAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfbool"
+}
+
 class VocaNovaDbContext <<dbcontext>> {
-  + AgeRanges : DbSetOfAgeRange
-  + AiGradingCaches : DbSetOfAiGradingCache
-  + AuditLogs : DbSetOfAuditLog
-  + EducationLevels : DbSetOfEducationLevel
-  + LearningPurposes : DbSetOfLearningPurpose
-  + Occupations : DbSetOfOccupation
-  + OtpVerifications : DbSetOfOtpVerification
-  + RefreshTokens : DbSetOfRefreshToken
-  + Regions : DbSetOfRegion
-  + Roles : DbSetOfRole
-  + TestAnswers : DbSetOfTestAnswer
-  + TestSessions : DbSetOfTestSession
+  "+ AgeRanges : DbSetOfAgeRange"
+  "+ AiGradingCaches : DbSetOfAiGradingCache"
+  "+ AuditLogs : DbSetOfAuditLog"
+  "+ EducationLevels : DbSetOfEducationLevel"
+  "+ LearningPurposes : DbSetOfLearningPurpose"
+  "+ Occupations : DbSetOfOccupation"
+  "+ OtpVerifications : DbSetOfOtpVerification"
+  "+ RefreshTokens : DbSetOfRefreshToken"
+  "+ Regions : DbSetOfRegion"
+  "+ Roles : DbSetOfRole"
+  "+ TestAnswers : DbSetOfTestAnswer"
+  "+ TestSessions : DbSetOfTestSession"
   --
-  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
 }
+
 class MySQL_Database <<database>> {
 
 }
 QuizSessionsController ..> QuizHistoryRequest
-QuizSessionsController ..> QuizHistoryService : GetHistoryAsync()
-QuizHistoryService ..> QuizHistoryRepository : GetHistoryAsync()
 QuizHistoryRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 VocaNovaDbContext ..> TestSession
 QuizSessionsController ..> QuizHistoryItemResponse
+QuizHistoryRequest ..> QuizSessionsController
+IQuizHistoryService <|.. QuizHistoryService
+QuizSessionsController ..> IQuizHistoryService : GetHistoryAsync()
+IQuizHistoryRepository <|.. QuizHistoryRepository
+QuizHistoryService ..> IQuizHistoryRepository : GetHistoryAsync()
 @enduml

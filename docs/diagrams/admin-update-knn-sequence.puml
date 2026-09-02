@@ -13,12 +13,14 @@ entity "AgeRange / Region /\nOccupation / EducationLevel /\nLearningPurpose\n(FE
 entity "UpdateAgeRangeRequest / UpdateRegionRequest /\nUpdateOccupationRequest / UpdateEducationLevelRequest /\nUpdateLearningPurposeRequest\n(BE Request DTO)" as BeUpdateDto
 entity "AgeRangeResponse / RegionResponse /\nOccupationResponse / EducationLevelResponse /\nLearningPurposeResponse\n(BE Response DTO)" as BeLookupResponseDto
 control "AdminKnnLookupService" as LookupService
+control "IAdminKnnLookupService" as IAdminKnnLookupService
 entity "AgeRange" as AgeRangeEntity
 entity "Region" as RegionEntity
 entity "Occupation" as OccupationEntity
 entity "EducationLevel" as EducationLevelEntity
 entity "LearningPurpose" as LearningPurposeEntity
 control "AdminKnnLookupRepository" as LookupRepository
+control "IAdminKnnLookupRepository" as IAdminKnnLookupRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -30,6 +32,7 @@ BE controller exists: AdminKnnController.
 BE update request DTOs and response DTOs exist for each KNN lookup type.
 Update KNN means updating one lookup row under a valid KNN slug.
 Entities exist: AgeRange, Region, Occupation, EducationLevel and LearningPurpose.
+Interfaces used in code: IAdminKnnLookupService, IAdminKnnLookupRepository.
 end note
 
 Admin -> UpdateKnnUi: Edit lookup row
@@ -46,8 +49,10 @@ alt Request invalid
     BeController --> FeController: HTTP 400 error
     FeController --> UpdateKnnUi: Show error message
 else Request valid
-    BeController -> LookupService: Update{LookupType}Async(id, command)
-    LookupService -> LookupRepository: Check duplicate name/code
+    BeController -> IAdminKnnLookupService: Update{LookupType}Async(id, command)
+    IAdminKnnLookupService -> LookupService: Update{LookupType}Async(id, command)
+    LookupService -> IAdminKnnLookupRepository: Check duplicate name/code
+    IAdminKnnLookupRepository -> LookupRepository: Check duplicate name/code
     LookupRepository -> DbContext: Query lookup table
     DbContext -> MySQL: SELECT lookup table
     MySQL --> DbContext: Duplicate row or null
@@ -59,7 +64,8 @@ else Request valid
         BeController --> FeController: HTTP 400/409 error
         FeController --> UpdateKnnUi: Show error message
     else Lookup item can be updated
-        LookupService -> LookupRepository: Update lookup row
+        LookupService -> IAdminKnnLookupRepository: Update lookup row
+        IAdminKnnLookupRepository -> LookupRepository: Update lookup row
         LookupRepository -> DbContext: Find lookup entity
         DbContext -> MySQL: SELECT lookup table
         MySQL --> DbContext: Lookup row or null

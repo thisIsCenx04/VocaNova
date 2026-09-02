@@ -10,11 +10,13 @@ control "SuperAdminAccountsController\n(BE API)" as BeController
 entity "CreateAdminAccountRequest\n(BE Request DTO)" as BeRequestDto
 entity "AdminAccountResponse\n(BE Response DTO)" as BeResponseDto
 control "SuperAdminAccountService" as AccountService
+control "ISuperAdminAccountService" as ISuperAdminAccountService
 entity "User" as UserEntity
 entity "UserAuth" as UserAuthEntity
 entity "UserProfile" as UserProfileEntity
 entity "Role" as RoleEntity
 control "SuperAdminAccountRepository" as AccountRepository
+control "ISuperAdminAccountRepository" as ISuperAdminAccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over CreatePage, MySQL
@@ -25,6 +27,7 @@ BE controller exists: SuperAdminAccountsController.
 BE DTOs exist: CreateAdminAccountRequest and AdminAccountResponse.
 Entities exist: User, UserAuth, UserProfile and Role.
 Dashboard calls API through VocaNovaApiClient.CreateAdminAccountAsync.
+Interfaces used in code: ISuperAdminAccountService, ISuperAdminAccountRepository.
 end note
 SuperAdmin -> CreatePage: Open create admin page
 SuperAdmin -> CreatePage: Enter full name, email,\nphone, password, status
@@ -43,9 +46,11 @@ else Form input valid
         BeController --> FeController: HTTP 400 error
         FeController --> CreatePage: Return Create.cshtml\nwith error message
     else Request validation success
-        BeController -> AccountService: CreateAsync(create data)
+        BeController -> ISuperAdminAccountService: CreateAsync(create data)
+        ISuperAdminAccountService -> AccountService: CreateAsync(create data)
         AccountService -> AccountService: Normalize phone/email\nand hash password
-        AccountService -> AccountRepository: FindDuplicateAsync(phone, email)
+        AccountService -> ISuperAdminAccountRepository: FindDuplicateAsync(phone, email)
+        ISuperAdminAccountRepository -> AccountRepository: FindDuplicateAsync(phone, email)
         AccountRepository -> DbContext: Query UserAuth
         DbContext -> MySQL: SELECT user_auth
         MySQL --> DbContext: Duplicate row or null
@@ -56,7 +61,8 @@ else Form input valid
             BeController --> FeController: HTTP 409 error
             FeController --> CreatePage: Return Create.cshtml\nwith error message
         else Phone and email are available
-            AccountService -> AccountRepository: GetAdminRoleIdAsync()
+            AccountService -> ISuperAdminAccountRepository: GetAdminRoleIdAsync()
+            ISuperAdminAccountRepository -> AccountRepository: GetAdminRoleIdAsync()
             AccountRepository -> DbContext: Query Role by name admin
             DbContext -> MySQL: SELECT roles
             MySQL --> DbContext: Admin role row or null
@@ -69,7 +75,8 @@ else Form input valid
                 FeController --> CreatePage: Return Create.cshtml\nwith error message
             else Admin role exists
                 AccountService -> AccountService: Begin transaction
-                AccountService -> AccountRepository: AddAccountAsync(create data,\npasswordHash, roleId)
+                AccountService -> ISuperAdminAccountRepository: AddAccountAsync(create data,\npasswordHash, roleId)
+                ISuperAdminAccountRepository -> AccountRepository: AddAccountAsync(create data,\npasswordHash, roleId)
                 AccountRepository -> DbContext: Find Role
                 DbContext -> MySQL: SELECT roles
                 MySQL --> DbContext: Role row

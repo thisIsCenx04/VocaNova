@@ -16,8 +16,11 @@ entity "CreateSessionResponse\n(BE Response DTO)" as BeCreateSessionResponseDto
 entity "QuestionResponse\n(BE Response DTO)" as BeQuestionDto
 control "QuizSessionsController\n(BE API)" as BeController
 control "QuizSessionService" as SessionService
+control "IQuizSessionService" as IQuizSessionService
 control "QuizSessionBuilder" as SessionBuilder
+control "IQuizSessionBuilder" as IQuizSessionBuilder
 control "QuizQuestionBuilder" as QuestionBuilder
+control "IQuizQuestionBuilder" as IQuizQuestionBuilder
 entity "UserList" as UserListEntity
 entity "UserListWord" as UserListWordEntity
 entity "UserWordProgress" as UserWordProgressEntity
@@ -27,8 +30,11 @@ entity "WordTopic" as WordTopicEntity
 entity "TestSession" as TestSessionEntity
 entity "TestSessionTopic" as TestSessionTopicEntity
 control "QuizPoolRepository" as PoolRepository
+control "IQuizPoolRepository" as IQuizPoolRepository
 control "QuizQuestionRepository" as QuestionRepository
+control "IQuizQuestionRepository" as IQuizQuestionRepository
 control "QuizSessionRepository" as SessionRepository
+control "IQuizSessionRepository" as IQuizSessionRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -42,6 +48,9 @@ CreateSessionResponse and QuestionResponse.
 Endpoint is POST /api/quiz/sessions.
 Entities exist: UserList, UserListWord, UserWordProgress, Word,
 WordSense, WordTopic, TestSession and TestSessionTopic.
+Interfaces used in code: IQuizSessionService, IQuizSessionBuilder, IQuizQuestionBuilder,
+  IQuizSessionRepository, IQuizPoolRepository,
+  IQuizQuestionRepository.
 end note
 
 Learner -> TakeExamUi: Configure exam
@@ -58,7 +67,8 @@ else Mobile validation success
     BeController -> BeCreateSessionDto: Bind request body
     BeCreateSessionDto --> BeController: CreateSessionRequest
     BeController -> BeController: Check authenticated user
-    BeController -> SessionService: CreateSessionAsync(userId, command)
+    BeController -> IQuizSessionService: CreateSessionAsync(userId, command)
+    IQuizSessionService -> SessionService: CreateSessionAsync(userId, command)
     SessionService -> SessionService: Validate mode, question type,\nscope, order and answer method
 
     alt Request invalid
@@ -67,8 +77,10 @@ else Mobile validation success
         FeApiService --> FeController: Action failed
         FeController --> TakeExamUi: Show create session error
     else Request valid
-        SessionService -> SessionBuilder: BuildPoolAsync(userId, command)
-        SessionBuilder -> PoolRepository: GetCandidatesAsync(userId, command)
+        SessionService -> IQuizSessionBuilder: BuildPoolAsync(userId, command)
+        IQuizSessionBuilder -> SessionBuilder: BuildPoolAsync(userId, command)
+        SessionBuilder -> IQuizPoolRepository: GetCandidatesAsync(userId, command)
+        IQuizPoolRepository -> PoolRepository: GetCandidatesAsync(userId, command)
         PoolRepository -> DbContext: Query quiz candidate words
         DbContext -> MySQL: SELECT user_list_words\nJOIN user_lists, words,\nword_topics, user_word_progresses
         MySQL --> DbContext: Candidate rows
@@ -93,8 +105,10 @@ else Mobile validation success
             FeApiService --> FeController: Action failed
             FeController --> TakeExamUi: Show not enough words
         else Pool ready
-            SessionService -> QuestionBuilder: BuildQuestionAsync(firstWordId, questionType)
-            QuestionBuilder -> QuestionRepository: FindQuestionWordAsync(firstWordId)
+            SessionService -> IQuizQuestionBuilder: BuildQuestionAsync(firstWordId, questionType)
+            IQuizQuestionBuilder -> QuestionBuilder: BuildQuestionAsync(firstWordId, questionType)
+            QuestionBuilder -> IQuizQuestionRepository: FindQuestionWordAsync(firstWordId)
+            IQuizQuestionRepository -> QuestionRepository: FindQuestionWordAsync(firstWordId)
             QuestionRepository -> DbContext: Query selected Word\nwith senses and topics
             DbContext -> MySQL: SELECT words,\nword_senses, word_topics
             MySQL --> DbContext: Question word rows
@@ -106,7 +120,8 @@ else Mobile validation success
             WordTopicEntity --> DbContext: Topic ids
             DbContext --> QuestionRepository: Question word
 
-            QuestionBuilder -> QuestionRepository: GetDistractorsAsync(wordId,\nwordClass, topicIds)
+            QuestionBuilder -> IQuizQuestionRepository: GetDistractorsAsync(wordId,\nwordClass, topicIds)
+            IQuizQuestionRepository -> QuestionRepository: GetDistractorsAsync(wordId,\nwordClass, topicIds)
             QuestionRepository -> DbContext: Query distractor words and senses
             DbContext -> MySQL: SELECT words,\nSELECT word_senses
             MySQL --> DbContext: Distractor rows
@@ -118,7 +133,8 @@ else Mobile validation success
             QuestionRepository --> QuestionBuilder: Question data
             QuestionBuilder --> SessionService: First question
 
-            SessionService -> SessionRepository: CreateAsync(userId, command,\ntopicIds, questionCount)
+            SessionService -> IQuizSessionRepository: CreateAsync(userId, command,\ntopicIds, questionCount)
+            IQuizSessionRepository -> SessionRepository: CreateAsync(userId, command,\ntopicIds, questionCount)
             SessionRepository -> TestSessionEntity: Create TestSession
             SessionRepository -> TestSessionTopicEntity: Create TestSessionTopic rows
             TestSessionEntity --> SessionRepository: TestSession

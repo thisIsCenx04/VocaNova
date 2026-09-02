@@ -14,13 +14,18 @@ entity "User" as UserEntity
 entity "UserAuth" as UserAuthEntity
 entity "RefreshToken" as RefreshTokenEntity
 control "BcryptPasswordHasher" as PasswordHasher
+control "IPasswordHasher" as IPasswordHasher
 control "AuthAccountRepository" as AuthAccountRepository
+control "IAuthAccountRepository" as IAuthAccountRepository
 control "RefreshTokenRepository" as RefreshTokenRepository
+control "IRefreshTokenRepository" as IRefreshTokenRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over LoginScreen, MySQL
 BE DTOs exist: LoginRequest and TokenResponse.
 FE response DTO exists: AuthTokensDto.
+Interfaces used in code: IAuthAccountRepository, IRefreshTokenRepository,
+  IPasswordHasher.
 end note
 Guest -> LoginScreen: Access login page
 Guest -> LoginScreen: Enter phone and password
@@ -37,7 +42,8 @@ AuthController --> LoginScreen: HTTP 400/429 error
 LoginScreen --> Guest: Show error message
 else Request validation success
 AuthController -> AuthService: LoginAsync(login data)
-AuthService -> AuthAccountRepository: FindByPhoneAsync(phone)
+AuthService -> IAuthAccountRepository: FindByPhoneAsync(phone)
+IAuthAccountRepository -> AuthAccountRepository: FindByPhoneAsync(phone)
 AuthAccountRepository -> DbContext: Query user by phone
 DbContext -> MySQL: SELECT user account
 MySQL --> DbContext: User row or null
@@ -52,7 +58,8 @@ AuthService --> AuthController: Unauthorized result
 AuthController --> LoginScreen: HTTP 401 Invalid phone or password
 LoginScreen --> Guest: Show error message
 else User found
-AuthService -> PasswordHasher: Verify(password, passwordHash)
+AuthService -> IPasswordHasher: Verify(password, passwordHash)
+IPasswordHasher -> PasswordHasher: Verify(password, passwordHash)
 PasswordHasher --> AuthService: Valid or invalid
 alt Password invalid
 AuthService --> AuthController: Unauthorized result
@@ -64,11 +71,13 @@ AuthService --> AuthController: Forbidden/Unauthorized result
 AuthController --> LoginScreen: HTTP 403/401 error
 LoginScreen --> Guest: Show error message
 else Account active
-AuthService -> AuthAccountRepository: StageLastLoginAsync(userId)
+AuthService -> IAuthAccountRepository: StageLastLoginAsync(userId)
+IAuthAccountRepository -> AuthAccountRepository: StageLastLoginAsync(userId)
 AuthAccountRepository -> DbContext: Update User.LastLoginAt
 DbContext -> MySQL: UPDATE users
 MySQL --> DbContext: Update result
-AuthService -> RefreshTokenRepository: StageCreateAsync(CreateRefreshToken)
+AuthService -> IRefreshTokenRepository: StageCreateAsync(CreateRefreshToken)
+IRefreshTokenRepository -> RefreshTokenRepository: StageCreateAsync(CreateRefreshToken)
 RefreshTokenRepository -> RefreshTokenEntity: Create RefreshToken
 RefreshTokenEntity --> RefreshTokenRepository: RefreshToken
 RefreshTokenRepository -> DbContext: Add RefreshToken

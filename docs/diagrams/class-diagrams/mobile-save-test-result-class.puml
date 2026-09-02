@@ -9,256 +9,320 @@ note top
 Generated from mobile-save-test-result-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
+
 class QuizSessionNotifier <<service>> {
-  + submitAnswer() : FutureOfvoid
-  + finish() : FutureOfbool
+  "+ submitAnswer() : FutureOfvoid"
+  "+ finish() : FutureOfbool"
 }
+
 class QuizApiService <<service>> {
-  + _dio : Dio
+  "+ _dio : Dio"
   --
-  + submitAnswer() : FutureOfQuizAnswerResult
-  + finishSession() : FutureOfvoid
+  "+ submitAnswer() : FutureOfQuizAnswerResult"
+  "+ finishSession() : FutureOfvoid"
 }
+
 class QuizAnswerResultDto <<dto>> {
-  + isCorrect : bool
-  + expectedAnswer : String
-  + correctCount : int
-  + wrongCount : int
-  + score : double
-  + aiScore : doubleNullable
-  + aiExplanation : StringNullable
-  + aiSuggestion : StringNullable
-  + nextQuestion : QuizQuestionDtoNullable
+  "+ isCorrect : bool"
+  "+ expectedAnswer : String"
+  "+ correctCount : int"
+  "+ wrongCount : int"
+  "+ score : double"
+  "+ aiScore : doubleNullable"
+  "+ aiExplanation : StringNullable"
+  "+ aiSuggestion : StringNullable"
+  "+ nextQuestion : QuizQuestionDtoNullable"
 }
+
 class QuizResultDto <<dto>> {
-  + sessionId : int
-  + status : String
-  + correctCount : int
-  + wrongCount : int
-  + questionCount : int
-  + answeredCount : int
-  + accuracy : double
-  + durationSec : intNullable
-  + maxStreak : int
-  + score : double
-  + answers : ListOfQuizResultAnswerDto
+  "+ sessionId : int"
+  "+ status : String"
+  "+ correctCount : int"
+  "+ wrongCount : int"
+  "+ questionCount : int"
+  "+ answeredCount : int"
+  "+ accuracy : double"
+  "+ durationSec : intNullable"
+  "+ maxStreak : int"
+  "+ score : double"
+  "+ answers : ListOfQuizResultAnswerDto"
 }
+
 class SubmitAnswerRequest <<dto>> {
-  + WordId : uint
-  + UserAnswer : stringNullable
-  + ListId : uintNullable
+  "+ WordId : uint"
+  "+ UserAnswer : stringNullable"
+  "+ ListId : uintNullable"
 }
+
 class AnswerResponse <<dto>> {
-  + SessionId : uint
-  + WordId : uint
-  + IsCorrect : bool
-  + ExpectedAnswer : string
-  + CorrectCount : int
-  + WrongCount : int
-  + Score : float
-  + AiScore : floatNullable
-  + AiExplanation : stringNullable
-  + AiSuggestion : stringNullable
-  + NextQuestion : QuestionResponseNullable
+  "+ SessionId : uint"
+  "+ WordId : uint"
+  "+ IsCorrect : bool"
+  "+ ExpectedAnswer : string"
+  "+ CorrectCount : int"
+  "+ WrongCount : int"
+  "+ Score : float"
+  "+ AiScore : floatNullable"
+  "+ AiExplanation : stringNullable"
+  "+ AiSuggestion : stringNullable"
+  "+ NextQuestion : QuestionResponseNullable"
 }
+
 class QuizResultResponse <<dto>> {
-  + SessionId : uint
-  + Status : string
-  + CorrectCount : int
-  + WrongCount : int
-  + QuestionCount : int
-  + AnsweredCount : int
-  + Accuracy : float
-  + DurationSec : intNullable
-  + MaxStreak : int
-  + Score : float
-  + StartedAt : DateTime
-  + EndedAt : DateTimeNullable
+  "+ SessionId : uint"
+  "+ Status : string"
+  "+ CorrectCount : int"
+  "+ WrongCount : int"
+  "+ QuestionCount : int"
+  "+ AnsweredCount : int"
+  "+ Accuracy : float"
+  "+ DurationSec : intNullable"
+  "+ MaxStreak : int"
+  "+ Score : float"
+  "+ StartedAt : DateTime"
+  "+ EndedAt : DateTimeNullable"
 }
+
 class QuizSessionsController <<backend_controller>> {
-  - _sessionService : IQuizSessionService
-  - _submissionService : IQuizSubmissionService
-  - _resultService : IQuizResultService
-  - _historyService : IQuizHistoryService
+  "- _sessionService : IQuizSessionService"
+  "- _submissionService : IQuizSubmissionService"
+  "- _resultService : IQuizResultService"
+  "- _historyService : IQuizHistoryService"
   --
-  + SubmitAnswer(id: uint, request: SubmitAnswerRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
-  + Finish(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
-  + GetResult(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+  "+ SubmitAnswer(id: uint, request: SubmitAnswerRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ Finish(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ GetResult(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
+
 class QuizSubmissionService <<service>> {
-  - _repository : IQuizSubmissionRepository
-  - _sessionBuilder : IQuizSessionBuilder
-  - _questionBuilder : IQuizQuestionBuilder
-  - _graders : IReadOnlyDictionaryOfstring_IAnswerGrader
-  - _aiGradingService : IAiGradingService
-  - _srsService : ISrsService
-  - _progressCache : IProgressSummaryCacheNullable
-  - _poolCache : IQuizPoolCacheNullable
+  "- _repository : IQuizSubmissionRepository"
+  "- _sessionBuilder : IQuizSessionBuilder"
+  "- _questionBuilder : IQuizQuestionBuilder"
+  "- _graders : IReadOnlyDictionaryOfstring_IAnswerGrader"
+  "- _aiGradingService : IAiGradingService"
+  "- _srsService : ISrsService"
+  "- _progressCache : IProgressSummaryCacheNullable"
+  "- _poolCache : IQuizPoolCacheNullable"
   --
-  + SubmitAnswerAsync(userId: uint, sessionId: uint, command: SubmitAnswerCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizAnswer
+  "+ SubmitAnswerAsync(userId: uint, sessionId: uint, command: SubmitAnswerCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizAnswer"
 }
+
+class IQuizSubmissionService <<service_interface>> {
+  "+ SubmitAnswerAsync(userId: uint, sessionId: uint, command: SubmitAnswerCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizAnswer"
+}
+
 class QuizResultService <<service>> {
-  - _repository : IQuizResultRepository
+  "- _repository : IQuizResultRepository"
   --
-  + FinishSessionAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizResult
-  + GetResultAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizResult
+  "+ FinishSessionAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizResult"
+  "+ GetResultAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizResult"
 }
+
+class IQuizResultService <<service_interface>> {
+  "+ FinishSessionAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizResult"
+  "+ GetResultAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizResult"
+}
+
 class QuizQuestionBuilder <<entity>> {
-  - _quizQuestionRepository : IQuizQuestionRepository
+  "- _quizQuestionRepository : IQuizQuestionRepository"
   --
-  + BuildQuestionAsync(wordId: uint, questionType: int, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizQuestion
-  + BuildNextQuestionAsync()
+  "+ BuildQuestionAsync(wordId: uint, questionType: int, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizQuestion"
+  "+ BuildNextQuestionAsync()"
 }
+
+class IQuizQuestionBuilder <<service_interface>> {
+  "+ BuildQuestionAsync(wordId: uint, questionType: int, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizQuestion"
+}
+
 class SrsService <<service>> {
-  - _repository : ISrsRepository
+  "- _repository : ISrsRepository"
   --
-  + UpdateProgressAsync(userId: uint, wordId: uint, isCorrect: bool, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfUserWordProgress
+  "+ UpdateProgressAsync(userId: uint, wordId: uint, isCorrect: bool, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfUserWordProgress"
 }
+
+class ISrsService <<service_interface>> {
+  "+ UpdateProgressAsync(userId: uint, wordId: uint, isCorrect: bool, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfUserWordProgress"
+}
+
 class TestSession <<entity>> {
-  + SessionId : uint
-  + UserId : uint
-  + TestType : string
-  + Mode : string
-  + QuestionType : int
-  + ScopeType : string
-  + ScopeDateFrom : DateOnlyNullable
-  + ScopeDateTo : DateOnlyNullable
-  + WordOrder : string
-  + WordLimit : intNullable
-  + TimeLimitSec : intNullable
-  + Lives : intNullable
+  "+ SessionId : uint"
+  "+ UserId : uint"
+  "+ TestType : string"
+  "+ Mode : string"
+  "+ QuestionType : int"
+  "+ ScopeType : string"
+  "+ ScopeDateFrom : DateOnlyNullable"
+  "+ ScopeDateTo : DateOnlyNullable"
+  "+ WordOrder : string"
+  "+ WordLimit : intNullable"
+  "+ TimeLimitSec : intNullable"
+  "+ Lives : intNullable"
 }
+
 class TestAnswer <<entity>> {
-  + AnswerId : uint
-  + SessionId : uint
-  + WordId : uint
-  + SenseId : uintNullable
-  + QuestionNumber : int
-  + QuestionType : int
-  + DisplayContent : string
-  + ExpectedAnswer : string
-  + AcceptedAnswers : stringNullable
-  + UserAnswer : stringNullable
-  + IsCorrect : boolNullable
-  + AiScore : floatNullable
+  "+ AnswerId : uint"
+  "+ SessionId : uint"
+  "+ WordId : uint"
+  "+ SenseId : uintNullable"
+  "+ QuestionNumber : int"
+  "+ QuestionType : int"
+  "+ DisplayContent : string"
+  "+ ExpectedAnswer : string"
+  "+ AcceptedAnswers : stringNullable"
+  "+ UserAnswer : stringNullable"
+  "+ IsCorrect : boolNullable"
+  "+ AiScore : floatNullable"
 }
+
 class UserWordProgress <<entity>> {
-  + ProgressId : uint
-  + UserId : uint
-  + WordId : uint
-  + TestCount : int
-  + CorrectCount : int
-  + WrongCount : int
-  + ConsecutiveCorrect : int
-  + IsInWrongList : bool
-  + MasteryLevel : int
-  + SrsInterval : int
-  + EaseFactor : float
-  + LastTestedAt : DateTimeNullable
+  "+ ProgressId : uint"
+  "+ UserId : uint"
+  "+ WordId : uint"
+  "+ TestCount : int"
+  "+ CorrectCount : int"
+  "+ WrongCount : int"
+  "+ ConsecutiveCorrect : int"
+  "+ IsInWrongList : bool"
+  "+ MasteryLevel : int"
+  "+ SrsInterval : int"
+  "+ EaseFactor : float"
+  "+ LastTestedAt : DateTimeNullable"
 }
+
 class Word <<entity>> {
-  + WordId : uint
-  + Word1 : string
-  + WordKey : string
-  + CefrLevel : stringNullable
-  + PhoneticUk : stringNullable
-  + PhoneticUs : stringNullable
-  + ImageUrl : stringNullable
-  + IsPhrase : bool
-  + Status : string
-  + CreatedAt : DateTime
-  + UpdatedAt : DateTime
-  + AiGradingCaches : ICollectionOfAiGradingCache
+  "+ WordId : uint"
+  "+ Word1 : string"
+  "+ WordKey : string"
+  "+ CefrLevel : stringNullable"
+  "+ PhoneticUk : stringNullable"
+  "+ PhoneticUs : stringNullable"
+  "+ ImageUrl : stringNullable"
+  "+ IsPhrase : bool"
+  "+ Status : string"
+  "+ CreatedAt : DateTime"
+  "+ UpdatedAt : DateTime"
+  "+ AiGradingCaches : ICollectionOfAiGradingCache"
 }
+
 class WordSense <<entity>> {
-  + SenseId : uint
-  + WordId : uint
-  + SenseOrder : int
-  + WordClass : string
-  + EnglishDefinition : string
-  + VietnameseMeaning : stringNullable
-  + Status : string
-  + TestAnswers : ICollectionOfTestAnswer
-  + Word : Word
-  + WordExamples : ICollectionOfWordExample
-  + WordRelations : ICollectionOfWordRelation
+  "+ SenseId : uint"
+  "+ WordId : uint"
+  "+ SenseOrder : int"
+  "+ WordClass : string"
+  "+ EnglishDefinition : string"
+  "+ VietnameseMeaning : stringNullable"
+  "+ Status : string"
+  "+ TestAnswers : ICollectionOfTestAnswer"
+  "+ Word : Word"
+  "+ WordExamples : ICollectionOfWordExample"
+  "+ WordRelations : ICollectionOfWordRelation"
 }
+
 class QuizSubmissionRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  "- _dbContext : VocaNovaDbContext"
   --
-  + GetStateAsync(userId: uint, sessionId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizSubmissionState
-  + SaveSubmissionAsync(changes: QuizSubmissionChanges, cancellationToken: CancellationToken) : Task
+  "+ GetStateAsync(userId: uint, sessionId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizSubmissionState"
+  "+ SaveSubmissionAsync(changes: QuizSubmissionChanges, cancellationToken: CancellationToken) : Task"
 }
+
+class IQuizSubmissionRepository <<repository_interface>> {
+  "+ GetStateAsync(userId: uint, sessionId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizSubmissionStateNullable"
+  "+ SaveSubmissionAsync(changes: QuizSubmissionChanges, cancellationToken: CancellationToken) : Task"
+}
+
 class QuizQuestionRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  "- _dbContext : VocaNovaDbContext"
   --
-  + FindQuestionWordAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizQuestionWord
+  "+ FindQuestionWordAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizQuestionWord"
 }
+
+class IQuizQuestionRepository <<repository_interface>> {
+  "+ FindQuestionWordAsync(wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizQuestionWordNullable"
+  "+ GetDistractorsAsync(excludedWordId: uint, wordClass: string, topicIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfQuizQuestionWord"
+}
+
 class SrsRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  "- _dbContext : VocaNovaDbContext"
   --
-  + FindAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfUserWordProgress
+  "+ FindAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfUserWordProgress"
 }
+
+class ISrsRepository <<repository_interface>> {
+  "+ FindAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfUserWordProgressNullable"
+  "+ Stage(progress: UserWordProgress) : void"
+}
+
 class QuizResultRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  "- _dbContext : VocaNovaDbContext"
   --
-  + GetSessionAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizResultState
-  + SaveFinishAsync(changes: QuizFinishChanges, cancellationToken: CancellationToken) : Task
-  + GetAnswersAsync(sessionId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfTestAnswerResult
+  "+ GetSessionAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizResultState"
+  "+ SaveFinishAsync(changes: QuizFinishChanges, cancellationToken: CancellationToken) : Task"
+  "+ GetAnswersAsync(sessionId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfTestAnswerResult"
 }
+
+class IQuizResultRepository <<repository_interface>> {
+  "+ GetSessionAsync(userId: uint, sessionId: uint, cancellationToken: CancellationToken) : TaskOfQuizResultStateNullable"
+  "+ SaveFinishAsync(changes: QuizFinishChanges, cancellationToken: CancellationToken) : Task"
+  "+ GetAnswersAsync(sessionId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfTestAnswerResult"
+}
+
 class VocaNovaDbContext <<dbcontext>> {
-  + AgeRanges : DbSetOfAgeRange
-  + AiGradingCaches : DbSetOfAiGradingCache
-  + AuditLogs : DbSetOfAuditLog
-  + EducationLevels : DbSetOfEducationLevel
-  + LearningPurposes : DbSetOfLearningPurpose
-  + Occupations : DbSetOfOccupation
-  + OtpVerifications : DbSetOfOtpVerification
-  + RefreshTokens : DbSetOfRefreshToken
-  + Regions : DbSetOfRegion
-  + Roles : DbSetOfRole
-  + TestAnswers : DbSetOfTestAnswer
-  + TestSessions : DbSetOfTestSession
+  "+ AgeRanges : DbSetOfAgeRange"
+  "+ AiGradingCaches : DbSetOfAiGradingCache"
+  "+ AuditLogs : DbSetOfAuditLog"
+  "+ EducationLevels : DbSetOfEducationLevel"
+  "+ LearningPurposes : DbSetOfLearningPurpose"
+  "+ Occupations : DbSetOfOccupation"
+  "+ OtpVerifications : DbSetOfOtpVerification"
+  "+ RefreshTokens : DbSetOfRefreshToken"
+  "+ Regions : DbSetOfRegion"
+  "+ Roles : DbSetOfRole"
+  "+ TestAnswers : DbSetOfTestAnswer"
+  "+ TestSessions : DbSetOfTestSession"
   --
-  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
 }
+
 class MySQL_Database <<database>> {
 
 }
 QuizSessionNotifier ..> QuizApiService : submitAnswer()
 QuizApiService ..> QuizSessionsController
 QuizSessionsController ..> SubmitAnswerRequest
-QuizSessionsController ..> QuizSubmissionService : SubmitAnswerAsync()
-QuizSubmissionService ..> QuizSubmissionRepository : GetStateAsync()
 QuizSubmissionRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 VocaNovaDbContext ..> TestSession
 VocaNovaDbContext ..> TestAnswer
-QuizSubmissionService ..> QuizQuestionBuilder : BuildQuestionAsync()
-QuizQuestionBuilder ..> QuizQuestionRepository : FindQuestionWordAsync()
 QuizQuestionRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> Word
 VocaNovaDbContext ..> WordSense
-QuizSubmissionService ..> SrsService : UpdateProgressAsync()
-SrsService ..> SrsRepository : FindAsync()
 SrsRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> UserWordProgress
-SrsService ..> SrsRepository
 SrsRepository ..> UserWordProgress
 QuizSubmissionService ..> TestSession
-QuizSubmissionService ..> QuizQuestionBuilder : BuildNextQuestionAsync()
-QuizSubmissionService ..> QuizSubmissionRepository : SaveSubmissionAsync()
 QuizSubmissionRepository ..> TestAnswer
 QuizSessionsController ..> AnswerResponse
 QuizApiService ..> QuizAnswerResultDto
 QuizSessionNotifier ..> QuizApiService : finishSession()
-QuizSessionsController ..> QuizResultService : FinishSessionAsync()
-QuizResultService ..> QuizResultRepository : GetSessionAsync()
 QuizResultRepository ..> VocaNovaDbContext
-QuizResultService ..> QuizResultRepository : SaveFinishAsync()
 QuizResultRepository ..> TestSession
 QuizSessionsController ..> QuizResultResponse
-QuizSessionsController ..> QuizResultService : GetResultAsync()
-QuizResultService ..> QuizResultRepository : GetAnswersAsync()
 QuizApiService ..> QuizResultDto
+SubmitAnswerRequest ..> QuizSessionsController
+IQuizSubmissionService <|.. QuizSubmissionService
+QuizSessionsController ..> IQuizSubmissionService : SubmitAnswerAsync()
+IQuizResultService <|.. QuizResultService
+QuizSessionsController ..> IQuizResultService : FinishSessionAsync()
+IQuizQuestionBuilder <|.. QuizQuestionBuilder
+QuizSubmissionService ..> IQuizQuestionBuilder : BuildQuestionAsync()
+ISrsService <|.. SrsService
+QuizSubmissionService ..> ISrsService : UpdateProgressAsync()
+IQuizSubmissionRepository <|.. QuizSubmissionRepository
+QuizSubmissionService ..> IQuizSubmissionRepository : GetStateAsync()
+IQuizQuestionRepository <|.. QuizQuestionRepository
+QuizQuestionBuilder ..> IQuizQuestionRepository : FindQuestionWordAsync()
+ISrsRepository <|.. SrsRepository
+SrsService ..> ISrsRepository : FindAsync()
+IQuizResultRepository <|.. QuizResultRepository
+QuizResultService ..> IQuizResultRepository : GetSessionAsync()
 @enduml

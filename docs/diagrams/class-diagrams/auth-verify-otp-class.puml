@@ -9,83 +9,98 @@ note top
 Generated from auth-verify-otp-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
+
 class OtpVerifyRequest <<dto>> {
-  + Phone : stringNullable
-  + OtpCode : stringNullable
+  "+ Phone : stringNullable"
+  "+ OtpCode : stringNullable"
 }
+
 class OtpVerifyResponse <<dto>> {
-  + Verified : bool
+  "+ Verified : bool"
 }
+
 class AuthController <<backend_controller>> {
-  - _authService : IDashboardAuthService
+  "- _authService : IDashboardAuthService"
   --
-  + Login(returnUrl: stringNullable) : IActionResult
-  + Login(model: LoginViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult
-  + Logout(cancellationToken: CancellationToken) : TaskOfIActionResult
+  "+ Login(returnUrl: stringNullable) : IActionResult"
+  "+ Login(model: LoginViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ Logout(cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
+
 class AuthService <<service>> {
-  - _accountRepository : IAuthAccountRepository
-  - _refreshTokenRepository : IRefreshTokenRepository
-  - _otpRepository : IOtpRepository
-  - _transactionManager : IApplicationTransactionManager
-  - _jwtTokenService : IJwtTokenService
-  - _googleIdentityProvider : IGoogleIdentityProvider
-  - _userProfileCache : IUserProfileCacheNullable
-  - _knnTopicRecommendationCache : IKnnTopicRecommendationCacheNullable
-  - _otpCodeGenerator : IOtpCodeGenerator
-  - _smsSender : ISmsSender
-  - _passwordHasher : IPasswordHasher
-  - _refreshTokenHasher : IRefreshTokenHasher
+  "- _accountRepository : IAuthAccountRepository"
+  "- _refreshTokenRepository : IRefreshTokenRepository"
+  "- _otpRepository : IOtpRepository"
+  "- _transactionManager : IApplicationTransactionManager"
+  "- _jwtTokenService : IJwtTokenService"
+  "- _googleIdentityProvider : IGoogleIdentityProvider"
+  "- _userProfileCache : IUserProfileCacheNullable"
+  "- _knnTopicRecommendationCache : IKnnTopicRecommendationCacheNullable"
+  "- _otpCodeGenerator : IOtpCodeGenerator"
+  "- _smsSender : ISmsSender"
+  "- _passwordHasher : IPasswordHasher"
+  "- _refreshTokenHasher : IRefreshTokenHasher"
   --
-  + VerifyOtpAsync(command: OtpVerifyCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfOtpVerificationResult
-  + VerifyResetOtpAsync(command: OtpVerifyCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfOtpVerificationResult
+  "+ VerifyOtpAsync(command: OtpVerifyCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfOtpVerificationResult"
+  "+ VerifyResetOtpAsync(command: OtpVerifyCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfOtpVerificationResult"
 }
+
 class OtpVerification <<entity>> {
-  + OtpId : uint
-  + UserId : uintNullable
-  + Phone : string
-  + OtpCode : string
-  + IsUsed : bool
-  + Status : string
-  + VerifyAttemptCount : int
-  + ExpiresAt : DateTime
-  + CreatedAt : DateTime
-  + User : UserNullable
+  "+ OtpId : uint"
+  "+ UserId : uintNullable"
+  "+ Phone : string"
+  "+ OtpCode : string"
+  "+ IsUsed : bool"
+  "+ Status : string"
+  "+ VerifyAttemptCount : int"
+  "+ ExpiresAt : DateTime"
+  "+ CreatedAt : DateTime"
+  "+ User : UserNullable"
 }
+
 class OtpRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  "- _dbContext : VocaNovaDbContext"
   --
-  + FindLatestAsync(phone: string, purpose: stringNullable, userId: uintNullable, since: DateTimeNullable, cancellationToken: CancellationToken) : TaskOfOtpRecord
-  + StageUsedAsync(record: OtpRecord, userId: uintNullable, usedAt: DateTime, cancellationToken: CancellationToken) : Task
-  + StageAttemptAsync(otpId: uint, verifyAttemptCount: int, cancellationToken: CancellationToken) : Task
+  "+ FindLatestAsync(phone: string, purpose: stringNullable, userId: uintNullable, since: DateTimeNullable, cancellationToken: CancellationToken) : TaskOfOtpRecord"
+  "+ StageUsedAsync(record: OtpRecord, userId: uintNullable, usedAt: DateTime, cancellationToken: CancellationToken) : Task"
+  "+ StageAttemptAsync(otpId: uint, verifyAttemptCount: int, cancellationToken: CancellationToken) : Task"
 }
+
+class IOtpRepository <<repository_interface>> {
+  "+ FindLatestAsync(phone: string, purpose: stringNullable, userId: uintNullable, since: DateTimeNullable, cancellationToken: CancellationToken) : TaskOfOtpRecordNullable"
+  "+ FindLatestForUpdateAsync(phone: string, purpose: stringNullable, userId: uintNullable, cancellationToken: CancellationToken) : TaskOfOtpRecordNullable"
+  "+ StageCreateAsync(otp: CreateOtpRecord, cancellationToken: CancellationToken) : Task"
+  "+ StageUsedAsync(otp: OtpRecord, userId: uintNullable, usedAt: DateTime, cancellationToken: CancellationToken) : Task"
+  "+ StageAttemptAsync(otpId: uint, verifyAttemptCount: int, cancellationToken: CancellationToken) : Task"
+}
+
 class VocaNovaDbContext <<dbcontext>> {
-  + AgeRanges : DbSetOfAgeRange
-  + AiGradingCaches : DbSetOfAiGradingCache
-  + AuditLogs : DbSetOfAuditLog
-  + EducationLevels : DbSetOfEducationLevel
-  + LearningPurposes : DbSetOfLearningPurpose
-  + Occupations : DbSetOfOccupation
-  + OtpVerifications : DbSetOfOtpVerification
-  + RefreshTokens : DbSetOfRefreshToken
-  + Regions : DbSetOfRegion
-  + Roles : DbSetOfRole
-  + TestAnswers : DbSetOfTestAnswer
-  + TestSessions : DbSetOfTestSession
+  "+ AgeRanges : DbSetOfAgeRange"
+  "+ AiGradingCaches : DbSetOfAiGradingCache"
+  "+ AuditLogs : DbSetOfAuditLog"
+  "+ EducationLevels : DbSetOfEducationLevel"
+  "+ LearningPurposes : DbSetOfLearningPurpose"
+  "+ Occupations : DbSetOfOccupation"
+  "+ OtpVerifications : DbSetOfOtpVerification"
+  "+ RefreshTokens : DbSetOfRefreshToken"
+  "+ Regions : DbSetOfRegion"
+  "+ Roles : DbSetOfRole"
+  "+ TestAnswers : DbSetOfTestAnswer"
+  "+ TestSessions : DbSetOfTestSession"
   --
-  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
 }
+
 class MySQL_Database <<database>> {
 
 }
 OtpVerifyRequest ..> AuthController
 AuthController ..> AuthService : VerifyOtpAsync()
-AuthService ..> OtpRepository : FindLatestAsync()
 OtpRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 VocaNovaDbContext ..> OtpVerification
-AuthService ..> OtpRepository : StageAttemptAsync()
 OtpRepository ..> OtpVerification
-AuthService ..> OtpRepository : StageUsedAsync()
 AuthController ..> OtpVerifyResponse
+IOtpRepository <|.. OtpRepository
+AuthService ..> IOtpRepository : FindLatestAsync()
 @enduml

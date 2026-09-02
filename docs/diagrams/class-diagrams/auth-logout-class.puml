@@ -9,69 +9,92 @@ note top
 Generated from auth-logout-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
+
 class RefreshTokenRequest <<dto>> {
-  + RefreshToken : stringNullable
+  "+ RefreshToken : stringNullable"
 }
+
 class AuthController <<backend_controller>> {
-  - _authService : IDashboardAuthService
+  "- _authService : IDashboardAuthService"
   --
-  + Logout(cancellationToken: CancellationToken) : TaskOfIActionResult
+  "+ Logout(cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
+
 class AuthService <<service>> {
-  - _accountRepository : IAuthAccountRepository
-  - _refreshTokenRepository : IRefreshTokenRepository
-  - _otpRepository : IOtpRepository
-  - _transactionManager : IApplicationTransactionManager
-  - _jwtTokenService : IJwtTokenService
-  - _googleIdentityProvider : IGoogleIdentityProvider
-  - _userProfileCache : IUserProfileCacheNullable
-  - _knnTopicRecommendationCache : IKnnTopicRecommendationCacheNullable
-  - _otpCodeGenerator : IOtpCodeGenerator
-  - _smsSender : ISmsSender
-  - _passwordHasher : IPasswordHasher
-  - _refreshTokenHasher : IRefreshTokenHasher
+  "- _accountRepository : IAuthAccountRepository"
+  "- _refreshTokenRepository : IRefreshTokenRepository"
+  "- _otpRepository : IOtpRepository"
+  "- _transactionManager : IApplicationTransactionManager"
+  "- _jwtTokenService : IJwtTokenService"
+  "- _googleIdentityProvider : IGoogleIdentityProvider"
+  "- _userProfileCache : IUserProfileCacheNullable"
+  "- _knnTopicRecommendationCache : IKnnTopicRecommendationCacheNullable"
+  "- _otpCodeGenerator : IOtpCodeGenerator"
+  "- _smsSender : ISmsSender"
+  "- _passwordHasher : IPasswordHasher"
+  "- _refreshTokenHasher : IRefreshTokenHasher"
   --
-  + LogoutAsync(command: RefreshTokenCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfbool
+  "+ LogoutAsync(command: RefreshTokenCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfbool"
 }
+
+class IPasswordHasher <<service_interface>> {
+  "+ Hash(password: string) : string"
+  "+ Verify(password: string, passwordHash: string) : bool"
+}
+
 class RefreshToken <<entity>> {
-  + TokenId : uint
-  + UserId : uint
-  + TokenHash : string
-  + DeviceInfo : stringNullable
-  + IpAddress : stringNullable
-  + ExpiresAt : DateTime
-  + CreatedAt : DateTime
-  + RevokedAt : DateTimeNullable
-  + User : User
+  "+ TokenId : uint"
+  "+ UserId : uint"
+  "+ TokenHash : string"
+  "+ DeviceInfo : stringNullable"
+  "+ IpAddress : stringNullable"
+  "+ ExpiresAt : DateTime"
+  "+ CreatedAt : DateTime"
+  "+ RevokedAt : DateTimeNullable"
+  "+ User : User"
 }
+
 class RefreshTokenRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  "- _dbContext : VocaNovaDbContext"
   --
-  + StageRevokeAsync(hash: string, revokedAt: DateTime, cancellationToken: CancellationToken) : TaskOfBool
+  "+ StageRevokeAsync(hash: string, revokedAt: DateTime, cancellationToken: CancellationToken) : TaskOfBool"
 }
+
+class IRefreshTokenRepository <<repository_interface>> {
+  "+ StageCreateAsync(refreshToken: CreateRefreshToken, cancellationToken: CancellationToken) : Task"
+  "+ FindByHashAsync(hash: string, cancellationToken: CancellationToken) : TaskOfRefreshTokenRecordNullable"
+  "+ FindForUpdateByHashAsync(hash: string, cancellationToken: CancellationToken) : TaskOfRefreshTokenRecordNullable"
+  "+ StageRevokeAsync(hash: string, revokedAt: DateTime, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ StageRevokeAllAsync(userId: uint, revokedAt: DateTime, cancellationToken: CancellationToken) : TaskOfint"
+}
+
 class VocaNovaDbContext <<dbcontext>> {
-  + AgeRanges : DbSetOfAgeRange
-  + AiGradingCaches : DbSetOfAiGradingCache
-  + AuditLogs : DbSetOfAuditLog
-  + EducationLevels : DbSetOfEducationLevel
-  + LearningPurposes : DbSetOfLearningPurpose
-  + Occupations : DbSetOfOccupation
-  + OtpVerifications : DbSetOfOtpVerification
-  + RefreshTokens : DbSetOfRefreshToken
-  + Regions : DbSetOfRegion
-  + Roles : DbSetOfRole
-  + TestAnswers : DbSetOfTestAnswer
-  + TestSessions : DbSetOfTestSession
+  "+ AgeRanges : DbSetOfAgeRange"
+  "+ AiGradingCaches : DbSetOfAiGradingCache"
+  "+ AuditLogs : DbSetOfAuditLog"
+  "+ EducationLevels : DbSetOfEducationLevel"
+  "+ LearningPurposes : DbSetOfLearningPurpose"
+  "+ Occupations : DbSetOfOccupation"
+  "+ OtpVerifications : DbSetOfOtpVerification"
+  "+ RefreshTokens : DbSetOfRefreshToken"
+  "+ Regions : DbSetOfRegion"
+  "+ Roles : DbSetOfRole"
+  "+ TestAnswers : DbSetOfTestAnswer"
+  "+ TestSessions : DbSetOfTestSession"
   --
-  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
 }
+
 class MySQL_Database <<database>> {
 
 }
 AuthController ..> AuthService : LogoutAsync()
-AuthService ..> RefreshTokenRepository : StageRevokeAsync()
 RefreshTokenRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 VocaNovaDbContext ..> RefreshToken
 RefreshTokenRepository ..> RefreshToken
+RefreshTokenRequest ..> AuthController
+AuthService ..> IPasswordHasher
+IRefreshTokenRepository <|.. RefreshTokenRepository
+AuthService ..> IRefreshTokenRepository : StageRevokeAsync()
 @enduml

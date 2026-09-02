@@ -19,12 +19,14 @@ entity "MasteryBreakdownResponse\n(BE Response DTO)" as BeMasteryResponseDto
 entity "WeakestWordResponse\n(BE Response DTO)" as BeWeakestWordResponseDto
 control "ProgressController\n(BE API)" as BeController
 control "ProgressAnalyticsService" as AnalyticsService
+control "IProgressAnalyticsService" as IProgressAnalyticsService
 entity "TestSession" as TestSessionEntity
 entity "TestAnswer" as TestAnswerEntity
 entity "UserWordProgress" as UserWordProgressEntity
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 control "ProgressAnalyticsRepository" as AnalyticsRepository
+control "IProgressAnalyticsRepository" as IProgressAnalyticsRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -38,6 +40,7 @@ BE request DTOs exist: ProgressChartRequest and WeakestWordsRequest.
 BE response DTOs exist: ProgressChartResponse, MasteryBreakdownResponse and WeakestWordResponse.
 Endpoints are GET /api/progress/chart, /api/progress/mastery-breakdown and /api/progress/weakest-words.
 Entities exist: TestSession, TestAnswer, UserWordProgress, Word and WordSense.
+Interfaces used in code: IProgressAnalyticsService, IProgressAnalyticsRepository.
 end note
 
 Learner -> LearningAnalyticsUi: Open learning analytics
@@ -48,7 +51,8 @@ FeApiService -> BeController: GET /api/progress/chart\ngranularity
 BeController -> BeChartRequestDto: Bind query string
 BeChartRequestDto --> BeController: ProgressChartRequest
 BeController -> BeController: Check authenticated user
-BeController -> AnalyticsService: GetChartAsync(userId, query)
+BeController -> IProgressAnalyticsService: GetChartAsync(userId, query)
+IProgressAnalyticsService -> AnalyticsService: GetChartAsync(userId, query)
 AnalyticsService -> AnalyticsService: Validate granularity\nand build periods
 
 alt Granularity invalid
@@ -57,7 +61,8 @@ alt Granularity invalid
     FeApiService --> FeController: Action failed
     FeController --> LearningAnalyticsUi: Show analytics error
 else Granularity valid
-    AnalyticsService -> AnalyticsRepository: GetSessionTimesAsync(userId, window)
+    AnalyticsService -> IProgressAnalyticsRepository: GetSessionTimesAsync(userId, window)
+    IProgressAnalyticsRepository -> AnalyticsRepository: GetSessionTimesAsync(userId, window)
     AnalyticsRepository -> DbContext: Query session started times
     DbContext -> MySQL: SELECT test_sessions
     MySQL --> DbContext: Session rows
@@ -65,7 +70,8 @@ else Granularity valid
     TestSessionEntity --> DbContext: Session times
     DbContext --> AnalyticsRepository: Session times
 
-    AnalyticsService -> AnalyticsRepository: GetAnswerStatisticsAsync(userId, window)
+    AnalyticsService -> IProgressAnalyticsRepository: GetAnswerStatisticsAsync(userId, window)
+    IProgressAnalyticsRepository -> AnalyticsRepository: GetAnswerStatisticsAsync(userId, window)
     AnalyticsRepository -> DbContext: Query answer statistics
     DbContext -> MySQL: SELECT test_answers\nJOIN test_sessions
     MySQL --> DbContext: Answer rows
@@ -88,8 +94,10 @@ end
 FeController -> FeApiService: getMasteryBreakdown()
 FeApiService -> BeController: GET /api/progress/mastery-breakdown
 BeController -> BeController: Check authenticated user
-BeController -> AnalyticsService: GetMasteryBreakdownAsync(userId)
-AnalyticsService -> AnalyticsRepository: GetMasteryLevelCountsAsync(userId)
+BeController -> IProgressAnalyticsService: GetMasteryBreakdownAsync(userId)
+IProgressAnalyticsService -> AnalyticsService: GetMasteryBreakdownAsync(userId)
+AnalyticsService -> IProgressAnalyticsRepository: GetMasteryLevelCountsAsync(userId)
+IProgressAnalyticsRepository -> AnalyticsRepository: GetMasteryLevelCountsAsync(userId)
 AnalyticsRepository -> DbContext: Query mastery levels
 DbContext -> MySQL: SELECT user_word_progresses
 MySQL --> DbContext: Mastery rows
@@ -111,7 +119,8 @@ FeApiService -> BeController: GET /api/progress/weakest-words\nlimit = 10
 BeController -> BeWeakestWordsRequestDto: Bind query string
 BeWeakestWordsRequestDto --> BeController: WeakestWordsRequest
 BeController -> BeController: Check authenticated user
-BeController -> AnalyticsService: GetWeakestWordsAsync(userId, query)
+BeController -> IProgressAnalyticsService: GetWeakestWordsAsync(userId, query)
+IProgressAnalyticsService -> AnalyticsService: GetWeakestWordsAsync(userId, query)
 AnalyticsService -> AnalyticsService: Validate limit
 
 alt Limit invalid
@@ -120,7 +129,8 @@ alt Limit invalid
     FeApiService --> FeController: Action failed
     FeController --> LearningAnalyticsUi: Show analytics error
 else Limit valid
-    AnalyticsService -> AnalyticsRepository: GetWeakestWordStatisticsAsync(userId, limit)
+    AnalyticsService -> IProgressAnalyticsRepository: GetWeakestWordStatisticsAsync(userId, limit)
+    IProgressAnalyticsRepository -> AnalyticsRepository: GetWeakestWordStatisticsAsync(userId, limit)
     AnalyticsRepository -> DbContext: Query weakest words
     DbContext -> MySQL: SELECT user_word_progresses\nJOIN words and word_senses
     MySQL --> DbContext: Weakest word rows

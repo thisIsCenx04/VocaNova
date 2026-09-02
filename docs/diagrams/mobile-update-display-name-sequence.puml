@@ -17,6 +17,7 @@ control "AuthService" as AuthService
 entity "User" as UserEntity
 entity "UserProfile" as UserProfileEntity
 control "AuthAccountRepository" as AccountRepository
+control "IAuthAccountRepository" as IAuthAccountRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -28,6 +29,7 @@ FE response DTO exists: UserProfileDto.
 BE DTOs exist: UpdateUserProfileRequest and UserProfileResponse.
 Endpoint is PUT /api/auth/me/profile.
 Entities exist: User and UserProfile.
+Interfaces used in code: IAuthAccountRepository.
 end note
 
 Learner -> DisplayNameUi: Enter new display name
@@ -46,7 +48,8 @@ alt Request invalid
     FeController --> DisplayNameUi: Show update error
 else Request valid
     BeController -> AuthService: UpdateProfileAsync(userId, command)
-    AuthService -> AccountRepository: UpdateProfileAsync(userId, command)
+    AuthService -> IAuthAccountRepository: UpdateProfileAsync(userId, command)
+    IAuthAccountRepository -> AccountRepository: UpdateProfileAsync(userId, command)
     AccountRepository -> DbContext: Find user aggregate
     DbContext -> MySQL: SELECT users\nLEFT JOIN user_profiles
     MySQL --> DbContext: User rows or null

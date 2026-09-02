@@ -20,17 +20,24 @@ entity "CreateSessionResponse\n(BE Response DTO)" as BeCreateSessionResponseDto
 entity "QuestionResponse\n(BE Response DTO)" as BeQuestionDto
 control "QuizSessionsController\n(BE API)" as BeController
 control "QuizHistoryService" as HistoryService
+control "IQuizHistoryService" as IQuizHistoryService
 control "QuizSessionService" as SessionService
+control "IQuizSessionService" as IQuizSessionService
 control "QuizSessionBuilder" as SessionBuilder
+control "IQuizSessionBuilder" as IQuizSessionBuilder
 control "QuizQuestionBuilder" as QuestionBuilder
 entity "UserWordProgress" as UserWordProgressEntity
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "TestSession" as TestSessionEntity
 control "QuizHistoryRepository" as HistoryRepository
+control "IQuizHistoryRepository" as IQuizHistoryRepository
 control "QuizPoolRepository" as PoolRepository
+control "IQuizPoolRepository" as IQuizPoolRepository
 control "QuizQuestionRepository" as QuestionRepository
+control "IQuizQuestionRepository" as IQuizQuestionRepository
 control "QuizSessionRepository" as SessionRepository
+control "IQuizSessionRepository" as IQuizSessionRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -44,6 +51,10 @@ BE DTOs exist: WrongWordsRequest, WrongWordResponse,
 CreateSessionRequest, CreateSessionResponse and QuestionResponse.
 Retry incorrect vocabulary is implemented by creating a quiz session with scope_type = "wrong_words".
 Entities exist: UserWordProgress, Word, WordSense and TestSession.
+Interfaces used in code: IQuizSessionService, IQuizHistoryService,
+  IQuizHistoryRepository, IQuizSessionBuilder,
+  IQuizSessionRepository, IQuizPoolRepository,
+  IQuizQuestionRepository.
 end note
 
 Learner -> RetryIncorrectUi: Open incorrect vocabulary list
@@ -53,8 +64,10 @@ FeApiService -> BeController: GET /api/quiz/wrong-words\npage, limit
 BeController -> BeWrongWordsRequestDto: Bind query string
 BeWrongWordsRequestDto --> BeController: WrongWordsRequest
 BeController -> BeController: Check authenticated user
-BeController -> HistoryService: GetWrongWordsAsync(userId, query)
-HistoryService -> HistoryRepository: GetWrongWordsAsync(userId, page, limit)
+BeController -> IQuizHistoryService: GetWrongWordsAsync(userId, query)
+IQuizHistoryService -> HistoryService: GetWrongWordsAsync(userId, query)
+HistoryService -> IQuizHistoryRepository: GetWrongWordsAsync(userId, page, limit)
+IQuizHistoryRepository -> HistoryRepository: GetWrongWordsAsync(userId, page, limit)
 HistoryRepository -> DbContext: Query wrong word progress
 DbContext -> MySQL: SELECT user_word_progresses\nJOIN words and word_senses
 MySQL --> DbContext: Wrong word rows
@@ -91,9 +104,12 @@ alt Request invalid
     FeApiService --> QuizConfigController: Action failed
     QuizConfigController --> RetryIncorrectUi: Show create quiz error
 else Request valid
-    BeController -> SessionService: CreateSessionAsync(userId, command)
-    SessionService -> SessionBuilder: BuildAsync(userId, command)
-    SessionBuilder -> PoolRepository: GetCandidatesAsync(userId,\nscope_type = "wrong_words")
+    BeController -> IQuizSessionService: CreateSessionAsync(userId, command)
+    IQuizSessionService -> SessionService: CreateSessionAsync(userId, command)
+    SessionService -> IQuizSessionBuilder: BuildAsync(userId, command)
+    IQuizSessionBuilder -> SessionBuilder: BuildAsync(userId, command)
+    SessionBuilder -> IQuizPoolRepository: GetCandidatesAsync(userId,\nscope_type = "wrong_words")
+    IQuizPoolRepository -> PoolRepository: GetCandidatesAsync(userId,\nscope_type = "wrong_words")
     PoolRepository -> DbContext: Query words in wrong list
     DbContext -> MySQL: SELECT words JOIN word_senses\nWHERE user_word_progresses.is_in_wrong_list
     MySQL --> DbContext: Candidate rows
@@ -114,7 +130,8 @@ else Request valid
         QuizConfigController --> RetryIncorrectUi: Show no words message
     else Candidates available
         SessionBuilder -> QuestionBuilder: Build first question
-        QuestionBuilder -> QuestionRepository: FindQuestionWordAsync(wordId)
+        QuestionBuilder -> IQuizQuestionRepository: FindQuestionWordAsync(wordId)
+        IQuizQuestionRepository -> QuestionRepository: FindQuestionWordAsync(wordId)
         QuestionRepository -> DbContext: Query Word with senses
         DbContext -> MySQL: SELECT words,\nword_senses
         MySQL --> DbContext: Question word rows
@@ -126,7 +143,8 @@ else Request valid
         QuestionRepository --> QuestionBuilder: Question data
         QuestionBuilder --> SessionBuilder: First question
         SessionBuilder --> SessionService: Built quiz session
-        SessionService -> SessionRepository: CreateSessionAsync(session)
+        SessionService -> IQuizSessionRepository: CreateSessionAsync(session)
+        IQuizSessionRepository -> SessionRepository: CreateSessionAsync(session)
         SessionRepository -> TestSessionEntity: Create TestSession
         TestSessionEntity --> SessionRepository: TestSession
         SessionRepository -> DbContext: Add TestSession

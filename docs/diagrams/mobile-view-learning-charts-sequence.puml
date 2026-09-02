@@ -14,9 +14,11 @@ entity "ProgressChartRequest\n(BE Request DTO)" as BeChartRequestDto
 entity "ProgressChartResponse\n(BE Response DTO)" as BeChartResponseDto
 control "ProgressController\n(BE API)" as BeController
 control "ProgressAnalyticsService" as AnalyticsService
+control "IProgressAnalyticsService" as IProgressAnalyticsService
 entity "TestSession" as TestSessionEntity
 entity "TestAnswer" as TestAnswerEntity
 control "ProgressAnalyticsRepository" as AnalyticsRepository
+control "IProgressAnalyticsRepository" as IProgressAnalyticsRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -29,6 +31,7 @@ BE controller exists: ProgressController.
 BE DTOs exist: ProgressChartRequest and ProgressChartResponse.
 Endpoint is GET /api/progress/chart with granularity query.
 Entities exist: TestSession and TestAnswer.
+Interfaces used in code: IProgressAnalyticsService, IProgressAnalyticsRepository.
 end note
 
 Learner -> ChartsUi: Open learning charts
@@ -38,7 +41,8 @@ FeApiService -> BeController: GET /api/progress/chart\ngranularity
 BeController -> BeChartRequestDto: Bind query string
 BeChartRequestDto --> BeController: ProgressChartRequest
 BeController -> BeController: Check authenticated user
-BeController -> AnalyticsService: GetChartAsync(userId, query)
+BeController -> IProgressAnalyticsService: GetChartAsync(userId, query)
+IProgressAnalyticsService -> AnalyticsService: GetChartAsync(userId, query)
 AnalyticsService -> AnalyticsService: Validate granularity\nand build periods
 
 alt Granularity invalid
@@ -47,14 +51,16 @@ alt Granularity invalid
     FeApiService --> FeController: Action failed
     FeController --> ChartsUi: Show chart error
 else Granularity valid
-    AnalyticsService -> AnalyticsRepository: GetSessionTimesAsync(userId, window)
+    AnalyticsService -> IProgressAnalyticsRepository: GetSessionTimesAsync(userId, window)
+    IProgressAnalyticsRepository -> AnalyticsRepository: GetSessionTimesAsync(userId, window)
     AnalyticsRepository -> DbContext: Query session started times
     DbContext -> MySQL: SELECT test_sessions
     MySQL --> DbContext: Session rows
     DbContext -> TestSessionEntity: Read TestSession rows
     TestSessionEntity --> DbContext: Session times
 
-    AnalyticsService -> AnalyticsRepository: GetAnswerStatisticsAsync(userId, window)
+    AnalyticsService -> IProgressAnalyticsRepository: GetAnswerStatisticsAsync(userId, window)
+    IProgressAnalyticsRepository -> AnalyticsRepository: GetAnswerStatisticsAsync(userId, window)
     AnalyticsRepository -> DbContext: Query answer statistics
     DbContext -> MySQL: SELECT test_answers\nJOIN test_sessions
     MySQL --> DbContext: Answer rows

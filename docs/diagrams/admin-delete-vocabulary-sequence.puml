@@ -10,10 +10,12 @@ boundary "Vocabulary UI" as VocabularyUi
 control "VocabularyController\n(FE Dashboard)" as FeController
 control "AdminWordsController\n(BE API)" as BeController
 control "WordAdminService" as WordService
+control "IWordAdminService" as IWordAdminService
 entity "Word" as WordEntity
 entity "UserListWord" as UserListWordEntity
 entity "UserWordProgress" as UserWordProgressEntity
 control "WordAdminRepository" as WordRepository
+control "IWordAdminRepository" as IWordAdminRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -28,14 +30,17 @@ API delete endpoint uses route id only and returns bool in the response envelope
 API endpoint is protected by SuperAdmin policy.
 Delete is soft delete: word status becomes deleted.
 Entities exist: Word, UserListWord and UserWordProgress.
+Interfaces used in code: IWordAdminService, IWordAdminRepository.
 end note
 
 Admin -> VocabularyUi: Click Delete vocabulary
 VocabularyUi -> FeController: POST /vocabulary/delete\nid, returnUrl?
 FeController -> BeController: VocaNovaApiClient.DeleteWordAsync(id)\nDELETE /api/admin/words/{id}
 BeController -> BeController: Check super admin authorization
-BeController -> WordService: SoftDeleteAsync(id)
-WordService -> WordRepository: SetWordStatusAsync(id, deleted)
+BeController -> IWordAdminService: SoftDeleteAsync(id)
+IWordAdminService -> WordService: SoftDeleteAsync(id)
+WordService -> IWordAdminRepository: SetWordStatusAsync(id, deleted)
+IWordAdminRepository -> WordRepository: SetWordStatusAsync(id, deleted)
 WordRepository -> DbContext: Find Word
 DbContext -> MySQL: SELECT words
 MySQL --> DbContext: Word row or null
@@ -57,7 +62,8 @@ else Word found
     DbContext --> WordRepository: Save result
     WordRepository --> WordService: true
 
-    WordService -> WordRepository: GetReferencingUserIdsAsync(id)
+    WordService -> IWordAdminRepository: GetReferencingUserIdsAsync(id)
+    IWordAdminRepository -> WordRepository: GetReferencingUserIdsAsync(id)
     WordRepository -> DbContext: Query list/progress references
     DbContext -> MySQL: SELECT user_list_words\nUNION SELECT user_word_progresses
     MySQL --> DbContext: Referencing user ids

@@ -17,12 +17,16 @@ entity "UpdateSenseRequest\n(BE Request DTO)" as BeUpdateSenseRequestDto
 entity "CreateSenseRequest\n(BE Request DTO)" as BeCreateSenseRequestDto
 entity "WordSenseResponse\n(BE Response DTO)" as BeWordSenseDto
 control "WordReadService" as WordReadService
+control "IWordReadService" as IWordReadService
 control "WordAdminService" as WordAdminService
+control "IWordAdminService" as IWordAdminService
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "WordExample" as WordExampleEntity
 control "WordReadRepository" as WordReadRepository
+control "IWordReadRepository" as IWordReadRepository
 control "WordAdminRepository" as WordAdminRepository
+control "IWordAdminRepository" as IWordAdminRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -37,13 +41,17 @@ UpdateSenseRequest, CreateSenseRequest and WordSenseResponse.
 VocabularyController.Edit loads word detail, updates metadata,
 updates existing senses, optionally creates a new sense, then optionally toggles status.
 Entities exist: Word, WordSense and WordExample.
+Interfaces used in code: IWordReadService, IWordAdminService, IWordReadRepository,
+  IWordAdminRepository.
 end note
 
 Admin -> EditVocabularyUi: Open edit vocabulary page
 EditVocabularyUi -> FeController: GET /vocabulary/{id}/edit
 FeController -> ReadController: VocaNovaApiClient.GetWordDetailAsync\nGET /api/words/{id}
-ReadController -> WordReadService: GetByIdAsync(id)
-WordReadService -> WordReadRepository: FindDetailAsync(id)
+ReadController -> IWordReadService: GetByIdAsync(id)
+IWordReadService -> WordReadService: GetByIdAsync(id)
+WordReadService -> IWordReadRepository: FindDetailAsync(id)
+IWordReadRepository -> WordReadRepository: FindDetailAsync(id)
 WordReadRepository -> DbContext: Query word detail
 DbContext -> MySQL: SELECT words with senses\nand examples
 MySQL --> DbContext: Word detail rows or null
@@ -88,9 +96,11 @@ else Word input valid
         AdminController --> FeController: HTTP 400 error
         FeController --> EditVocabularyUi: Redirect with error message
     else Request validation success
-        AdminController -> WordAdminService: UpdateAsync(id, update word data)
+        AdminController -> IWordAdminService: UpdateAsync(id, update word data)
+        IWordAdminService -> WordAdminService: UpdateAsync(id, update word data)
         WordAdminService -> WordAdminService: Normalize word, word_key,\nCEFR and phonetics
-        WordAdminService -> WordAdminRepository: WordExistsAsync(wordKey, id)
+        WordAdminService -> IWordAdminRepository: WordExistsAsync(wordKey, id)
+        IWordAdminRepository -> WordAdminRepository: WordExistsAsync(wordKey, id)
         WordAdminRepository -> DbContext: Query duplicate word
         DbContext -> MySQL: SELECT words
         MySQL --> DbContext: Duplicate row or null
@@ -104,7 +114,8 @@ else Word input valid
             AdminController --> FeController: HTTP 409 error
             FeController --> EditVocabularyUi: Redirect with duplicate message
         else Word can be updated
-            WordAdminService -> WordAdminRepository: UpdateMetadataAsync(id, update data)
+            WordAdminService -> IWordAdminRepository: UpdateMetadataAsync(id, update data)
+            IWordAdminRepository -> WordAdminRepository: UpdateMetadataAsync(id, update data)
             WordAdminRepository -> DbContext: Find Word
             DbContext -> MySQL: SELECT words
             MySQL --> DbContext: Word row or null
@@ -148,9 +159,11 @@ else Word input valid
             AdminController --> FeController: HTTP 400 error
             FeController -> FeController: Add sense error
         else Sense request validation success
-            AdminController -> WordAdminService: UpdateSenseAsync(id, senseId, sense data)
+            AdminController -> IWordAdminService: UpdateSenseAsync(id, senseId, sense data)
+            IWordAdminService -> WordAdminService: UpdateSenseAsync(id, senseId, sense data)
             WordAdminService -> WordAdminService: Normalize sense data
-            WordAdminService -> WordAdminRepository: UpdateSenseAsync(id, senseId, sense data)
+            WordAdminService -> IWordAdminRepository: UpdateSenseAsync(id, senseId, sense data)
+            IWordAdminRepository -> WordAdminRepository: UpdateSenseAsync(id, senseId, sense data)
             WordAdminRepository -> DbContext: Find WordSense with examples
             DbContext -> MySQL: SELECT word_senses\nJOIN word_examples
             MySQL --> DbContext: Sense rows or null
@@ -187,8 +200,10 @@ else Word input valid
         FeController -> AdminController: VocaNovaApiClient.CreateSenseAsync\nPOST /api/admin/words/{id}/senses
         AdminController -> BeCreateSenseRequestDto: Bind JSON body
         BeCreateSenseRequestDto --> AdminController: CreateSenseRequest
-        AdminController -> WordAdminService: CreateSenseAsync(id, sense data)
-        WordAdminService -> WordAdminRepository: CreateSenseAsync(id, sense data)
+        AdminController -> IWordAdminService: CreateSenseAsync(id, sense data)
+        IWordAdminService -> WordAdminService: CreateSenseAsync(id, sense data)
+        WordAdminService -> IWordAdminRepository: CreateSenseAsync(id, sense data)
+        IWordAdminRepository -> WordAdminRepository: CreateSenseAsync(id, sense data)
         WordAdminRepository -> DbContext: Check Word exists\nand get next sense order
         DbContext -> MySQL: SELECT words,\nSELECT word_senses
         MySQL --> DbContext: Word row and max order
@@ -209,8 +224,10 @@ else Word input valid
 
     opt Status changed
         FeController -> AdminController: VocaNovaApiClient.DeleteWordAsync\nor RestoreWordAsync
-        AdminController -> WordAdminService: SoftDeleteAsync(id)\nor RestoreAsync(id)
-        WordAdminService -> WordAdminRepository: SetWordStatusAsync(id, status)
+        AdminController -> IWordAdminService: SoftDeleteAsync(id)\nor RestoreAsync(id)
+        IWordAdminService -> WordAdminService: SoftDeleteAsync(id)\nor RestoreAsync(id)
+        WordAdminService -> IWordAdminRepository: SetWordStatusAsync(id, status)
+        IWordAdminRepository -> WordAdminRepository: SetWordStatusAsync(id, status)
         WordAdminRepository -> DbContext: Find Word
         DbContext -> MySQL: SELECT words
         MySQL --> DbContext: Word row or null

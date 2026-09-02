@@ -9,197 +9,231 @@ note top
 Generated from mobile-manage-learning-analytics-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
+
 class ProgressChartsNotifier <<service>> {
-  + build() : ProgressChartsState
-  + changeGranularity() : FutureOfvoid
-  + load()
+  "+ build() : ProgressChartsState"
+  "+ changeGranularity() : FutureOfvoid"
+  "+ load()"
 }
+
 class ProgressApiService <<service>> {
-  + _dio : Dio
+  "+ _dio : Dio"
   --
-  + getChart() : FutureOfProgressChart
-  + getMasteryBreakdown() : FutureOfListOfMasteryBreakdown
-  + getWeakestWords() : FutureOfListOfWeakestWord
+  "+ getChart() : FutureOfProgressChart"
+  "+ getMasteryBreakdown() : FutureOfListOfMasteryBreakdown"
+  "+ getWeakestWords() : FutureOfListOfWeakestWord"
 }
+
 class ProgressChartDto <<dto>> {
-  + granularity : String
-  + points : ListOfProgressChartPointDto
+  "+ granularity : String"
+  "+ points : ListOfProgressChartPointDto"
 }
+
 class MasteryBreakdownDto <<dto>> {
-  + masteryLevel : int
-  + wordCount : int
+  "+ masteryLevel : int"
+  "+ wordCount : int"
 }
+
 class WeakestWordDto <<dto>> {
-  + wordId : int
-  + word : String
-  + primaryMeaning : StringNullable
-  + testCount : int
-  + correctCount : int
-  + wrongCount : int
-  + accuracyRate : double
-  + masteryLevel : int
+  "+ wordId : int"
+  "+ word : String"
+  "+ primaryMeaning : StringNullable"
+  "+ testCount : int"
+  "+ correctCount : int"
+  "+ wrongCount : int"
+  "+ accuracyRate : double"
+  "+ masteryLevel : int"
 }
+
 class ProgressChartRequest <<dto>> {
-  + Granularity : stringNullable
+  "+ Granularity : stringNullable"
 }
+
 class WeakestWordsRequest <<dto>> {
-  + Limit : intNullable
+  "+ Limit : intNullable"
 }
+
 class ProgressChartResponse <<dto>> {
-  + Granularity : string
-  + Points : IReadOnlyCollectionOfProgressChartPointResponse
+  "+ Granularity : string"
+  "+ Points : IReadOnlyCollectionOfProgressChartPointResponse"
 }
+
 class MasteryBreakdownResponse <<dto>> {
-  + MasteryLevel : int
-  + WordCount : int
+  "+ MasteryLevel : int"
+  "+ WordCount : int"
 }
+
 class WeakestWordResponse <<dto>> {
-  + WordId : uint
-  + Word : string
-  + PrimaryMeaning : stringNullable
-  + TestCount : int
-  + CorrectCount : int
-  + WrongCount : int
-  + AccuracyRate : float
-  + MasteryLevel : int
-  + LastWrongAt : DateTimeNullable
-  + NextReviewAt : DateTimeNullable
+  "+ WordId : uint"
+  "+ Word : string"
+  "+ PrimaryMeaning : stringNullable"
+  "+ TestCount : int"
+  "+ CorrectCount : int"
+  "+ WrongCount : int"
+  "+ AccuracyRate : float"
+  "+ MasteryLevel : int"
+  "+ LastWrongAt : DateTimeNullable"
+  "+ NextReviewAt : DateTimeNullable"
 }
+
 class ProgressController <<backend_controller>> {
-  - _progressSummaryService : IProgressSummaryService
-  - _progressAnalyticsService : IProgressAnalyticsService
+  "- _progressSummaryService : IProgressSummaryService"
+  "- _progressAnalyticsService : IProgressAnalyticsService"
   --
-  + GetChart(request: ProgressChartRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
-  + GetMasteryBreakdown(cancellationToken: CancellationToken) : TaskOfIActionResult
-  + GetWeakestWords(request: WeakestWordsRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  "+ GetChart(request: ProgressChartRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ GetMasteryBreakdown(cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ GetWeakestWords(request: WeakestWordsRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
+
 class ProgressAnalyticsService <<service>> {
-  - _progressAnalyticsRepository : IProgressAnalyticsRepository
+  "- _progressAnalyticsRepository : IProgressAnalyticsRepository"
   --
-  + GetChartAsync(userId: uint, query: ProgressChartQuery, cancellationToken: CancellationToken) : TaskOfProgressResultOfProgressChart
-  + GetMasteryBreakdownAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfIReadOnlyCollectionOfMasteryBreakdown
-  + GetWeakestWordsAsync(userId: uint, query: WeakestWordsQuery, cancellationToken: CancellationToken) : TaskOfProgressResultOfIReadOnlyCollectionOfWeakestWord
+  "+ GetChartAsync(userId: uint, query: ProgressChartQuery, cancellationToken: CancellationToken) : TaskOfProgressResultOfProgressChart"
+  "+ GetMasteryBreakdownAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfIReadOnlyCollectionOfMasteryBreakdown"
+  "+ GetWeakestWordsAsync(userId: uint, query: WeakestWordsQuery, cancellationToken: CancellationToken) : TaskOfProgressResultOfIReadOnlyCollectionOfWeakestWord"
 }
+
+class IProgressAnalyticsService <<service_interface>> {
+  "+ GetChartAsync(userId: uint, query: ProgressChartQuery, cancellationToken: CancellationToken) : TaskOfProgressResultOfProgressChart"
+  "+ GetMasteryBreakdownAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfIReadOnlyCollectionOfMasteryBreakdown"
+  "+ GetWeakestWordsAsync(userId: uint, query: WeakestWordsQuery, cancellationToken: CancellationToken) : TaskOfProgressResultOfIReadOnlyCollectionOfWeakestWord"
+  "+ GetWordProgressAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfWordProgress"
+}
+
 class TestSession <<entity>> {
-  + SessionId : uint
-  + UserId : uint
-  + TestType : string
-  + Mode : string
-  + QuestionType : int
-  + ScopeType : string
-  + ScopeDateFrom : DateOnlyNullable
-  + ScopeDateTo : DateOnlyNullable
-  + WordOrder : string
-  + WordLimit : intNullable
-  + TimeLimitSec : intNullable
-  + Lives : intNullable
+  "+ SessionId : uint"
+  "+ UserId : uint"
+  "+ TestType : string"
+  "+ Mode : string"
+  "+ QuestionType : int"
+  "+ ScopeType : string"
+  "+ ScopeDateFrom : DateOnlyNullable"
+  "+ ScopeDateTo : DateOnlyNullable"
+  "+ WordOrder : string"
+  "+ WordLimit : intNullable"
+  "+ TimeLimitSec : intNullable"
+  "+ Lives : intNullable"
 }
+
 class TestAnswer <<entity>> {
-  + AnswerId : uint
-  + SessionId : uint
-  + WordId : uint
-  + SenseId : uintNullable
-  + QuestionNumber : int
-  + QuestionType : int
-  + DisplayContent : string
-  + ExpectedAnswer : string
-  + AcceptedAnswers : stringNullable
-  + UserAnswer : stringNullable
-  + IsCorrect : boolNullable
-  + AiScore : floatNullable
+  "+ AnswerId : uint"
+  "+ SessionId : uint"
+  "+ WordId : uint"
+  "+ SenseId : uintNullable"
+  "+ QuestionNumber : int"
+  "+ QuestionType : int"
+  "+ DisplayContent : string"
+  "+ ExpectedAnswer : string"
+  "+ AcceptedAnswers : stringNullable"
+  "+ UserAnswer : stringNullable"
+  "+ IsCorrect : boolNullable"
+  "+ AiScore : floatNullable"
 }
+
 class UserWordProgress <<entity>> {
-  + ProgressId : uint
-  + UserId : uint
-  + WordId : uint
-  + TestCount : int
-  + CorrectCount : int
-  + WrongCount : int
-  + ConsecutiveCorrect : int
-  + IsInWrongList : bool
-  + MasteryLevel : int
-  + SrsInterval : int
-  + EaseFactor : float
-  + LastTestedAt : DateTimeNullable
+  "+ ProgressId : uint"
+  "+ UserId : uint"
+  "+ WordId : uint"
+  "+ TestCount : int"
+  "+ CorrectCount : int"
+  "+ WrongCount : int"
+  "+ ConsecutiveCorrect : int"
+  "+ IsInWrongList : bool"
+  "+ MasteryLevel : int"
+  "+ SrsInterval : int"
+  "+ EaseFactor : float"
+  "+ LastTestedAt : DateTimeNullable"
 }
+
 class Word <<entity>> {
-  + WordId : uint
-  + Word1 : string
-  + WordKey : string
-  + CefrLevel : stringNullable
-  + PhoneticUk : stringNullable
-  + PhoneticUs : stringNullable
-  + ImageUrl : stringNullable
-  + IsPhrase : bool
-  + Status : string
-  + CreatedAt : DateTime
-  + UpdatedAt : DateTime
-  + AiGradingCaches : ICollectionOfAiGradingCache
+  "+ WordId : uint"
+  "+ Word1 : string"
+  "+ WordKey : string"
+  "+ CefrLevel : stringNullable"
+  "+ PhoneticUk : stringNullable"
+  "+ PhoneticUs : stringNullable"
+  "+ ImageUrl : stringNullable"
+  "+ IsPhrase : bool"
+  "+ Status : string"
+  "+ CreatedAt : DateTime"
+  "+ UpdatedAt : DateTime"
+  "+ AiGradingCaches : ICollectionOfAiGradingCache"
 }
+
 class WordSense <<entity>> {
-  + SenseId : uint
-  + WordId : uint
-  + SenseOrder : int
-  + WordClass : string
-  + EnglishDefinition : string
-  + VietnameseMeaning : stringNullable
-  + Status : string
-  + TestAnswers : ICollectionOfTestAnswer
-  + Word : Word
-  + WordExamples : ICollectionOfWordExample
-  + WordRelations : ICollectionOfWordRelation
+  "+ SenseId : uint"
+  "+ WordId : uint"
+  "+ SenseOrder : int"
+  "+ WordClass : string"
+  "+ EnglishDefinition : string"
+  "+ VietnameseMeaning : stringNullable"
+  "+ Status : string"
+  "+ TestAnswers : ICollectionOfTestAnswer"
+  "+ Word : Word"
+  "+ WordExamples : ICollectionOfWordExample"
+  "+ WordRelations : ICollectionOfWordRelation"
 }
+
 class ProgressAnalyticsRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  "- _dbContext : VocaNovaDbContext"
   --
-  + GetSessionTimesAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfDateTime
-  + GetAnswerStatisticsAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfProgressAnswerStatistics
-  + GetMasteryLevelCountsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfMasteryLevelCount
-  + GetWeakestWordStatisticsAsync(userId: uint, limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfWeakestWordStatistics
+  "+ GetSessionTimesAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfDateTime"
+  "+ GetAnswerStatisticsAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfProgressAnswerStatistics"
+  "+ GetMasteryLevelCountsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfMasteryLevelCount"
+  "+ GetWeakestWordStatisticsAsync(userId: uint, limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfWeakestWordStatistics"
 }
+
+class IProgressAnalyticsRepository <<repository_interface>> {
+  "+ GetSessionTimesAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfDateTime"
+  "+ GetAnswerStatisticsAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfProgressAnswerStatistics"
+  "+ GetMasteryLevelCountsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfMasteryLevelCount"
+  "+ GetWeakestWordStatisticsAsync(userId: uint, limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfWeakestWordStatistics"
+  "+ GetWordProgressStatisticsAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfWordProgressStatisticsNullable"
+}
+
 class VocaNovaDbContext <<dbcontext>> {
-  + AgeRanges : DbSetOfAgeRange
-  + AiGradingCaches : DbSetOfAiGradingCache
-  + AuditLogs : DbSetOfAuditLog
-  + EducationLevels : DbSetOfEducationLevel
-  + LearningPurposes : DbSetOfLearningPurpose
-  + Occupations : DbSetOfOccupation
-  + OtpVerifications : DbSetOfOtpVerification
-  + RefreshTokens : DbSetOfRefreshToken
-  + Regions : DbSetOfRegion
-  + Roles : DbSetOfRole
-  + TestAnswers : DbSetOfTestAnswer
-  + TestSessions : DbSetOfTestSession
+  "+ AgeRanges : DbSetOfAgeRange"
+  "+ AiGradingCaches : DbSetOfAiGradingCache"
+  "+ AuditLogs : DbSetOfAuditLog"
+  "+ EducationLevels : DbSetOfEducationLevel"
+  "+ LearningPurposes : DbSetOfLearningPurpose"
+  "+ Occupations : DbSetOfOccupation"
+  "+ OtpVerifications : DbSetOfOtpVerification"
+  "+ RefreshTokens : DbSetOfRefreshToken"
+  "+ Regions : DbSetOfRegion"
+  "+ Roles : DbSetOfRole"
+  "+ TestAnswers : DbSetOfTestAnswer"
+  "+ TestSessions : DbSetOfTestSession"
   --
-  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
 }
+
 class MySQL_Database <<database>> {
 
 }
 ProgressChartsNotifier ..> ProgressApiService : getChart()
 ProgressApiService ..> ProgressController
 ProgressController ..> ProgressChartRequest
-ProgressController ..> ProgressAnalyticsService : GetChartAsync()
-ProgressAnalyticsService ..> ProgressAnalyticsRepository : GetSessionTimesAsync()
 ProgressAnalyticsRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 VocaNovaDbContext ..> TestSession
-ProgressAnalyticsService ..> ProgressAnalyticsRepository : GetAnswerStatisticsAsync()
 VocaNovaDbContext ..> TestAnswer
 ProgressController ..> ProgressChartResponse
 ProgressApiService ..> ProgressChartDto
 ProgressChartsNotifier ..> ProgressApiService : getMasteryBreakdown()
-ProgressController ..> ProgressAnalyticsService : GetMasteryBreakdownAsync()
-ProgressAnalyticsService ..> ProgressAnalyticsRepository : GetMasteryLevelCountsAsync()
 VocaNovaDbContext ..> UserWordProgress
 ProgressController ..> MasteryBreakdownResponse
 ProgressApiService ..> MasteryBreakdownDto
 ProgressChartsNotifier ..> ProgressApiService : getWeakestWords()
 ProgressController ..> WeakestWordsRequest
-ProgressController ..> ProgressAnalyticsService : GetWeakestWordsAsync()
-ProgressAnalyticsService ..> ProgressAnalyticsRepository : GetWeakestWordStatisticsAsync()
 VocaNovaDbContext ..> Word
 VocaNovaDbContext ..> WordSense
 ProgressController ..> WeakestWordResponse
 ProgressApiService ..> WeakestWordDto
+ProgressChartRequest ..> ProgressController
+WeakestWordsRequest ..> ProgressController
+IProgressAnalyticsService <|.. ProgressAnalyticsService
+ProgressController ..> IProgressAnalyticsService : GetChartAsync()
+IProgressAnalyticsRepository <|.. ProgressAnalyticsRepository
+ProgressAnalyticsService ..> IProgressAnalyticsRepository : GetSessionTimesAsync()
 @enduml

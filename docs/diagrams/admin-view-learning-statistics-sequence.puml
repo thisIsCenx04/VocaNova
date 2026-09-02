@@ -14,6 +14,7 @@ entity "Demographics\n(FE Response DTO)" as FeDemographicsDto
 entity "AdminLearningStatsResponse\n(BE Response DTO)" as BeLearningStatsDto
 entity "AdminDemographicsResponse\n(BE Response DTO)" as BeDemographicsDto
 control "AdminStatsService" as StatsService
+control "IAdminStatsService" as IAdminStatsService
 entity "TestAnswer" as TestAnswerEntity
 entity "Word" as WordEntity
 entity "TestSession" as TestSessionEntity
@@ -23,6 +24,7 @@ entity "AgeRange" as AgeRangeEntity
 entity "Occupation" as OccupationEntity
 entity "EducationLevel" as EducationLevelEntity
 control "AdminStatsRepository" as StatsRepository
+control "IAdminStatsRepository" as IAdminStatsRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -36,6 +38,7 @@ BE response DTOs exist: AdminLearningStatsResponse and AdminDemographicsResponse
 StatisticsController.Index calls VocaNovaApiClient.GetLearningStatsAsync
 and GetDemographicsAsync.
 No request DTO body is used for these GET endpoints.
+Interfaces used in code: IAdminStatsService, IAdminStatsRepository.
 end note
 
 Admin -> StatisticsUi: Open learning statistics
@@ -43,10 +46,12 @@ StatisticsUi -> FeController: GET /statistics
 
 FeController -> BeController: VocaNovaApiClient.GetLearningStatsAsync\nGET /api/admin/stats/learning
 BeController -> BeController: Check admin authorization
-BeController -> StatsService: GetLearningStatsAsync()
+BeController -> IAdminStatsService: GetLearningStatsAsync()
+IAdminStatsService -> StatsService: GetLearningStatsAsync()
 StatsService -> StatsService: Calculate today, tomorrow,\ntrend window and top wrong word limit
 
-StatsService -> StatsRepository: GetTopWrongWordsAsync(limit)
+StatsService -> IAdminStatsRepository: GetTopWrongWordsAsync(limit)
+IAdminStatsRepository -> StatsRepository: GetTopWrongWordsAsync(limit)
 StatsRepository -> DbContext: Query wrong answers by word
 DbContext -> MySQL: SELECT test_answers\nJOIN words and test_sessions
 MySQL --> DbContext: Wrong word rows
@@ -59,7 +64,8 @@ TestSessionEntity --> DbContext: TestSession aggregate
 DbContext --> StatsRepository: Top wrong word rows
 StatsRepository --> StatsService: Top wrong words
 
-StatsService -> StatsRepository: GetSessionAccuracyRowsAsync(window)
+StatsService -> IAdminStatsRepository: GetSessionAccuracyRowsAsync(window)
+IAdminStatsRepository -> StatsRepository: GetSessionAccuracyRowsAsync(window)
 StatsRepository -> DbContext: Query completed sessions
 DbContext -> MySQL: SELECT test_sessions
 MySQL --> DbContext: Session rows
@@ -76,8 +82,10 @@ FeLearningStatsDto --> FeController: LearningStats
 
 FeController -> BeController: VocaNovaApiClient.GetDemographicsAsync\nGET /api/admin/stats/demographics
 BeController -> BeController: Check admin authorization
-BeController -> StatsService: GetDemographicsAsync()
-StatsService -> StatsRepository: GetDemographicsAsync()
+BeController -> IAdminStatsService: GetDemographicsAsync()
+IAdminStatsService -> StatsService: GetDemographicsAsync()
+StatsService -> IAdminStatsRepository: GetDemographicsAsync()
+IAdminStatsRepository -> StatsRepository: GetDemographicsAsync()
 
 StatsRepository -> DbContext: Query active learning profiles\nby age range
 DbContext -> MySQL: SELECT user_learning_profiles\nJOIN users and age_ranges

@@ -14,10 +14,12 @@ entity "WordDetailResponse\n(BE Response DTO)" as BeWordDetailResponseDto
 entity "CreateSenseRequest\n(BE Request DTO)" as BeCreateSenseRequestDto
 entity "WordSenseResponse\n(BE Response DTO)" as BeWordSenseResponseDto
 control "WordAdminService" as WordService
+control "IWordAdminService" as IWordAdminService
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "WordExample" as WordExampleEntity
 control "WordAdminRepository" as WordRepository
+control "IWordAdminRepository" as IWordAdminRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -32,6 +34,7 @@ VocabularyController posts word metadata through VocaNovaApiClient.CreateWordWit
 Dashboard parses only word_id from the created word response, then optionally creates senses.
 No Dashboard Data/Dtos FE response DTO is used for this create action.
 Entities exist: Word, WordSense and WordExample.
+Interfaces used in code: IWordAdminService, IWordAdminRepository.
 end note
 
 Admin -> CreateVocabularyUi: Open create vocabulary page
@@ -55,7 +58,8 @@ else Word input valid
         BeController --> FeController: HTTP 400 error
         FeController --> CreateVocabularyUi: Redirect with error message
     else Request validation success
-        BeController -> WordService: CreateAsync(create word data)
+        BeController -> IWordAdminService: CreateAsync(create word data)
+        IWordAdminService -> WordService: CreateAsync(create word data)
         WordService -> WordService: Normalize word, word_key,\nCEFR and phonetics
 
         alt Word data invalid
@@ -63,7 +67,8 @@ else Word input valid
             BeController --> FeController: HTTP 400 error
             FeController --> CreateVocabularyUi: Redirect with error message
         else Word data valid
-            WordService -> WordRepository: WordExistsAsync(wordKey)
+            WordService -> IWordAdminRepository: WordExistsAsync(wordKey)
+            IWordAdminRepository -> WordRepository: WordExistsAsync(wordKey)
             WordRepository -> DbContext: Query word by word_key
             DbContext -> MySQL: SELECT words
             MySQL --> DbContext: Word row or null
@@ -77,7 +82,8 @@ else Word input valid
                 BeController --> FeController: HTTP 409 error
                 FeController --> CreateVocabularyUi: Redirect with duplicate message
             else Word can be created
-                WordService -> WordRepository: CreateAsync(create word data)
+                WordService -> IWordAdminRepository: CreateAsync(create word data)
+                IWordAdminRepository -> WordRepository: CreateAsync(create word data)
                 WordRepository -> WordEntity: Create Word
                 WordEntity --> WordRepository: Word
                 WordRepository -> DbContext: Add Word
@@ -113,9 +119,11 @@ else Word input valid
                 BeController --> FeController: HTTP 400 error
                 FeController -> FeController: Add sense error
             else Sense request validation success
-                BeController -> WordService: CreateSenseAsync(wordId, sense data)
+                BeController -> IWordAdminService: CreateSenseAsync(wordId, sense data)
+                IWordAdminService -> WordService: CreateSenseAsync(wordId, sense data)
                 WordService -> WordService: Normalize sense data
-                WordService -> WordRepository: CreateSenseAsync(wordId, sense data)
+                WordService -> IWordAdminRepository: CreateSenseAsync(wordId, sense data)
+                IWordAdminRepository -> WordRepository: CreateSenseAsync(wordId, sense data)
                 WordRepository -> DbContext: Check word exists
                 DbContext -> MySQL: SELECT words
                 MySQL --> DbContext: Word row or null

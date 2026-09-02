@@ -16,13 +16,16 @@ entity "AdminWordQueryRequest\n(BE Request DTO)" as BeWordQueryDto
 entity "AdminWordListItemResponse\n(BE Response DTO)" as BeWordListDto
 entity "TopicSummaryResponse\n(BE Response DTO)" as BeTopicSummaryDto
 control "WordAdminService" as WordService
+control "IWordAdminService" as IWordAdminService
 control "TopicReadService" as TopicService
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "WordTopic" as WordTopicEntity
 entity "Topic" as TopicEntity
 control "WordAdminRepository" as WordRepository
+control "IWordAdminRepository" as IWordAdminRepository
 control "TopicReadRepository" as TopicRepository
+control "ITopicReadRepository" as ITopicReadRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -38,6 +41,7 @@ FE response DTOs exist: WordListItem and TopicSummary.
 BE request DTO exists: AdminWordQueryRequest.
 BE response DTOs exist: AdminWordListItemResponse and TopicSummaryResponse.
 Entities exist: Word, WordSense, WordTopic and Topic.
+Interfaces used in code: IWordAdminService, IWordAdminRepository, ITopicReadRepository.
 end note
 
 Admin -> VocabularyUi: Enter search/filter values
@@ -49,7 +53,8 @@ FeController -> AdminWordsController: VocaNovaApiClient.GetWordsAsync\nGET /api/
 AdminWordsController -> BeWordQueryDto: Bind query string
 BeWordQueryDto --> AdminWordsController: AdminWordQueryRequest
 AdminWordsController -> AdminWordsController: Check admin authorization
-AdminWordsController -> WordService: SearchAsync(query)
+AdminWordsController -> IWordAdminService: SearchAsync(query)
+IWordAdminService -> WordService: SearchAsync(query)
 WordService -> WordService: Validate page, limit,\nCEFR, status and sort
 
 alt Query validation fails
@@ -58,7 +63,8 @@ alt Query validation fails
     FeController --> VocabularyUi: Show empty list or error
 else Query validation success
     WordService -> WordService: Normalize q, CEFR,\nstatus, wordType and sort
-    WordService -> WordRepository: SearchAsync(normalized query)
+    WordService -> IWordAdminRepository: SearchAsync(normalized query)
+    IWordAdminRepository -> WordRepository: SearchAsync(normalized query)
     WordRepository -> DbContext: Build word search query
     DbContext -> MySQL: SELECT COUNT(*) FROM words\nwith filters
     MySQL --> DbContext: Total item count
@@ -87,7 +93,8 @@ end
 
 FeController -> TopicsController: VocaNovaApiClient.GetTopicsAsync\nGET /api/topics
 TopicsController -> TopicService: GetTopicsAsync()
-TopicService -> TopicRepository: GetTopicsAsync()
+TopicService -> ITopicReadRepository: GetTopicsAsync()
+ITopicReadRepository -> TopicRepository: GetTopicsAsync()
 TopicRepository -> DbContext: Query topics
 DbContext -> MySQL: SELECT topics
 MySQL --> DbContext: Topic rows

@@ -9,94 +9,126 @@ note top
 Generated from superadmin-delete-admin-account-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
+
 class AdminAccountsController <<frontend_controller>> {
-  - _apiClient : IVocaNovaApiClient
+  "- _apiClient : IVocaNovaApiClient"
   --
-  + Delete(id: uint, returnUrl: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
+  "+ Delete(id: uint, returnUrl: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
+
 class SuperAdminAccountsController <<backend_controller>> {
-  - _service : ISuperAdminAccountService
+  "- _service : ISuperAdminAccountService"
   --
-  + Delete(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult
+  "+ Delete(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
+
 class SuperAdminAccountService <<service>> {
-  - _repository : ISuperAdminAccountRepository
-  - _transactionManager : IApplicationTransactionManager
-  - _userProfileCache : IUserProfileCacheNullable
+  "- _repository : ISuperAdminAccountRepository"
+  "- _transactionManager : IApplicationTransactionManager"
+  "- _userProfileCache : IUserProfileCacheNullable"
   --
-  + DeleteAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool
+  "+ DeleteAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
 }
+
+class ISuperAdminAccountService <<service_interface>> {
+  "+ GetAccountsAsync(query: AdminAccountQuery, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfAdminAccountModel"
+  "+ GetAccountAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfAdminAccountModel"
+  "+ CreateAsync(request: CreateAdminAccountModel, cancellationToken: CancellationToken) : TaskOfResultOfAdminAccountModel"
+  "+ UpdateAsync(adminId: uint, request: UpdateAdminAccountModel, cancellationToken: CancellationToken) : TaskOfResultOfAdminAccountModel"
+  "+ LockAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+  "+ UnlockAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+  "+ DeleteAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+}
+
 class User <<entity>> {
-  + UserId : uint
-  + RoleId : uint
-  + Status : string
-  + LastLoginAt : DateTimeNullable
-  + CreatedAt : DateTime
-  + UpdatedAt : DateTime
-  + AuditLogs : ICollectionOfAuditLog
-  + OtpVerifications : ICollectionOfOtpVerification
-  + RefreshTokens : ICollectionOfRefreshToken
-  + Role : Role
-  + TestSessions : ICollectionOfTestSession
-  + UserAuth : UserAuthNullable
+  "+ UserId : uint"
+  "+ RoleId : uint"
+  "+ Status : string"
+  "+ LastLoginAt : DateTimeNullable"
+  "+ CreatedAt : DateTime"
+  "+ UpdatedAt : DateTime"
+  "+ AuditLogs : ICollectionOfAuditLog"
+  "+ OtpVerifications : ICollectionOfOtpVerification"
+  "+ RefreshTokens : ICollectionOfRefreshToken"
+  "+ Role : Role"
+  "+ TestSessions : ICollectionOfTestSession"
+  "+ UserAuth : UserAuthNullable"
 }
+
 class UserAuth <<entity>> {
-  + UserId : uint
-  + Phone : stringNullable
-  + IsPhoneVerified : bool
-  + GoogleUid : stringNullable
-  + GoogleEmail : stringNullable
-  + Username : stringNullable
-  + PasswordHash : stringNullable
-  + UpdatedAt : DateTime
-  + User : User
+  "+ UserId : uint"
+  "+ Phone : stringNullable"
+  "+ IsPhoneVerified : bool"
+  "+ GoogleUid : stringNullable"
+  "+ GoogleEmail : stringNullable"
+  "+ Username : stringNullable"
+  "+ PasswordHash : stringNullable"
+  "+ UpdatedAt : DateTime"
+  "+ User : User"
 }
+
 class RefreshToken <<entity>> {
-  + TokenId : uint
-  + UserId : uint
-  + TokenHash : string
-  + DeviceInfo : stringNullable
-  + IpAddress : stringNullable
-  + ExpiresAt : DateTime
-  + CreatedAt : DateTime
-  + RevokedAt : DateTimeNullable
-  + User : User
+  "+ TokenId : uint"
+  "+ UserId : uint"
+  "+ TokenHash : string"
+  "+ DeviceInfo : stringNullable"
+  "+ IpAddress : stringNullable"
+  "+ ExpiresAt : DateTime"
+  "+ CreatedAt : DateTime"
+  "+ RevokedAt : DateTimeNullable"
+  "+ User : User"
 }
+
 class SuperAdminAccountRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  "- _dbContext : VocaNovaDbContext"
   --
-  + DeleteAccountAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfBool
-  + RevokeActiveRefreshTokensAsync(adminId: uint, now: DateTime, cancellationToken: CancellationToken) : Task
-  + GetAccountStatusAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfstring
+  "+ DeleteAccountAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ RevokeActiveRefreshTokensAsync(adminId: uint, now: DateTime, cancellationToken: CancellationToken) : Task"
+  "+ GetAccountStatusAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfstring"
 }
+
+class ISuperAdminAccountRepository <<repository_interface>> {
+  "+ GetAccountsAsync(query: AdminAccountQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfAdminAccountModel"
+  "+ GetAccountAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfAdminAccountModelNullable"
+  "+ FindDuplicateAsync(phone: string, email: string, excludedUserId: uintNullable, cancellationToken: CancellationToken) : TaskOfstringNullable"
+  "+ GetAdminRoleIdAsync(cancellationToken: CancellationToken) : TaskOfuintNullable"
+  "+ AddAccountAsync(request: CreateAdminAccountModel, passwordHash: string, roleId: uint, cancellationToken: CancellationToken) : TaskOfAdminAccountModel"
+  "+ UpdateAccountAsync(adminId: uint, request: UpdateAdminAccountModel, passwordHash: stringNullable, cancellationToken: CancellationToken) : TaskOfAdminAccountModelNullable"
+  "+ ChangeStatusAsync(adminId: uint, newStatus: string, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ DeleteAccountAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ RevokeActiveRefreshTokensAsync(adminId: uint, now: DateTime, cancellationToken: CancellationToken) : Task"
+  "+ GetAccountStatusAsync(adminId: uint, cancellationToken: CancellationToken) : TaskOfstringNullable"
+}
+
 class VocaNovaDbContext <<dbcontext>> {
-  + AgeRanges : DbSetOfAgeRange
-  + AiGradingCaches : DbSetOfAiGradingCache
-  + AuditLogs : DbSetOfAuditLog
-  + EducationLevels : DbSetOfEducationLevel
-  + LearningPurposes : DbSetOfLearningPurpose
-  + Occupations : DbSetOfOccupation
-  + OtpVerifications : DbSetOfOtpVerification
-  + RefreshTokens : DbSetOfRefreshToken
-  + Regions : DbSetOfRegion
-  + Roles : DbSetOfRole
-  + TestAnswers : DbSetOfTestAnswer
-  + TestSessions : DbSetOfTestSession
+  "+ AgeRanges : DbSetOfAgeRange"
+  "+ AiGradingCaches : DbSetOfAiGradingCache"
+  "+ AuditLogs : DbSetOfAuditLog"
+  "+ EducationLevels : DbSetOfEducationLevel"
+  "+ LearningPurposes : DbSetOfLearningPurpose"
+  "+ Occupations : DbSetOfOccupation"
+  "+ OtpVerifications : DbSetOfOtpVerification"
+  "+ RefreshTokens : DbSetOfRefreshToken"
+  "+ Regions : DbSetOfRegion"
+  "+ Roles : DbSetOfRole"
+  "+ TestAnswers : DbSetOfTestAnswer"
+  "+ TestSessions : DbSetOfTestSession"
   --
-  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
 }
+
 class MySQL_Database <<database>> {
 
 }
 AdminAccountsController ..> SuperAdminAccountsController
-SuperAdminAccountsController ..> SuperAdminAccountService : DeleteAsync()
-SuperAdminAccountService ..> SuperAdminAccountRepository : GetAccountStatusAsync()
 SuperAdminAccountRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 VocaNovaDbContext ..> User
-SuperAdminAccountService ..> SuperAdminAccountRepository : RevokeActiveRefreshTokensAsync()
 SuperAdminAccountRepository ..> RefreshToken
-SuperAdminAccountService ..> SuperAdminAccountRepository : DeleteAccountAsync()
 SuperAdminAccountRepository ..> User
 SuperAdminAccountRepository ..> UserAuth
+ISuperAdminAccountService <|.. SuperAdminAccountService
+SuperAdminAccountsController ..> ISuperAdminAccountService : DeleteAsync()
+ISuperAdminAccountRepository <|.. SuperAdminAccountRepository
+SuperAdminAccountService ..> ISuperAdminAccountRepository : GetAccountStatusAsync()
 @enduml

@@ -14,6 +14,7 @@ entity "RoleResponse\n(BE Response DTO)" as BeResponseDto
 control "RoleManagementService" as RoleService
 entity "Role" as RoleEntity
 control "RoleManagementRepository" as RoleRepository
+control "IRoleManagementRepository" as IRoleManagementRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -24,6 +25,7 @@ BE controller exists: RolesController.
 BE DTOs exist: SaveRoleRequest and RoleResponse.
 Entity exists: Role.
 Dashboard calls API through VocaNovaApiClient.CreateRoleAsync.
+Interfaces used in code: IRoleManagementRepository.
 end note
 
 SuperAdmin -> CreateRolePage: Open create role page
@@ -53,7 +55,8 @@ else Form input valid
             BeController --> FeController: HTTP 400 error
             FeController --> CreateRolePage: Show error message
         else Role name valid
-            RoleService -> RoleRepository: RoleExistsAsync(roleName)
+            RoleService -> IRoleManagementRepository: RoleExistsAsync(roleName)
+            IRoleManagementRepository -> RoleRepository: RoleExistsAsync(roleName)
             RoleRepository -> DbContext: Query role by name
             DbContext -> MySQL: SELECT roles
             MySQL --> DbContext: Role row or null
@@ -68,7 +71,8 @@ else Form input valid
                 FeController --> CreateRolePage: Show error message
             else Role can be created
                 RoleService -> RoleService: Begin transaction
-                RoleService -> RoleRepository: AddRoleAsync(roleName)
+                RoleService -> IRoleManagementRepository: AddRoleAsync(roleName)
+                IRoleManagementRepository -> RoleRepository: AddRoleAsync(roleName)
                 RoleRepository -> RoleEntity: Create Role
                 RoleEntity --> RoleRepository: Role
                 RoleRepository -> DbContext: Add Role

@@ -20,14 +20,18 @@ entity "ListWordResponse\n(BE Response DTO)" as BeListWordDto
 control "WordsController\n(BE API)" as WordsController
 control "ListsController\n(BE API)" as ListsController
 control "WordReadService" as WordService
+control "IWordReadService" as IWordReadService
 control "ListMutationService" as ListService
+control "IListMutationService" as IListMutationService
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "WordTopic" as WordTopicEntity
 entity "UserList" as UserListEntity
 entity "UserListWord" as UserListWordEntity
 control "WordReadRepository" as WordRepository
+control "IWordReadRepository" as IWordReadRepository
 control "ListMutationRepository" as ListRepository
+control "IListMutationRepository" as IListMutationRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -40,6 +44,8 @@ BE request DTOs exist: WordSearchRequest and AddListWordRequest.
 BE response DTOs exist: WordSummaryResponse and ListWordResponse.
 Endpoints are GET /api/words and POST /api/lists/{id}/words.
 Entities exist: Word, WordSense, WordTopic, UserList and UserListWord.
+Interfaces used in code: IWordReadService, IListMutationService, IWordReadRepository,
+  IListMutationRepository.
 end note
 
 Learner -> AddFromSearchUi: Search vocabulary
@@ -48,7 +54,8 @@ SearchController -> SearchApiService: search(query, cefr?, topicId?)
 SearchApiService -> WordsController: GET /api/words\nq, page, limit, cefr, topicId
 WordsController -> BeWordSearchDto: Bind query string
 BeWordSearchDto --> WordsController: WordSearchRequest
-WordsController -> WordService: SearchAsync(query)
+WordsController -> IWordReadService: SearchAsync(query)
+IWordReadService -> WordService: SearchAsync(query)
 WordService -> WordService: Validate page, limit and CEFR
 
 alt Search validation fails
@@ -57,7 +64,8 @@ alt Search validation fails
     SearchApiService --> SearchController: Action failed
     SearchController --> AddFromSearchUi: Show search error
 else Search validation success
-    WordService -> WordRepository: SearchAsync(normalized query)
+    WordService -> IWordReadRepository: SearchAsync(normalized query)
+    IWordReadRepository -> WordRepository: SearchAsync(normalized query)
     WordRepository -> DbContext: Query matching words
     DbContext -> MySQL: SELECT words with senses/topics
     MySQL --> DbContext: Word rows
@@ -86,8 +94,10 @@ ListsApiService -> ListsController: POST /api/lists/{id}/words\nword_id, add_met
 ListsController -> BeAddListWordDto: Bind request body
 BeAddListWordDto --> ListsController: AddListWordRequest
 ListsController -> ListsController: Check authenticated user
-ListsController -> ListService: AddWordAsync(userId, listId, request)
-ListService -> ListRepository: GetOwnershipAsync(userId, listId)
+ListsController -> IListMutationService: AddWordAsync(userId, listId, request)
+IListMutationService -> ListService: AddWordAsync(userId, listId, request)
+ListService -> IListMutationRepository: GetOwnershipAsync(userId, listId)
+IListMutationRepository -> ListRepository: GetOwnershipAsync(userId, listId)
 ListRepository -> DbContext: Query UserList ownership
 DbContext -> MySQL: SELECT user_lists
 MySQL --> DbContext: UserList row or null
@@ -102,7 +112,8 @@ alt List missing or forbidden
     ListsApiService --> ListController: Action failed
     ListController --> AddFromSearchUi: Show add error
 else List owned
-    ListService -> ListRepository: ActiveWordExistsAsync(wordId)
+    ListService -> IListMutationRepository: ActiveWordExistsAsync(wordId)
+    IListMutationRepository -> ListRepository: ActiveWordExistsAsync(wordId)
     ListRepository -> DbContext: Check active Word
     DbContext -> MySQL: SELECT words
     MySQL --> DbContext: Word exists or not
@@ -117,7 +128,8 @@ else List owned
         ListsApiService --> ListController: Action failed
         ListController --> AddFromSearchUi: Show add error
     else Word exists
-        ListService -> ListRepository: FindListWordAsync(userId, listId, wordId)
+        ListService -> IListMutationRepository: FindListWordAsync(userId, listId, wordId)
+        IListMutationRepository -> ListRepository: FindListWordAsync(userId, listId, wordId)
         ListRepository -> DbContext: Query existing UserListWord
         DbContext -> MySQL: SELECT user_list_words
         MySQL --> DbContext: List word row or null
@@ -132,7 +144,8 @@ else List owned
             ListsApiService --> ListController: Action failed
             ListController --> AddFromSearchUi: Show duplicate error
         else New or deleted list word
-            ListService -> ListRepository: AddWordAsync or RestoreWordAsync
+            ListService -> IListMutationRepository: AddWordAsync or RestoreWordAsync
+            IListMutationRepository -> ListRepository: AddWordAsync or RestoreWordAsync
             ListRepository -> UserListWordEntity: Create or restore UserListWord
             UserListWordEntity --> ListRepository: UserListWord
             ListRepository -> DbContext: Add/track UserListWord

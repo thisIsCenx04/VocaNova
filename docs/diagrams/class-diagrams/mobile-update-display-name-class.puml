@@ -9,103 +9,137 @@ note top
 Generated from mobile-update-display-name-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
+
 class AuthNotifier <<service>> {
-  + updateProfile() : FutureOfbool
+  "+ updateProfile() : FutureOfbool"
 }
+
 class AuthApiService <<service>> {
-  + _dio : Dio
+  "+ _dio : Dio"
   --
-  + updateProfile() : FutureOfUserProfile
+  "+ updateProfile() : FutureOfUserProfile"
 }
+
 class UserProfileDto <<dto>> {
-  + userId : int
-  + phone : StringNullable
-  + displayName : String
-  + avatarUrl : StringNullable
-  + role : String
-  + status : String
-  + learningProfile : LearningProfileDtoNullable
+  "+ userId : int"
+  "+ phone : StringNullable"
+  "+ displayName : String"
+  "+ avatarUrl : StringNullable"
+  "+ role : String"
+  "+ status : String"
+  "+ learningProfile : LearningProfileDtoNullable"
 }
+
 class UpdateUserProfileRequest <<dto>> {
-  + DisplayName : stringNullable
-  + AvatarUrl : stringNullable
+  "+ DisplayName : stringNullable"
+  "+ AvatarUrl : stringNullable"
 }
+
 class UserProfileResponse <<dto>> {
-  + UserId : uint
-  + Phone : stringNullable
-  + FullName : string
-  + AvatarUrl : stringNullable
-  + Role : string
-  + Status : string
-  + LearningProfile : LearningProfileResponseNullable
+  "+ UserId : uint"
+  "+ Phone : stringNullable"
+  "+ FullName : string"
+  "+ AvatarUrl : stringNullable"
+  "+ Role : string"
+  "+ Status : string"
+  "+ LearningProfile : LearningProfileResponseNullable"
 }
+
 class AuthController <<backend_controller>> {
-  - _authService : IDashboardAuthService
+  "- _authService : IDashboardAuthService"
   --
-  + Login(returnUrl: stringNullable) : IActionResult
-  + Login(model: LoginViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult
-  + Logout(cancellationToken: CancellationToken) : TaskOfIActionResult
+  "+ Login(returnUrl: stringNullable) : IActionResult"
+  "+ Login(model: LoginViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ Logout(cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
+
 class AuthService <<service>> {
-  - _accountRepository : IAuthAccountRepository
-  - _refreshTokenRepository : IRefreshTokenRepository
-  - _otpRepository : IOtpRepository
-  - _transactionManager : IApplicationTransactionManager
-  - _jwtTokenService : IJwtTokenService
-  - _googleIdentityProvider : IGoogleIdentityProvider
-  - _userProfileCache : IUserProfileCacheNullable
-  - _knnTopicRecommendationCache : IKnnTopicRecommendationCacheNullable
-  - _otpCodeGenerator : IOtpCodeGenerator
-  - _smsSender : ISmsSender
-  - _passwordHasher : IPasswordHasher
-  - _refreshTokenHasher : IRefreshTokenHasher
+  "- _accountRepository : IAuthAccountRepository"
+  "- _refreshTokenRepository : IRefreshTokenRepository"
+  "- _otpRepository : IOtpRepository"
+  "- _transactionManager : IApplicationTransactionManager"
+  "- _jwtTokenService : IJwtTokenService"
+  "- _googleIdentityProvider : IGoogleIdentityProvider"
+  "- _userProfileCache : IUserProfileCacheNullable"
+  "- _knnTopicRecommendationCache : IKnnTopicRecommendationCacheNullable"
+  "- _otpCodeGenerator : IOtpCodeGenerator"
+  "- _smsSender : ISmsSender"
+  "- _passwordHasher : IPasswordHasher"
+  "- _refreshTokenHasher : IRefreshTokenHasher"
   --
-  + UpdateProfileAsync(userId: uint, command: UpdateProfileCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfUserProfile
-  + UpdateLearningProfileAsync(userId: uint, command: UpdateLearningProfileCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfUserProfile
+  "+ UpdateProfileAsync(userId: uint, command: UpdateProfileCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfUserProfile"
+  "+ UpdateLearningProfileAsync(userId: uint, command: UpdateLearningProfileCommand, cancellationToken: CancellationToken) : TaskOfAuthOperationResultOfUserProfile"
 }
+
 class User <<entity>> {
-  + UserId : uint
-  + RoleId : uint
-  + Status : string
-  + LastLoginAt : DateTimeNullable
-  + CreatedAt : DateTime
-  + UpdatedAt : DateTime
-  + AuditLogs : ICollectionOfAuditLog
-  + OtpVerifications : ICollectionOfOtpVerification
-  + RefreshTokens : ICollectionOfRefreshToken
-  + Role : Role
-  + TestSessions : ICollectionOfTestSession
-  + UserAuth : UserAuthNullable
+  "+ UserId : uint"
+  "+ RoleId : uint"
+  "+ Status : string"
+  "+ LastLoginAt : DateTimeNullable"
+  "+ CreatedAt : DateTime"
+  "+ UpdatedAt : DateTime"
+  "+ AuditLogs : ICollectionOfAuditLog"
+  "+ OtpVerifications : ICollectionOfOtpVerification"
+  "+ RefreshTokens : ICollectionOfRefreshToken"
+  "+ Role : Role"
+  "+ TestSessions : ICollectionOfTestSession"
+  "+ UserAuth : UserAuthNullable"
 }
+
 class UserProfile <<entity>> {
-  + UserId : uint
-  + FullName : string
-  + AvatarUrl : stringNullable
-  + UpdatedAt : DateTime
-  + User : User
+  "+ UserId : uint"
+  "+ FullName : string"
+  "+ AvatarUrl : stringNullable"
+  "+ UpdatedAt : DateTime"
+  "+ User : User"
 }
+
 class AuthAccountRepository <<repository>> {
-  - _dbContext : VocaNovaDbContext
+  "- _dbContext : VocaNovaDbContext"
   --
-  + UpdateProfileAsync(userId: uint, command: UpdateProfileCommand, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfAuthUserProfile
-  + UpdateAvatarAsync(userId: uint, avatarUrl: string, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfAuthUserProfile
+  "+ UpdateProfileAsync(userId: uint, command: UpdateProfileCommand, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfAuthUserProfile"
+  "+ UpdateAvatarAsync(userId: uint, avatarUrl: string, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfAuthUserProfile"
 }
+
+class IAuthAccountRepository <<repository_interface>> {
+  "+ FindByPhoneAsync(phone: string, cancellationToken: CancellationToken) : TaskOfAuthAccountNullable"
+  "+ FindByGoogleSubjectAsync(googleSubject: string, cancellationToken: CancellationToken) : TaskOfAuthAccountNullable"
+  "+ FindByGoogleEmailAsync(googleEmail: string, cancellationToken: CancellationToken) : TaskOfAuthAccountNullable"
+  "+ FindByIdAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAuthAccountNullable"
+  "+ FindRoleByNameAsync(roleName: string, cancellationToken: CancellationToken) : TaskOfAuthRoleNullable"
+  "+ StageCreateAsync(account: CreateAuthAccount, cancellationToken: CancellationToken) : Task"
+  "+ StageLastLoginAsync(userId: uint, updatedAt: DateTime, cancellationToken: CancellationToken) : Task"
+  "+ GetProfileAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfUserProfileNullable"
+  "+ UpdateProfileAsync(userId: uint, command: UpdateProfileCommand, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfUserProfileNullable"
+  "+ UpdateAvatarAsync(userId: uint, avatarUrl: string, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfUserProfileNullable"
+  "+ UpsertLearningProfileAsync(userId: uint, command: UpdateLearningProfileCommand, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfUserProfileNullable"
+  "+ ActiveAgeRangeExistsAsync(ageRangeId: uint, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ ResolveAgeRangeIdByAgeAsync(age: int, cancellationToken: CancellationToken) : TaskOfuintNullable"
+  "+ ActiveRegionExistsAsync(regionId: uint, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ ActiveOccupationExistsAsync(occupationId: uint, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ ActiveEducationLevelExistsAsync(educationLevelId: uint, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ ActiveLearningPurposeExistsAsync(learningPurposeId: uint, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ UpdatePasswordAsync(userId: uint, passwordHash: string, updatedAt: DateTime, cancellationToken: CancellationToken) : Task"
+  "+ StageSoftDeleteAsync(userId: uint, now: DateTime, cancellationToken: CancellationToken) : TaskOfbool"
+}
+
 class VocaNovaDbContext <<dbcontext>> {
-  + AgeRanges : DbSetOfAgeRange
-  + AiGradingCaches : DbSetOfAiGradingCache
-  + AuditLogs : DbSetOfAuditLog
-  + EducationLevels : DbSetOfEducationLevel
-  + LearningPurposes : DbSetOfLearningPurpose
-  + Occupations : DbSetOfOccupation
-  + OtpVerifications : DbSetOfOtpVerification
-  + RefreshTokens : DbSetOfRefreshToken
-  + Regions : DbSetOfRegion
-  + Roles : DbSetOfRole
-  + TestAnswers : DbSetOfTestAnswer
-  + TestSessions : DbSetOfTestSession
+  "+ AgeRanges : DbSetOfAgeRange"
+  "+ AiGradingCaches : DbSetOfAiGradingCache"
+  "+ AuditLogs : DbSetOfAuditLog"
+  "+ EducationLevels : DbSetOfEducationLevel"
+  "+ LearningPurposes : DbSetOfLearningPurpose"
+  "+ Occupations : DbSetOfOccupation"
+  "+ OtpVerifications : DbSetOfOtpVerification"
+  "+ RefreshTokens : DbSetOfRefreshToken"
+  "+ Regions : DbSetOfRegion"
+  "+ Roles : DbSetOfRole"
+  "+ TestAnswers : DbSetOfTestAnswer"
+  "+ TestSessions : DbSetOfTestSession"
   --
-  + SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
 }
+
 class MySQL_Database <<database>> {
 
 }
@@ -113,7 +147,6 @@ AuthNotifier ..> AuthApiService : updateProfile()
 AuthApiService ..> AuthController
 AuthController ..> UpdateUserProfileRequest
 AuthController ..> AuthService : UpdateProfileAsync()
-AuthService ..> AuthAccountRepository : UpdateProfileAsync()
 AuthAccountRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 VocaNovaDbContext ..> User
@@ -122,4 +155,7 @@ AuthAccountRepository ..> UserProfile
 AuthAccountRepository ..> User
 AuthController ..> UserProfileResponse
 AuthApiService ..> UserProfileDto
+UpdateUserProfileRequest ..> AuthController
+IAuthAccountRepository <|.. AuthAccountRepository
+AuthService ..> IAuthAccountRepository : UpdateProfileAsync()
 @enduml

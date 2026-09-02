@@ -18,12 +18,14 @@ entity "AdminLearningStatsResponse\n(BE Response DTO)" as BeLearningStatsDto
 entity "AdminMasteryDistributionResponse\n(BE Response DTO)" as BeMasteryDto
 entity "AdminActivityTrendResponse\n(BE Response DTO)" as BeActivityDto
 control "AdminStatsService" as StatsService
+control "IAdminStatsService" as IAdminStatsService
 entity "User" as UserEntity
 entity "Word" as WordEntity
 entity "TestSession" as TestSessionEntity
 entity "TestAnswer" as TestAnswerEntity
 entity "UserWordProgress" as UserWordProgressEntity
 control "AdminStatsRepository" as StatsRepository
+control "IAdminStatsRepository" as IAdminStatsRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -38,15 +40,18 @@ AdminMasteryDistributionResponse and AdminActivityTrendResponse.
 Dashboard overview calls API through VocaNovaApiClient.GetDashboardStatsAsync,
 GetLearningStatsAsync, GetMasteryDistributionAsync and GetActivityTrendAsync.
 No request DTO body is used for these GET endpoints.
+Interfaces used in code: IAdminStatsService, IAdminStatsRepository.
 end note
 
 Admin -> DashboardUi: Open dashboard statistics
 DashboardUi -> FeController: GET /dashboard
 FeController -> BeController: VocaNovaApiClient.GetDashboardStatsAsync\nGET /api/admin/stats/dashboard
 BeController -> BeController: Check admin authorization
-BeController -> StatsService: GetDashboardAsync()
+BeController -> IAdminStatsService: GetDashboardAsync()
+IAdminStatsService -> StatsService: GetDashboardAsync()
 StatsService -> StatsService: Calculate today, tomorrow,\nand seven-day window
-StatsService -> StatsRepository: GetDashboardStatsAsync(today,\ntomorrow, sevenDayStart)
+StatsService -> IAdminStatsRepository: GetDashboardStatsAsync(today,\ntomorrow, sevenDayStart)
+IAdminStatsRepository -> StatsRepository: GetDashboardStatsAsync(today,\ntomorrow, sevenDayStart)
 StatsRepository -> DbContext: Count active users
 DbContext -> MySQL: SELECT users
 MySQL --> DbContext: User count
@@ -74,9 +79,11 @@ FeDashboardStatsDto --> FeController: DashboardStats
 
 FeController -> BeController: VocaNovaApiClient.GetLearningStatsAsync\nGET /api/admin/stats/learning
 BeController -> BeController: Check admin authorization
-BeController -> StatsService: GetLearningStatsAsync()
+BeController -> IAdminStatsService: GetLearningStatsAsync()
+IAdminStatsService -> StatsService: GetLearningStatsAsync()
 StatsService -> StatsService: Calculate trend window\nand top wrong word limit
-StatsService -> StatsRepository: GetTopWrongWordsAsync(limit)
+StatsService -> IAdminStatsRepository: GetTopWrongWordsAsync(limit)
+IAdminStatsRepository -> StatsRepository: GetTopWrongWordsAsync(limit)
 StatsRepository -> DbContext: Query wrong answers by word
 DbContext -> MySQL: SELECT test_answers\nJOIN words and test_sessions
 MySQL --> DbContext: Wrong word rows
@@ -89,7 +96,8 @@ TestSessionEntity --> DbContext: TestSession aggregate
 DbContext --> StatsRepository: Top wrong word rows
 StatsRepository --> StatsService: Top wrong words
 
-StatsService -> StatsRepository: GetSessionAccuracyRowsAsync(window)
+StatsService -> IAdminStatsRepository: GetSessionAccuracyRowsAsync(window)
+IAdminStatsRepository -> StatsRepository: GetSessionAccuracyRowsAsync(window)
 StatsRepository -> DbContext: Query completed sessions
 DbContext -> MySQL: SELECT test_sessions
 MySQL --> DbContext: Session rows
@@ -105,8 +113,10 @@ FeLearningStatsDto --> FeController: LearningStats
 
 FeController -> BeController: VocaNovaApiClient.GetMasteryDistributionAsync\nGET /api/admin/stats/mastery-distribution
 BeController -> BeController: Check admin authorization
-BeController -> StatsService: GetMasteryDistributionAsync()
-StatsService -> StatsRepository: GetMasteryDistributionAsync()
+BeController -> IAdminStatsService: GetMasteryDistributionAsync()
+IAdminStatsService -> StatsService: GetMasteryDistributionAsync()
+StatsService -> IAdminStatsRepository: GetMasteryDistributionAsync()
+IAdminStatsRepository -> StatsRepository: GetMasteryDistributionAsync()
 StatsRepository -> DbContext: Query user word progress\nby mastery level
 DbContext -> MySQL: SELECT user_word_progresses\nJOIN users
 MySQL --> DbContext: Mastery rows
@@ -125,7 +135,8 @@ FeMasteryDto --> FeController: MasteryDistribution
 
 FeController -> BeController: VocaNovaApiClient.GetActivityTrendAsync("daily")\nGET /api/admin/stats/activity-trend
 BeController -> BeController: Check admin authorization
-BeController -> StatsService: GetActivityTrendAsync(granularity)
+BeController -> IAdminStatsService: GetActivityTrendAsync(granularity)
+IAdminStatsService -> StatsService: GetActivityTrendAsync(granularity)
 StatsService -> StatsService: Validate granularity\nand build buckets
 
 alt Granularity invalid
@@ -133,7 +144,8 @@ alt Granularity invalid
     BeController --> FeController: HTTP 400 error
     FeController --> DashboardUi: Render dashboard with fallback data
 else Granularity valid
-    StatsService -> StatsRepository: GetSessionAccuracyRowsAsync(window)
+    StatsService -> IAdminStatsRepository: GetSessionAccuracyRowsAsync(window)
+    IAdminStatsRepository -> StatsRepository: GetSessionAccuracyRowsAsync(window)
     StatsRepository -> DbContext: Query completed sessions
     DbContext -> MySQL: SELECT test_sessions
     MySQL --> DbContext: Session rows
@@ -141,7 +153,8 @@ else Granularity valid
     TestSessionEntity --> DbContext: Accuracy rows
     DbContext --> StatsRepository: Accuracy rows
 
-    StatsService -> StatsRepository: GetSessionCountsByDayAsync(window)
+    StatsService -> IAdminStatsRepository: GetSessionCountsByDayAsync(window)
+    IAdminStatsRepository -> StatsRepository: GetSessionCountsByDayAsync(window)
     StatsRepository -> DbContext: Query session started dates
     DbContext -> MySQL: SELECT test_sessions
     MySQL --> DbContext: Session date rows

@@ -12,6 +12,7 @@ control "WordsController\n(BE API)" as BeController
 entity "WordDetail\n(FE Response DTO)" as FeWordDetailDto
 entity "WordDetailResponse\n(BE Response DTO)" as BeWordDetailDto
 control "WordReadService" as WordService
+control "IWordReadService" as IWordReadService
 entity "Word" as WordEntity
 entity "WordSense" as WordSenseEntity
 entity "WordExample" as WordExampleEntity
@@ -22,6 +23,7 @@ entity "WordIdiom" as WordIdiomEntity
 entity "WordTopic" as WordTopicEntity
 entity "Topic" as TopicEntity
 control "WordReadRepository" as WordRepository
+control "IWordReadRepository" as IWordReadRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -36,19 +38,22 @@ VocabularyController.Detail calls VocaNovaApiClient.GetWordDetailAsync.
 API endpoint is GET /api/words/{id}; no request DTO body is used.
 Entities exist: Word, WordSense, WordExample, WordRelation,
 WordAudioAsset, WordDerivedForm, WordIdiom, WordTopic and Topic.
+Interfaces used in code: IWordReadService, IWordReadRepository.
 end note
 
 Admin -> VocabularyDetailsUi: Open vocabulary details
 VocabularyDetailsUi -> FeController: GET /vocabulary/{id}
 FeController -> BeController: VocaNovaApiClient.GetWordDetailAsync\nGET /api/words/{id}
-BeController -> WordService: GetByIdAsync(id)
+BeController -> IWordReadService: GetByIdAsync(id)
+IWordReadService -> WordService: GetByIdAsync(id)
 
 alt Word id invalid
     WordService --> BeController: NotFound result
     BeController --> FeController: HTTP 404 error
     FeController --> VocabularyDetailsUi: Show not found
 else Word id valid
-    WordService -> WordRepository: FindDetailAsync(id)
+    WordService -> IWordReadRepository: FindDetailAsync(id)
+    IWordReadRepository -> WordRepository: FindDetailAsync(id)
     WordRepository -> DbContext: Query word detail
     DbContext -> MySQL: SELECT words with includes
     MySQL --> DbContext: Word detail rows or null

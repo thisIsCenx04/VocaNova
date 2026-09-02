@@ -13,10 +13,12 @@ entity "ProgressSummaryDto\n(FE Response DTO)" as FeSummaryDto
 entity "ProgressSummaryResponse\n(BE Response DTO)" as BeSummaryDto
 control "ProgressController\n(BE API)" as BeController
 control "ProgressSummaryService" as SummaryService
+control "IProgressSummaryService" as IProgressSummaryService
 entity "TestSession" as TestSessionEntity
 entity "TestAnswer" as TestAnswerEntity
 entity "UserWordProgress" as UserWordProgressEntity
 control "ProgressSummaryRepository" as SummaryRepository
+control "IProgressSummaryRepository" as IProgressSummaryRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -29,6 +31,7 @@ BE controller exists: ProgressController.
 BE response DTO exists: ProgressSummaryResponse.
 Endpoint is GET /api/progress/summary; no request DTO body is used.
 Entities exist: TestSession, TestAnswer and UserWordProgress.
+Interfaces used in code: IProgressSummaryService, IProgressSummaryRepository.
 end note
 
 Learner -> StatisticsDashboardUi: Open statistics dashboard
@@ -42,9 +45,11 @@ alt User id missing
     FeApiService --> FeController: Action failed
     FeController --> StatisticsDashboardUi: Show error state
 else User authenticated
-    BeController -> SummaryService: GetSummaryAsync(userId)
+    BeController -> IProgressSummaryService: GetSummaryAsync(userId)
+    IProgressSummaryService -> SummaryService: GetSummaryAsync(userId)
     SummaryService -> SummaryService: Build seven-day and month query
-    SummaryService -> SummaryRepository: GetSummaryStatisticsAsync(userId, query)
+    SummaryService -> IProgressSummaryRepository: GetSummaryStatisticsAsync(userId, query)
+    IProgressSummaryRepository -> SummaryRepository: GetSummaryStatisticsAsync(userId, query)
     SummaryRepository -> DbContext: Query session dates
     DbContext -> MySQL: SELECT test_sessions
     MySQL --> DbContext: Session date rows

@@ -8,8 +8,10 @@ boundary "Topics UI" as TopicsPage
 control "TopicsController\n(FE Dashboard)" as DashboardController
 control "AdminTopicsController\n(BE API)" as ApiController
 control "TopicAdminService" as TopicService
+control "ITopicAdminService" as ITopicAdminService
 entity "Topic" as TopicEntity
 control "TopicAdminRepository" as TopicRepository
+control "ITopicAdminRepository" as ITopicAdminRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over TopicsPage, MySQL
@@ -18,13 +20,16 @@ Dashboard calls DeleteTopicAsync through VocaNovaApiClient.
 API endpoint is DELETE /api/admin/topics/{id}.
 No request DTO body is used; API returns bool in the response envelope.
 Delete is soft delete: topic status becomes deleted.
+Interfaces used in code: ITopicAdminService, ITopicAdminRepository.
 end note
 Admin -> TopicsPage: Click Delete topic
 TopicsPage -> DashboardController: POST /topics/{id}/delete
 DashboardController -> ApiController: VocaNovaApiClient.DeleteTopicAsync(id)\nDELETE /api/admin/topics/{id}
 ApiController -> ApiController: Check admin authorization
-ApiController -> TopicService: SoftDeleteAsync(id)
-TopicService -> TopicRepository: SetStatusAsync(id, deleted)
+ApiController -> ITopicAdminService: SoftDeleteAsync(id)
+ITopicAdminService -> TopicService: SoftDeleteAsync(id)
+TopicService -> ITopicAdminRepository: SetStatusAsync(id, deleted)
+ITopicAdminRepository -> TopicRepository: SetStatusAsync(id, deleted)
 TopicRepository -> DbContext: Find topic
 DbContext -> MySQL: SELECT topics
 MySQL --> DbContext: Topic row or null

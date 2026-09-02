@@ -10,8 +10,10 @@ entity "UpdateWordImageRequest\n(BE Request DTO)" as ImageRequestDto
 entity "WordDetailResponse\n(BE Response DTO)" as ImageResponseDto
 control "AdminWordsController\n(BE API)" as ApiController
 control "WordAdminService" as WordService
+control "IWordAdminService" as IWordAdminService
 entity "Word" as WordEntity
 control "WordAdminRepository" as WordRepository
+control "IWordAdminRepository" as IWordAdminRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 note over VocabularyPage, MySQL
@@ -20,6 +22,7 @@ Dashboard route is POST /vocabulary/{id}/image/delete.
 Dashboard VocaNovaApiClient calls PUT /api/admin/words/{id}/image with image_url = null.
 API uses UpdateWordImageRequest and returns WordDetailResponse.
 Delete image clears the word image_url; no storage delete call was found.
+Interfaces used in code: IWordAdminService, IWordAdminRepository.
 end note
 Admin -> VocabularyPage: Click Delete image
 VocabularyPage -> DashboardController: POST /vocabulary/{id}/image/delete
@@ -31,9 +34,11 @@ alt Request validation fails
 ApiController --> DashboardController: HTTP 400 error
 DashboardController --> VocabularyPage: Show error message
 else Request validation success
-ApiController -> WordService: UpdateImageUrlAsync(wordId, null)
+ApiController -> IWordAdminService: UpdateImageUrlAsync(wordId, null)
+IWordAdminService -> WordService: UpdateImageUrlAsync(wordId, null)
 WordService -> WordService: Normalize image URL
-WordService -> WordRepository: SetImageUrlAsync(wordId, null)
+WordService -> IWordAdminRepository: SetImageUrlAsync(wordId, null)
+IWordAdminRepository -> WordRepository: SetImageUrlAsync(wordId, null)
 WordRepository -> DbContext: Find word
 DbContext -> MySQL: SELECT words
 MySQL --> DbContext: Word row or null

@@ -13,12 +13,14 @@ entity "AgeRange / Region /\nOccupation / EducationLevel /\nLearningPurpose\n(FE
 entity "CreateAgeRangeRequest / CreateRegionRequest /\nCreateOccupationRequest / CreateEducationLevelRequest /\nCreateLearningPurposeRequest\n(BE Request DTO)" as BeCreateDto
 entity "AgeRangeResponse / RegionResponse /\nOccupationResponse / EducationLevelResponse /\nLearningPurposeResponse\n(BE Response DTO)" as BeLookupResponseDto
 control "AdminKnnLookupService" as LookupService
+control "IAdminKnnLookupService" as IAdminKnnLookupService
 entity "AgeRange" as AgeRangeEntity
 entity "Region" as RegionEntity
 entity "Occupation" as OccupationEntity
 entity "EducationLevel" as EducationLevelEntity
 entity "LearningPurpose" as LearningPurposeEntity
 control "AdminKnnLookupRepository" as LookupRepository
+control "IAdminKnnLookupRepository" as IAdminKnnLookupRepository
 database "VocaNovaDbContext" as DbContext
 database "MySQL Database" as MySQL
 
@@ -32,6 +34,7 @@ BE create request DTOs and response DTOs exist for each KNN lookup type.
 Create KNN means creating one lookup row under age-ranges, regions, occupations,
 education-levels or learning-purposes.
 Entities exist: AgeRange, Region, Occupation, EducationLevel and LearningPurpose.
+Interfaces used in code: IAdminKnnLookupService, IAdminKnnLookupRepository.
 end note
 
 Admin -> CreateKnnUi: Enter lookup fields
@@ -48,9 +51,11 @@ alt Request invalid
     BeController --> FeController: HTTP 400 error
     FeController --> CreateKnnUi: Show error message
 else Request valid
-    BeController -> LookupService: Create{LookupType}Async(command)
+    BeController -> IAdminKnnLookupService: Create{LookupType}Async(command)
+    IAdminKnnLookupService -> LookupService: Create{LookupType}Async(command)
     LookupService -> LookupService: Normalize and validate fields
-    LookupService -> LookupRepository: Check duplicate name/code
+    LookupService -> IAdminKnnLookupRepository: Check duplicate name/code
+    IAdminKnnLookupRepository -> LookupRepository: Check duplicate name/code
     LookupRepository -> DbContext: Query lookup table
     DbContext -> MySQL: SELECT age_ranges / regions /\noccupations / education_levels /\nlearning_purposes
     MySQL --> DbContext: Duplicate row or null
@@ -62,7 +67,8 @@ else Request valid
         BeController --> FeController: HTTP 400/409 error
         FeController --> CreateKnnUi: Show error message
     else Lookup item can be created
-        LookupService -> LookupRepository: Create lookup row
+        LookupService -> IAdminKnnLookupRepository: Create lookup row
+        IAdminKnnLookupRepository -> LookupRepository: Create lookup row
         LookupRepository -> AgeRangeEntity: Create AgeRange if slug age-ranges
         LookupRepository -> RegionEntity: Create Region if slug regions
         LookupRepository -> OccupationEntity: Create Occupation if slug occupations
