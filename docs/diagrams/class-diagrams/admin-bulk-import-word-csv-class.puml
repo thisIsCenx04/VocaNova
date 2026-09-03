@@ -128,7 +128,7 @@ class Topic <<entity>> {
   "+ WordTopics : ICollectionOfWordTopic"
 }
 
-class WordTopic <<dto>> {
+class WordTopic <<entity>> {
   "+ WordId : uint"
   "+ TopicId : uint"
   "+ IsPrimary : bool"

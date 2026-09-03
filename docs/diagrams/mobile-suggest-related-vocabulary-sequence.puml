@@ -7,8 +7,6 @@ skinparam sequenceMessageAlign center
 
 actor Learner
 boundary "Suggest Related Vocabulary UI" as RelatedUi
-control "WordDetailNotifier\n(FE Mobile)" as FeController
-control "WordDetailApiService\n(FE Mobile)" as FeApiService
 entity "WordDetailDto\n(FE Response DTO)" as FeWordDetailDto
 entity "WordRelationDto\n(FE Response DTO)" as FeRelationDto
 entity "WordDetailResponse\n(BE Response DTO)" as BeWordDetailDto
@@ -26,7 +24,6 @@ database "MySQL Database" as MySQL
 note over RelatedUi, MySQL
 Checked in current code:
 Mobile UI file exists: word_detail_screen.dart.
-FE controller/service exist: WordDetailNotifier and WordDetailApiService.
 FE DTOs exist: WordDetailDto and WordRelationDto.
 BE controller exists: WordsController.
 BE response DTO exists: WordDetailResponse.
@@ -37,9 +34,7 @@ Interfaces used in code: IWordReadService, IWordReadRepository.
 end note
 
 Learner -> RelatedUi: Open related vocabulary area
-RelatedUi -> FeController: load(wordId)
-FeController -> FeApiService: getWord(wordId)
-FeApiService -> BeController: GET /api/words/{id}
+RelatedUi -> BeController: GET /api/words/{id}
 BeController -> IWordReadService: GetByIdAsync(id)
 IWordReadService -> WordService: GetByIdAsync(id)
 WordService -> IWordReadRepository: FindDetailAsync(id)
@@ -52,9 +47,8 @@ alt Word not found
     DbContext --> WordRepository: null
     WordRepository --> WordService: null
     WordService --> BeController: NotFound result
-    BeController --> FeApiService: HTTP 404 error
-    FeApiService --> FeController: Action failed
-    FeController --> RelatedUi: Show error
+    BeController --> RelatedUi: HTTP 404 error
+    RelatedUi --> Learner: Show error
 else Word found
     DbContext -> WordEntity: Read Word
     DbContext -> WordSenseEntity: Read WordSenses
@@ -67,13 +61,12 @@ else Word found
     WordService --> BeController: Word detail result
     BeController -> BeWordDetailDto: Create WordDetailResponse
     BeWordDetailDto --> BeController: WordDetailResponse
-    BeController --> FeApiService: HTTP 200 OK\nWordDetailResponse
-    FeApiService -> FeWordDetailDto: Parse response data
+    BeController --> RelatedUi: HTTP 200 OK\nWordDetailResponse
+    RelatedUi -> FeWordDetailDto: Parse response data
     FeWordDetailDto -> FeRelationDto: Parse relations
     FeRelationDto --> FeWordDetailDto: WordRelation list
-    FeWordDetailDto --> FeApiService: WordDetail
-    FeApiService --> FeController: Word detail
-    FeController --> RelatedUi: Show related vocabulary
+    FeWordDetailDto --> RelatedUi: Word detail
+    RelatedUi --> Learner: Show related vocabulary
 end
 
 @enduml

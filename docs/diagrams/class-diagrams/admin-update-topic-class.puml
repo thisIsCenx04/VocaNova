@@ -100,7 +100,7 @@ class Word <<entity>> {
   "+ AiGradingCaches : ICollectionOfAiGradingCache"
 }
 
-class WordTopic <<dto>> {
+class WordTopic <<entity>> {
   "+ WordId : uint"
   "+ TopicId : uint"
   "+ IsPrimary : bool"

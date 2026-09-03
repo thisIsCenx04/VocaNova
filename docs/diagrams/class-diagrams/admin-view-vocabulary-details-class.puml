@@ -150,7 +150,7 @@ class WordIdiom <<entity>> {
   "+ Word : Word"
 }
 
-class WordTopic <<dto>> {
+class WordTopic <<entity>> {
   "+ WordId : uint"
   "+ TopicId : uint"
   "+ IsPrimary : bool"

@@ -10,18 +10,6 @@ Generated from mobile-suggest-related-vocabulary-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 
-class WordDetailNotifier <<service>> {
-  "+ build() : WordDetailState"
-  "+ saveToWordBook() : FutureOfvoid"
-  "+ load(wordId)"
-}
-
-class WordDetailApiService <<service>> {
-  "+ _dio : Dio"
-  --
-  "+ getWord() : FutureOfWordDetail"
-}
-
 class WordDetailDto <<dto>> {
   "+ wordId : int"
   "+ word : String"
@@ -152,12 +140,10 @@ class VocaNovaDbContext <<dbcontext>> {
 class MySQL_Database <<database>> {
 
 }
-WordDetailNotifier ..> WordDetailApiService : getWord()
-WordDetailApiService ..> WordsController
+WordDetailDto ..> WordsController
 WordReadRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 WordsController ..> WordDetailResponse
-WordDetailApiService ..> WordDetailDto
 WordDetailDto ..> WordRelationDto
 IWordReadService <|.. WordReadService
 WordsController ..> IWordReadService : GetByIdAsync()

@@ -143,7 +143,7 @@ class WordSense <<entity>> {
   "+ WordRelations : ICollectionOfWordRelation"
 }
 
-class WordTopic <<dto>> {
+class WordTopic <<entity>> {
   "+ WordId : uint"
   "+ TopicId : uint"
   "+ IsPrimary : bool"
