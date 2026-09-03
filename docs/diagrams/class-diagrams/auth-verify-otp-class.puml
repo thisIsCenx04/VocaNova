@@ -132,7 +132,6 @@ OtpVerifyRequest ..> AuthController
 AuthController ..> IAuthService : VerifyOtpAsync()
 OtpRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> OtpVerification
 OtpRepository ..> OtpVerification
 AuthController ..> OtpVerifyResponse
 IOtpRepository <|.. OtpRepository

@@ -266,17 +266,12 @@ UsersController ..> AdminUsersController
 AdminUsersController ..> AdminUserQueryRequest
 AdminUserRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> User
-VocaNovaDbContext ..> UserProfile
-VocaNovaDbContext ..> Role
 AdminUsersController ..> AdminUserSummaryResponse
 AdminUsersController ..> AdminUserSummary
 AdminUsersController ..> AdminUserDetailResponse
 AdminUsersController ..> AdminUserDetail
-VocaNovaDbContext ..> Topic
 AdminUsersController ..> AdminUserTopicsResponse
 AdminUsersController ..> AdminUserTopics
-VocaNovaDbContext ..> TestSession
 AdminUsersController ..> AdminUserTestSessionResponse
 AdminUsersController ..> AdminUserTestSession
 AdminUserRepository ..> User
@@ -286,4 +281,8 @@ IAdminUserService <|.. AdminUserService
 AdminUsersController ..> IAdminUserService : GetUsersAsync()
 IAdminUserRepository <|.. AdminUserRepository
 AdminUserService ..> IAdminUserRepository : GetUsersAsync()
+AdminUserRepository ..> UserProfile
+AdminUserRepository ..> Role
+AdminUserRepository ..> Topic
+AdminUserRepository ..> TestSession
 @enduml

@@ -209,14 +209,14 @@ AuthApiService ..> AuthController
 AuthController ..> IAuthService : GetProfileAsync()
 AuthAccountRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> User
-VocaNovaDbContext ..> UserAuth
-VocaNovaDbContext ..> UserProfile
-VocaNovaDbContext ..> Role
-VocaNovaDbContext ..> UserLearningProfile
 AuthController ..> UserProfileResponse
 AuthApiService ..> UserProfileDto
 IAuthAccountRepository <|.. AuthAccountRepository
 AuthService ..> IAuthAccountRepository : GetProfileAsync()
 IAuthService <|.. AuthService
+AuthAccountRepository ..> User
+AuthAccountRepository ..> UserAuth
+AuthAccountRepository ..> UserProfile
+AuthAccountRepository ..> Role
+AuthAccountRepository ..> UserLearningProfile
 @enduml

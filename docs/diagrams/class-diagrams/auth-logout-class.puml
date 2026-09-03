@@ -127,7 +127,6 @@ class IPasswordHasher <<service_interface>> {
 AuthController ..> IAuthService : LogoutAsync()
 RefreshTokenRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> RefreshToken
 RefreshTokenRepository ..> RefreshToken
 RefreshTokenRequest ..> AuthController
 AuthService ..> IPasswordHasher

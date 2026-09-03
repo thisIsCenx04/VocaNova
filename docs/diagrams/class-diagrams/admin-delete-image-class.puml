@@ -140,7 +140,6 @@ VocabularyController ..> UpdateWordImageRequest
 UpdateWordImageRequest ..> AdminWordsController
 WordAdminRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Word
 WordAdminRepository ..> Word
 AdminWordsController ..> WordDetailResponse
 IWordAdminService <|.. WordAdminService

@@ -254,17 +254,12 @@ WordSearchApiService ..> WordsController
 WordsController ..> WordSearchRequest
 WordReadRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Word
-VocaNovaDbContext ..> WordSense
-VocaNovaDbContext ..> WordTopic
 WordsController ..> WordSummaryResponse
 WordSearchApiService ..> WordSummaryDto
 ListDetailNotifier ..> ListsApiService : addWord()
 ListsApiService ..> ListsController
 ListsController ..> AddListWordRequest
 ListMutationRepository ..> VocaNovaDbContext
-VocaNovaDbContext ..> UserList
-VocaNovaDbContext ..> UserListWord
 ListMutationRepository ..> UserListWord
 ListsController ..> ListWordResponse
 ListsApiService ..> ListWordDto
@@ -278,4 +273,8 @@ IWordReadRepository <|.. WordReadRepository
 WordReadService ..> IWordReadRepository : SearchAsync()
 IListMutationRepository <|.. ListMutationRepository
 ListMutationService ..> IListMutationRepository : GetOwnershipAsync()
+ListMutationRepository ..> Word
+ListMutationRepository ..> WordSense
+ListMutationRepository ..> UserList
+WordReadRepository ..> WordTopic
 @enduml

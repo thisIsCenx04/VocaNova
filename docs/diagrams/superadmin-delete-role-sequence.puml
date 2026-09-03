@@ -61,8 +61,7 @@ RoleService --> ApiController: Conflict result
 ApiController --> DashboardController: HTTP 409 error
 DashboardController --> RolesPage: Show error message
 else Role can be deleted
-RoleService -> IRoleManagementService: Begin transaction
-IRoleManagementService -> RoleService: Begin transaction
+RoleService -> RoleService: Begin transaction
 RoleService -> IRoleManagementRepository: DeleteRoleAsync(roleId)
 IRoleManagementRepository -> RoleRepository: DeleteRoleAsync(roleId)
 RoleRepository -> RoleEntity: Remove Role

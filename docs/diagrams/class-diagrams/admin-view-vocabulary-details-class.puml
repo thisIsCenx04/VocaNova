@@ -204,19 +204,19 @@ class MySQL_Database <<database>> {
 VocabularyController ..> WordsController
 WordReadRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Word
-VocaNovaDbContext ..> WordSense
-VocaNovaDbContext ..> WordExample
-VocaNovaDbContext ..> WordRelation
-VocaNovaDbContext ..> WordAudioAsset
-VocaNovaDbContext ..> WordDerivedForm
-VocaNovaDbContext ..> WordIdiom
-VocaNovaDbContext ..> WordTopic
-VocaNovaDbContext ..> Topic
 WordsController ..> WordDetailResponse
 WordsController ..> WordDetail
 IWordReadService <|.. WordReadService
 WordsController ..> IWordReadService : GetByIdAsync()
 IWordReadRepository <|.. WordReadRepository
 WordReadService ..> IWordReadRepository : FindDetailAsync()
+WordReadRepository ..> Word
+WordReadRepository ..> WordSense
+WordReadRepository ..> WordExample
+WordReadRepository ..> WordRelation
+WordReadRepository ..> WordAudioAsset
+WordReadRepository ..> WordDerivedForm
+WordReadRepository ..> WordIdiom
+WordReadRepository ..> Topic
+WordReadRepository ..> WordTopic
 @enduml

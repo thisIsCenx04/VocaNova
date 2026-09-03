@@ -153,9 +153,6 @@ QuizApiService ..> QuizSessionsController
 QuizSessionsController ..> WrongWordsRequest
 QuizHistoryRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> UserWordProgress
-VocaNovaDbContext ..> Word
-VocaNovaDbContext ..> WordSense
 QuizSessionsController ..> WrongWordResponse
 QuizApiService ..> WrongWordDto
 WrongWordsNotifier ..> QuizApiService : removeWrongWord()
@@ -165,4 +162,6 @@ IQuizHistoryService <|.. QuizHistoryService
 QuizSessionsController ..> IQuizHistoryService : GetWrongWordsAsync()
 IQuizHistoryRepository <|.. QuizHistoryRepository
 QuizHistoryService ..> IQuizHistoryRepository : GetWrongWordsAsync()
+QuizHistoryRepository ..> Word
+QuizHistoryRepository ..> WordSense
 @enduml

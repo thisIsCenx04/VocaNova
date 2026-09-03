@@ -294,27 +294,27 @@ class MySQL_Database <<database>> {
 }
 KnnLearningRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> TestSession
 KnnProfileRepository ..> VocaNovaDbContext
-VocaNovaDbContext ..> UserLearningProfile
-VocaNovaDbContext ..> UserTopicPreference
-VocaNovaDbContext ..> AgeRange
-VocaNovaDbContext ..> Region
-VocaNovaDbContext ..> Occupation
-VocaNovaDbContext ..> EducationLevel
-VocaNovaDbContext ..> LearningPurpose
-VocaNovaDbContext ..> Topic
-VocaNovaDbContext ..> UserListWord
-VocaNovaDbContext ..> WordTopic
-VocaNovaDbContext ..> TestAnswer
-VocaNovaDbContext ..> UserWordProgress
 RecommendationsController ..> WordRecommendationResponse
-VocaNovaDbContext ..> Word
-VocaNovaDbContext ..> WordSense
 IKnnLearningService <|.. KnnLearningService
 RecommendationsController ..> IKnnLearningService : GetWordRecommendationsAsync()
 IKnnLearningRepository <|.. KnnLearningRepository
 KnnLearningService ..> IKnnLearningRepository : GetSessionCountAsync()
 IKnnProfileRepository <|.. KnnProfileRepository
 KnnLearningService ..> IKnnProfileRepository : GetProfileVectorSourceAsync()
+KnnLearningRepository ..> TestSession
+KnnLearningRepository ..> UserLearningProfile
+KnnLearningRepository ..> UserTopicPreference
+KnnLearningRepository ..> AgeRange
+KnnLearningRepository ..> Region
+KnnLearningRepository ..> Occupation
+KnnLearningRepository ..> EducationLevel
+KnnLearningRepository ..> LearningPurpose
+KnnLearningRepository ..> Topic
+KnnLearningRepository ..> UserListWord
+KnnLearningRepository ..> TestAnswer
+KnnLearningRepository ..> UserWordProgress
+KnnLearningRepository ..> Word
+KnnLearningRepository ..> WordSense
+KnnLearningRepository ..> WordTopic
 @enduml

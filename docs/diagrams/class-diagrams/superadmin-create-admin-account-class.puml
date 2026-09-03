@@ -147,7 +147,6 @@ AdminAccountsController ..> SuperAdminAccountsController
 SuperAdminAccountsController ..> CreateAdminAccountRequest
 SuperAdminAccountRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Role
 SuperAdminAccountRepository ..> User
 SuperAdminAccountRepository ..> UserAuth
 SuperAdminAccountRepository ..> UserProfile

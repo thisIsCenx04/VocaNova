@@ -69,8 +69,7 @@ SaveRoleRequestDto -> ApiController: POST /api/superadmin/roles\nSaveRoleRequest
 ApiController -> ApiController: Validate SaveRoleRequest
 ApiController -> IRoleManagementService: CreateAsync(role data)
 IRoleManagementService -> RoleService: CreateAsync(role data)
-RoleService -> IRoleManagementService: Normalize and validate role name
-IRoleManagementService -> RoleService: Normalize and validate role name
+RoleService -> RoleService: Normalize and validate role name
 RoleService -> IRoleManagementRepository: RoleExistsAsync(roleName)
 IRoleManagementRepository -> RoleRepository: RoleExistsAsync(roleName)
 RoleRepository -> DbContext: Query role by name
@@ -85,8 +84,7 @@ RoleService --> ApiController: Conflict result
 ApiController --> DashboardController: HTTP 409 error
 DashboardController --> RolesPage: Show error message
 else Role can be created
-RoleService -> IRoleManagementService: Begin transaction
-IRoleManagementService -> RoleService: Begin transaction
+RoleService -> RoleService: Begin transaction
 RoleService -> IRoleManagementRepository: AddRoleAsync(roleName)
 IRoleManagementRepository -> RoleRepository: AddRoleAsync(roleName)
 RoleRepository -> RoleEntity: Create Role
@@ -142,8 +140,7 @@ RoleService --> ApiController: Conflict result
 ApiController --> DashboardController: HTTP 409 error
 DashboardController --> RolesPage: Show error message
 else Role name is available
-RoleService -> IRoleManagementService: Begin transaction
-IRoleManagementService -> RoleService: Begin transaction
+RoleService -> RoleService: Begin transaction
 RoleService -> IRoleManagementRepository: UpdateRoleAsync(roleId, roleName)
 IRoleManagementRepository -> RoleRepository: UpdateRoleAsync(roleId, roleName)
 RoleRepository -> RoleEntity: Update role_name
@@ -195,8 +192,7 @@ RoleService --> ApiController: Conflict result
 ApiController --> DashboardController: HTTP 409 error
 DashboardController --> RolesPage: Show error message
 else Role can be deleted
-RoleService -> IRoleManagementService: Begin transaction
-IRoleManagementService -> RoleService: Begin transaction
+RoleService -> RoleService: Begin transaction
 RoleService -> IRoleManagementRepository: DeleteRoleAsync(roleId)
 IRoleManagementRepository -> RoleRepository: DeleteRoleAsync(roleId)
 RoleRepository -> RoleEntity: Remove Role

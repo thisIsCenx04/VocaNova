@@ -148,13 +148,12 @@ AdminAccountsController ..> RolesController
 RolesController ..> RoleManagementService : GetRolesAsync()
 RoleManagementRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Role
 RolesController ..> ManagedRole
 RolesController ..> RoleManagementService : AssignRoleAsync()
-VocaNovaDbContext ..> User
 RoleManagementRepository ..> User
 RoleManagementRepository ..> RefreshToken
 IRoleManagementRepository <|.. RoleManagementRepository
 RoleManagementService ..> IRoleManagementRepository : GetRolesAsync()
 IRoleManagementService <|.. RoleManagementService
+RoleManagementRepository ..> Role
 @enduml

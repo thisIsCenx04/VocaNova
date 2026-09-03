@@ -140,13 +140,13 @@ ProgressOverviewNotifier ..> ProgressApiService : getSummary()
 ProgressApiService ..> ProgressController
 ProgressSummaryRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> TestSession
-VocaNovaDbContext ..> TestAnswer
-VocaNovaDbContext ..> UserWordProgress
 ProgressController ..> ProgressSummaryResponse
 ProgressApiService ..> ProgressSummaryDto
 IProgressSummaryService <|.. ProgressSummaryService
 ProgressController ..> IProgressSummaryService : GetSummaryAsync()
 IProgressSummaryRepository <|.. ProgressSummaryRepository
 ProgressSummaryService ..> IProgressSummaryRepository : GetSummaryStatisticsAsync()
+ProgressSummaryRepository ..> TestSession
+ProgressSummaryRepository ..> TestAnswer
+ProgressSummaryRepository ..> UserWordProgress
 @enduml

@@ -126,8 +126,6 @@ ProgressApiService ..> ProgressController
 ProgressController ..> ProgressChartRequest
 ProgressAnalyticsRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> TestSession
-VocaNovaDbContext ..> TestAnswer
 ProgressController ..> ProgressChartResponse
 ProgressApiService ..> ProgressChartDto
 ProgressChartRequest ..> ProgressController
@@ -135,4 +133,6 @@ IProgressAnalyticsService <|.. ProgressAnalyticsService
 ProgressController ..> IProgressAnalyticsService : GetChartAsync()
 IProgressAnalyticsRepository <|.. ProgressAnalyticsRepository
 ProgressAnalyticsService ..> IProgressAnalyticsRepository : GetSessionTimesAsync()
+ProgressAnalyticsRepository ..> TestSession
+ProgressAnalyticsRepository ..> TestAnswer
 @enduml

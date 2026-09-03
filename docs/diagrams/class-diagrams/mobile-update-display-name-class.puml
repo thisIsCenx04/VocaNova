@@ -183,8 +183,6 @@ AuthController ..> UpdateUserProfileRequest
 AuthController ..> IAuthService : UpdateProfileAsync()
 AuthAccountRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> User
-VocaNovaDbContext ..> UserProfile
 AuthAccountRepository ..> UserProfile
 AuthAccountRepository ..> User
 AuthController ..> UserProfileResponse

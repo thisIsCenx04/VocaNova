@@ -216,18 +216,13 @@ ProgressApiService ..> ProgressController
 ProgressController ..> ProgressChartRequest
 ProgressAnalyticsRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> TestSession
-VocaNovaDbContext ..> TestAnswer
 ProgressController ..> ProgressChartResponse
 ProgressApiService ..> ProgressChartDto
 ProgressChartsNotifier ..> ProgressApiService : getMasteryBreakdown()
-VocaNovaDbContext ..> UserWordProgress
 ProgressController ..> MasteryBreakdownResponse
 ProgressApiService ..> MasteryBreakdownDto
 ProgressChartsNotifier ..> ProgressApiService : getWeakestWords()
 ProgressController ..> WeakestWordsRequest
-VocaNovaDbContext ..> Word
-VocaNovaDbContext ..> WordSense
 ProgressController ..> WeakestWordResponse
 ProgressApiService ..> WeakestWordDto
 ProgressChartRequest ..> ProgressController
@@ -236,4 +231,9 @@ IProgressAnalyticsService <|.. ProgressAnalyticsService
 ProgressController ..> IProgressAnalyticsService : GetChartAsync()
 IProgressAnalyticsRepository <|.. ProgressAnalyticsRepository
 ProgressAnalyticsService ..> IProgressAnalyticsRepository : GetSessionTimesAsync()
+ProgressAnalyticsRepository ..> TestSession
+ProgressAnalyticsRepository ..> TestAnswer
+ProgressAnalyticsRepository ..> UserWordProgress
+ProgressAnalyticsRepository ..> Word
+ProgressAnalyticsRepository ..> WordSense
 @enduml

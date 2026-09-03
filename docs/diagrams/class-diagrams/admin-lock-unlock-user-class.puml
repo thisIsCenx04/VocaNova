@@ -115,12 +115,11 @@ class MySQL_Database <<database>> {
 UsersController ..> AdminUsersController
 AdminUserRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> User
-VocaNovaDbContext ..> Role
 AdminUserRepository ..> User
 AdminUserRepository ..> RefreshToken
 IAdminUserService <|.. AdminUserService
 AdminUsersController ..> IAdminUserService : DeactivateAsync()
 IAdminUserRepository <|.. AdminUserRepository
 AdminUserService ..> IAdminUserRepository : GetStatusTargetAsync()
+AdminUserRepository ..> Role
 @enduml

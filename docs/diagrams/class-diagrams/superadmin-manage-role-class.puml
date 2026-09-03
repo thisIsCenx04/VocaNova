@@ -10,11 +10,14 @@ Generated from superadmin-manage-role-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 
-class RolesController <<frontend_controller>> {
+class "RolesController" as DashboardRolesController <<frontend_controller>> {
   "- _apiClient : IVocaNovaApiClient"
   --
+  "+ Index(search: stringNullable, type: stringNullable, sortBy: stringNullable, sortDirection: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult"
   "+ Create() : IActionResult"
   "+ Create(model: SaveRoleViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ Edit(roleId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ Edit(roleId: uint, model: SaveRoleViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult"
   "+ Delete(roleId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
@@ -41,15 +44,26 @@ class RoleResponse <<dto>> {
   "+ RoleName : string"
 }
 
-class BackendRolesController <<backend_controller>> {
-  "- _apiClient : IVocaNovaApiClient"
+class "RolesController" as BackendRolesController <<backend_controller>> {
+  "- _service : IRoleManagementService"
   --
-  "+ Create() : IActionResult"
-  "+ Create(model: SaveRoleViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ List(query: RoleQueryRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ Create(request: SaveRoleRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ Update(roleId: uint, request: SaveRoleRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
   "+ Delete(roleId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ Users(roleId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ Assign(roleId: uint, userId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ Remove(roleId: uint, userId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
 class IRoleManagementService <<service_interface>> {
+  "+ GetRolesAsync(query: RoleQuery, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfRoleModel"
+  "+ CreateAsync(request: SaveRoleModel, cancellationToken: CancellationToken) : TaskOfResultOfRoleModel"
+  "+ UpdateAsync(roleId: uint, request: SaveRoleModel, cancellationToken: CancellationToken) : TaskOfResultOfRoleModel"
+  "+ DeleteAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+  "+ GetUsersAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfResultOfIReadOnlyCollectionOfRoleUserModel"
+  "+ AssignRoleAsync(roleId: uint, userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+  "+ RemoveRoleAsync(roleId: uint, userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
 }
 
 class RoleManagementService <<service>> {
@@ -135,23 +149,22 @@ class VocaNovaDbContext <<dbcontext>> {
 class MySQL_Database <<database>> {
 
 }
-RolesController ..> RoleQueryRequest
+DashboardRolesController ..> RoleQueryRequest
 RoleQueryRequest ..> BackendRolesController
-BackendRolesController ..> RoleManagementService : GetRolesAsync()
+BackendRolesController ..> IRoleManagementService : GetRolesAsync()
 RoleManagementRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Role
 BackendRolesController ..> RoleResponse
 BackendRolesController ..> ManagedRole
-RolesController ..> SaveRoleRequest
+DashboardRolesController ..> SaveRoleRequest
 SaveRoleRequest ..> BackendRolesController
-BackendRolesController ..> RoleManagementService : CreateAsync()
+BackendRolesController ..> IRoleManagementService : CreateAsync()
 RoleManagementRepository ..> Role
-BackendRolesController ..> RoleManagementService : UpdateAsync()
-RolesController ..> BackendRolesController
-BackendRolesController ..> RoleManagementService : DeleteAsync()
-VocaNovaDbContext ..> User
+BackendRolesController ..> IRoleManagementService : UpdateAsync()
+DashboardRolesController ..> BackendRolesController
+BackendRolesController ..> IRoleManagementService : DeleteAsync()
 IRoleManagementRepository <|.. RoleManagementRepository
 RoleManagementService ..> IRoleManagementRepository : GetRolesAsync()
 IRoleManagementService <|.. RoleManagementService
+RoleManagementRepository ..> User
 @enduml

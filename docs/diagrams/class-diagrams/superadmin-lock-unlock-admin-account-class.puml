@@ -111,7 +111,6 @@ class MySQL_Database <<database>> {
 AdminAccountsController ..> SuperAdminAccountsController
 SuperAdminAccountRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> User
 SuperAdminAccountRepository ..> RefreshToken
 SuperAdminAccountRepository ..> User
 ISuperAdminAccountService <|.. SuperAdminAccountService

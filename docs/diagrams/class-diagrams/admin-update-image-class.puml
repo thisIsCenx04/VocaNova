@@ -166,7 +166,6 @@ VocabularyController ..> UploadWordImageRequest
 UploadWordImageRequest ..> AdminWordsController
 WordAdminRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Word
 WordAdminRepository ..> Word
 AdminWordsController ..> WordDetailResponse
 VocabularyController ..> WordDetail

@@ -17,12 +17,19 @@ class RolesController <<frontend_controller>> {
 }
 
 class BackendRolesController <<backend_controller>> {
-  "- _apiClient : IVocaNovaApiClient"
+  "- _service : IRoleManagementService"
   --
   "+ Delete(roleId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
 class IRoleManagementService <<service_interface>> {
+  "+ GetRolesAsync(query: RoleQuery, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfRoleModel"
+  "+ CreateAsync(request: SaveRoleModel, cancellationToken: CancellationToken) : TaskOfResultOfRoleModel"
+  "+ UpdateAsync(roleId: uint, request: SaveRoleModel, cancellationToken: CancellationToken) : TaskOfResultOfRoleModel"
+  "+ DeleteAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+  "+ GetUsersAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfResultOfIReadOnlyCollectionOfRoleUserModel"
+  "+ AssignRoleAsync(roleId: uint, userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+  "+ RemoveRoleAsync(roleId: uint, userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
 }
 
 class RoleManagementService <<service>> {
@@ -101,13 +108,12 @@ class MySQL_Database <<database>> {
 
 }
 RolesController ..> BackendRolesController
-BackendRolesController ..> RoleManagementService : DeleteAsync()
+BackendRolesController ..> IRoleManagementService : DeleteAsync()
 RoleManagementRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Role
-VocaNovaDbContext ..> User
 RoleManagementRepository ..> Role
 IRoleManagementRepository <|.. RoleManagementRepository
 RoleManagementService ..> IRoleManagementRepository : GetRoleNameAsync()
 IRoleManagementService <|.. RoleManagementService
+RoleManagementRepository ..> User
 @enduml

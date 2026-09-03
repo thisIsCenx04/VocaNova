@@ -156,9 +156,6 @@ WordDetailNotifier ..> WordDetailApiService : getWord()
 WordDetailApiService ..> WordsController
 WordReadRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Word
-VocaNovaDbContext ..> WordSense
-VocaNovaDbContext ..> WordRelation
 WordsController ..> WordDetailResponse
 WordDetailApiService ..> WordDetailDto
 WordDetailDto ..> WordRelationDto
@@ -166,4 +163,7 @@ IWordReadService <|.. WordReadService
 WordsController ..> IWordReadService : GetByIdAsync()
 IWordReadRepository <|.. WordReadRepository
 WordReadService ..> IWordReadRepository : FindDetailAsync()
+WordReadRepository ..> Word
+WordReadRepository ..> WordSense
+WordReadRepository ..> WordRelation
 @enduml

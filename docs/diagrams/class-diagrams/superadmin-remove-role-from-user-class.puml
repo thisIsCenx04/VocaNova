@@ -112,11 +112,10 @@ class MySQL_Database <<database>> {
 RolesController ..> RoleManagementService : RemoveRoleAsync()
 RoleManagementRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Role
-VocaNovaDbContext ..> User
 RoleManagementRepository ..> User
 RoleManagementRepository ..> RefreshToken
 IRoleManagementRepository <|.. RoleManagementRepository
 RoleManagementService ..> IRoleManagementRepository : GetRoleNameAsync()
 IRoleManagementService <|.. RoleManagementService
+RoleManagementRepository ..> Role
 @enduml

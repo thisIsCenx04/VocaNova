@@ -205,8 +205,6 @@ class MySQL_Database <<database>> {
 AuthController ..> IAuthService : LoginAsync()
 AuthAccountRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> User
-VocaNovaDbContext ..> UserAuth
 RefreshTokenRepository ..> RefreshToken
 RefreshTokenRepository ..> VocaNovaDbContext
 AuthController ..> TokenResponse
@@ -219,4 +217,6 @@ AuthService ..> IAuthAccountRepository : FindByPhoneAsync()
 IRefreshTokenRepository <|.. RefreshTokenRepository
 AuthService ..> IRefreshTokenRepository : StageCreateAsync()
 IAuthService <|.. AuthService
+AuthAccountRepository ..> User
+AuthAccountRepository ..> UserAuth
 @enduml

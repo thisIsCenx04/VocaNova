@@ -101,11 +101,11 @@ class MySQL_Database <<database>> {
 QuizSessionsController ..> QuizHistoryRequest
 QuizHistoryRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> TestSession
 QuizSessionsController ..> QuizHistoryItemResponse
 QuizHistoryRequest ..> QuizSessionsController
 IQuizHistoryService <|.. QuizHistoryService
 QuizSessionsController ..> IQuizHistoryService : GetHistoryAsync()
 IQuizHistoryRepository <|.. QuizHistoryRepository
 QuizHistoryService ..> IQuizHistoryRepository : GetHistoryAsync()
+QuizHistoryRepository ..> TestSession
 @enduml

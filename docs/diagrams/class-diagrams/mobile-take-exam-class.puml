@@ -273,13 +273,7 @@ QuizApiService ..> QuizSessionsController
 QuizSessionsController ..> CreateSessionRequest
 QuizPoolRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> UserListWord
-VocaNovaDbContext ..> UserList
-VocaNovaDbContext ..> Word
-VocaNovaDbContext ..> WordTopic
-VocaNovaDbContext ..> UserWordProgress
 QuizQuestionRepository ..> VocaNovaDbContext
-VocaNovaDbContext ..> WordSense
 QuizSessionRepository ..> TestSession
 QuizSessionRepository ..> TestSessionTopic
 QuizSessionRepository ..> VocaNovaDbContext
@@ -300,4 +294,12 @@ IQuizQuestionRepository <|.. QuizQuestionRepository
 QuizQuestionBuilder ..> IQuizQuestionRepository : FindQuestionWordAsync()
 IQuizSessionRepository <|.. QuizSessionRepository
 QuizSessionService ..> IQuizSessionRepository : CreateAsync()
+QuizPoolRepository ..> QuizSessionBuilder
+QuizQuestionRepository ..> QuizQuestionBuilder
+QuizPoolRepository ..> UserListWord
+QuizPoolRepository ..> UserList
+QuizPoolRepository ..> Word
+QuizPoolRepository ..> UserWordProgress
+QuizPoolRepository ..> WordSense
+QuizPoolRepository ..> WordTopic
 @enduml

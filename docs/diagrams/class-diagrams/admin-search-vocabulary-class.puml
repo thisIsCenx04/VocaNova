@@ -226,10 +226,6 @@ VocabularyController ..> AdminWordsController
 AdminWordsController ..> AdminWordQueryRequest
 WordAdminRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Word
-VocaNovaDbContext ..> WordSense
-VocaNovaDbContext ..> WordTopic
-VocaNovaDbContext ..> Topic
 AdminWordsController ..> AdminWordListItemResponse
 AdminWordsController ..> WordListItem
 VocabularyController ..> TopicsController
@@ -245,4 +241,8 @@ WordAdminService ..> IWordAdminRepository : SearchAsync()
 ITopicReadRepository <|.. TopicReadRepository
 TopicReadService ..> ITopicReadRepository : GetTopicsAsync()
 ITopicReadService <|.. TopicReadService
+TopicReadRepository ..> Word
+TopicReadRepository ..> WordSense
+TopicReadRepository ..> Topic
+WordAdminRepository ..> WordTopic
 @enduml

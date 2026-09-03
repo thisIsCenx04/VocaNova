@@ -207,15 +207,10 @@ class MySQL_Database <<database>> {
 DashboardController ..> AdminStatsController
 AdminStatsRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> User
-VocaNovaDbContext ..> Word
-VocaNovaDbContext ..> TestSession
 AdminStatsController ..> AdminDashboardStatsResponse
 AdminStatsController ..> DashboardStats
-VocaNovaDbContext ..> TestAnswer
 AdminStatsController ..> AdminLearningStatsResponse
 AdminStatsController ..> LearningStats
-VocaNovaDbContext ..> UserWordProgress
 AdminStatsController ..> AdminMasteryDistributionResponse
 AdminStatsController ..> MasteryDistribution
 AdminStatsController ..> AdminActivityTrendResponse
@@ -224,4 +219,9 @@ IAdminStatsService <|.. AdminStatsService
 AdminStatsController ..> IAdminStatsService : GetDashboardAsync()
 IAdminStatsRepository <|.. AdminStatsRepository
 AdminStatsService ..> IAdminStatsRepository : GetDashboardStatsAsync()
+AdminStatsRepository ..> User
+AdminStatsRepository ..> Word
+AdminStatsRepository ..> TestSession
+AdminStatsRepository ..> TestAnswer
+AdminStatsRepository ..> UserWordProgress
 @enduml

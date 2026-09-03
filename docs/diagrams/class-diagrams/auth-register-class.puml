@@ -236,16 +236,10 @@ class MySQL_Database <<database>> {
 }
 AuthAccountRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> User
-VocaNovaDbContext ..> UserAuth
-VocaNovaDbContext ..> OtpVerification
-VocaNovaDbContext ..> Role
 AuthAccountRepository ..> User
 AuthAccountRepository ..> UserAuth
 AuthAccountRepository ..> UserProfile
 AuthAccountRepository ..> UserLearningProfile
-VocaNovaDbContext ..> UserProfile
-VocaNovaDbContext ..> UserLearningProfile
 AuthAccountRepository ..> OtpVerification
 AuthAccountRepository ..> RefreshToken
 AuthController ..> TokenResponse
@@ -257,4 +251,5 @@ IPasswordHasher <|.. BcryptPasswordHasher
 AuthService ..> IPasswordHasher : Hash()
 IAuthAccountRepository <|.. AuthAccountRepository
 AuthService ..> IAuthAccountRepository : FindByPhoneAsync()
+AuthAccountRepository ..> Role
 @enduml

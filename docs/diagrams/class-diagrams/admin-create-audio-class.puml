@@ -172,7 +172,6 @@ VocabularyController ..> UploadWordAudioRequest
 UploadWordAudioRequest ..> AdminWordsController
 WordAdminRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Word
 WordAdminRepository ..> WordAudioAsset
 AdminWordsController ..> WordAudioResponse
 VocabularyController ..> WordDetail
@@ -181,4 +180,5 @@ AdminWordsController ..> IWordAdminService : UploadAudioAsync()
 WordAdminService ..> IWordAudioStorage : UploadAsync()
 IWordAdminRepository <|.. WordAdminRepository
 WordAdminService ..> IWordAdminRepository : WordExistsAsync()
+WordAdminRepository ..> Word
 @enduml

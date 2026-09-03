@@ -291,9 +291,6 @@ QuizApiService ..> QuizSessionsController
 QuizSessionsController ..> WrongWordsRequest
 QuizHistoryRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> UserWordProgress
-VocaNovaDbContext ..> Word
-VocaNovaDbContext ..> WordSense
 QuizSessionsController ..> WrongWordResponse
 QuizApiService ..> WrongWordDto
 QuizConfigNotifier ..> QuizApiService : createSession()
@@ -325,4 +322,9 @@ QuizQuestionBuilder ..> IQuizQuestionRepository : FindQuestionWordAsync()
 IQuizSessionRepository <|.. QuizSessionRepository
 QuizSessionService ..> IQuizSessionRepository : CreateSessionAsync()
 IQuizQuestionBuilder <|.. QuizQuestionBuilder
+QuizPoolRepository ..> QuizSessionBuilder
+QuizQuestionRepository ..> QuizQuestionBuilder
+QuizHistoryRepository ..> UserWordProgress
+QuizHistoryRepository ..> Word
+QuizHistoryRepository ..> WordSense
 @enduml

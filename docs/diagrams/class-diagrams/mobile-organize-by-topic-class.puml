@@ -251,19 +251,13 @@ class MySQL_Database <<database>> {
 WordSearchApiService ..> PersonalTopicsController
 PersonalTopicQueryRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Topic
-VocaNovaDbContext ..> UserList
-VocaNovaDbContext ..> UserListWord
 PersonalTopicsController ..> PersonalTopicResponse
 WordSearchApiService ..> PersonalTopicSummaryDto
-VocaNovaDbContext ..> Word
-VocaNovaDbContext ..> WordSense
 PersonalTopicsController ..> ListWordResponse
 WordSearchApiService ..> WordSummaryDto
 WordDetailApiService ..> PersonalTopicsController
 PersonalTopicsController ..> AddPersonalTopicWordRequest
 PersonalTopicMutationRepository ..> VocaNovaDbContext
-VocaNovaDbContext ..> WordTopic
 ListMutationRepository ..> UserListWord
 ListMutationRepository ..> VocaNovaDbContext
 WordDetailApiService ..> PersonalTopicSummaryDto
@@ -278,4 +272,9 @@ IPersonalTopicMutationRepository <|.. PersonalTopicMutationRepository
 PersonalTopicMutationService ..> IPersonalTopicMutationRepository : TopicExistsAsync()
 IListMutationRepository <|.. ListMutationRepository
 PersonalTopicMutationService ..> IListMutationRepository : RemoveWordAsync()
+ListMutationRepository ..> Topic
+ListMutationRepository ..> UserList
+ListMutationRepository ..> Word
+ListMutationRepository ..> WordSense
+PersonalTopicQueryRepository ..> WordTopic
 @enduml

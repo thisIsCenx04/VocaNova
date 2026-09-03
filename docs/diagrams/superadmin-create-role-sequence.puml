@@ -50,8 +50,7 @@ else Form input valid
     else Request validation success
         BeController -> IRoleManagementService: CreateAsync(role data)
         IRoleManagementService -> RoleService: CreateAsync(role data)
-        RoleService -> IRoleManagementService: Normalize and validate role name
-        IRoleManagementService -> RoleService: Normalize and validate role name
+        RoleService -> RoleService: Normalize and validate role name
 
         alt Role name invalid
             RoleService --> BeController: Validation failure
@@ -73,8 +72,7 @@ else Form input valid
                 BeController --> FeController: HTTP 409 error
                 FeController --> CreateRolePage: Show error message
             else Role can be created
-                RoleService -> IRoleManagementService: Begin transaction
-                IRoleManagementService -> RoleService: Begin transaction
+                RoleService -> RoleService: Begin transaction
                 RoleService -> IRoleManagementRepository: AddRoleAsync(roleName)
                 IRoleManagementRepository -> RoleRepository: AddRoleAsync(roleName)
                 RoleRepository -> RoleEntity: Create Role

@@ -192,7 +192,6 @@ VocabularyController ..> AdminWordsController
 AdminWordsController ..> CreateWordRequest
 WordAdminRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Word
 WordAdminRepository ..> Word
 WordAdminRepository ..> VocaNovaDbContext : FindDetailAsync()
 AdminWordsController ..> WordDetailResponse

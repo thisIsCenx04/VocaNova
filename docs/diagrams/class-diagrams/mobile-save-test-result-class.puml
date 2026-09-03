@@ -291,13 +291,8 @@ QuizApiService ..> QuizSessionsController
 QuizSessionsController ..> SubmitAnswerRequest
 QuizSubmissionRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> TestSession
-VocaNovaDbContext ..> TestAnswer
 QuizQuestionRepository ..> VocaNovaDbContext
-VocaNovaDbContext ..> Word
-VocaNovaDbContext ..> WordSense
 SrsRepository ..> VocaNovaDbContext
-VocaNovaDbContext ..> UserWordProgress
 SrsRepository ..> UserWordProgress
 QuizSubmissionService ..> TestSession
 QuizSubmissionRepository ..> TestAnswer
@@ -325,4 +320,7 @@ ISrsRepository <|.. SrsRepository
 SrsService ..> ISrsRepository : FindAsync()
 IQuizResultRepository <|.. QuizResultRepository
 QuizResultService ..> IQuizResultRepository : GetSessionAsync()
+QuizQuestionRepository ..> QuizQuestionBuilder
+QuizQuestionRepository ..> Word
+QuizQuestionRepository ..> WordSense
 @enduml

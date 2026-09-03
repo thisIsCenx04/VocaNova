@@ -194,8 +194,6 @@ VocabularyController ..> AdminWordsController
 AdminWordsController ..> ImportWordsRequest
 WordAdminRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Word
-VocaNovaDbContext ..> Topic
 WordAdminRepository ..> WordSense
 WordAdminRepository ..> WordExample
 WordAdminRepository ..> WordTopic
@@ -207,4 +205,6 @@ IWordAdminService <|.. WordAdminService
 AdminWordsController ..> IWordAdminService : ImportCsvAsync()
 IWordAdminRepository <|.. WordAdminRepository
 WordAdminService ..> IWordAdminRepository
+WordAdminRepository ..> Word
+WordAdminRepository ..> Topic
 @enduml

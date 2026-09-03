@@ -90,7 +90,6 @@ class MySQL_Database <<database>> {
 TopicsController ..> AdminTopicsController
 TopicAdminRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Topic
 TopicAdminRepository ..> Topic
 ITopicAdminService <|.. TopicAdminService
 AdminTopicsController ..> ITopicAdminService : SoftDeleteAsync()

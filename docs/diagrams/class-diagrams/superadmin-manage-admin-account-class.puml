@@ -200,10 +200,6 @@ AdminAccountsController ..> AdminAccountQueryRequest
 AdminAccountQueryRequest ..> SuperAdminAccountsController
 SuperAdminAccountRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> User
-VocaNovaDbContext ..> UserAuth
-VocaNovaDbContext ..> UserProfile
-VocaNovaDbContext ..> Role
 SuperAdminAccountsController ..> AdminAccountResponse
 SuperAdminAccountsController ..> AdminAccount
 AdminAccountsController ..> CreateAdminAccountRequest

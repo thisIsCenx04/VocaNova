@@ -256,9 +256,6 @@ class MySQL_Database <<database>> {
 VocabularyController ..> WordsController
 WordReadRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Word
-VocaNovaDbContext ..> WordSense
-VocaNovaDbContext ..> WordExample
 WordsController ..> WordDetailResponse
 WordsController ..> WordDetail
 VocabularyController ..> AdminWordsController

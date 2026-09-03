@@ -179,11 +179,6 @@ class MySQL_Database <<database>> {
 KnnController ..> AdminKnnController
 AdminKnnLookupRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> AgeRange
-VocaNovaDbContext ..> Region
-VocaNovaDbContext ..> Occupation
-VocaNovaDbContext ..> EducationLevel
-VocaNovaDbContext ..> LearningPurpose
 AdminKnnLookupRepository ..> AgeRange
 AdminKnnLookupRepository ..> Region
 AdminKnnLookupRepository ..> Occupation

@@ -143,8 +143,6 @@ TopicsController ..> CreateTopicRequest
 CreateTopicRequest ..> AdminTopicsController
 TopicAdminRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Topic
-VocaNovaDbContext ..> Word
 TopicAdminRepository ..> Topic
 TopicAdminRepository ..> WordTopic
 AdminTopicsController ..> TopicSummaryResponse
@@ -152,4 +150,5 @@ ITopicAdminService <|.. TopicAdminService
 AdminTopicsController ..> ITopicAdminService : CreateAsync()
 ITopicAdminRepository <|.. TopicAdminRepository
 TopicAdminService ..> ITopicAdminRepository : NameExistsAsync()
+TopicAdminRepository ..> Word
 @enduml

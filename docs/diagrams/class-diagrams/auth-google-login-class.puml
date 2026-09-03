@@ -204,19 +204,16 @@ class MySQL_Database <<database>> {
 AuthController ..> IAuthService : GoogleLoginAsync()
 AuthAccountRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> User
-VocaNovaDbContext ..> UserAuth
 AuthAccountRepository ..> RefreshToken
 AuthController ..> TokenResponse
 AuthController ..> AuthTokensDto
-VocaNovaDbContext ..> Role
 AuthAccountRepository ..> User
 AuthAccountRepository ..> UserAuth
 AuthAccountRepository ..> UserProfile
-VocaNovaDbContext ..> UserProfile
 GoogleAuthService ..> GoogleLoginRequest
 GoogleLoginRequest ..> AuthController
 IAuthAccountRepository <|.. AuthAccountRepository
 AuthService ..> IAuthAccountRepository : FindByGoogleSubjectAsync()
 IAuthService <|.. AuthService
+AuthAccountRepository ..> Role
 @enduml

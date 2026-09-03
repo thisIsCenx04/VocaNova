@@ -206,20 +206,20 @@ class MySQL_Database <<database>> {
 StatisticsController ..> AdminStatsController
 AdminStatsRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> TestAnswer
-VocaNovaDbContext ..> Word
-VocaNovaDbContext ..> TestSession
 AdminStatsController ..> AdminLearningStatsResponse
 AdminStatsController ..> LearningStats
-VocaNovaDbContext ..> UserLearningProfile
-VocaNovaDbContext ..> User
-VocaNovaDbContext ..> AgeRange
-VocaNovaDbContext ..> Occupation
-VocaNovaDbContext ..> EducationLevel
 AdminStatsController ..> AdminDemographicsResponse
 AdminStatsController ..> Demographics
 IAdminStatsService <|.. AdminStatsService
 AdminStatsController ..> IAdminStatsService : GetLearningStatsAsync()
 IAdminStatsRepository <|.. AdminStatsRepository
 AdminStatsService ..> IAdminStatsRepository : GetTopWrongWordsAsync()
+AdminStatsRepository ..> TestAnswer
+AdminStatsRepository ..> Word
+AdminStatsRepository ..> TestSession
+AdminStatsRepository ..> UserLearningProfile
+AdminStatsRepository ..> User
+AdminStatsRepository ..> AgeRange
+AdminStatsRepository ..> Occupation
+AdminStatsRepository ..> EducationLevel
 @enduml

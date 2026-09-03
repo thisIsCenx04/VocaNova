@@ -116,7 +116,6 @@ class MySQL_Database <<database>> {
 VocabularyController ..> AdminWordsController
 WordAdminRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> WordAudioAsset
 WordAdminRepository ..> WordAudioAsset
 IWordAdminService <|.. WordAdminService
 AdminWordsController ..> IWordAdminService : SoftDeleteAudioAsync()

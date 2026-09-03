@@ -148,12 +148,11 @@ class MySQL_Database <<database>> {
 VocabularyController ..> AdminWordsController
 WordAdminRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> Word
 WordAdminRepository ..> Word
-VocaNovaDbContext ..> UserListWord
-VocaNovaDbContext ..> UserWordProgress
 IWordAdminService <|.. WordAdminService
 AdminWordsController ..> IWordAdminService : SoftDeleteAsync()
 IWordAdminRepository <|.. WordAdminRepository
 WordAdminService ..> IWordAdminRepository : SetWordStatusAsync()
+WordAdminRepository ..> UserListWord
+WordAdminRepository ..> UserWordProgress
 @enduml

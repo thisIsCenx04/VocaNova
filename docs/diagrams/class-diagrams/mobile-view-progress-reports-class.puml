@@ -125,12 +125,12 @@ class MySQL_Database <<database>> {
 }
 ProgressAnalyticsRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-VocaNovaDbContext ..> UserWordProgress
-VocaNovaDbContext ..> Word
-VocaNovaDbContext ..> WordSense
 ProgressController ..> WordProgressResponse
 IProgressAnalyticsService <|.. ProgressAnalyticsService
 ProgressController ..> IProgressAnalyticsService : GetWordProgressAsync()
 IProgressAnalyticsRepository <|.. ProgressAnalyticsRepository
 ProgressAnalyticsService ..> IProgressAnalyticsRepository : GetWordProgressStatisticsAsync()
+ProgressAnalyticsRepository ..> UserWordProgress
+ProgressAnalyticsRepository ..> Word
+ProgressAnalyticsRepository ..> WordSense
 @enduml
