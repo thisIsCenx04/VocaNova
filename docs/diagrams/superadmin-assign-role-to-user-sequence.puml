@@ -107,8 +107,7 @@ DbContext -> RoleEntity: Materialize Role
 RoleEntity --> DbContext: Role
 DbContext --> RoleRepository: Result
 RoleRepository --> RoleService: current role id
-RoleService -> IRoleManagementService: Begin transaction
-IRoleManagementService -> RoleService: Begin transaction
+RoleService -> RoleService: Begin transaction
 RoleService -> IRoleManagementRepository: AssignRoleAsync(roleId, userId)
 IRoleManagementRepository -> RoleRepository: AssignRoleAsync(roleId, userId)
 RoleRepository -> UserEntity: Set RoleId

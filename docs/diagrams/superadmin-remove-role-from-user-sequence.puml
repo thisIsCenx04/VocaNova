@@ -73,8 +73,7 @@ alt User does not have this role
 RoleService --> ApiController: NotFound result
 ApiController --> SuperAdmin: HTTP 404 error
 else User has this role
-RoleService -> IRoleManagementService: Begin transaction
-IRoleManagementService -> RoleService: Begin transaction
+RoleService -> RoleService: Begin transaction
 RoleService -> IRoleManagementRepository: RemoveRoleAsync(roleId, userId, defaultRoleId)
 IRoleManagementRepository -> RoleRepository: RemoveRoleAsync(roleId, userId, defaultRoleId)
 RoleRepository -> UserEntity: Set RoleId = defaultRoleId

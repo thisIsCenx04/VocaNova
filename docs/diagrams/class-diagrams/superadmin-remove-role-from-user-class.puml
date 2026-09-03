@@ -10,14 +10,20 @@ Generated from superadmin-remove-role-from-user-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 
-class RolesController <<backend_controller>> {
-  "- _apiClient : IVocaNovaApiClient"
+class "RolesController" as BackendRolesController <<backend_controller>> {
+  "- _service : IRoleManagementService"
   --
-  "+ Index(search: stringNullable, type: stringNullable, sortBy: stringNullable, sortDirection: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult"
-  "+ Create() : IActionResult"
+  "+ Remove(roleId: uint, userId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
 class IRoleManagementService <<service_interface>> {
+  "+ GetRolesAsync(query: RoleQuery, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfRoleModel"
+  "+ CreateAsync(request: SaveRoleModel, cancellationToken: CancellationToken) : TaskOfResultOfRoleModel"
+  "+ UpdateAsync(roleId: uint, request: SaveRoleModel, cancellationToken: CancellationToken) : TaskOfResultOfRoleModel"
+  "+ DeleteAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+  "+ GetUsersAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfResultOfIReadOnlyCollectionOfRoleUserModel"
+  "+ AssignRoleAsync(roleId: uint, userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+  "+ RemoveRoleAsync(roleId: uint, userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
 }
 
 class RoleManagementService <<service>> {
@@ -109,7 +115,7 @@ class VocaNovaDbContext <<dbcontext>> {
 class MySQL_Database <<database>> {
 
 }
-RolesController ..> RoleManagementService : RemoveRoleAsync()
+BackendRolesController ..> IRoleManagementService : RemoveRoleAsync()
 RoleManagementRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 RoleManagementRepository ..> User

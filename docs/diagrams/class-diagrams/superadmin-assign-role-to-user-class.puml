@@ -41,14 +41,21 @@ class AdminUsersController <<backend_controller>> {
   "+ GetUserDetail(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
-class RolesController <<backend_controller>> {
-  "- _apiClient : IVocaNovaApiClient"
+class "RolesController" as BackendRolesController <<backend_controller>> {
+  "- _service : IRoleManagementService"
   --
-  "+ Index(search: stringNullable, type: stringNullable, sortBy: stringNullable, sortDirection: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult"
-  "+ Create() : IActionResult"
+  "+ List(query: RoleQueryRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ Assign(roleId: uint, userId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
 class IRoleManagementService <<service_interface>> {
+  "+ GetRolesAsync(query: RoleQuery, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfRoleModel"
+  "+ CreateAsync(request: SaveRoleModel, cancellationToken: CancellationToken) : TaskOfResultOfRoleModel"
+  "+ UpdateAsync(roleId: uint, request: SaveRoleModel, cancellationToken: CancellationToken) : TaskOfResultOfRoleModel"
+  "+ DeleteAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+  "+ GetUsersAsync(roleId: uint, cancellationToken: CancellationToken) : TaskOfResultOfIReadOnlyCollectionOfRoleUserModel"
+  "+ AssignRoleAsync(roleId: uint, userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+  "+ RemoveRoleAsync(roleId: uint, userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfbool"
 }
 
 class RoleManagementService <<service>> {
@@ -144,12 +151,12 @@ class MySQL_Database <<database>> {
 }
 AdminAccountsController ..> AdminUsersController
 AdminUsersController ..> AdminUserSummary
-AdminAccountsController ..> RolesController
-RolesController ..> RoleManagementService : GetRolesAsync()
+AdminAccountsController ..> BackendRolesController
+BackendRolesController ..> IRoleManagementService : GetRolesAsync()
 RoleManagementRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
-RolesController ..> ManagedRole
-RolesController ..> RoleManagementService : AssignRoleAsync()
+BackendRolesController ..> ManagedRole
+BackendRolesController ..> IRoleManagementService : AssignRoleAsync()
 RoleManagementRepository ..> User
 RoleManagementRepository ..> RefreshToken
 IRoleManagementRepository <|.. RoleManagementRepository
