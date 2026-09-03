@@ -6,20 +6,20 @@ import 'package:mocktail/mocktail.dart';
 import 'package:vocanova_mobile/core/network/app_exception.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
-import 'package:vocanova_mobile/features/auth/data/auth_repository.dart';
-import 'package:vocanova_mobile/features/auth/domain/onboarding_catalog.dart';
-import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
+import 'package:vocanova_mobile/features/auth/data/services/auth_api_service.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/onboarding_catalog.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/user_profile.dart';
 import 'package:vocanova_mobile/features/auth/presentation/onboarding_screen.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/data/word_search_repository.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/data/services/word_search_api_service.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late MockAuthRepository repository;
-  late MockWordSearchRepository wordSearchRepository;
+  late MockAuthApiService repository;
+  late MockWordSearchApiService wordSearchApiService;
   late MockLocalStorage localStorage;
 
   setUpAll(() {
@@ -28,8 +28,8 @@ void main() {
 
   setUp(() async {
     localStorage = MockLocalStorage();
-    repository = MockAuthRepository();
-    wordSearchRepository = MockWordSearchRepository();
+    repository = MockAuthApiService();
+    wordSearchApiService = MockWordSearchApiService();
     when(
       () => localStorage.setWithTtl<String>(any(), any()),
     ).thenAnswer((_) async {});
@@ -45,22 +45,22 @@ void main() {
         ],
       ),
     );
-    when(() => wordSearchRepository.getTopics()).thenAnswer(
+    when(() => wordSearchApiService.getTopics()).thenAnswer(
       (_) async => const [
         TopicSummary(topicId: 11, name: 'Travel', wordCount: 20),
         TopicSummary(topicId: 12, name: 'Business', wordCount: 30),
       ],
     );
-    when(() => repository.selectOnboardingTopics(any())).thenAnswer(
-      (_) async => 1,
-    );
+    when(
+      () => repository.selectOnboardingTopics(any()),
+    ).thenAnswer((_) async => 1);
   });
 
   testWidgets('purpose step is single-select', (tester) async {
     await pumpOnboarding(
       tester,
       repository,
-      wordSearchRepository,
+      wordSearchApiService,
       localStorage,
     );
 
@@ -88,7 +88,7 @@ void main() {
     await pumpOnboarding(
       tester,
       repository,
-      wordSearchRepository,
+      wordSearchApiService,
       localStorage,
     );
 
@@ -133,7 +133,7 @@ void main() {
     await pumpOnboarding(
       tester,
       repository,
-      wordSearchRepository,
+      wordSearchApiService,
       localStorage,
     );
 
@@ -167,7 +167,7 @@ void main() {
     await pumpOnboarding(
       tester,
       repository,
-      wordSearchRepository,
+      wordSearchApiService,
       localStorage,
     );
 
@@ -188,7 +188,7 @@ void main() {
     await pumpOnboarding(
       tester,
       repository,
-      wordSearchRepository,
+      wordSearchApiService,
       localStorage,
     );
 
@@ -210,22 +210,19 @@ void main() {
     await pumpOnboarding(
       tester,
       repository,
-      wordSearchRepository,
+      wordSearchApiService,
       localStorage,
     );
 
-    expect(
-      find.text("Couldn't load the catalog. Please try again."),
-      findsOne,
-    );
+    expect(find.text("Couldn't load the catalog. Please try again."), findsOne);
     expect(find.text('Retry'), findsOneWidget);
   });
 }
 
 Future<void> pumpOnboarding(
   WidgetTester tester,
-  AuthRepository repository,
-  WordSearchRepository wordSearchRepository,
+  AuthApiService repository,
+  WordSearchApiService wordSearchApiService,
   LocalStorage localStorage,
 ) async {
   final router = GoRouter(
@@ -241,8 +238,8 @@ Future<void> pumpOnboarding(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        authRepositoryProvider.overrideWithValue(repository),
-        wordSearchRepositoryProvider.overrideWithValue(wordSearchRepository),
+        authApiServiceProvider.overrideWithValue(repository),
+        wordSearchApiServiceProvider.overrideWithValue(wordSearchApiService),
         localStorageProvider.overrideWithValue(localStorage),
       ],
       child: MaterialApp.router(
@@ -255,8 +252,8 @@ Future<void> pumpOnboarding(
   await tester.pumpAndSettle();
 }
 
-class MockAuthRepository extends Mock implements AuthRepository {}
+class MockAuthApiService extends Mock implements AuthApiService {}
 
-class MockWordSearchRepository extends Mock implements WordSearchRepository {}
+class MockWordSearchApiService extends Mock implements WordSearchApiService {}
 
 class MockLocalStorage extends Mock implements LocalStorage {}

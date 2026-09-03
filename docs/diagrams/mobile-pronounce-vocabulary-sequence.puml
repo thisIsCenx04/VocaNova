@@ -1,0 +1,55 @@
+@startuml
+title Pronounce Vocabulary Sequence (Mobile audio/TTS)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Learner
+boundary "Pronounce Vocabulary UI" as PronounceUi
+control "AudioPlaybackService\n(FE Mobile)" as AudioService
+control "AudioPlayer\n(Device)" as AudioPlayer
+control "FlutterTts\n(Device)" as FlutterTts
+
+note over PronounceUi, FlutterTts
+Checked in current code:
+Mobile UI calls AudioPlaybackService from audio_playback_service.dart.
+No backend API, request DTO, response DTO, repository, DbContext or database is used by this action.
+AudioPlaybackService currently has useTestVoice = true, so pronunciation uses FlutterTts test text.
+When useTestVoice is false, it plays audioUrl through AudioPlayer if present,
+otherwise falls back to FlutterTts for the word text.
+end note
+
+Learner -> PronounceUi: Tap pronunciation button
+PronounceUi -> AudioService: playPronunciation(word, accent, audioUrl)
+
+alt Test voice mode enabled
+    AudioService -> AudioPlayer: stop()
+    AudioPlayer --> AudioService: Stopped
+    AudioService -> FlutterTts: stop()
+    FlutterTts --> AudioService: Stopped
+    AudioService -> FlutterTts: setLanguage(en-US/en-GB)
+    AudioService -> FlutterTts: setSpeechRate(0.42)\nand setPitch(1)
+    AudioService -> FlutterTts: speak(testVoiceText)
+    FlutterTts --> AudioService: Started or failed
+    AudioService --> PronounceUi: Playback result
+else Audio URL available
+    AudioService -> FlutterTts: stop()
+    FlutterTts --> AudioService: Stopped
+    AudioService -> AudioPlayer: stop()
+    AudioPlayer --> AudioService: Stopped
+    AudioService -> AudioPlayer: play(UrlSource(audioUrl))
+    AudioPlayer --> AudioService: Playback started
+    AudioService --> PronounceUi: Playback result
+else No audio URL
+    AudioService -> AudioPlayer: stop()
+    AudioPlayer --> AudioService: Stopped
+    AudioService -> FlutterTts: stop()
+    FlutterTts --> AudioService: Stopped
+    AudioService -> FlutterTts: setLanguage(en-US/en-GB)
+    AudioService -> FlutterTts: speak(word)
+    FlutterTts --> AudioService: Started or failed
+    AudioService --> PronounceUi: Playback result
+end
+
+@enduml

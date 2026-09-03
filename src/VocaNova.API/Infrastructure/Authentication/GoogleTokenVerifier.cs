@@ -1,9 +1,11 @@
 using Google.Apis.Auth;
 using Microsoft.Extensions.Options;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Auth.BLL.Models;
 
 namespace VocaNova.API.Infrastructure.Authentication;
 
-public sealed class GoogleTokenVerifier : IGoogleTokenVerifier
+public sealed class GoogleTokenVerifier : IGoogleIdentityProvider
 {
     private readonly GoogleAuthSettings _settings;
 
@@ -12,7 +14,7 @@ public sealed class GoogleTokenVerifier : IGoogleTokenVerifier
         _settings = settings.Value;
     }
 
-    public async Task<GoogleUserInfo?> VerifyAsync(
+    public async Task<GoogleIdentity?> VerifyAsync(
         string idToken,
         CancellationToken cancellationToken = default)
     {
@@ -35,7 +37,7 @@ public sealed class GoogleTokenVerifier : IGoogleTokenVerifier
                 return null;
             }
 
-            return new GoogleUserInfo(
+            return new GoogleIdentity(
                 payload.Subject,
                 payload.Email,
                 payload.EmailVerified,

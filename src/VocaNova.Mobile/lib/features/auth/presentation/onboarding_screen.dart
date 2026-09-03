@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
-import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
-import 'package:vocanova_mobile/features/auth/domain/onboarding_catalog.dart';
-import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/auth_state.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/onboarding_catalog.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/user_profile.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
@@ -52,9 +52,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     });
     try {
       final options = await ref
-          .read(authRepositoryProvider)
+          .read(authApiServiceProvider)
           .getLearningProfileOptions();
-      final topics = await ref.read(wordSearchRepositoryProvider).getTopics();
+      final topics = await ref.read(wordSearchApiServiceProvider).getTopics();
       if (!mounted) return;
       setState(() {
         _learningPurposes = options.learningPurposes;
@@ -243,7 +243,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       }
 
       await ref
-          .read(authRepositoryProvider)
+          .read(authApiServiceProvider)
           .selectOnboardingTopics(_selectedTopicIds.toList(growable: false));
 
       if (!mounted) return;

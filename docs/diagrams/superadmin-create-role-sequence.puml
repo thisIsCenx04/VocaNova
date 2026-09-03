@@ -1,0 +1,96 @@
+@startuml
+title Create Role Sequence (/api/superadmin/roles)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor SuperAdmin
+boundary "Create Role UI" as CreateRolePage
+control "RolesController\n(FE Dashboard)" as FeController
+control "RolesController\n(BE API)" as BeController
+entity "SaveRoleRequest\n(BE Request DTO)" as BeRequestDto
+entity "RoleResponse\n(BE Response DTO)" as BeResponseDto
+control "IRoleManagementService" as IRoleManagementService
+control "RoleManagementService" as RoleService
+entity "Role" as RoleEntity
+control "IRoleManagementRepository" as IRoleManagementRepository
+control "RoleManagementRepository" as RoleRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over CreateRolePage, MySQL
+Checked in current code:
+FE controller exists: RolesController.
+BE controller exists: RolesController.
+BE DTOs exist: SaveRoleRequest and RoleResponse.
+Entity exists: Role.
+Dashboard calls API through VocaNovaApiClient.CreateRoleAsync.
+Interfaces used in code: IRoleManagementService, IRoleManagementRepository.
+end note
+
+SuperAdmin -> CreateRolePage: Open create role page
+SuperAdmin -> CreateRolePage: Enter role name
+SuperAdmin -> CreateRolePage: Submit form
+CreateRolePage -> FeController: POST /roles/create
+FeController -> FeController: Validate form input
+
+alt Form input invalid
+    FeController --> CreateRolePage: Show validation message
+else Form input valid
+    FeController -> BeController: VocaNovaApiClient.CreateRoleAsync\nPOST /api/superadmin/roles
+    BeController -> BeRequestDto: Bind JSON body
+    BeRequestDto --> BeController: SaveRoleRequest
+    BeController -> BeController: Check super admin authorization
+    BeController -> BeController: Validate SaveRoleRequest
+
+    alt Request validation fails
+        BeController --> FeController: HTTP 400 error
+        FeController --> CreateRolePage: Show error message
+    else Request validation success
+        BeController -> IRoleManagementService: CreateAsync(role data)
+        IRoleManagementService -> RoleService: CreateAsync(role data)
+        RoleService -> RoleService: Normalize and validate role name
+
+        alt Role name invalid
+            RoleService --> BeController: Validation failure
+            BeController --> FeController: HTTP 400 error
+            FeController --> CreateRolePage: Show error message
+        else Role name valid
+            RoleService -> IRoleManagementRepository: RoleExistsAsync(roleName)
+            IRoleManagementRepository -> RoleRepository: RoleExistsAsync(roleName)
+            RoleRepository -> DbContext: Query role by name
+            DbContext -> MySQL: SELECT roles
+            MySQL --> DbContext: Role row or null
+            DbContext -> RoleEntity: Materialize Role?
+            RoleEntity --> DbContext: Role or null
+            DbContext --> RoleRepository: Result
+            RoleRepository --> RoleService: exists or not
+
+            alt Role name already exists
+                RoleService --> BeController: Conflict result
+                BeController --> FeController: HTTP 409 error
+                FeController --> CreateRolePage: Show error message
+            else Role can be created
+                RoleService -> RoleService: Begin transaction
+                RoleService -> IRoleManagementRepository: AddRoleAsync(roleName)
+                IRoleManagementRepository -> RoleRepository: AddRoleAsync(roleName)
+                RoleRepository -> RoleEntity: Create Role
+                RoleEntity --> RoleRepository: Role
+                RoleRepository -> DbContext: Add Role
+                DbContext -> MySQL: INSERT roles
+                MySQL --> DbContext: Insert result
+                DbContext --> RoleRepository: Save result
+                RoleRepository --> RoleService: Created role
+
+                RoleService --> BeController: Return created role
+                BeController -> BeResponseDto: Create RoleResponse
+                BeResponseDto --> BeController: RoleResponse
+                BeController --> FeController: HTTP 201 Created\nRoleResponse
+                FeController --> CreateRolePage: Redirect to role list
+            end
+        end
+    end
+end
+
+@enduml

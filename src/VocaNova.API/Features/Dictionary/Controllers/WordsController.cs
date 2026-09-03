@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VocaNova.API.Common.Extensions;
-using VocaNova.API.Features.Dictionary.DTOs;
-using VocaNova.API.Features.Dictionary.Services;
+using VocaNova.API.Features.Dictionary.BLL.Models;
+using VocaNova.API.Features.Dictionary.BLL.Services;
+using VocaNova.API.Features.Dictionary.BLL.Services.IServices;
+using VocaNova.API.Common.Responses;
+using VocaNova.API.Features.Dictionary.Contracts.Requests;
+using VocaNova.API.Features.Dictionary.Mappings;
 
 namespace VocaNova.API.Features.Dictionary.Controllers;
 
@@ -11,25 +14,26 @@ namespace VocaNova.API.Features.Dictionary.Controllers;
 [Route("api/words")]
 public sealed class WordsController : ControllerBase
 {
-    private readonly IWordService _wordService;
+    private readonly IWordReadService _wordService;
 
-    public WordsController(IWordService wordService)
+    public WordsController(IWordReadService wordService)
     {
         _wordService = wordService;
     }
 
     [HttpGet]
     public async Task<IActionResult> Search(
-        [FromQuery] WordSearchQuery query,
+        [FromQuery] WordSearchRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _wordService.SearchAsync(query, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Words loaded successfully.");
+        var result = await _wordService.SearchAsync(
+            request.ToBusinessQuery(),
+            cancellationToken);
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "Words loaded successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpGet("{id:uint}")]
@@ -38,23 +42,31 @@ public sealed class WordsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _wordService.GetByIdAsync(id, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Word loaded successfully.");
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "Word loaded successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpGet("daily")]
     public async Task<IActionResult> GetDaily(CancellationToken cancellationToken)
     {
         var result = await _wordService.GetDailyAsync(cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "Daily word loaded successfully."))
+            : ErrorResponse(result);
+    }
 
-        return this.OkResult(result.Value!, "Daily word loaded successfully.");
+    private ObjectResult ErrorResponse<T>(DictionaryResult<T> result)
+    {
+        var statusCode = result.ErrorKind == DictionaryErrorKind.NotFound
+            ? StatusCodes.Status404NotFound
+            : StatusCodes.Status400BadRequest;
+        return StatusCode(
+            statusCode,
+            ApiResponseFormatter.Error(result.Error!, new[] { result.Error! }));
     }
 }

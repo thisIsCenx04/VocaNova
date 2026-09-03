@@ -1,0 +1,188 @@
+@startuml
+title User Management Sequence (/users and /api/admin/users)
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+actor Admin
+boundary "Users UI" as UsersPage
+control "UsersController\n(FE Dashboard)" as FeController
+control "AdminUsersController\n(BE API)" as BeController
+entity "AdminUserQueryRequest\n(BE Request DTO)" as BeQueryDto
+entity "AdminUserSummaryResponse\n(BE Response DTO)" as BeSummaryDto
+entity "AdminUserDetailResponse\n(BE Response DTO)" as BeDetailDto
+entity "AdminUserTopicsResponse\n(BE Response DTO)" as BeTopicsDto
+entity "AdminUserTestSessionResponse\n(BE Response DTO)" as BeTestSessionDto
+entity "AdminUserSummary\n(FE Response DTO)" as FeSummaryDto
+entity "AdminUserDetail\n(FE Response DTO)" as FeDetailDto
+entity "AdminUserTopics\n(FE Response DTO)" as FeTopicsDto
+entity "AdminUserTestSession\n(FE Response DTO)" as FeTestSessionDto
+control "IAdminUserService" as IAdminUserService
+control "AdminUserService" as AdminUserService
+entity "User" as UserEntity
+entity "UserProfile" as UserProfileEntity
+entity "Role" as RoleEntity
+entity "Topic" as TopicEntity
+entity "TestSession" as TestSessionEntity
+entity "RefreshToken" as RefreshTokenEntity
+control "IAdminUserRepository" as IAdminUserRepository
+control "AdminUserRepository" as AdminUserRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+note over UsersPage, MySQL
+Checked in current code:
+FE controller exists: UsersController.
+FE response DTOs exist: AdminUserSummary, AdminUserDetail, AdminUserTopics, and AdminUserTestSession.
+BE controller exists: AdminUsersController.
+BE DTOs exist: AdminUserQueryRequest and AdminUser*Response contracts.
+Deactivate/Restore use route id only and return bool in the API envelope.
+Interfaces used in code: IAdminUserService, IAdminUserRepository.
+end note
+Admin -> UsersPage: Open user management
+UsersPage -> FeController: GET /users(filters, search, paging, sort)
+FeController -> FeController: Normalize filter
+FeController -> BeController: VocaNovaApiClient.GetUsersAsync\nGET /api/admin/users
+BeController -> BeQueryDto: Bind query string
+BeQueryDto --> BeController: AdminUserQueryRequest
+BeController -> BeController: Check admin authorization
+BeController -> BeController: Validate AdminUserQueryRequest
+alt Request validation fails
+    BeController --> FeController: HTTP 400 error
+    FeController --> UsersPage: Show error message
+else Request validation success
+    BeController -> IAdminUserService: GetUsersAsync(query)
+    IAdminUserService -> AdminUserService: GetUsersAsync(query)
+    AdminUserService -> IAdminUserRepository: GetUsersAsync(query)
+    IAdminUserRepository -> AdminUserRepository: GetUsersAsync(query)
+    AdminUserRepository -> DbContext: Query users
+    DbContext -> MySQL: SELECT users with role/profile
+    MySQL --> DbContext: User rows and total count
+    DbContext -> UserEntity: Materialize User rows
+    DbContext -> UserProfileEntity: Materialize UserProfile rows
+    DbContext -> RoleEntity: Materialize Role rows
+    UserEntity --> DbContext: Users
+    UserProfileEntity --> DbContext: UserProfiles
+    RoleEntity --> DbContext: Roles
+    DbContext --> AdminUserRepository: Result
+    AdminUserRepository --> AdminUserService: Paged users
+    AdminUserService --> BeController: Return users result
+    BeController -> BeSummaryDto: Create AdminUserSummaryResponse
+    BeSummaryDto --> BeController: Paged AdminUserSummaryResponse
+    BeController -> FeSummaryDto: HTTP 200 OK\nPaged AdminUserSummaryResponse JSON
+    FeSummaryDto --> FeController: Paged AdminUserSummary
+    FeController --> UsersPage: Render user list
+end
+alt Admin opens user detail
+    Admin -> UsersPage: Select user
+    UsersPage -> FeController: GET /users/{id}
+    FeController -> BeController: VocaNovaApiClient.GetUserDetailAsync\nGET /api/admin/users/{id}
+    BeController -> IAdminUserService: GetUserDetailAsync(id)
+    IAdminUserService -> AdminUserService: GetUserDetailAsync(id)
+    AdminUserService -> IAdminUserRepository: GetUserDetailAsync(id)
+    IAdminUserRepository -> AdminUserRepository: GetUserDetailAsync(id)
+    AdminUserRepository -> DbContext: Query user detail
+    DbContext -> MySQL: SELECT user profile data
+    MySQL --> DbContext: User detail row or null
+    DbContext -> UserEntity: Materialize User?
+    DbContext -> UserProfileEntity: Materialize UserProfile?
+    DbContext -> RoleEntity: Materialize Role?
+    UserEntity --> DbContext: User or null
+    UserProfileEntity --> DbContext: UserProfile or null
+    RoleEntity --> DbContext: Role or null
+    DbContext --> AdminUserRepository: Result
+    AdminUserRepository --> AdminUserService: User detail or null
+    alt User not found
+        AdminUserService --> BeController: NotFound result
+        BeController --> FeController: HTTP 404 error
+        FeController --> UsersPage: Show not found
+    else User found
+        AdminUserService --> BeController: Return detail result
+        BeController -> BeDetailDto: Create AdminUserDetailResponse
+        BeDetailDto --> BeController: AdminUserDetailResponse
+        BeController -> FeDetailDto: HTTP 200 OK\nAdminUserDetailResponse JSON
+        FeDetailDto --> FeController: AdminUserDetail
+        FeController -> BeController: VocaNovaApiClient.GetUserTopicsAsync\nGET /api/admin/users/{id}/topics
+        BeController -> IAdminUserService: GetUserTopicsAsync(id)
+        IAdminUserService -> AdminUserService: GetUserTopicsAsync(id)
+        AdminUserService -> IAdminUserRepository: GetUserTopicsAsync(id)
+        IAdminUserRepository -> AdminUserRepository: GetUserTopicsAsync(id)
+        AdminUserRepository -> DbContext: Query user topics
+        DbContext -> MySQL: SELECT selected/suggested topics
+        MySQL --> DbContext: Topic rows
+        DbContext -> TopicEntity: Materialize Topic rows
+        TopicEntity --> DbContext: Topics
+        DbContext --> AdminUserRepository: Result
+        AdminUserRepository --> AdminUserService: User topics
+        AdminUserService --> BeController: Return topics result
+        BeController -> BeTopicsDto: Create AdminUserTopicsResponse
+        BeTopicsDto --> BeController: AdminUserTopicsResponse
+        BeController -> FeTopicsDto: HTTP 200 OK\nAdminUserTopicsResponse JSON
+        FeTopicsDto --> FeController: AdminUserTopics
+        FeController -> BeController: VocaNovaApiClient.GetUserTestHistoryAsync\nGET /api/admin/users/{id}/test-history
+        BeController -> IAdminUserService: GetTestHistoryAsync(id)
+        IAdminUserService -> AdminUserService: GetTestHistoryAsync(id)
+        AdminUserService -> IAdminUserRepository: GetTestHistoryAsync(id)
+        IAdminUserRepository -> AdminUserRepository: GetTestHistoryAsync(id)
+        AdminUserRepository -> DbContext: Query test sessions
+        DbContext -> MySQL: SELECT test_sessions
+        MySQL --> DbContext: Test session rows
+        DbContext -> TestSessionEntity: Materialize TestSession rows
+        TestSessionEntity --> DbContext: TestSessions
+        DbContext --> AdminUserRepository: Result
+        AdminUserRepository --> AdminUserService: Paged test history
+        AdminUserService --> BeController: Return history result
+        BeController -> BeTestSessionDto: Create AdminUserTestSessionResponse
+        BeTestSessionDto --> BeController: Paged AdminUserTestSessionResponse
+        BeController -> FeTestSessionDto: HTTP 200 OK\nPaged AdminUserTestSessionResponse JSON
+        FeTestSessionDto --> FeController: Paged AdminUserTestSession
+        FeController --> UsersPage: Render user detail
+    end
+else Admin changes user status
+    Admin -> UsersPage: Click Deactivate/Restore
+    UsersPage -> FeController: POST /users/{id}/deactivate\nor /users/{id}/restore
+    FeController -> BeController: VocaNovaApiClient.DeactivateUserAsync\nor RestoreUserAsync\nPATCH /api/admin/users/{id}/deactivate\nor /restore
+    BeController -> BeController: Check admin authorization
+    BeController -> IAdminUserService: DeactivateAsync(id, actorRole)or RestoreAsync(id, actorRole)
+    IAdminUserService -> AdminUserService: DeactivateAsync(id, actorRole)or RestoreAsync(id, actorRole)
+    AdminUserService -> IAdminUserRepository: GetStatusTargetAsync(id)
+    IAdminUserRepository -> AdminUserRepository: GetStatusTargetAsync(id)
+    AdminUserRepository -> DbContext: Query target user status
+    DbContext -> MySQL: SELECT user status and role
+    MySQL --> DbContext: Target row or null
+    DbContext -> UserEntity: Materialize User?
+    DbContext -> RoleEntity: Materialize Role?
+    UserEntity --> DbContext: User or null
+    RoleEntity --> DbContext: Role or null
+    DbContext --> AdminUserRepository: Result
+    AdminUserRepository --> AdminUserService: Status target or null
+    alt User not found or cannot be managed
+        AdminUserService --> BeController: NotFound/Forbidden/Conflict result
+        BeController --> FeController: HTTP error
+        FeController --> UsersPage: Show feedback
+    else Status can be changed
+        AdminUserService -> IAdminUserRepository: StageStatusAsync(id, status)
+        IAdminUserRepository -> AdminUserRepository: StageStatusAsync(id, status)
+        AdminUserRepository -> UserEntity: Update status
+        UserEntity --> AdminUserRepository: User
+        AdminUserRepository -> DbContext: Track User status
+        DbContext -> MySQL: UPDATE users
+        MySQL --> DbContext: Update result
+        opt Deactivate user
+            AdminUserService -> IAdminUserRepository: RevokeActiveRefreshTokensAsync(id)
+            IAdminUserRepository -> AdminUserRepository: RevokeActiveRefreshTokensAsync(id)
+            AdminUserRepository -> RefreshTokenEntity: Set RevokedAt
+            RefreshTokenEntity --> AdminUserRepository: RefreshToken updated
+            AdminUserRepository -> DbContext: Track refresh token updates
+            DbContext -> MySQL: UPDATE refresh_tokens
+            MySQL --> DbContext: Update result
+        end
+        AdminUserService -> IAdminUserRepository: SaveChangesAsync()
+        IAdminUserRepository -> AdminUserRepository: SaveChangesAsync()
+        AdminUserRepository -> DbContext: Save changes
+        DbContext --> AdminUserRepository: Save result
+        AdminUserRepository --> AdminUserService: Saved
+        AdminUserService --> BeController: Success result
+        BeController --> FeController: HTTP 200 OK
+        FeController --> UsersPage: Show feedback and refresh page
+    end
+end
+@enduml

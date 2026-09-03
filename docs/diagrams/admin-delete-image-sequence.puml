@@ -1,0 +1,68 @@
+@startuml
+title Delete Word Image Sequence (/api/admin/words/{id}/image)
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+actor Admin
+boundary "Vocabulary UI" as VocabularyPage
+control "VocabularyController\n(FE Dashboard)" as DashboardController
+entity "UpdateWordImageRequest\n(BE Request DTO)" as ImageRequestDto
+control "AdminWordsController\n(BE API)" as ApiController
+entity "WordDetailResponse\n(BE Response DTO)" as ImageResponseDto
+control "IWordAdminService" as IWordAdminService
+control "WordAdminService" as WordService
+entity "Word" as WordEntity
+control "IWordAdminRepository" as IWordAdminRepository
+control "WordAdminRepository" as WordRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+note over VocabularyPage, MySQL
+Checked in current code:
+Dashboard route is POST /vocabulary/{id}/image/delete.
+Dashboard VocaNovaApiClient calls PUT /api/admin/words/{id}/image with image_url = null.
+API uses UpdateWordImageRequest and returns WordDetailResponse.
+Delete image clears the word image_url; no storage delete call was found.
+Interfaces used in code: IWordAdminService, IWordAdminRepository.
+end note
+Admin -> VocabularyPage: Click Delete image
+VocabularyPage -> DashboardController: POST /vocabulary/{id}/image/delete
+DashboardController -> ImageRequestDto: VocaNovaApiClient.UpdateImageUrlAsync(wordId, null)\nCreate request data(image_url = null)
+ImageRequestDto -> ApiController: PUT /api/admin/words/{id}/imageUpdateWordImageRequest
+ApiController -> ApiController: Check admin authorization
+ApiController -> ApiController: Validate UpdateWordImageRequest
+alt Request validation fails
+ApiController --> DashboardController: HTTP 400 error
+DashboardController --> VocabularyPage: Show error message
+else Request validation success
+ApiController -> IWordAdminService: UpdateImageUrlAsync(wordId, null)
+IWordAdminService -> WordService: UpdateImageUrlAsync(wordId, null)
+WordService -> IWordAdminService: Normalize image URL
+IWordAdminService -> WordService: Normalize image URL
+WordService -> IWordAdminRepository: SetImageUrlAsync(wordId, null)
+IWordAdminRepository -> WordRepository: SetImageUrlAsync(wordId, null)
+WordRepository -> DbContext: Find word
+DbContext -> MySQL: SELECT words
+MySQL --> DbContext: Word row or null
+DbContext -> WordEntity: Materialize Word?
+WordEntity --> DbContext: Word or null
+DbContext --> WordRepository: Result
+alt Word not found
+WordRepository --> WordService: null
+WordService --> ApiController: NotFound result
+ApiController --> DashboardController: HTTP 404 error
+DashboardController --> VocabularyPage: Show error message
+else Word found
+WordRepository -> WordEntity: Clear ImageUrl
+WordEntity --> WordRepository: Word updated
+WordRepository -> DbContext: Track word image_url
+DbContext -> MySQL: UPDATE words
+MySQL --> DbContext: Update result
+DbContext --> WordRepository: Save result
+WordRepository --> WordService: Updated word detail
+WordService --> ApiController: Return updated word
+ApiController -> ImageResponseDto: Create response data(WordDetailResponse)
+ImageResponseDto --> DashboardController: HTTP 200 OK\nWordDetailResponse
+DashboardController --> VocabularyPage: Show image removed feedback
+end
+end
+@enduml

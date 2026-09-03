@@ -1,0 +1,227 @@
+@startuml
+title View Dashboard Statistics Class Diagram (/dashboard and /api/admin/stats/*)
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from admin-view-dashboard-statistics-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+
+class DashboardController <<frontend_controller>> {
+  "- _apiClient : IVocaNovaApiClient"
+  --
+  "+ Index(cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ Data(granularity: string, cancellationToken: CancellationToken) : TaskOfIActionResult"
+}
+
+class AdminStatsController <<backend_controller>> {
+  "- _adminStatsService : IAdminStatsService"
+  --
+  "+ GetDashboard(cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ GetLearningStats(cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ GetMasteryDistribution(cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ GetActivityTrend(granularity: string, cancellationToken: CancellationToken) : TaskOfIActionResult"
+}
+
+class DashboardStats <<dto>> {
+  "+ TotalUsers : int"
+  "+ TotalWords : int"
+  "+ SessionsToday : int"
+  "+ AvgAccuracy7d : double"
+}
+
+class LearningStats <<dto>> {
+  "+ TopWrongWords : IReadOnlyListOfWrongWordStat"
+  "+ AccuracyTrend : IReadOnlyListOfAccuracyTrendPoint"
+}
+
+class MasteryDistribution <<dto>> {
+  "+ TotalWordsInProgress : int"
+  "+ Levels : IReadOnlyListOfMasteryLevelCount"
+}
+
+class ActivityTrend <<dto>> {
+  "+ Granularity : string"
+  "+ Points : IReadOnlyListOfActivityTrendPoint"
+}
+
+class AdminDashboardStatsResponse <<dto>> {
+  "+ TotalUsers : int"
+  "+ TotalWords : int"
+  "+ SessionsToday : int"
+  "+ AvgAccuracy7d : double"
+}
+
+class AdminLearningStatsResponse <<dto>> {
+  "+ TopWrongWords : IReadOnlyCollectionOfAdminWrongWordResponse"
+  "+ AccuracyTrend : IReadOnlyCollectionOfAdminAccuracyTrendPointResponse"
+}
+
+class AdminMasteryDistributionResponse <<dto>> {
+  "+ TotalWordsInProgress : int"
+  "+ Levels : IReadOnlyCollectionOfAdminMasteryLevelResponse"
+}
+
+class AdminActivityTrendResponse <<dto>> {
+  "+ Granularity : string"
+  "+ Points : IReadOnlyCollectionOfAdminActivityTrendPointResponse"
+}
+
+class IAdminStatsService <<service_interface>> {
+  "+ GetDashboardAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminDashboardStatsModel"
+  "+ GetDemographicsAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminDemographicsModel"
+  "+ GetLearningStatsAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminLearningStatsModel"
+  "+ GetSessionsTrendAsync(days: int, cancellationToken: CancellationToken) : TaskOfResultOfAdminSessionsTrendModel"
+  "+ GetMasteryDistributionAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminMasteryDistributionModel"
+  "+ GetActivityTrendAsync(granularity: string, cancellationToken: CancellationToken) : TaskOfResultOfAdminActivityTrendModel"
+  "+ GetAuditLogsAsync(query: AdminAuditLogQuery, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfAdminAuditLogModel"
+}
+
+class AdminStatsService <<service>> {
+  "- _repository : IAdminStatsRepository"
+  --
+  "+ GetDashboardAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminDashboardStatsModel"
+  "+ GetLearningStatsAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminLearningStatsModel"
+  "+ GetMasteryDistributionAsync(cancellationToken: CancellationToken) : TaskOfResultOfAdminMasteryDistributionModel"
+  "+ GetActivityTrendAsync(granularity: string, cancellationToken: CancellationToken) : TaskOfResultOfAdminActivityTrendModel"
+}
+
+class User <<entity>> {
+  "+ UserId : uint"
+  "+ RoleId : uint"
+  "+ Status : string"
+  "+ LastLoginAt : DateTimeNullable"
+  "+ CreatedAt : DateTime"
+  "+ UpdatedAt : DateTime"
+  "+ AuditLogs : ICollectionOfAuditLog"
+  "+ OtpVerifications : ICollectionOfOtpVerification"
+  "+ RefreshTokens : ICollectionOfRefreshToken"
+  "+ Role : Role"
+  "+ TestSessions : ICollectionOfTestSession"
+  "+ UserAuth : UserAuthNullable"
+}
+
+class Word <<entity>> {
+  "+ WordId : uint"
+  "+ Word1 : string"
+  "+ WordKey : string"
+  "+ CefrLevel : stringNullable"
+  "+ PhoneticUk : stringNullable"
+  "+ PhoneticUs : stringNullable"
+  "+ ImageUrl : stringNullable"
+  "+ IsPhrase : bool"
+  "+ Status : string"
+  "+ CreatedAt : DateTime"
+  "+ UpdatedAt : DateTime"
+  "+ AiGradingCaches : ICollectionOfAiGradingCache"
+}
+
+class TestSession <<entity>> {
+  "+ SessionId : uint"
+  "+ UserId : uint"
+  "+ TestType : string"
+  "+ Mode : string"
+  "+ QuestionType : int"
+  "+ ScopeType : string"
+  "+ ScopeDateFrom : DateOnlyNullable"
+  "+ ScopeDateTo : DateOnlyNullable"
+  "+ WordOrder : string"
+  "+ WordLimit : intNullable"
+  "+ TimeLimitSec : intNullable"
+  "+ Lives : intNullable"
+}
+
+class TestAnswer <<entity>> {
+  "+ AnswerId : uint"
+  "+ SessionId : uint"
+  "+ WordId : uint"
+  "+ SenseId : uintNullable"
+  "+ QuestionNumber : int"
+  "+ QuestionType : int"
+  "+ DisplayContent : string"
+  "+ ExpectedAnswer : string"
+  "+ AcceptedAnswers : stringNullable"
+  "+ UserAnswer : stringNullable"
+  "+ IsCorrect : boolNullable"
+  "+ AiScore : floatNullable"
+}
+
+class UserWordProgress <<entity>> {
+  "+ ProgressId : uint"
+  "+ UserId : uint"
+  "+ WordId : uint"
+  "+ TestCount : int"
+  "+ CorrectCount : int"
+  "+ WrongCount : int"
+  "+ ConsecutiveCorrect : int"
+  "+ IsInWrongList : bool"
+  "+ MasteryLevel : int"
+  "+ SrsInterval : int"
+  "+ EaseFactor : float"
+  "+ LastTestedAt : DateTimeNullable"
+}
+
+class IAdminStatsRepository <<repository_interface>> {
+  "+ GetDashboardStatsAsync(todayUtc: DateTime, tomorrowUtc: DateTime, sevenDayStartUtc: DateTime, cancellationToken: CancellationToken) : TaskOfAdminDashboardStatsModel"
+  "+ GetDemographicsAsync(cancellationToken: CancellationToken) : TaskOfAdminDemographicsModel"
+  "+ GetTopWrongWordsAsync(limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminWrongWordModel"
+  "+ GetSessionAccuracyRowsAsync(fromInclusiveUtc: DateTime, toExclusiveUtc: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminSessionAccuracyRow"
+  "+ GetSessionCountsByDayAsync(fromInclusiveUtc: DateTime, toExclusiveUtc: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminSessionCountRow"
+  "+ GetMasteryDistributionAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminMasteryCountRow"
+  "+ GetAuditLogsAsync(query: AdminAuditLogQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfAdminAuditLogModel"
+}
+
+class AdminStatsRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ GetDashboardStatsAsync(todayUtc: DateTime, tomorrowUtc: DateTime, sevenDayStartUtc: DateTime, cancellationToken: CancellationToken) : TaskOfAdminDashboardStatsModel"
+  "+ GetTopWrongWordsAsync(limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminWrongWordModel"
+  "+ GetSessionAccuracyRowsAsync(fromInclusiveUtc: DateTime, toExclusiveUtc: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminSessionAccuracyRow"
+  "+ GetSessionCountsByDayAsync(fromInclusiveUtc: DateTime, toExclusiveUtc: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminSessionCountRow"
+  "+ GetMasteryDistributionAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminMasteryCountRow"
+}
+
+class VocaNovaDbContext <<dbcontext>> {
+  "+ AgeRanges : DbSetOfAgeRange"
+  "+ AiGradingCaches : DbSetOfAiGradingCache"
+  "+ AuditLogs : DbSetOfAuditLog"
+  "+ EducationLevels : DbSetOfEducationLevel"
+  "+ LearningPurposes : DbSetOfLearningPurpose"
+  "+ Occupations : DbSetOfOccupation"
+  "+ OtpVerifications : DbSetOfOtpVerification"
+  "+ RefreshTokens : DbSetOfRefreshToken"
+  "+ Regions : DbSetOfRegion"
+  "+ Roles : DbSetOfRole"
+  "+ TestAnswers : DbSetOfTestAnswer"
+  "+ TestSessions : DbSetOfTestSession"
+  --
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
+}
+
+class MySQL_Database <<database>> {
+
+}
+DashboardController ..> AdminStatsController
+AdminStatsRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+AdminStatsController ..> AdminDashboardStatsResponse
+AdminStatsController ..> DashboardStats
+AdminStatsController ..> AdminLearningStatsResponse
+AdminStatsController ..> LearningStats
+AdminStatsController ..> AdminMasteryDistributionResponse
+AdminStatsController ..> MasteryDistribution
+AdminStatsController ..> AdminActivityTrendResponse
+AdminStatsController ..> ActivityTrend
+IAdminStatsService <|.. AdminStatsService
+AdminStatsController ..> IAdminStatsService : GetDashboardAsync()
+IAdminStatsRepository <|.. AdminStatsRepository
+AdminStatsService ..> IAdminStatsRepository : GetDashboardStatsAsync()
+AdminStatsRepository ..> User
+AdminStatsRepository ..> Word
+AdminStatsRepository ..> TestSession
+AdminStatsRepository ..> TestAnswer
+AdminStatsRepository ..> UserWordProgress
+@enduml

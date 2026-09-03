@@ -1,0 +1,251 @@
+@startuml
+title KNN Vocabulary Recommendation Sequence (/api/recommendations/words)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Learner
+boundary "Vocabulary Recommendation UI" as RecommendationUi
+control "RecommendationsController\n(BE API)" as BeController
+entity "WordRecommendationResponse\n(BE Response DTO)" as BeWordRecommendationDto
+control "IKnnLearningService" as IKnnLearningService
+control "KnnLearningService" as KnnLearningService
+entity "TestSession" as TestSessionEntity
+entity "Topic" as TopicEntity
+entity "TestAnswer" as TestAnswerEntity
+entity "WordTopic" as WordTopicEntity
+entity "UserWordProgress" as UserWordProgressEntity
+entity "UserListWord" as UserListWordEntity
+entity "UserLearningProfile" as UserLearningProfileEntity
+entity "UserTopicPreference" as UserTopicPreferenceEntity
+entity "AgeRange" as AgeRangeEntity
+entity "Region" as RegionEntity
+entity "Occupation" as OccupationEntity
+entity "EducationLevel" as EducationLevelEntity
+entity "LearningPurpose" as LearningPurposeEntity
+entity "Word" as WordEntity
+entity "WordSense" as WordSenseEntity
+control "IKnnLearningRepository" as IKnnLearningRepository
+control "KnnLearningRepository" as KnnLearningRepository
+control "IKnnProfileRepository" as IKnnProfileRepository
+control "KnnProfileRepository" as KnnProfileRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over RecommendationUi, MySQL
+Checked in current code:
+BE controller exists: RecommendationsController.
+API endpoint is GET /api/recommendations/words.
+No request DTO body is used; limit is an optional query parameter.
+BE response DTO exists: WordRecommendationResponse.
+Mobile currently defines ApiEndpoints.recommendedWords, but no Mobile service/screen calls it yet.
+KnnLearningService calculates recommendations from quiz history,
+or falls back to profile/onboarding data when quiz history is not enough.
+Entities exist: TestSession, Topic, TestAnswer, WordTopic,
+UserWordProgress, UserListWord, UserLearningProfile, UserTopicPreference,
+AgeRange, Region, Occupation, EducationLevel, LearningPurpose, Word and WordSense.
+Interfaces used in code: IKnnLearningService, IKnnLearningRepository,
+  IKnnProfileRepository.
+end note
+
+Learner -> RecommendationUi: Open vocabulary recommendations
+RecommendationUi -> BeController: GET /api/recommendations/words\nlimit?
+BeController -> BeController: Check authenticated user
+
+alt User id missing
+    BeController --> RecommendationUi: HTTP 401 error
+else User authenticated
+    BeController -> IKnnLearningService: GetWordRecommendationsAsync(userId, limit)
+    IKnnLearningService -> KnnLearningService: GetWordRecommendationsAsync(userId, limit)
+    KnnLearningService -> IKnnLearningService: Validate limit
+    IKnnLearningService -> KnnLearningService: Validate limit
+
+    alt Limit invalid
+        KnnLearningService --> BeController: Validation failure
+        BeController --> RecommendationUi: HTTP 400 error
+    else Limit valid
+        KnnLearningService -> IKnnLearningService: Load existing word scores if available
+        IKnnLearningService -> KnnLearningService: Load existing word scores if available
+
+        alt No existing word scores
+            KnnLearningService -> IKnnLearningService: GenerateWordRecommendationsAsync(userId)
+            IKnnLearningService -> KnnLearningService: GenerateWordRecommendationsAsync(userId)
+            KnnLearningService -> IKnnLearningRepository: GetSessionCountAsync(userId)
+            IKnnLearningRepository -> KnnLearningRepository: GetSessionCountAsync(userId)
+            KnnLearningRepository -> DbContext: Count test sessions
+            DbContext -> MySQL: SELECT test_sessions
+            MySQL --> DbContext: Session count
+            DbContext -> TestSessionEntity: Count TestSession rows
+            TestSessionEntity --> DbContext: TestSession count
+            DbContext --> KnnLearningRepository: Session count
+            KnnLearningRepository --> KnnLearningService: Session count
+
+            alt Not enough quiz sessions
+                KnnLearningService -> IKnnProfileRepository: GetProfileVectorSourceAsync(userId)
+                IKnnProfileRepository -> KnnProfileRepository: GetProfileVectorSourceAsync(userId)
+                KnnProfileRepository -> DbContext: Query learning profile\nand topic preferences
+                DbContext -> MySQL: SELECT user_learning_profiles,\nSELECT user_topic_preferences
+                MySQL --> DbContext: Profile and topic rows
+                DbContext -> UserLearningProfileEntity: Read UserLearningProfile?
+                DbContext -> UserTopicPreferenceEntity: Read UserTopicPreference rows
+                UserLearningProfileEntity --> DbContext: UserLearningProfile or null
+                UserTopicPreferenceEntity --> DbContext: Interest topic ids
+                DbContext --> KnnProfileRepository: Profile vector source or null
+                KnnProfileRepository --> KnnLearningService: Profile vector source or null
+
+                alt Profile data missing
+                    KnnLearningService -> IKnnLearningService: No candidate word scores
+                    IKnnLearningService -> KnnLearningService: No candidate word scores
+                else Profile data available
+                    KnnLearningService -> IKnnProfileRepository: GetActiveLookupDimensionsAsync()
+                    IKnnProfileRepository -> KnnProfileRepository: GetActiveLookupDimensionsAsync()
+                    KnnProfileRepository -> DbContext: Query active lookup dimensions
+                    DbContext -> MySQL: SELECT age_ranges, regions,\noccupations, education_levels,\nlearning_purposes, topics
+                    MySQL --> DbContext: Lookup rows
+                    DbContext -> AgeRangeEntity: Read AgeRange ids
+                    DbContext -> RegionEntity: Read Region ids
+                    DbContext -> OccupationEntity: Read Occupation ids
+                    DbContext -> EducationLevelEntity: Read EducationLevel ids
+                    DbContext -> LearningPurposeEntity: Read LearningPurpose ids
+                    DbContext -> TopicEntity: Read Topic ids
+                    AgeRangeEntity --> DbContext: AgeRange ids
+                    RegionEntity --> DbContext: Region ids
+                    OccupationEntity --> DbContext: Occupation ids
+                    EducationLevelEntity --> DbContext: EducationLevel ids
+                    LearningPurposeEntity --> DbContext: LearningPurpose ids
+                    TopicEntity --> DbContext: Topic ids
+                    DbContext --> KnnProfileRepository: Lookup dimensions
+                    KnnProfileRepository --> KnnLearningService: Lookup dimensions
+
+                    KnnLearningService -> IKnnProfileRepository: GetCandidateProfileSourcesAsync(userId)
+                    IKnnProfileRepository -> KnnProfileRepository: GetCandidateProfileSourcesAsync(userId)
+                    KnnProfileRepository -> DbContext: Query candidate profiles\nand topic preferences
+                    DbContext -> MySQL: SELECT user_learning_profiles,\nSELECT user_topic_preferences
+                    MySQL --> DbContext: Candidate rows
+                    DbContext -> UserLearningProfileEntity: Read candidate profiles
+                    DbContext -> UserTopicPreferenceEntity: Read candidate topic preferences
+                    UserLearningProfileEntity --> DbContext: Candidate profile rows
+                    UserTopicPreferenceEntity --> DbContext: Candidate topic rows
+                    DbContext --> KnnProfileRepository: Candidate profile sources
+                    KnnProfileRepository --> KnnLearningService: Candidate profile sources
+                    KnnLearningService -> IKnnLearningService: Build profile vectors\nand find nearest neighbors
+                    IKnnLearningService -> KnnLearningService: Build profile vectors\nand find nearest neighbors
+
+                    alt No nearest neighbors
+                        KnnLearningService -> IKnnLearningService: No candidate word scores
+                        IKnnLearningService -> KnnLearningService: No candidate word scores
+                    else Nearest neighbors found
+                        KnnLearningService -> IKnnProfileRepository: GetActiveTopicIdsAsync(userId)
+                        IKnnProfileRepository -> KnnProfileRepository: GetActiveTopicIdsAsync(userId)
+                        KnnProfileRepository -> DbContext: Query user topic preferences
+                        DbContext -> MySQL: SELECT user_topic_preferences
+                        MySQL --> DbContext: Topic preference rows
+                        DbContext -> UserTopicPreferenceEntity: Read topic preferences
+                        UserTopicPreferenceEntity --> DbContext: Interest topic ids
+                        DbContext --> KnnProfileRepository: Interest topic ids
+                        KnnProfileRepository --> KnnLearningService: Interest topic ids
+
+                        KnnLearningService -> IKnnLearningRepository: GetNeighborStudiedWordsAsync(neighborIds,\ninterestTopicIds)
+                        IKnnLearningRepository -> KnnLearningRepository: GetNeighborStudiedWordsAsync(neighborIds,\ninterestTopicIds)
+                        KnnLearningRepository -> DbContext: Query neighbor studied words
+                        DbContext -> MySQL: SELECT user_list_words\nJOIN word_topics
+                        MySQL --> DbContext: Neighbor word rows
+                        DbContext -> UserListWordEntity: Read UserListWord rows
+                        DbContext -> WordTopicEntity: Filter by WordTopic rows
+                        UserListWordEntity --> DbContext: Neighbor word ids
+                        WordTopicEntity --> DbContext: Topic filter
+                        DbContext --> KnnLearningRepository: Neighbor word ids
+                        KnnLearningRepository --> KnnLearningService: Neighbor word ids
+                    end
+                end
+            else Enough quiz sessions
+                KnnLearningService -> IKnnLearningRepository: GetActiveTopicIdsAsync()
+                IKnnLearningRepository -> KnnLearningRepository: GetActiveTopicIdsAsync()
+                KnnLearningRepository -> DbContext: Query active topics
+                DbContext -> MySQL: SELECT topics
+                MySQL --> DbContext: Topic rows
+                DbContext -> TopicEntity: Read Topic ids
+                TopicEntity --> DbContext: Topic ids
+                DbContext --> KnnLearningRepository: Topic ids
+                KnnLearningRepository --> KnnLearningService: Topic ids
+
+                KnnLearningService -> IKnnLearningRepository: GetTopicAnswerStatsAsync(userId)
+                IKnnLearningRepository -> KnnLearningRepository: GetTopicAnswerStatsAsync(userId)
+                KnnLearningRepository -> DbContext: Query answer stats by topic
+                DbContext -> MySQL: SELECT test_answers\nJOIN words and word_topics
+                MySQL --> DbContext: Answer statistic rows
+                DbContext -> TestAnswerEntity: Read TestAnswer rows
+                DbContext -> WordTopicEntity: Group by WordTopic
+                TestAnswerEntity --> DbContext: Correct/total counts
+                WordTopicEntity --> DbContext: Topic groups
+                DbContext --> KnnLearningRepository: Topic answer stats
+                KnnLearningRepository --> KnnLearningService: User accuracy vector
+
+                KnnLearningService -> IKnnLearningRepository: GetEligibleUserIdsAsync(minSessions,\nexcludingUserId)
+                IKnnLearningRepository -> KnnLearningRepository: GetEligibleUserIdsAsync(minSessions,\nexcludingUserId)
+                KnnLearningRepository -> DbContext: Query eligible users by sessions
+                DbContext -> MySQL: SELECT test_sessions
+                MySQL --> DbContext: Eligible user rows
+                DbContext -> TestSessionEntity: Group TestSession rows
+                TestSessionEntity --> DbContext: Eligible user ids
+                DbContext --> KnnLearningRepository: Eligible user ids
+                KnnLearningRepository --> KnnLearningService: Eligible user ids
+                KnnLearningService -> IKnnLearningService: Compute neighbor vectors\nand cosine similarity
+                IKnnLearningService -> KnnLearningService: Compute neighbor vectors\nand cosine similarity
+
+                alt No nearest neighbors
+                    KnnLearningService -> IKnnLearningService: No candidate word scores
+                    IKnnLearningService -> KnnLearningService: No candidate word scores
+                else Nearest neighbors found
+                    KnnLearningService -> IKnnLearningRepository: GetMasteredWordsAsync(neighborIds,\nminMasteryLevel)
+                    IKnnLearningRepository -> KnnLearningRepository: GetMasteredWordsAsync(neighborIds,\nminMasteryLevel)
+                    KnnLearningRepository -> DbContext: Query mastered words
+                    DbContext -> MySQL: SELECT user_word_progresses
+                    MySQL --> DbContext: Mastered word rows
+                    DbContext -> UserWordProgressEntity: Read UserWordProgress rows
+                    UserWordProgressEntity --> DbContext: Mastered word ids
+                    DbContext --> KnnLearningRepository: Mastered word ids
+                    KnnLearningRepository --> KnnLearningService: Mastered word ids
+                end
+            end
+
+            KnnLearningService -> IKnnLearningRepository: GetActiveListWordIdsAsync(userId)
+            IKnnLearningRepository -> KnnLearningRepository: GetActiveListWordIdsAsync(userId)
+            KnnLearningRepository -> DbContext: Query current list words
+            DbContext -> MySQL: SELECT user_list_words
+            MySQL --> DbContext: Current list rows
+            DbContext -> UserListWordEntity: Read UserListWord rows
+            UserListWordEntity --> DbContext: Current word ids
+            DbContext --> KnnLearningRepository: Current word ids
+            KnnLearningRepository --> KnnLearningService: Current word ids
+            KnnLearningService -> IKnnLearningService: Score candidate words\nand remove current words
+            IKnnLearningService -> KnnLearningService: Score candidate words\nand remove current words
+        end
+
+        alt No candidate word scores
+            KnnLearningService --> BeController: Empty recommendation result
+            BeController -> BeWordRecommendationDto: Create empty response list
+            BeWordRecommendationDto --> BeController: WordRecommendationResponse list
+            BeController --> RecommendationUi: HTTP 200 OK\nempty data
+        else Candidate word scores available
+            KnnLearningService -> IKnnLearningRepository: GetWordRecommendationsAsync(scoresByWordId, limit)
+            IKnnLearningRepository -> KnnLearningRepository: GetWordRecommendationsAsync(scoresByWordId, limit)
+            KnnLearningRepository -> DbContext: Query recommended word rows
+            DbContext -> MySQL: SELECT words\nwith first word_sense
+            MySQL --> DbContext: Recommended word rows
+            DbContext -> WordEntity: Read Word rows
+            DbContext -> WordSenseEntity: Read first WordSense
+            WordEntity --> DbContext: Word rows
+            WordSenseEntity --> DbContext: Primary meaning
+            DbContext --> KnnLearningRepository: Recommended word rows
+            KnnLearningRepository --> KnnLearningService: Word recommendations
+            KnnLearningService --> BeController: Word recommendation result
+            BeController -> BeWordRecommendationDto: Create WordRecommendationResponse list
+            BeWordRecommendationDto --> BeController: WordRecommendationResponse list
+            BeController --> RecommendationUi: HTTP 200 OK\nWordRecommendationResponse list
+        end
+    end
+end
+
+@enduml

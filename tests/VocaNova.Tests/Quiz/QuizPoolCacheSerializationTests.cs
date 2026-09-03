@@ -1,6 +1,8 @@
 using System.Text.Json;
 using FluentAssertions;
-using VocaNova.API.Features.Quiz.DTOs;
+using VocaNova.API.Features.Quiz.Contracts.Requests;
+using VocaNova.API.Features.Quiz.Contracts.Responses;
+using VocaNova.API.Features.Quiz.BLL.Models;
 
 namespace VocaNova.Tests.Quiz;
 

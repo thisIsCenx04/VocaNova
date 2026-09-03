@@ -1,4 +1,4 @@
-using VocaNova.Dashboard.Models.Api.Stats;
+using VocaNova.Dashboard.Data.Dtos.Stats;
 
 namespace VocaNova.Dashboard.Models.Statistics;
 

@@ -1,0 +1,169 @@
+@startuml
+title Add Vocabulary from Search Sequence (/api/words and /api/lists/{id}/words)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Learner
+boundary "Add Vocabulary from Search UI" as AddFromSearchUi
+control "WordSearchNotifier\n(FE Mobile)" as SearchController
+control "WordSearchApiService\n(FE Mobile)" as SearchApiService
+control "ListDetailNotifier\n(FE Mobile)" as ListController
+control "ListsApiService\n(FE Mobile)" as ListsApiService
+entity "WordSummaryDto\n(FE Response DTO)" as FeWordSummaryDto
+entity "ListWordDto\n(FE Response DTO)" as FeListWordDto
+entity "WordSearchRequest\n(BE Request DTO)" as BeWordSearchDto
+entity "WordSummaryResponse\n(BE Response DTO)" as BeWordSummaryDto
+entity "AddListWordRequest\n(BE Request DTO)" as BeAddListWordDto
+entity "ListWordResponse\n(BE Response DTO)" as BeListWordDto
+control "WordsController\n(BE API)" as WordsController
+control "ListsController\n(BE API)" as ListsController
+control "IWordReadService" as IWordReadService
+control "WordReadService" as WordService
+control "IListMutationService" as IListMutationService
+control "ListMutationService" as ListService
+entity "Word" as WordEntity
+entity "WordSense" as WordSenseEntity
+entity "WordTopic" as WordTopicEntity
+entity "UserList" as UserListEntity
+entity "UserListWord" as UserListWordEntity
+control "IWordReadRepository" as IWordReadRepository
+control "WordReadRepository" as WordRepository
+control "IListMutationRepository" as IListMutationRepository
+control "ListMutationRepository" as ListRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over AddFromSearchUi, MySQL
+Checked in current code:
+Mobile search uses WordSearchNotifier and WordSearchApiService.
+Mobile add-to-list uses ListDetailNotifier and ListsApiService.
+FE response DTOs exist: WordSummaryDto and ListWordDto.
+BE request DTOs exist: WordSearchRequest and AddListWordRequest.
+BE response DTOs exist: WordSummaryResponse and ListWordResponse.
+Endpoints are GET /api/words and POST /api/lists/{id}/words.
+Entities exist: Word, WordSense, WordTopic, UserList and UserListWord.
+Interfaces used in code: IWordReadService, IListMutationService, IWordReadRepository,
+  IListMutationRepository.
+end note
+
+Learner -> AddFromSearchUi: Search vocabulary
+AddFromSearchUi -> SearchController: queryChanged/search
+SearchController -> SearchApiService: search(query, cefr?, topicId?)
+SearchApiService -> WordsController: GET /api/words\nq, page, limit, cefr, topicId
+WordsController -> BeWordSearchDto: Bind query string
+BeWordSearchDto --> WordsController: WordSearchRequest
+WordsController -> IWordReadService: SearchAsync(query)
+IWordReadService -> WordService: SearchAsync(query)
+WordService -> IWordReadService: Validate page, limit and CEFR
+IWordReadService -> WordService: Validate page, limit and CEFR
+
+alt Search validation fails
+    WordService --> WordsController: Validation failure
+    WordsController --> SearchApiService: HTTP 400 error
+    SearchApiService --> SearchController: Action failed
+    SearchController --> AddFromSearchUi: Show search error
+else Search validation success
+    WordService -> IWordReadRepository: SearchAsync(normalized query)
+    IWordReadRepository -> WordRepository: SearchAsync(normalized query)
+    WordRepository -> DbContext: Query matching words
+    DbContext -> MySQL: SELECT words with senses/topics
+    MySQL --> DbContext: Word rows
+    DbContext -> WordEntity: Read Word rows
+    DbContext -> WordSenseEntity: Read primary WordSense
+    DbContext -> WordTopicEntity: Read WordTopic ids
+    WordEntity --> DbContext: Word rows
+    WordSenseEntity --> DbContext: Primary meaning
+    WordTopicEntity --> DbContext: Topic ids
+    DbContext --> WordRepository: Paged word result
+    WordRepository --> WordService: Paged words
+    WordService --> WordsController: Search result
+    WordsController -> BeWordSummaryDto: Create WordSummaryResponse list
+    BeWordSummaryDto --> WordsController: WordSummaryResponse list
+    WordsController --> SearchApiService: HTTP 200 OK\nWordSummaryResponse list
+    SearchApiService -> FeWordSummaryDto: Parse response data
+    FeWordSummaryDto --> SearchApiService: WordSummary list
+    SearchApiService --> SearchController: Search results
+    SearchController --> AddFromSearchUi: Show word results
+end
+
+Learner -> AddFromSearchUi: Tap add on a word
+AddFromSearchUi -> ListController: addWord(wordId)
+ListController -> ListsApiService: addWord(listId, wordId)
+ListsApiService -> ListsController: POST /api/lists/{id}/words\nword_id, add_method, note
+ListsController -> BeAddListWordDto: Bind request body
+BeAddListWordDto --> ListsController: AddListWordRequest
+ListsController -> ListsController: Check authenticated user
+ListsController -> IListMutationService: AddWordAsync(userId, listId, request)
+IListMutationService -> ListService: AddWordAsync(userId, listId, request)
+ListService -> IListMutationRepository: GetOwnershipAsync(userId, listId)
+IListMutationRepository -> ListRepository: GetOwnershipAsync(userId, listId)
+ListRepository -> DbContext: Query UserList ownership
+DbContext -> MySQL: SELECT user_lists
+MySQL --> DbContext: UserList row or null
+DbContext -> UserListEntity: Read UserList?
+UserListEntity --> DbContext: UserList or null
+DbContext --> ListRepository: Ownership result
+ListRepository --> ListService: Ownership result
+
+alt List missing or forbidden
+    ListService --> ListsController: NotFound or Forbidden result
+    ListsController --> ListsApiService: HTTP 404/403 error
+    ListsApiService --> ListController: Action failed
+    ListController --> AddFromSearchUi: Show add error
+else List owned
+    ListService -> IListMutationRepository: ActiveWordExistsAsync(wordId)
+    IListMutationRepository -> ListRepository: ActiveWordExistsAsync(wordId)
+    ListRepository -> DbContext: Check active Word
+    DbContext -> MySQL: SELECT words
+    MySQL --> DbContext: Word exists or not
+    DbContext -> WordEntity: Read Word?
+    WordEntity --> DbContext: Word or null
+    DbContext --> ListRepository: Exists result
+    ListRepository --> ListService: Exists result
+
+    alt Word not found
+        ListService --> ListsController: NotFound result
+        ListsController --> ListsApiService: HTTP 404 error
+        ListsApiService --> ListController: Action failed
+        ListController --> AddFromSearchUi: Show add error
+    else Word exists
+        ListService -> IListMutationRepository: FindListWordAsync(userId, listId, wordId)
+        IListMutationRepository -> ListRepository: FindListWordAsync(userId, listId, wordId)
+        ListRepository -> DbContext: Query existing UserListWord
+        DbContext -> MySQL: SELECT user_list_words
+        MySQL --> DbContext: List word row or null
+        DbContext -> UserListWordEntity: Read UserListWord?
+        UserListWordEntity --> DbContext: UserListWord or null
+        DbContext --> ListRepository: Existing list word
+        ListRepository --> ListService: Existing list word
+
+        alt Word already active in list
+            ListService --> ListsController: Conflict result
+            ListsController --> ListsApiService: HTTP 409 error
+            ListsApiService --> ListController: Action failed
+            ListController --> AddFromSearchUi: Show duplicate error
+        else New or deleted list word
+            ListService -> IListMutationRepository: AddWordAsync or RestoreWordAsync
+            IListMutationRepository -> ListRepository: AddWordAsync or RestoreWordAsync
+            ListRepository -> UserListWordEntity: Create or restore UserListWord
+            UserListWordEntity --> ListRepository: UserListWord
+            ListRepository -> DbContext: Add/track UserListWord
+            DbContext -> MySQL: INSERT/UPDATE user_list_words
+            MySQL --> DbContext: Save result
+            DbContext --> ListRepository: Save result
+            ListRepository --> ListService: Added list word
+            ListService --> ListsController: Added word result
+            ListsController -> BeListWordDto: Create ListWordResponse
+            BeListWordDto --> ListsController: ListWordResponse
+            ListsController --> ListsApiService: HTTP 201 Created\nListWordResponse
+            ListsApiService -> FeListWordDto: Parse response data
+            FeListWordDto --> ListsApiService: ListWord
+            ListsApiService --> ListController: Added ListWord
+            ListController --> AddFromSearchUi: Show word added
+        end
+    end
+end
+
+@enduml

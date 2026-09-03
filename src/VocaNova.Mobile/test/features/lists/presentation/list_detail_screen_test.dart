@@ -6,23 +6,23 @@ import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/data/word_search_repository.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/data/services/word_search_api_service.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
-import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
-import 'package:vocanova_mobile/features/lists/domain/list_word.dart';
+import 'package:vocanova_mobile/features/lists/data/services/lists_api_service.dart';
+import 'package:vocanova_mobile/features/lists/domain/models/list_word.dart';
 import 'package:vocanova_mobile/features/lists/presentation/list_detail_screen.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
-  late MockListsRepository repository;
-  late MockWordSearchRepository searchRepository;
+  late MockListsApiService repository;
+  late MockWordSearchApiService searchRepository;
   late MockConnectivityService connectivity;
   late MockLocalStorage storage;
 
   setUp(() {
-    repository = MockListsRepository();
-    searchRepository = MockWordSearchRepository();
+    repository = MockListsApiService();
+    searchRepository = MockWordSearchApiService();
     connectivity = MockConnectivityService();
     storage = MockLocalStorage();
     when(() => connectivity.isOnline).thenAnswer((_) async => true);
@@ -127,18 +127,18 @@ void main() {
 
 Future<void> pumpDetail(
   WidgetTester tester,
-  ListsRepository repository,
-  WordSearchRepository searchRepository,
+  ListsApiService repository,
+  WordSearchApiService searchRepository,
   ConnectivityService connectivity,
   LocalStorage storage,
 ) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        listsRepositoryProvider.overrideWithValue(repository),
+        listsApiServiceProvider.overrideWithValue(repository),
         listsLocalStorageProvider.overrideWithValue(storage),
         connectivityServiceProvider.overrideWithValue(connectivity),
-        wordSearchRepositoryProvider.overrideWithValue(searchRepository),
+        wordSearchApiServiceProvider.overrideWithValue(searchRepository),
       ],
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -151,9 +151,9 @@ Future<void> pumpDetail(
   await tester.pump(const Duration(milliseconds: 100));
 }
 
-class MockListsRepository extends Mock implements ListsRepository {}
+class MockListsApiService extends Mock implements ListsApiService {}
 
-class MockWordSearchRepository extends Mock implements WordSearchRepository {}
+class MockWordSearchApiService extends Mock implements WordSearchApiService {}
 
 class MockConnectivityService extends Mock implements ConnectivityService {}
 

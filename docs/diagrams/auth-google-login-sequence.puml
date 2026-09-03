@@ -1,0 +1,163 @@
+@startuml
+title Login With Google Sequence (/api/auth/google)
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+actor Guest
+boundary "LoginScreen UI" as LoginScreen
+control "GoogleAuthService" as GoogleAuthService
+entity "GoogleLoginRequest\n(BE Request DTO)" as GoogleLoginRequestDto
+entity "TokenResponse\n(BE Response DTO)" as GoogleLoginResponseDto
+entity "AuthTokensDto\n(FE Response DTO)" as FeTokensDto
+control "AuthController" as AuthController
+control "IAuthService" as IAuthService
+control "AuthService" as AuthService
+entity "User" as UserEntity
+entity "UserAuth" as UserAuthEntity
+entity "UserProfile" as UserProfileEntity
+entity "Role" as RoleEntity
+entity "RefreshToken" as RefreshTokenEntity
+control "IAuthAccountRepository" as IAuthAccountRepository
+control "AuthAccountRepository" as AuthAccountRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+note over LoginScreen, MySQL
+BE DTOs exist: GoogleLoginRequest and TokenResponse.
+FE response DTO exists: AuthTokensDto.
+Mobile GoogleAuthService gets the id_token before the API call.
+Interfaces used in code: IAuthService, IAuthAccountRepository.
+end note
+Guest -> LoginScreen: Access login page
+Guest -> LoginScreen: Click Login with Google
+LoginScreen -> GoogleAuthService: getIdToken()
+GoogleAuthService --> LoginScreen: id_token
+alt Google login cancelled or token missing
+LoginScreen --> Guest: Show error message
+else Google token received
+LoginScreen -> GoogleLoginRequestDto: Create request data(id_token)
+LoginScreen -> AuthController: POST /api/auth/googleGoogleLoginRequest
+AuthController -> AuthController: Validate GoogleLoginRequest
+alt Request validation or rate limit fails
+AuthController --> LoginScreen: HTTP 400/429 error
+LoginScreen --> Guest: Show error message
+else Request validation success
+AuthController -> IAuthService: GoogleLoginAsync(login data)
+IAuthService -> AuthService: GoogleLoginAsync(login data)
+AuthService -> IAuthService: Verify id_token
+IAuthService -> AuthService: Verify id_token
+alt id_token invalid
+AuthService --> AuthController: Unauthorized result
+AuthController --> LoginScreen: HTTP 401 Invalid Google id token
+LoginScreen --> Guest: Show error message
+else id_token valid
+AuthService -> IAuthAccountRepository: FindByGoogleSubjectAsync(subject)
+IAuthAccountRepository -> AuthAccountRepository: FindByGoogleSubjectAsync(subject)
+AuthAccountRepository -> DbContext: Query user by Google subject
+DbContext -> MySQL: SELECT user account
+MySQL --> DbContext: User row or null
+DbContext -> UserEntity: Materialize User?
+DbContext -> UserAuthEntity: Materialize UserAuth?
+UserEntity --> DbContext: User or null
+UserAuthEntity --> DbContext: UserAuth or null
+DbContext --> AuthAccountRepository: Result
+AuthAccountRepository --> AuthService: AuthAccount or null
+alt Existing Google account
+alt Account locked or deleted
+AuthService --> AuthController: Forbidden/Unauthorized result
+AuthController --> LoginScreen: HTTP 403/401 error
+LoginScreen --> Guest: Show error message
+else Account active
+AuthService -> IAuthAccountRepository: StageLastLoginAsync(userId)
+IAuthAccountRepository -> AuthAccountRepository: StageLastLoginAsync(userId)
+AuthAccountRepository -> DbContext: Update User.LastLoginAt
+DbContext -> MySQL: UPDATE users
+MySQL --> DbContext: Update result
+AuthService -> IAuthAccountRepository: Create refresh token
+IAuthAccountRepository -> AuthAccountRepository: Create refresh token
+AuthAccountRepository -> RefreshTokenEntity: Create RefreshToken
+RefreshTokenEntity --> AuthAccountRepository: RefreshToken
+AuthAccountRepository -> DbContext: Add RefreshToken
+DbContext -> MySQL: INSERT refresh_tokens
+MySQL --> DbContext: Insert result
+AuthService --> AuthController: Return login result
+AuthController -> GoogleLoginResponseDto: Create response data(access_token, refresh_token,\nexpires_in, token_type)
+AuthController -> FeTokensDto: HTTP 200 OK\nTokenResponse JSON
+FeTokensDto --> LoginScreen: AuthTokens
+LoginScreen --> Guest: Navigate to app
+end
+else New Google account
+AuthService -> IAuthAccountRepository: FindByGoogleEmailAsync(email)
+IAuthAccountRepository -> AuthAccountRepository: FindByGoogleEmailAsync(email)
+AuthAccountRepository -> DbContext: Query user by Google email
+DbContext -> MySQL: SELECT user account
+MySQL --> DbContext: User row or null
+DbContext -> UserEntity: Materialize User?
+DbContext -> UserAuthEntity: Materialize UserAuth?
+UserEntity --> DbContext: User or null
+UserAuthEntity --> DbContext: UserAuth or null
+DbContext --> AuthAccountRepository: Result
+AuthAccountRepository --> AuthService: AuthAccount or null
+alt Google email already exists
+AuthService --> AuthController: Conflict result
+AuthController --> LoginScreen: HTTP 409 Google email already exists
+LoginScreen --> Guest: Show error message
+else Email is available
+AuthService -> IAuthAccountRepository: FindRoleByNameAsync("User")
+IAuthAccountRepository -> AuthAccountRepository: FindRoleByNameAsync("User")
+AuthAccountRepository -> DbContext: Query role
+DbContext -> MySQL: SELECT roles
+MySQL --> DbContext: Role row or null
+DbContext -> RoleEntity: Materialize Role?
+RoleEntity --> DbContext: Role or null
+DbContext --> AuthAccountRepository: Result
+AuthAccountRepository --> AuthService: AuthRole or null
+alt Default user role missing
+AuthService --> AuthController: Validation failure
+AuthController --> LoginScreen: HTTP 400 error
+LoginScreen --> Guest: Show error message
+else Role exists
+AuthService -> IAuthAccountRepository: StageCreateAsync(CreateAuthAccount)
+IAuthAccountRepository -> AuthAccountRepository: StageCreateAsync(CreateAuthAccount)
+AuthAccountRepository -> UserEntity: Create User
+AuthAccountRepository -> UserAuthEntity: Create UserAuth
+AuthAccountRepository -> UserProfileEntity: Create UserProfile
+UserEntity --> AuthAccountRepository: User
+UserAuthEntity --> AuthAccountRepository: UserAuth
+UserProfileEntity --> AuthAccountRepository: UserProfile
+AuthAccountRepository -> DbContext: Add User, UserAuth,\nUserProfile
+DbContext -> MySQL: INSERT account data
+MySQL --> DbContext: Insert result
+DbContext --> AuthAccountRepository: Save result
+AuthService -> IAuthAccountRepository: FindByGoogleSubjectAsync(subject)
+IAuthAccountRepository -> AuthAccountRepository: FindByGoogleSubjectAsync(subject)
+AuthAccountRepository -> DbContext: Reload created account
+DbContext -> MySQL: SELECT created user account
+MySQL --> DbContext: Created user row
+DbContext -> UserEntity: Materialize created User
+DbContext -> UserAuthEntity: Materialize created UserAuth
+DbContext -> UserProfileEntity: Materialize created UserProfile
+UserEntity --> DbContext: User
+UserAuthEntity --> DbContext: UserAuth
+UserProfileEntity --> DbContext: UserProfile
+DbContext --> AuthAccountRepository: Result
+AuthAccountRepository --> AuthService: Created account
+AuthService -> IAuthAccountRepository: Create refresh token
+IAuthAccountRepository -> AuthAccountRepository: Create refresh token
+AuthAccountRepository -> RefreshTokenEntity: Create RefreshToken
+RefreshTokenEntity --> AuthAccountRepository: RefreshToken
+AuthAccountRepository -> DbContext: Add RefreshToken
+DbContext -> MySQL: INSERT refresh_tokens
+MySQL --> DbContext: Insert result
+DbContext --> AuthAccountRepository: Save result
+AuthService --> AuthController: Return login result
+AuthController -> GoogleLoginResponseDto: Create response data(access_token, refresh_token,\nexpires_in, token_type)
+AuthController -> FeTokensDto: HTTP 200 OK\nTokenResponse JSON
+FeTokensDto --> LoginScreen: AuthTokens
+LoginScreen --> Guest: Navigate to app
+end
+end
+end
+end
+end
+end
+@enduml

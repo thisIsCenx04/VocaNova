@@ -1,0 +1,98 @@
+@startuml
+title Delete Topic Class Diagram (/api/admin/topics/{id})
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from admin-delete-topic-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+
+class TopicsController <<frontend_controller>> {
+  "- _apiClient : IVocaNovaApiClient"
+  --
+  "+ Delete(id: uint, returnUrl: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult"
+}
+
+class AdminTopicsController <<backend_controller>> {
+  "- _service : ITopicAdminService"
+  --
+  "+ SoftDelete(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
+}
+
+class ITopicAdminService <<service_interface>> {
+  "+ ListAsync(query: AdminTopicQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfIReadOnlyCollectionOfAdminTopic"
+  "+ CreateAsync(command: CreateTopicCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfTopicSummary"
+  "+ AddWordsAsync(topicId: uint, wordIds: IReadOnlyCollectionOfuintNullable, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfint"
+  "+ UpdateAsync(topicId: uint, command: UpdateTopicCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfTopicSummary"
+  "+ SoftDeleteAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
+  "+ RestoreAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
+}
+
+class TopicAdminService <<service>> {
+  "- _repository : ITopicAdminRepository"
+  "- _cache : ITopicCacheNullable"
+  --
+  "+ SoftDeleteAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryBool"
+}
+
+class Topic <<entity>> {
+  "+ TopicId : uint"
+  "+ TopicName : string"
+  "+ TopicNameVi : stringNullable"
+  "+ Icon : stringNullable"
+  "+ Status : string"
+  "+ TestSessionTopics : ICollectionOfTestSessionTopic"
+  "+ UserTopicPreferences : ICollectionOfUserTopicPreference"
+  "+ WordTopics : ICollectionOfWordTopic"
+}
+
+class ITopicAdminRepository <<repository_interface>> {
+  "+ ListAsync(query: AdminTopicQuery, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminTopic"
+  "+ ExistsAsync(topicId: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ NameExistsAsync(name: string, nameVi: stringNullable, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ WordIdsExistAsync(wordIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ CreateAsync(command: CreateTopicCommand, cancellationToken: CancellationToken) : TaskOfTopicSummary"
+  "+ UpdateAsync(topicId: uint, command: UpdateTopicCommand, cancellationToken: CancellationToken) : TaskOfTopicSummaryNullable"
+  "+ AddWordsAsync(topicId: uint, wordIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : TaskOfint"
+  "+ HasActiveWordsAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ SetStatusAsync(topicId: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool"
+}
+
+class TopicAdminRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ SetStatusAsync(topicId: uint, status: string, cancellationToken: CancellationToken) : TaskOfBool"
+}
+
+class VocaNovaDbContext <<dbcontext>> {
+  "+ AgeRanges : DbSetOfAgeRange"
+  "+ AiGradingCaches : DbSetOfAiGradingCache"
+  "+ AuditLogs : DbSetOfAuditLog"
+  "+ EducationLevels : DbSetOfEducationLevel"
+  "+ LearningPurposes : DbSetOfLearningPurpose"
+  "+ Occupations : DbSetOfOccupation"
+  "+ OtpVerifications : DbSetOfOtpVerification"
+  "+ RefreshTokens : DbSetOfRefreshToken"
+  "+ Regions : DbSetOfRegion"
+  "+ Roles : DbSetOfRole"
+  "+ TestAnswers : DbSetOfTestAnswer"
+  "+ TestSessions : DbSetOfTestSession"
+  --
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
+}
+
+class MySQL_Database <<database>> {
+
+}
+TopicsController ..> AdminTopicsController
+TopicAdminRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+TopicAdminRepository ..> Topic
+ITopicAdminService <|.. TopicAdminService
+AdminTopicsController ..> ITopicAdminService : SoftDeleteAsync()
+ITopicAdminRepository <|.. TopicAdminRepository
+TopicAdminService ..> ITopicAdminRepository : SetStatusAsync()
+@enduml

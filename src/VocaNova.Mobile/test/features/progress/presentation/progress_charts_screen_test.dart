@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
-import 'package:vocanova_mobile/features/progress/data/progress_repository.dart';
-import 'package:vocanova_mobile/features/progress/domain/progress_analytics.dart';
+import 'package:vocanova_mobile/features/progress/data/services/progress_api_service.dart';
+import 'package:vocanova_mobile/features/progress/domain/models/progress_analytics.dart';
 import 'package:vocanova_mobile/features/progress/presentation/progress_charts_screen.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
@@ -13,7 +13,7 @@ void main() {
   testWidgets('renders line chart, horizontal mastery, and weakest words', (
     tester,
   ) async {
-    final repository = MockProgressRepository();
+    final repository = MockProgressApiService();
     when(() => repository.getChart('daily')).thenAnswer((_) async => daily);
     when(() => repository.getChart('weekly')).thenAnswer((_) async => weekly);
     when(
@@ -27,7 +27,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [progressRepositoryProvider.overrideWithValue(repository)],
+        overrides: [progressApiServiceProvider.overrideWithValue(repository)],
         child: MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -53,7 +53,7 @@ void main() {
   });
 }
 
-class MockProgressRepository extends Mock implements ProgressRepository {}
+class MockProgressApiService extends Mock implements ProgressApiService {}
 
 const daily = ProgressChart(
   granularity: 'daily',

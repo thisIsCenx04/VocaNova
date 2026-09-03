@@ -15,4 +15,3 @@ public partial class Occupation
 
     public virtual ICollection<UserLearningProfile> UserLearningProfiles { get; set; } = new List<UserLearningProfile>();
 }
-

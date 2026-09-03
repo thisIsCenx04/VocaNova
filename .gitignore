@@ -83,5 +83,6 @@ input.txt
 
 # Figma working files (contains a read-only token — never commit)
 .figma-tmp/
-docs/*
 .artifacts-test/
+
+PROMPT.EXAMPLE.md

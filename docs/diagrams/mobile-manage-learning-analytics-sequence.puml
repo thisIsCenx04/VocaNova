@@ -1,0 +1,159 @@
+@startuml
+title Manage Learning Analytics Sequence (/api/progress/chart, /mastery-breakdown, /weakest-words)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Learner
+boundary "Learning Analytics UI" as LearningAnalyticsUi
+control "ProgressChartsNotifier\n(FE Mobile)" as FeController
+control "ProgressApiService\n(FE Mobile)" as FeApiService
+entity "ProgressChartDto\n(FE Response DTO)" as FeChartDto
+entity "MasteryBreakdownDto\n(FE Response DTO)" as FeMasteryDto
+entity "WeakestWordDto\n(FE Response DTO)" as FeWeakestWordDto
+entity "ProgressChartRequest\n(BE Request DTO)" as BeChartRequestDto
+entity "WeakestWordsRequest\n(BE Request DTO)" as BeWeakestWordsRequestDto
+entity "ProgressChartResponse\n(BE Response DTO)" as BeChartResponseDto
+entity "MasteryBreakdownResponse\n(BE Response DTO)" as BeMasteryResponseDto
+entity "WeakestWordResponse\n(BE Response DTO)" as BeWeakestWordResponseDto
+control "ProgressController\n(BE API)" as BeController
+control "IProgressAnalyticsService" as IProgressAnalyticsService
+control "ProgressAnalyticsService" as AnalyticsService
+entity "TestSession" as TestSessionEntity
+entity "TestAnswer" as TestAnswerEntity
+entity "UserWordProgress" as UserWordProgressEntity
+entity "Word" as WordEntity
+entity "WordSense" as WordSenseEntity
+control "IProgressAnalyticsRepository" as IProgressAnalyticsRepository
+control "ProgressAnalyticsRepository" as AnalyticsRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over LearningAnalyticsUi, MySQL
+Checked in current code:
+Mobile UI file exists: progress_charts_screen.dart.
+FE controller/service exist: ProgressChartsNotifier and ProgressApiService.
+FE response DTOs exist: ProgressChartDto, MasteryBreakdownDto and WeakestWordDto.
+BE controller exists: ProgressController.
+BE request DTOs exist: ProgressChartRequest and WeakestWordsRequest.
+BE response DTOs exist: ProgressChartResponse, MasteryBreakdownResponse and WeakestWordResponse.
+Endpoints are GET /api/progress/chart, /api/progress/mastery-breakdown and /api/progress/weakest-words.
+Entities exist: TestSession, TestAnswer, UserWordProgress, Word and WordSense.
+Interfaces used in code: IProgressAnalyticsService, IProgressAnalyticsRepository.
+end note
+
+Learner -> LearningAnalyticsUi: Open learning analytics
+LearningAnalyticsUi -> FeController: load()
+
+FeController -> FeApiService: getChart(granularity)
+FeApiService -> BeController: GET /api/progress/chart\ngranularity
+BeController -> BeChartRequestDto: Bind query string
+BeChartRequestDto --> BeController: ProgressChartRequest
+BeController -> BeController: Check authenticated user
+BeController -> IProgressAnalyticsService: GetChartAsync(userId, query)
+IProgressAnalyticsService -> AnalyticsService: GetChartAsync(userId, query)
+AnalyticsService -> IProgressAnalyticsService: Validate granularity\nand build periods
+IProgressAnalyticsService -> AnalyticsService: Validate granularity\nand build periods
+
+alt Granularity invalid
+    AnalyticsService --> BeController: Validation failure
+    BeController --> FeApiService: HTTP 400 error
+    FeApiService --> FeController: Action failed
+    FeController --> LearningAnalyticsUi: Show analytics error
+else Granularity valid
+    AnalyticsService -> IProgressAnalyticsRepository: GetSessionTimesAsync(userId, window)
+    IProgressAnalyticsRepository -> AnalyticsRepository: GetSessionTimesAsync(userId, window)
+    AnalyticsRepository -> DbContext: Query session started times
+    DbContext -> MySQL: SELECT test_sessions
+    MySQL --> DbContext: Session rows
+    DbContext -> TestSessionEntity: Read TestSession rows
+    TestSessionEntity --> DbContext: Session times
+    DbContext --> AnalyticsRepository: Session times
+
+    AnalyticsService -> IProgressAnalyticsRepository: GetAnswerStatisticsAsync(userId, window)
+    IProgressAnalyticsRepository -> AnalyticsRepository: GetAnswerStatisticsAsync(userId, window)
+    AnalyticsRepository -> DbContext: Query answer statistics
+    DbContext -> MySQL: SELECT test_answers\nJOIN test_sessions
+    MySQL --> DbContext: Answer rows
+    DbContext -> TestAnswerEntity: Read TestAnswer rows
+    DbContext -> TestSessionEntity: Read TestSession rows
+    TestAnswerEntity --> DbContext: Answer correctness
+    TestSessionEntity --> DbContext: Session scope
+    DbContext --> AnalyticsRepository: Answer statistics
+    AnalyticsRepository --> AnalyticsService: Chart source rows
+    AnalyticsService -> IProgressAnalyticsService: Build chart points
+    IProgressAnalyticsService -> AnalyticsService: Build chart points
+    AnalyticsService --> BeController: Chart result
+    BeController -> BeChartResponseDto: Create ProgressChartResponse
+    BeChartResponseDto --> BeController: ProgressChartResponse
+    BeController --> FeApiService: HTTP 200 OK\nProgressChartResponse
+    FeApiService -> FeChartDto: Parse response data
+    FeChartDto --> FeApiService: ProgressChart
+    FeApiService --> FeController: Progress chart
+end
+
+FeController -> FeApiService: getMasteryBreakdown()
+FeApiService -> BeController: GET /api/progress/mastery-breakdown
+BeController -> BeController: Check authenticated user
+BeController -> IProgressAnalyticsService: GetMasteryBreakdownAsync(userId)
+IProgressAnalyticsService -> AnalyticsService: GetMasteryBreakdownAsync(userId)
+AnalyticsService -> IProgressAnalyticsRepository: GetMasteryLevelCountsAsync(userId)
+IProgressAnalyticsRepository -> AnalyticsRepository: GetMasteryLevelCountsAsync(userId)
+AnalyticsRepository -> DbContext: Query mastery levels
+DbContext -> MySQL: SELECT user_word_progresses
+MySQL --> DbContext: Mastery rows
+DbContext -> UserWordProgressEntity: Read UserWordProgress rows
+UserWordProgressEntity --> DbContext: Mastery level counts
+DbContext --> AnalyticsRepository: Mastery counts
+AnalyticsRepository --> AnalyticsService: Mastery counts
+AnalyticsService -> IProgressAnalyticsService: Fill levels 0..5
+IProgressAnalyticsService -> AnalyticsService: Fill levels 0..5
+AnalyticsService --> BeController: Mastery breakdown result
+BeController -> BeMasteryResponseDto: Create MasteryBreakdownResponse list
+BeMasteryResponseDto --> BeController: MasteryBreakdownResponse list
+BeController --> FeApiService: HTTP 200 OK\nMasteryBreakdownResponse list
+FeApiService -> FeMasteryDto: Parse response data
+FeMasteryDto --> FeApiService: MasteryBreakdown list
+FeApiService --> FeController: Mastery breakdown
+
+FeController -> FeApiService: getWeakestWords()
+FeApiService -> BeController: GET /api/progress/weakest-words\nlimit = 10
+BeController -> BeWeakestWordsRequestDto: Bind query string
+BeWeakestWordsRequestDto --> BeController: WeakestWordsRequest
+BeController -> BeController: Check authenticated user
+BeController -> IProgressAnalyticsService: GetWeakestWordsAsync(userId, query)
+IProgressAnalyticsService -> AnalyticsService: GetWeakestWordsAsync(userId, query)
+AnalyticsService -> IProgressAnalyticsService: Validate limit
+IProgressAnalyticsService -> AnalyticsService: Validate limit
+
+alt Limit invalid
+    AnalyticsService --> BeController: Validation failure
+    BeController --> FeApiService: HTTP 400 error
+    FeApiService --> FeController: Action failed
+    FeController --> LearningAnalyticsUi: Show analytics error
+else Limit valid
+    AnalyticsService -> IProgressAnalyticsRepository: GetWeakestWordStatisticsAsync(userId, limit)
+    IProgressAnalyticsRepository -> AnalyticsRepository: GetWeakestWordStatisticsAsync(userId, limit)
+    AnalyticsRepository -> DbContext: Query weakest words
+    DbContext -> MySQL: SELECT user_word_progresses\nJOIN words and word_senses
+    MySQL --> DbContext: Weakest word rows
+    DbContext -> UserWordProgressEntity: Read UserWordProgress rows
+    DbContext -> WordEntity: Read Word rows
+    DbContext -> WordSenseEntity: Read primary WordSense rows
+    UserWordProgressEntity --> DbContext: Wrong counts\nand mastery levels
+    WordEntity --> DbContext: Word data
+    WordSenseEntity --> DbContext: Primary meaning
+    DbContext --> AnalyticsRepository: Weakest word statistics
+    AnalyticsRepository --> AnalyticsService: Weakest word statistics
+    AnalyticsService --> BeController: Weakest words result
+    BeController -> BeWeakestWordResponseDto: Create WeakestWordResponse list
+    BeWeakestWordResponseDto --> BeController: WeakestWordResponse list
+    BeController --> FeApiService: HTTP 200 OK\nWeakestWordResponse list
+    FeApiService -> FeWeakestWordDto: Parse response data
+    FeWeakestWordDto --> FeApiService: WeakestWord list
+    FeApiService --> FeController: Weakest words
+    FeController --> LearningAnalyticsUi: Show charts and weakest words
+end
+
+@enduml

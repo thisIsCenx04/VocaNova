@@ -1,0 +1,76 @@
+@startuml
+title View Progress Reports Sequence (/api/progress/words/{wordId})
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Learner
+boundary "Progress Reports UI" as ProgressReportsUi
+entity "WordProgressResponse\n(BE Response DTO)" as BeWordProgressDto
+control "ProgressController\n(BE API)" as BeController
+control "IProgressAnalyticsService" as IProgressAnalyticsService
+control "ProgressAnalyticsService" as AnalyticsService
+entity "UserWordProgress" as UserWordProgressEntity
+entity "Word" as WordEntity
+entity "WordSense" as WordSenseEntity
+control "IProgressAnalyticsRepository" as IProgressAnalyticsRepository
+control "ProgressAnalyticsRepository" as AnalyticsRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over ProgressReportsUi, MySQL
+Checked in current code:
+BE controller exists: ProgressController.
+BE response DTO exists: WordProgressResponse.
+Endpoint is GET /api/progress/words/{wordId}; no request DTO body is used.
+Mobile ProgressApiService currently has no getWordProgress method and no FE word progress DTO.
+Entities exist: UserWordProgress, Word and WordSense.
+Interfaces used in code: IProgressAnalyticsService, IProgressAnalyticsRepository.
+end note
+
+Learner -> ProgressReportsUi: Open word progress report
+ProgressReportsUi -> BeController: GET /api/progress/words/{wordId}\nbackend endpoint exists
+BeController -> BeController: Check authenticated user
+
+alt User id missing
+    BeController --> ProgressReportsUi: HTTP 401 error
+else User authenticated
+    BeController -> IProgressAnalyticsService: GetWordProgressAsync(userId, wordId)
+    IProgressAnalyticsService -> AnalyticsService: GetWordProgressAsync(userId, wordId)
+    AnalyticsService -> IProgressAnalyticsService: Validate wordId
+    IProgressAnalyticsService -> AnalyticsService: Validate wordId
+
+    alt Word id invalid
+        AnalyticsService --> BeController: NotFound result
+        BeController --> ProgressReportsUi: HTTP 404 error
+    else Word id valid
+        AnalyticsService -> IProgressAnalyticsRepository: GetWordProgressStatisticsAsync(userId, wordId)
+        IProgressAnalyticsRepository -> AnalyticsRepository: GetWordProgressStatisticsAsync(userId, wordId)
+        AnalyticsRepository -> DbContext: Query word progress
+        DbContext -> MySQL: SELECT user_word_progresses\nJOIN words and word_senses
+        MySQL --> DbContext: Word progress row or null
+
+        alt Progress not found
+            DbContext --> AnalyticsRepository: null
+            AnalyticsRepository --> AnalyticsService: null
+            AnalyticsService --> BeController: NotFound result
+            BeController --> ProgressReportsUi: HTTP 404 error
+        else Progress found
+            DbContext -> UserWordProgressEntity: Read UserWordProgress
+            DbContext -> WordEntity: Read Word
+            DbContext -> WordSenseEntity: Read primary WordSense
+            UserWordProgressEntity --> DbContext: Progress counts\nand SRS fields
+            WordEntity --> DbContext: Word data
+            WordSenseEntity --> DbContext: Primary meaning
+            DbContext --> AnalyticsRepository: Word progress statistics
+            AnalyticsRepository --> AnalyticsService: Word progress statistics
+            AnalyticsService --> BeController: Word progress result
+            BeController -> BeWordProgressDto: Create WordProgressResponse
+            BeWordProgressDto --> BeController: WordProgressResponse
+            BeController --> ProgressReportsUi: HTTP 200 OK\nWordProgressResponse
+        end
+    end
+end
+
+@enduml

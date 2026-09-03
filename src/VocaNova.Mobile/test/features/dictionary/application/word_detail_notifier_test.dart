@@ -9,13 +9,14 @@ import 'package:vocanova_mobile/core/storage/storage_keys.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_detail_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/data/word_detail_repository.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_detail.dart';
+import 'package:vocanova_mobile/features/dictionary/data/dtos/word_detail_dto.dart';
+import 'package:vocanova_mobile/features/dictionary/data/services/word_detail_api_service.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_detail.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late MockWordDetailRepository repository;
+  late MockWordDetailApiService repository;
   late MockConnectivityService connectivity;
   late LocalStorage storage;
   late ProviderContainer container;
@@ -25,11 +26,11 @@ void main() {
     storage = LocalStorage.create(
       preferences: await SharedPreferences.getInstance(),
     );
-    repository = MockWordDetailRepository();
+    repository = MockWordDetailApiService();
     connectivity = MockConnectivityService();
     container = ProviderContainer(
       overrides: [
-        wordDetailRepositoryProvider.overrideWithValue(repository),
+        wordDetailApiServiceProvider.overrideWithValue(repository),
         wordDetailLocalStorageProvider.overrideWithValue(storage),
         connectivityServiceProvider.overrideWithValue(connectivity),
       ],
@@ -41,7 +42,7 @@ void main() {
   test('fresh two-hour cache is checked before API', () async {
     await storage.setWithTtl(
       StorageKeys.wordCacheJson(7),
-      jsonEncode(word.toJson()),
+      jsonEncode(WordDetailDto.fromDomain(word).toJson()),
     );
 
     await container.read(wordDetailProvider(7).notifier).load();
@@ -51,7 +52,10 @@ void main() {
   });
 
   test('offline uses stale cache without API', () async {
-    await storage.set(StorageKeys.wordCacheJson(7), jsonEncode(word.toJson()));
+    await storage.set(
+      StorageKeys.wordCacheJson(7),
+      jsonEncode(WordDetailDto.fromDomain(word).toJson()),
+    );
     when(() => connectivity.isOnline).thenAnswer((_) async => false);
 
     await container.read(wordDetailProvider(7).notifier).load();
@@ -74,7 +78,7 @@ void main() {
   });
 }
 
-class MockWordDetailRepository extends Mock implements WordDetailRepository {}
+class MockWordDetailApiService extends Mock implements WordDetailApiService {}
 
 class MockConnectivityService extends Mock implements ConnectivityService {}
 

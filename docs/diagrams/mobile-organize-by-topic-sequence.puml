@@ -1,0 +1,190 @@
+@startuml
+title Organize by Topic Sequence (/api/personal-topics/*)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Learner
+boundary "Organize by Topic UI" as TopicUi
+control "WordSearchApiService\n(FE Mobile)" as SearchApiService
+control "WordDetailApiService\n(FE Mobile)" as DetailApiService
+entity "PersonalTopicSummaryDto\n(FE Response DTO)" as FePersonalTopicDto
+entity "WordSummaryDto\n(FE Response DTO)" as FeWordSummaryDto
+entity "PersonalTopicResponse\n(BE Response DTO)" as BePersonalTopicDto
+entity "ListWordResponse\n(BE Response DTO)" as BeListWordDto
+entity "AddPersonalTopicWordRequest\n(BE Request DTO)" as BeAddTopicWordDto
+control "PersonalTopicsController\n(BE API)" as PersonalTopicsController
+control "IPersonalTopicQueryService" as IPersonalTopicQueryService
+control "PersonalTopicQueryService" as TopicQueryService
+control "IPersonalTopicMutationService" as IPersonalTopicMutationService
+control "PersonalTopicMutationService" as TopicMutationService
+entity "Topic" as TopicEntity
+entity "Word" as WordEntity
+entity "WordSense" as WordSenseEntity
+entity "WordTopic" as WordTopicEntity
+entity "UserList" as UserListEntity
+entity "UserListWord" as UserListWordEntity
+control "IPersonalTopicQueryRepository" as IPersonalTopicQueryRepository
+control "PersonalTopicQueryRepository" as TopicQueryRepository
+control "IPersonalTopicMutationRepository" as IPersonalTopicMutationRepository
+control "PersonalTopicMutationRepository" as TopicMutationRepository
+control "IListMutationRepository" as IListMutationRepository
+control "ListMutationRepository" as ListRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over TopicUi, MySQL
+Checked in current code:
+Mobile services exist: WordSearchApiService and WordDetailApiService.
+FE response DTOs exist: PersonalTopicSummaryDto and WordSummaryDto.
+BE request DTO exists: AddPersonalTopicWordRequest.
+BE response DTOs exist: PersonalTopicResponse and ListWordResponse.
+Endpoints are GET /api/personal-topics, GET /api/personal-topics/{topicId}/words,
+POST /api/personal-topics/{topicId}/words and DELETE /api/personal-topics/{topicId}/words/{wordId}.
+Entities exist: Topic, Word, WordSense, WordTopic, UserList and UserListWord.
+Interfaces used in code: IPersonalTopicQueryService, IPersonalTopicMutationService,
+  IPersonalTopicQueryRepository,
+  IPersonalTopicMutationRepository, IListMutationRepository.
+end note
+
+Learner -> TopicUi: Open topic organization
+TopicUi -> SearchApiService: getPersonalTopics(wordId?)
+SearchApiService -> PersonalTopicsController: GET /api/personal-topics\nwordId?
+PersonalTopicsController -> PersonalTopicsController: Check authenticated user
+PersonalTopicsController -> IPersonalTopicQueryService: GetTopicsAsync(userId, query)
+IPersonalTopicQueryService -> TopicQueryService: GetTopicsAsync(userId, query)
+TopicQueryService -> IPersonalTopicQueryRepository: GetTopicsAsync(userId, wordId?)
+IPersonalTopicQueryRepository -> TopicQueryRepository: GetTopicsAsync(userId, wordId?)
+TopicQueryRepository -> DbContext: Query topics and reserved lists
+DbContext -> MySQL: SELECT topics,\nSELECT user_lists and user_list_words
+MySQL --> DbContext: Topic/list rows
+DbContext -> TopicEntity: Read Topic rows
+DbContext -> UserListEntity: Read reserved UserList rows
+DbContext -> UserListWordEntity: Count/check UserListWord rows
+TopicEntity --> DbContext: Topic rows
+UserListEntity --> DbContext: Personal topic lists
+UserListWordEntity --> DbContext: Word counts and contains flag
+DbContext --> TopicQueryRepository: Personal topic summaries
+TopicQueryRepository --> TopicQueryService: Personal topics
+TopicQueryService --> PersonalTopicsController: Topic result
+PersonalTopicsController -> BePersonalTopicDto: Create PersonalTopicResponse list
+BePersonalTopicDto --> PersonalTopicsController: PersonalTopicResponse list
+PersonalTopicsController --> SearchApiService: HTTP 200 OK\nPersonalTopicResponse list
+SearchApiService -> FePersonalTopicDto: Parse response data
+FePersonalTopicDto --> SearchApiService: PersonalTopicSummary list
+SearchApiService --> TopicUi: Show topics
+
+opt View words in a topic
+    TopicUi -> SearchApiService: getPersonalTopicWords(topicId)
+    SearchApiService -> PersonalTopicsController: GET /api/personal-topics/{topicId}/words\npage, limit
+    PersonalTopicsController -> IPersonalTopicQueryService: GetWordsAsync(userId, topicId, query)
+    IPersonalTopicQueryService -> TopicQueryService: GetWordsAsync(userId, topicId, query)
+    TopicQueryService -> IPersonalTopicQueryRepository: GetTopicWordsAsync(userId, topicId, page, limit)
+    IPersonalTopicQueryRepository -> TopicQueryRepository: GetTopicWordsAsync(userId, topicId, page, limit)
+    TopicQueryRepository -> DbContext: Query reserved list words
+    DbContext -> MySQL: SELECT topics,\nSELECT user_lists,\nSELECT user_list_words JOIN words
+    MySQL --> DbContext: Topic/list/word rows
+    DbContext -> TopicEntity: Check Topic
+    DbContext -> UserListEntity: Read reserved UserList
+    DbContext -> UserListWordEntity: Read UserListWord rows
+    DbContext -> WordEntity: Read Word rows
+    DbContext -> WordSenseEntity: Read primary WordSense
+    TopicEntity --> DbContext: Topic exists
+    UserListEntity --> DbContext: List id or null
+    UserListWordEntity --> DbContext: List word rows
+    WordEntity --> DbContext: Word rows
+    WordSenseEntity --> DbContext: Primary meaning
+    DbContext --> TopicQueryRepository: Paged topic words
+    TopicQueryRepository --> TopicQueryService: Paged words
+    TopicQueryService --> PersonalTopicsController: Words result
+    PersonalTopicsController -> BeListWordDto: Create ListWordResponse list
+    BeListWordDto --> PersonalTopicsController: ListWordResponse list
+    PersonalTopicsController --> SearchApiService: HTTP 200 OK\nListWordResponse list
+    SearchApiService -> FeWordSummaryDto: Parse response data
+    FeWordSummaryDto --> SearchApiService: WordSummary list
+    SearchApiService --> TopicUi: Show topic words
+end
+
+opt Add word to personal topic
+    TopicUi -> DetailApiService: addWordToPersonalTopic(topicId, wordId, note?)
+    DetailApiService -> PersonalTopicsController: POST /api/personal-topics/{topicId}/words\nword_id, note
+    PersonalTopicsController -> BeAddTopicWordDto: Bind request body
+    BeAddTopicWordDto --> PersonalTopicsController: AddPersonalTopicWordRequest
+    PersonalTopicsController -> IPersonalTopicMutationService: AddWordAsync(userId, topicId, request)
+    IPersonalTopicMutationService -> TopicMutationService: AddWordAsync(userId, topicId, request)
+    TopicMutationService -> IPersonalTopicMutationRepository: TopicExistsAsync(topicId)
+    IPersonalTopicMutationRepository -> TopicMutationRepository: TopicExistsAsync(topicId)
+    TopicMutationRepository -> DbContext: Check Topic
+    DbContext -> MySQL: SELECT topics
+    MySQL --> DbContext: Topic exists or not
+    DbContext -> TopicEntity: Read Topic?
+    TopicEntity --> DbContext: Topic or null
+    TopicMutationRepository --> TopicMutationService: Exists result
+
+    alt Topic or word invalid
+        TopicMutationService --> PersonalTopicsController: NotFound or validation failure
+        PersonalTopicsController --> DetailApiService: HTTP 400/404 error
+        DetailApiService --> TopicUi: Show add error
+    else Topic and word valid
+        TopicMutationService -> IPersonalTopicMutationRepository: WordBelongsToTopicAsync(topicId, wordId)
+        IPersonalTopicMutationRepository -> TopicMutationRepository: WordBelongsToTopicAsync(topicId, wordId)
+        TopicMutationRepository -> DbContext: Check WordTopic link
+        DbContext -> MySQL: SELECT word_topics
+        MySQL --> DbContext: Link exists or not
+        DbContext -> WordTopicEntity: Read WordTopic?
+        WordTopicEntity --> DbContext: WordTopic or null
+        TopicMutationService -> IPersonalTopicMutationRepository: GetOrCreateListIdAsync(userId, topicId)
+        IPersonalTopicMutationRepository -> TopicMutationRepository: GetOrCreateListIdAsync(userId, topicId)
+        TopicMutationRepository -> DbContext: Find or create reserved UserList
+        DbContext -> MySQL: SELECT/INSERT user_lists
+        MySQL --> DbContext: List result
+        DbContext -> UserListEntity: Read/create UserList
+        UserListEntity --> DbContext: UserList
+        TopicMutationService -> IListMutationRepository: AddWordAsync or RestoreWordAsync
+        IListMutationRepository -> ListRepository: AddWordAsync or RestoreWordAsync
+        ListRepository -> UserListWordEntity: Create or restore UserListWord
+        UserListWordEntity --> ListRepository: UserListWord
+        ListRepository -> DbContext: Add/track UserListWord
+        DbContext -> MySQL: INSERT/UPDATE user_list_words
+        MySQL --> DbContext: Save result
+        TopicMutationService --> PersonalTopicsController: Personal topic result
+        PersonalTopicsController -> BePersonalTopicDto: Create PersonalTopicResponse
+        BePersonalTopicDto --> PersonalTopicsController: PersonalTopicResponse
+        PersonalTopicsController --> DetailApiService: HTTP 201 Created\nPersonalTopicResponse
+        DetailApiService -> FePersonalTopicDto: Parse response data
+        FePersonalTopicDto --> DetailApiService: PersonalTopicSummary
+        DetailApiService --> TopicUi: Show topic updated
+    end
+end
+
+opt Remove word from personal topic
+    TopicUi -> SearchApiService: removePersonalTopicWord(topicId, wordId)
+    SearchApiService -> PersonalTopicsController: DELETE /api/personal-topics/{topicId}/words/{wordId}
+    PersonalTopicsController -> IPersonalTopicMutationService: RemoveWordAsync(userId, topicId, wordId)
+    IPersonalTopicMutationService -> TopicMutationService: RemoveWordAsync(userId, topicId, wordId)
+    TopicMutationService -> IPersonalTopicMutationRepository: FindActiveListIdAsync(userId, topicId)
+    IPersonalTopicMutationRepository -> TopicMutationRepository: FindActiveListIdAsync(userId, topicId)
+    TopicMutationRepository -> DbContext: Query reserved UserList
+    DbContext -> MySQL: SELECT user_lists
+    MySQL --> DbContext: List id or null
+    DbContext -> UserListEntity: Read UserList?
+    UserListEntity --> DbContext: UserList or null
+    TopicMutationService -> IListMutationRepository: RemoveWordAsync(userId, listId, wordId)
+    IListMutationRepository -> ListRepository: RemoveWordAsync(userId, listId, wordId)
+    ListRepository -> DbContext: Find UserListWord
+    DbContext -> MySQL: SELECT user_list_words
+    MySQL --> DbContext: UserListWord row or null
+    DbContext -> UserListWordEntity: Read UserListWord?
+    UserListWordEntity --> DbContext: UserListWord or null
+    ListRepository -> UserListWordEntity: Set status deleted
+    UserListWordEntity --> ListRepository: UserListWord updated
+    ListRepository -> DbContext: Save changes
+    DbContext -> MySQL: UPDATE user_list_words
+    MySQL --> DbContext: Save result
+    TopicMutationService --> PersonalTopicsController: Success result
+    PersonalTopicsController --> SearchApiService: HTTP 200 OK
+    SearchApiService --> TopicUi: Show topic updated
+end
+
+@enduml

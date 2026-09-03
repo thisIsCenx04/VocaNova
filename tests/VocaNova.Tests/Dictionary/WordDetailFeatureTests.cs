@@ -1,10 +1,23 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Dictionary.DTOs;
-using VocaNova.API.Features.Dictionary.Repositories;
-using VocaNova.API.Features.Dictionary.Services;
-using VocaNova.API.Infrastructure.Caching;
+using VocaNova.API.Features.Dictionary.Contracts.Requests;
+using VocaNova.API.Features.Dictionary.Contracts.Responses;
+using VocaNova.API.Features.Dictionary.BLL.Models;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.DAL.Repositories;
+using VocaNova.API.Features.Dictionary.BLL.Services;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Lists.BLL.Abstractions;
+using VocaNova.API.Features.Progress.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Infrastructure.Caching.Dictionary;
+using VocaNova.API.Infrastructure.Caching.Knn;
+using VocaNova.API.Infrastructure.Caching.Lists;
+using VocaNova.API.Infrastructure.Caching.Progress;
+using VocaNova.API.Infrastructure.Caching.Quiz;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -184,7 +197,7 @@ public class WordDetailFeatureTests
                 UpdatedAt = DateTime.UtcNow,
             });
 
-        dbContext.WordSenses.Add(new WordSense
+        dbContext.WordSenses.Add(new EntityWordSense
         {
             SenseId = 1,
             WordId = 1,
@@ -194,7 +207,7 @@ public class WordDetailFeatureTests
             VietnameseMeaning = "chay",
         });
         dbContext.WordExamples.AddRange(
-            new WordExample
+            new EntityWordExample
             {
                 ExampleId = 1,
                 WordId = 1,
@@ -203,7 +216,7 @@ public class WordDetailFeatureTests
                 ExampleVi = "Toi chay moi sang.",
                 OrderIndex = 1,
             },
-            new WordExample
+            new EntityWordExample
             {
                 ExampleId = 2,
                 WordId = 1,
@@ -213,7 +226,7 @@ public class WordDetailFeatureTests
                 OrderIndex = 1,
             });
         dbContext.WordRelations.AddRange(
-            new WordRelation
+            new EntityWordRelation
             {
                 RelationId = 1,
                 WordId = 1,
@@ -223,7 +236,7 @@ public class WordDetailFeatureTests
                 RelatedWordId = 2,
                 IsQuizEligible = true,
             },
-            new WordRelation
+            new EntityWordRelation
             {
                 RelationId = 2,
                 WordId = 1,
@@ -264,7 +277,7 @@ public class WordDetailFeatureTests
                 Status = AudioStatus.Pending,
                 CreatedAt = DateTime.UtcNow,
             });
-        dbContext.WordDerivedForms.Add(new WordDerivedForm
+        dbContext.WordDerivedForms.Add(new EntityWordDerivedForm
         {
             DerivedId = 1,
             WordId = 1,
@@ -272,7 +285,7 @@ public class WordDetailFeatureTests
             DerivedWordId = 3,
             WordClass = "noun",
         });
-        dbContext.WordIdioms.Add(new WordIdiom
+        dbContext.WordIdioms.Add(new EntityWordIdiom
         {
             IdiomId = 1,
             WordId = 1,
@@ -280,7 +293,7 @@ public class WordDetailFeatureTests
             MeaningEn = "have no time left",
             MeaningVi = "het thoi gian",
         });
-        dbContext.WordTopics.Add(new WordTopic
+        dbContext.WordTopics.Add(new EntityWordTopic
         {
             WordId = 1,
             TopicId = 1,

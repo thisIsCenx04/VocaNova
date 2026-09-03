@@ -1,4 +1,6 @@
 using System.Collections.Concurrent;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Auth.BLL.Models;
 
 namespace VocaNova.API.Infrastructure.RateLimiting;
 
@@ -7,7 +9,7 @@ public sealed class InMemoryAuthRateLimiter : IAuthRateLimiter
     private readonly ConcurrentDictionary<string, WindowCounter> _counters = new(StringComparer.Ordinal);
     private readonly object _syncRoot = new();
 
-    public AuthRateLimitResult TryAcquire(string key, int permitLimit, TimeSpan window)
+    public AuthRateLimitDecision TryAcquire(string key, int permitLimit, TimeSpan window)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(permitLimit);
@@ -26,11 +28,11 @@ public sealed class InMemoryAuthRateLimiter : IAuthRateLimiter
             if (counter.Count >= permitLimit)
             {
                 var retryAfter = (int)Math.Ceiling((counter.ResetAt - now).TotalSeconds);
-                return new AuthRateLimitResult(false, Math.Max(retryAfter, 1));
+                return new AuthRateLimitDecision(false, Math.Max(retryAfter, 1));
             }
 
             counter.Count++;
-            return new AuthRateLimitResult(true, 0);
+            return new AuthRateLimitDecision(true, 0);
         }
     }
 

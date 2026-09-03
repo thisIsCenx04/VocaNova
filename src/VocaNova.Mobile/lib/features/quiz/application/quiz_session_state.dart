@@ -1,4 +1,4 @@
-import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
+import 'package:vocanova_mobile/features/quiz/domain/models/quiz_config.dart';
 
 class QuizSessionState {
   const QuizSessionState({

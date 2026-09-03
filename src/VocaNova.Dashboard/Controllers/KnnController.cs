@@ -1,6 +1,6 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
-using VocaNova.Dashboard.Models.Api.Knn;
+using VocaNova.Dashboard.Data.Dtos.Knn;
 using VocaNova.Dashboard.Models.Knn;
 using VocaNova.Dashboard.Services.Api;
 

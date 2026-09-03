@@ -5,14 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
-import 'package:vocanova_mobile/features/quiz/data/quiz_repository.dart';
-import 'package:vocanova_mobile/features/quiz/domain/quiz_result.dart';
+import 'package:vocanova_mobile/features/quiz/data/services/quiz_api_service.dart';
+import 'package:vocanova_mobile/features/quiz/domain/models/quiz_result.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/quiz_result_screen.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
   Future<GoRouter> pumpResult(WidgetTester tester) async {
-    final repository = MockQuizRepository();
+    final repository = MockQuizApiService();
     when(() => repository.getResult(9)).thenAnswer((_) async => result);
     final router = GoRouter(
       initialLocation: AppRoutes.quizResultFor('9'),
@@ -37,7 +37,7 @@ void main() {
     );
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [quizRepositoryProvider.overrideWithValue(repository)],
+        overrides: [quizApiServiceProvider.overrideWithValue(repository)],
         child: MaterialApp.router(
           routerConfig: router,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -89,7 +89,7 @@ void main() {
   });
 }
 
-class MockQuizRepository extends Mock implements QuizRepository {}
+class MockQuizApiService extends Mock implements QuizApiService {}
 
 const result = QuizResult(
   sessionId: 9,

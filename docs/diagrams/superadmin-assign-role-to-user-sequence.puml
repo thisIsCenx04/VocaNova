@@ -1,0 +1,133 @@
+@startuml
+title Assign Role To User Sequence (/api/superadmin/roles/{roleId}/users/{userId})
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+actor SuperAdmin
+boundary "Role Assignment UI" as RoleAssignmentPage
+control "AdminAccountsController\n(FE Dashboard)" as DashboardController
+entity "AdminUserSummary\n(FE Response DTO)" as FeUserDto
+entity "ManagedRole\n(FE Response DTO)" as FeRoleDto
+control "AdminUsersController\n(BE API)" as AdminUsersController
+control "RolesController\n(BE API)" as ApiController
+control "IRoleManagementService" as IRoleManagementService
+control "RoleManagementService" as RoleService
+entity "Role" as RoleEntity
+entity "User" as UserEntity
+entity "RefreshToken" as RefreshTokenEntity
+control "IRoleManagementRepository" as IRoleManagementRepository
+control "RoleManagementRepository" as RoleRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+note over RoleAssignmentPage, MySQL
+Checked in current code:
+Dashboard AdminAccountsController handles role assignment.
+VocaNovaApiClient calls POST /api/superadmin/roles/{roleId}/users/{userId}.
+FE response DTOs exist: AdminUserSummary and ManagedRole for loading assignable data.
+No request DTO body is used; API returns bool in the response envelope.
+Assigning a role revokes active refresh tokens for the user.
+Interfaces used in code: IRoleManagementService, IRoleManagementRepository.
+end note
+SuperAdmin -> RoleAssignmentPage: Open role assignment page
+RoleAssignmentPage -> DashboardController: GET /admin-accounts/role-assignment(search, role, page)
+DashboardController -> AdminUsersController: VocaNovaApiClient.GetUsersAsync(filter)\nGET /api/admin/users(role filter)
+AdminUsersController -> FeUserDto: HTTP 200 OK\nPaged AdminUserSummary JSON
+FeUserDto --> DashboardController: Paged users
+DashboardController --> RoleAssignmentPage: Render assignable users
+SuperAdmin -> RoleAssignmentPage: Select target role
+RoleAssignmentPage -> DashboardController: POST /admin-accounts/{id}/role
+DashboardController -> DashboardController: Validate role value(user or admin)
+alt Role input invalid
+DashboardController --> RoleAssignmentPage: Show error message
+else Role input valid
+DashboardController -> ApiController: VocaNovaApiClient.GetRolesAsync()\nGET /api/superadmin/roles
+ApiController -> IRoleManagementService: GetRolesAsync(query)
+IRoleManagementService -> RoleService: GetRolesAsync(query)
+RoleService -> IRoleManagementRepository: GetRolesAsync(query)
+IRoleManagementRepository -> RoleRepository: GetRolesAsync(query)
+RoleRepository -> DbContext: Query roles
+DbContext -> MySQL: SELECT roles
+MySQL --> DbContext: Role rows
+DbContext -> RoleEntity: Materialize Role rows
+RoleEntity --> DbContext: Roles
+DbContext --> RoleRepository: Result
+RoleRepository --> RoleService: Paged roles
+RoleService --> ApiController: Return roles result
+ApiController -> FeRoleDto: HTTP 200 OK\nPaged RoleResponse JSON
+FeRoleDto --> DashboardController: Paged ManagedRole
+alt Target role not found
+DashboardController --> RoleAssignmentPage: Show error message
+else Target role found
+DashboardController -> ApiController: VocaNovaApiClient.AssignRoleAsync(roleId, userId)\nPOST /api/superadmin/roles/{roleId}/users/{userId}
+ApiController -> ApiController: Check super admin authorization
+ApiController -> IRoleManagementService: AssignRoleAsync(roleId, userId)
+IRoleManagementService -> RoleService: AssignRoleAsync(roleId, userId)
+RoleService -> IRoleManagementRepository: GetRoleNameAsync(roleId)
+IRoleManagementRepository -> RoleRepository: GetRoleNameAsync(roleId)
+RoleRepository -> DbContext: Query target role
+DbContext -> MySQL: SELECT roles
+MySQL --> DbContext: Role row or null
+DbContext -> RoleEntity: Materialize Role?
+RoleEntity --> DbContext: Role or null
+DbContext --> RoleRepository: Result
+RoleRepository --> RoleService: role name or null
+RoleService -> IRoleManagementRepository: GetUserRoleNameAsync(userId)
+IRoleManagementRepository -> RoleRepository: GetUserRoleNameAsync(userId)
+RoleRepository -> DbContext: Query current user role
+DbContext -> MySQL: SELECT user with role
+MySQL --> DbContext: User row or null
+DbContext -> UserEntity: Materialize User?
+UserEntity --> DbContext: User or null
+DbContext --> RoleRepository: Result
+RoleRepository --> RoleService: user role name or null
+alt Role/user not found or protected role
+RoleService --> ApiController: NotFound/Forbidden result
+ApiController --> DashboardController: HTTP 404/403 error
+DashboardController --> RoleAssignmentPage: Show error message
+else User already has this role
+RoleService -> IRoleManagementRepository: GetRoleIdByNameAsync(currentRole)
+IRoleManagementRepository -> RoleRepository: GetRoleIdByNameAsync(currentRole)
+RoleRepository -> DbContext: Query current role id
+DbContext -> MySQL: SELECT roles
+MySQL --> DbContext: Role id
+DbContext -> RoleEntity: Materialize Role
+RoleEntity --> DbContext: Role
+DbContext --> RoleRepository: Result
+RoleRepository --> RoleService: current role id
+RoleService --> ApiController: Conflict result
+ApiController --> DashboardController: HTTP 409 error
+DashboardController --> RoleAssignmentPage: Show error message
+else Role can be assigned
+RoleService -> IRoleManagementRepository: GetRoleIdByNameAsync(currentRole)
+IRoleManagementRepository -> RoleRepository: GetRoleIdByNameAsync(currentRole)
+RoleRepository -> DbContext: Query current role id
+DbContext -> MySQL: SELECT roles
+MySQL --> DbContext: Role id
+DbContext -> RoleEntity: Materialize Role
+RoleEntity --> DbContext: Role
+DbContext --> RoleRepository: Result
+RoleRepository --> RoleService: current role id
+RoleService -> RoleService: Begin transaction
+RoleService -> IRoleManagementRepository: AssignRoleAsync(roleId, userId)
+IRoleManagementRepository -> RoleRepository: AssignRoleAsync(roleId, userId)
+RoleRepository -> UserEntity: Set RoleId
+UserEntity --> RoleRepository: User updated
+RoleRepository -> DbContext: Track user role
+DbContext -> MySQL: UPDATE users
+MySQL --> DbContext: Update result
+RoleService -> IRoleManagementRepository: RevokeActiveRefreshTokensAsync(userId)
+IRoleManagementRepository -> RoleRepository: RevokeActiveRefreshTokensAsync(userId)
+RoleRepository -> RefreshTokenEntity: Set RevokedAt
+RefreshTokenEntity --> RoleRepository: RefreshToken updated
+RoleRepository -> DbContext: Track refresh token updates
+DbContext -> MySQL: UPDATE refresh_tokens
+MySQL --> DbContext: Update result
+DbContext --> RoleRepository: Save result
+RoleRepository --> RoleService: Saved
+RoleService --> ApiController: Success result
+ApiController --> DashboardController: HTTP 200 OK
+DashboardController --> RoleAssignmentPage: Show feedback and refresh page
+end
+end
+end
+@enduml

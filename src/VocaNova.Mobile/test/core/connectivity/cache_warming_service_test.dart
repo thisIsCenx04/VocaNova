@@ -6,10 +6,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vocanova_mobile/core/connectivity/cache_warming_service.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
-import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
-import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
-import 'package:vocanova_mobile/features/progress/data/progress_repository.dart';
-import 'package:vocanova_mobile/features/progress/domain/progress_summary.dart';
+import 'package:vocanova_mobile/features/lists/data/services/lists_api_service.dart';
+import 'package:vocanova_mobile/features/lists/domain/models/user_list.dart';
+import 'package:vocanova_mobile/features/progress/data/services/progress_api_service.dart';
+import 'package:vocanova_mobile/features/progress/domain/models/progress_summary.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -17,16 +17,16 @@ void main() {
   test('warms lists and progress summary caches', () async {
     SharedPreferences.setMockInitialValues({});
     final preferences = await SharedPreferences.getInstance();
-    final listsRepository = MockListsRepository();
-    final progressRepository = MockProgressRepository();
-    when(() => listsRepository.getLists()).thenAnswer((_) async => [list]);
+    final listsApiService = MockListsApiService();
+    final progressApiService = MockProgressApiService();
+    when(() => listsApiService.getLists()).thenAnswer((_) async => [list]);
     when(
-      () => progressRepository.getSummary(),
+      () => progressApiService.getSummary(),
     ).thenAnswer((_) async => summary);
 
     await CacheWarmingService(
-      listsRepository: listsRepository,
-      progressRepository: progressRepository,
+      listsApiService: listsApiService,
+      progressApiService: progressApiService,
       storage: LocalStorage.create(preferences: preferences),
     ).warm();
 
@@ -41,9 +41,9 @@ void main() {
   });
 }
 
-class MockListsRepository extends Mock implements ListsRepository {}
+class MockListsApiService extends Mock implements ListsApiService {}
 
-class MockProgressRepository extends Mock implements ProgressRepository {}
+class MockProgressApiService extends Mock implements ProgressApiService {}
 
 final list = UserList(
   listId: 3,

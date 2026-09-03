@@ -1,8 +1,9 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Quiz.Repositories;
-using VocaNova.API.Features.Quiz.Services;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.DAL.Repositories;
+using VocaNova.API.Features.Quiz.BLL.Services;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -158,7 +159,7 @@ public class QuizQuestionBuilderTests
             UpdatedAt = now,
             WordSenses =
             {
-                new WordSense
+                new EntityWordSense
                 {
                     SenseId = wordId,
                     WordId = wordId,
@@ -170,7 +171,7 @@ public class QuizQuestionBuilderTests
             },
             WordTopics =
             {
-                new WordTopic
+                new EntityWordTopic
                 {
                     WordId = wordId,
                     TopicId = topicId,

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vocanova_mobile/features/notifications/application/notifications_notifier.dart';
 import 'package:vocanova_mobile/features/notifications/application/notifications_state.dart';
-import 'package:vocanova_mobile/features/notifications/domain/app_notification.dart';
+import 'package:vocanova_mobile/features/notifications/domain/models/app_notification.dart';
 import 'package:vocanova_mobile/features/notifications/presentation/notifications_screen.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
-import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/auth_state.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_form_scaffold.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_validators.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';

@@ -2,10 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using VocaNova.API.Common.Extensions;
 using VocaNova.API.Common.Responses;
-using VocaNova.API.Features.SuperAdmin.DTOs;
-using VocaNova.API.Features.SuperAdmin.Services;
+using VocaNova.API.Features.SuperAdmin.Contracts.Requests;
+using VocaNova.API.Features.SuperAdmin.Contracts.Responses;
+using VocaNova.API.Features.SuperAdmin.Mappings;
+using VocaNova.API.Features.SuperAdmin.BLL.Abstractions;
 using VocaNova.API.Infrastructure.Authentication;
 using VocaNova.API.Infrastructure.Auditing;
+using VocaNova.API.Features.SuperAdmin.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.SuperAdmin.Controllers;
 
@@ -23,12 +26,18 @@ public sealed class SuperAdminAccountsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] AdminAccountQuery query, CancellationToken cancellationToken)
+    public async Task<IActionResult> List([FromQuery] AdminAccountQueryRequest query, CancellationToken cancellationToken)
     {
-        var result = await _service.GetAccountsAsync(query, cancellationToken);
-        return result.IsSuccess
-            ? Ok(ApiResponseFormatter.Paged(result.Value!, "Admin accounts loaded successfully."))
-            : this.ErrorResult(result);
+        var result = await _service.GetAccountsAsync(query.ToModel(), cancellationToken);
+        if (!result.IsSuccess) return this.ErrorResult(result);
+        
+        var mapped = new VocaNova.API.Common.Results.PagedResult<AdminAccountResponse>(
+            result.Value!.Items.Select(x => x.ToResponse()).ToArray(),
+            result.Value.Page,
+            result.Value.Limit,
+            result.Value.TotalItems);
+            
+        return Ok(ApiResponseFormatter.Paged(mapped, "Admin accounts loaded successfully."));
     }
 
     [HttpGet("{id:uint}")]
@@ -36,26 +45,26 @@ public sealed class SuperAdminAccountsController : ControllerBase
     {
         var result = await _service.GetAccountAsync(id, cancellationToken);
         return result.IsSuccess
-            ? this.OkResult(result.Value!, "Admin account loaded successfully.")
+            ? this.OkResult(result.Value!.ToResponse(), "Admin account loaded successfully.")
             : this.ErrorResult(result);
     }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateAdminAccountRequest request, CancellationToken cancellationToken)
     {
-        var result = await _service.CreateAsync(request, cancellationToken);
+        var result = await _service.CreateAsync(request.ToModel(), cancellationToken);
         if (!result.IsSuccess) return this.ErrorResult(result);
         SetAuditEntity(result.Value!.AdminId);
-        return this.CreatedResult(result.Value, "Admin account created successfully.");
+        return this.CreatedResult(result.Value.ToResponse(), "Admin account created successfully.");
     }
 
     [HttpPut("{id:uint}")]
     public async Task<IActionResult> Update(uint id, [FromBody] UpdateAdminAccountRequest request, CancellationToken cancellationToken)
     {
-        var result = await _service.UpdateAsync(id, request, cancellationToken);
+        var result = await _service.UpdateAsync(id, request.ToModel(), cancellationToken);
         if (!result.IsSuccess) return this.ErrorResult(result);
         SetAuditEntity(id);
-        return this.OkResult(result.Value!, "Admin account updated successfully.");
+        return this.OkResult(result.Value!.ToResponse(), "Admin account updated successfully.");
     }
 
     [HttpPatch("{id:uint}/lock")]

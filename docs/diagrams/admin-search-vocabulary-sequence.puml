@@ -1,0 +1,119 @@
+@startuml
+title Search Vocabulary Sequence (/vocabulary and /api/admin/words)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Vocabulary Search UI" as VocabularyUi
+control "VocabularyController\n(FE Dashboard)" as FeController
+control "AdminWordsController\n(BE API)" as AdminWordsController
+control "TopicsController\n(BE API)" as TopicsController
+entity "WordListItem\n(FE Response DTO)" as FeWordListDto
+entity "TopicSummary\n(FE Response DTO)" as FeTopicSummaryDto
+entity "AdminWordQueryRequest\n(BE Request DTO)" as BeWordQueryDto
+entity "AdminWordListItemResponse\n(BE Response DTO)" as BeWordListDto
+entity "TopicSummaryResponse\n(BE Response DTO)" as BeTopicSummaryDto
+control "IWordAdminService" as IWordAdminService
+control "WordAdminService" as WordService
+control "ITopicReadService" as ITopicReadService
+control "TopicReadService" as TopicService
+entity "Word" as WordEntity
+entity "WordSense" as WordSenseEntity
+entity "WordTopic" as WordTopicEntity
+entity "Topic" as TopicEntity
+control "IWordAdminRepository" as IWordAdminRepository
+control "WordAdminRepository" as WordRepository
+control "ITopicReadRepository" as ITopicReadRepository
+control "TopicReadRepository" as TopicRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over VocabularyUi, MySQL
+Checked in current code:
+Dashboard UI file exists: Views/Vocabulary/Index.cshtml.
+FE controller exists: VocabularyController.
+BE controllers exist: AdminWordsController and TopicsController.
+Dashboard route is GET /vocabulary with q, cefr, topicId, status,
+wordType, includeDeleted, page, limit, sortBy and sortDirection.
+VocaNovaApiClient calls GET /api/admin/words and GET /api/topics.
+FE response DTOs exist: WordListItem and TopicSummary.
+BE request DTO exists: AdminWordQueryRequest.
+BE response DTOs exist: AdminWordListItemResponse and TopicSummaryResponse.
+Entities exist: Word, WordSense, WordTopic and Topic.
+Interfaces used in code: IWordAdminService, ITopicReadService, IWordAdminRepository,
+  ITopicReadRepository.
+end note
+
+Admin -> VocabularyUi: Enter search/filter values
+Admin -> VocabularyUi: Submit search
+VocabularyUi -> FeController: GET /vocabulary\nquery/filter/sort/page
+FeController -> FeController: Normalize page, limit,\nsort and filters
+
+FeController -> AdminWordsController: VocaNovaApiClient.GetWordsAsync\nGET /api/admin/words
+AdminWordsController -> BeWordQueryDto: Bind query string
+BeWordQueryDto --> AdminWordsController: AdminWordQueryRequest
+AdminWordsController -> AdminWordsController: Check admin authorization
+AdminWordsController -> IWordAdminService: SearchAsync(query)
+IWordAdminService -> WordService: SearchAsync(query)
+WordService -> IWordAdminService: Validate page, limit,\nCEFR, status and sort
+IWordAdminService -> WordService: Validate page, limit,\nCEFR, status and sort
+
+alt Query validation fails
+    WordService --> AdminWordsController: Validation failure
+    AdminWordsController --> FeController: HTTP 400 error
+    FeController --> VocabularyUi: Show empty list or error
+else Query validation success
+    WordService -> IWordAdminService: Normalize q, CEFR,\nstatus, wordType and sort
+    IWordAdminService -> WordService: Normalize q, CEFR,\nstatus, wordType and sort
+    WordService -> IWordAdminRepository: SearchAsync(normalized query)
+    IWordAdminRepository -> WordRepository: SearchAsync(normalized query)
+    WordRepository -> DbContext: Build word search query
+    DbContext -> MySQL: SELECT COUNT(*) FROM words\nwith filters
+    MySQL --> DbContext: Total item count
+    DbContext -> WordEntity: Count matching Word rows
+    WordEntity --> DbContext: Total item count
+
+    WordRepository -> DbContext: Query paged word list
+    DbContext -> MySQL: SELECT words with senses\nand topics
+    MySQL --> DbContext: Word list rows
+    DbContext -> WordEntity: Read Word rows
+    DbContext -> WordSenseEntity: Read primary WordSense
+    DbContext -> WordTopicEntity: Read WordTopic links
+    DbContext -> TopicEntity: Read Topic rows
+    WordEntity --> DbContext: Word rows
+    WordSenseEntity --> DbContext: Primary meaning\nand word type
+    WordTopicEntity --> DbContext: Topic links
+    TopicEntity --> DbContext: Topic data
+    DbContext --> WordRepository: Paged word result
+    WordRepository --> WordService: Paged words
+    WordService --> AdminWordsController: Search result
+    AdminWordsController -> BeWordListDto: Create AdminWordListItemResponse list
+    BeWordListDto --> AdminWordsController: AdminWordListItemResponse list
+    AdminWordsController -> FeWordListDto: HTTP 200 OK\npaged AdminWordListItemResponse JSON
+    FeWordListDto --> FeController: WordListItem list
+end
+
+FeController -> TopicsController: VocaNovaApiClient.GetTopicsAsync\nGET /api/topics
+TopicsController -> ITopicReadService: GetTopicsAsync()
+ITopicReadService -> TopicService: GetTopicsAsync()
+TopicService -> ITopicReadRepository: GetTopicsAsync()
+ITopicReadRepository -> TopicRepository: GetTopicsAsync()
+TopicRepository -> DbContext: Query topics
+DbContext -> MySQL: SELECT topics
+MySQL --> DbContext: Topic rows
+DbContext -> TopicEntity: Read Topic rows
+TopicEntity --> DbContext: Topic summaries
+DbContext --> TopicRepository: Topic summaries
+TopicRepository --> TopicService: Topic summaries
+TopicService --> TopicsController: Topic result
+TopicsController -> BeTopicSummaryDto: Create TopicSummaryResponse list
+BeTopicSummaryDto --> TopicsController: TopicSummaryResponse list
+TopicsController -> FeTopicSummaryDto: HTTP 200 OK\nTopicSummaryResponse JSON
+FeTopicSummaryDto --> FeController: TopicSummary list
+
+FeController -> FeController: Build VocabularyListViewModel
+FeController --> VocabularyUi: Show search results
+
+@enduml

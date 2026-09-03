@@ -1,4 +1,4 @@
-import 'package:vocanova_mobile/features/dictionary/domain/word_detail.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_detail.dart';
 
 class WordDetailState {
   const WordDetailState({

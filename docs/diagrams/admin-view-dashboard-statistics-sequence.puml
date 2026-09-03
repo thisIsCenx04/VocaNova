@@ -1,0 +1,180 @@
+@startuml
+title View Dashboard Statistics Sequence (/dashboard and /api/admin/stats/*)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Dashboard Statistics UI" as DashboardUi
+control "DashboardController\n(FE Dashboard)" as FeController
+control "AdminStatsController\n(BE API)" as BeController
+entity "DashboardStats\n(FE Response DTO)" as FeDashboardStatsDto
+entity "LearningStats\n(FE Response DTO)" as FeLearningStatsDto
+entity "MasteryDistribution\n(FE Response DTO)" as FeMasteryDto
+entity "ActivityTrend\n(FE Response DTO)" as FeActivityDto
+entity "AdminDashboardStatsResponse\n(BE Response DTO)" as BeDashboardStatsDto
+entity "AdminLearningStatsResponse\n(BE Response DTO)" as BeLearningStatsDto
+entity "AdminMasteryDistributionResponse\n(BE Response DTO)" as BeMasteryDto
+entity "AdminActivityTrendResponse\n(BE Response DTO)" as BeActivityDto
+control "IAdminStatsService" as IAdminStatsService
+control "AdminStatsService" as StatsService
+entity "User" as UserEntity
+entity "Word" as WordEntity
+entity "TestSession" as TestSessionEntity
+entity "TestAnswer" as TestAnswerEntity
+entity "UserWordProgress" as UserWordProgressEntity
+control "IAdminStatsRepository" as IAdminStatsRepository
+control "AdminStatsRepository" as StatsRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over DashboardUi, MySQL
+Checked in current code:
+Dashboard UI file exists: Views/Dashboard/Index.cshtml.
+FE controller exists: DashboardController.
+BE controller exists: AdminStatsController.
+FE response DTOs exist: DashboardStats, LearningStats, MasteryDistribution and ActivityTrend.
+BE response DTOs exist: AdminDashboardStatsResponse, AdminLearningStatsResponse,
+AdminMasteryDistributionResponse and AdminActivityTrendResponse.
+Dashboard overview calls API through VocaNovaApiClient.GetDashboardStatsAsync,
+GetLearningStatsAsync, GetMasteryDistributionAsync and GetActivityTrendAsync.
+No request DTO body is used for these GET endpoints.
+Interfaces used in code: IAdminStatsService, IAdminStatsRepository.
+end note
+
+Admin -> DashboardUi: Open dashboard statistics
+DashboardUi -> FeController: GET /dashboard
+FeController -> BeController: VocaNovaApiClient.GetDashboardStatsAsync\nGET /api/admin/stats/dashboard
+BeController -> BeController: Check admin authorization
+BeController -> IAdminStatsService: GetDashboardAsync()
+IAdminStatsService -> StatsService: GetDashboardAsync()
+StatsService -> IAdminStatsService: Calculate today, tomorrow,\nand seven-day window
+IAdminStatsService -> StatsService: Calculate today, tomorrow,\nand seven-day window
+StatsService -> IAdminStatsRepository: GetDashboardStatsAsync(today,\ntomorrow, sevenDayStart)
+IAdminStatsRepository -> StatsRepository: GetDashboardStatsAsync(today,\ntomorrow, sevenDayStart)
+StatsRepository -> DbContext: Count active users
+DbContext -> MySQL: SELECT users
+MySQL --> DbContext: User count
+DbContext -> UserEntity: Count User rows
+UserEntity --> DbContext: User aggregate
+
+StatsRepository -> DbContext: Count words
+DbContext -> MySQL: SELECT words
+MySQL --> DbContext: Word count
+DbContext -> WordEntity: Count Word rows
+WordEntity --> DbContext: Word aggregate
+
+StatsRepository -> DbContext: Count completed sessions today\nand sum seven-day accuracy
+DbContext -> MySQL: SELECT test_sessions
+MySQL --> DbContext: Session rows
+DbContext -> TestSessionEntity: Aggregate TestSession rows
+TestSessionEntity --> DbContext: TestSession aggregate
+DbContext --> StatsRepository: Dashboard stats result
+StatsRepository --> StatsService: Dashboard stats
+StatsService --> BeController: Dashboard stats result
+BeController -> BeDashboardStatsDto: Create AdminDashboardStatsResponse
+BeDashboardStatsDto --> BeController: AdminDashboardStatsResponse
+BeController -> FeDashboardStatsDto: HTTP 200 OK\nAdminDashboardStatsResponse JSON
+FeDashboardStatsDto --> FeController: DashboardStats
+
+FeController -> BeController: VocaNovaApiClient.GetLearningStatsAsync\nGET /api/admin/stats/learning
+BeController -> BeController: Check admin authorization
+BeController -> IAdminStatsService: GetLearningStatsAsync()
+IAdminStatsService -> StatsService: GetLearningStatsAsync()
+StatsService -> IAdminStatsService: Calculate trend window\nand top wrong word limit
+IAdminStatsService -> StatsService: Calculate trend window\nand top wrong word limit
+StatsService -> IAdminStatsRepository: GetTopWrongWordsAsync(limit)
+IAdminStatsRepository -> StatsRepository: GetTopWrongWordsAsync(limit)
+StatsRepository -> DbContext: Query wrong answers by word
+DbContext -> MySQL: SELECT test_answers\nJOIN words and test_sessions
+MySQL --> DbContext: Wrong word rows
+DbContext -> TestAnswerEntity: Group TestAnswer rows
+DbContext -> WordEntity: Read Word projection
+DbContext -> TestSessionEntity: Filter completed sessions
+TestAnswerEntity --> DbContext: TestAnswer aggregate
+WordEntity --> DbContext: Word aggregate
+TestSessionEntity --> DbContext: TestSession aggregate
+DbContext --> StatsRepository: Top wrong word rows
+StatsRepository --> StatsService: Top wrong words
+
+StatsService -> IAdminStatsRepository: GetSessionAccuracyRowsAsync(window)
+IAdminStatsRepository -> StatsRepository: GetSessionAccuracyRowsAsync(window)
+StatsRepository -> DbContext: Query completed sessions
+DbContext -> MySQL: SELECT test_sessions
+MySQL --> DbContext: Session rows
+DbContext -> TestSessionEntity: Project TestSession rows
+TestSessionEntity --> DbContext: Accuracy rows
+DbContext --> StatsRepository: Accuracy rows
+StatsRepository --> StatsService: Accuracy trend rows
+StatsService --> BeController: Learning stats result
+BeController -> BeLearningStatsDto: Create AdminLearningStatsResponse
+BeLearningStatsDto --> BeController: AdminLearningStatsResponse
+BeController -> FeLearningStatsDto: HTTP 200 OK\nAdminLearningStatsResponse JSON
+FeLearningStatsDto --> FeController: LearningStats
+
+FeController -> BeController: VocaNovaApiClient.GetMasteryDistributionAsync\nGET /api/admin/stats/mastery-distribution
+BeController -> BeController: Check admin authorization
+BeController -> IAdminStatsService: GetMasteryDistributionAsync()
+IAdminStatsService -> StatsService: GetMasteryDistributionAsync()
+StatsService -> IAdminStatsRepository: GetMasteryDistributionAsync()
+IAdminStatsRepository -> StatsRepository: GetMasteryDistributionAsync()
+StatsRepository -> DbContext: Query user word progress\nby mastery level
+DbContext -> MySQL: SELECT user_word_progresses\nJOIN users
+MySQL --> DbContext: Mastery rows
+DbContext -> UserWordProgressEntity: Group UserWordProgress rows
+DbContext -> UserEntity: Filter active users
+UserWordProgressEntity --> DbContext: Mastery aggregate
+UserEntity --> DbContext: Active users
+DbContext --> StatsRepository: Mastery count rows
+StatsRepository --> StatsService: Mastery distribution rows
+StatsService -> IAdminStatsService: Fill levels 0..5
+IAdminStatsService -> StatsService: Fill levels 0..5
+StatsService --> BeController: Mastery distribution result
+BeController -> BeMasteryDto: Create AdminMasteryDistributionResponse
+BeMasteryDto --> BeController: AdminMasteryDistributionResponse
+BeController -> FeMasteryDto: HTTP 200 OK\nAdminMasteryDistributionResponse JSON
+FeMasteryDto --> FeController: MasteryDistribution
+
+FeController -> BeController: VocaNovaApiClient.GetActivityTrendAsync("daily")\nGET /api/admin/stats/activity-trend
+BeController -> BeController: Check admin authorization
+BeController -> IAdminStatsService: GetActivityTrendAsync(granularity)
+IAdminStatsService -> StatsService: GetActivityTrendAsync(granularity)
+StatsService -> IAdminStatsService: Validate granularity\nand build buckets
+IAdminStatsService -> StatsService: Validate granularity\nand build buckets
+
+alt Granularity invalid
+    StatsService --> BeController: Validation failure
+    BeController --> FeController: HTTP 400 error
+    FeController --> DashboardUi: Render dashboard with fallback data
+else Granularity valid
+    StatsService -> IAdminStatsRepository: GetSessionAccuracyRowsAsync(window)
+    IAdminStatsRepository -> StatsRepository: GetSessionAccuracyRowsAsync(window)
+    StatsRepository -> DbContext: Query completed sessions
+    DbContext -> MySQL: SELECT test_sessions
+    MySQL --> DbContext: Session rows
+    DbContext -> TestSessionEntity: Project TestSession rows
+    TestSessionEntity --> DbContext: Accuracy rows
+    DbContext --> StatsRepository: Accuracy rows
+
+    StatsService -> IAdminStatsRepository: GetSessionCountsByDayAsync(window)
+    IAdminStatsRepository -> StatsRepository: GetSessionCountsByDayAsync(window)
+    StatsRepository -> DbContext: Query session started dates
+    DbContext -> MySQL: SELECT test_sessions
+    MySQL --> DbContext: Session date rows
+    DbContext -> TestSessionEntity: Project TestSession dates
+    TestSessionEntity --> DbContext: Session count rows
+    DbContext --> StatsRepository: Session count rows
+    StatsRepository --> StatsService: Activity source rows
+    StatsService -> IAdminStatsService: Build activity points
+    IAdminStatsService -> StatsService: Build activity points
+    StatsService --> BeController: Activity trend result
+    BeController -> BeActivityDto: Create AdminActivityTrendResponse
+    BeActivityDto --> BeController: AdminActivityTrendResponse
+    BeController -> FeActivityDto: HTTP 200 OK\nAdminActivityTrendResponse JSON
+    FeActivityDto --> FeController: ActivityTrend
+    FeController -> FeController: Build DashboardOverviewViewModel
+    FeController --> DashboardUi: Render dashboard statistics
+end
+
+@enduml

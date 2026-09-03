@@ -1,5 +1,5 @@
 using FluentAssertions;
-using VocaNova.API.Features.Quiz.Services;
+using VocaNova.API.Features.Quiz.BLL.Services;
 
 namespace VocaNova.Tests.Quiz;
 
@@ -19,7 +19,7 @@ public class AnswerGraderTests
     public async Task ExactTypingGrader_Should_Match_Accepted_Answers_After_Normalizing()
     {
         var grader = new ExactTypingGrader();
-        var acceptedAnswers = AcceptedAnswersJsonParser.Parse("[\"go quickly\", \"move fast!\"]");
+        var acceptedAnswers = AcceptedAnswersParser.Parse("[\"go quickly\", \"move fast!\"]");
 
         var result = await grader.GradeAsync("MOVE FAST", "run", acceptedAnswers);
 
@@ -40,7 +40,7 @@ public class AnswerGraderTests
     public async Task MultipleChoiceGrader_Should_Match_Accepted_Answers_Directly()
     {
         var grader = new MultipleChoiceGrader();
-        var acceptedAnswers = AcceptedAnswersJsonParser.Parse("[\"A\", \"B\"]");
+        var acceptedAnswers = AcceptedAnswersParser.Parse("[\"A\", \"B\"]");
 
         var result = await grader.GradeAsync("B", "C", acceptedAnswers);
 
@@ -50,7 +50,7 @@ public class AnswerGraderTests
     [Fact]
     public void AcceptedAnswersJsonParser_Should_Return_Empty_When_Json_Is_Invalid()
     {
-        var result = AcceptedAnswersJsonParser.Parse("not-json");
+        var result = AcceptedAnswersParser.Parse("not-json");
 
         result.Should().BeEmpty();
     }

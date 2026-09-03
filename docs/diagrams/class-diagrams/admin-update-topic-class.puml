@@ -1,0 +1,166 @@
+@startuml
+title Update Topic Class Diagram (/api/admin/topics/{id})
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from admin-update-topic-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+
+class TopicsController <<frontend_controller>> {
+  "- _apiClient : IVocaNovaApiClient"
+  --
+  "+ Update(id: uint, model: TopicEditViewModel, cancellationToken: CancellationToken) : TaskOfIActionResult"
+}
+
+class AdminTopic <<dto>> {
+  "+ TopicId : uint"
+  "+ TopicName : string"
+  "+ TopicNameVi : stringNullable"
+  "+ Icon : stringNullable"
+  "+ Status : string"
+  "+ WordCount : int"
+}
+
+class WordListItem <<dto>> {
+  "+ WordId : uint"
+  "+ Word : string"
+  "+ Cefr : stringNullable"
+  "+ Phonetic : stringNullable"
+  "+ Status : string"
+  "+ ImageUrl : stringNullable"
+  "+ PrimaryMeaning : stringNullable"
+  "+ Topics : IReadOnlyListOfWordTopic"
+  "+ WordType : stringNullable"
+}
+
+class UpdateTopicRequest <<dto>> {
+  "+ TopicName : stringNullable"
+  "+ TopicNameVi : stringNullable"
+  "+ Icon : stringNullable"
+  "+ WordIds : ListOfUintNullable"
+}
+
+class TopicSummaryResponse <<dto>> {
+  "+ TopicId : uint"
+  "+ Name : string"
+  "+ NameVi : stringNullable"
+  "+ Icon : stringNullable"
+  "+ WordCount : int"
+}
+
+class AdminTopicsController <<backend_controller>> {
+  "- _service : ITopicAdminService"
+  --
+  "+ Update(id: uint, request: UpdateTopicRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+}
+
+class ITopicAdminService <<service_interface>> {
+  "+ ListAsync(query: AdminTopicQuery, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfIReadOnlyCollectionOfAdminTopic"
+  "+ CreateAsync(command: CreateTopicCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfTopicSummary"
+  "+ AddWordsAsync(topicId: uint, wordIds: IReadOnlyCollectionOfuintNullable, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfint"
+  "+ UpdateAsync(topicId: uint, command: UpdateTopicCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfTopicSummary"
+  "+ SoftDeleteAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
+  "+ RestoreAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfbool"
+}
+
+class TopicAdminService <<service>> {
+  "- _repository : ITopicAdminRepository"
+  "- _cache : ITopicCacheNullable"
+  --
+  "+ UpdateAsync(topicId: uint, command: UpdateTopicCommand, cancellationToken: CancellationToken) : TaskOfDictionaryResultOfTopicSummary"
+}
+
+class Topic <<entity>> {
+  "+ TopicId : uint"
+  "+ TopicName : string"
+  "+ TopicNameVi : stringNullable"
+  "+ Icon : stringNullable"
+  "+ Status : string"
+  "+ TestSessionTopics : ICollectionOfTestSessionTopic"
+  "+ UserTopicPreferences : ICollectionOfUserTopicPreference"
+  "+ WordTopics : ICollectionOfWordTopic"
+}
+
+class Word <<entity>> {
+  "+ WordId : uint"
+  "+ Word1 : string"
+  "+ WordKey : string"
+  "+ CefrLevel : stringNullable"
+  "+ PhoneticUk : stringNullable"
+  "+ PhoneticUs : stringNullable"
+  "+ ImageUrl : stringNullable"
+  "+ IsPhrase : bool"
+  "+ Status : string"
+  "+ CreatedAt : DateTime"
+  "+ UpdatedAt : DateTime"
+  "+ AiGradingCaches : ICollectionOfAiGradingCache"
+}
+
+class WordTopic <<entity>> {
+  "+ WordId : uint"
+  "+ TopicId : uint"
+  "+ IsPrimary : bool"
+  "+ Topic : Topic"
+  "+ Word : Word"
+}
+
+class ITopicAdminRepository <<repository_interface>> {
+  "+ ListAsync(query: AdminTopicQuery, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfAdminTopic"
+  "+ ExistsAsync(topicId: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ NameExistsAsync(name: string, nameVi: stringNullable, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ WordIdsExistAsync(wordIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ CreateAsync(command: CreateTopicCommand, cancellationToken: CancellationToken) : TaskOfTopicSummary"
+  "+ UpdateAsync(topicId: uint, command: UpdateTopicCommand, cancellationToken: CancellationToken) : TaskOfTopicSummaryNullable"
+  "+ AddWordsAsync(topicId: uint, wordIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : TaskOfint"
+  "+ HasActiveWordsAsync(topicId: uint, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ SetStatusAsync(topicId: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool"
+}
+
+class TopicAdminRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ NameExistsAsync(name: string, nameVi: stringNullable, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ WordIdsExistAsync(wordIds: ListOfUint, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ UpdateAsync(topicId: uint, command: UpdateTopicCommand, cancellationToken: CancellationToken) : TaskOfTopicSummary"
+}
+
+class VocaNovaDbContext <<dbcontext>> {
+  "+ AgeRanges : DbSetOfAgeRange"
+  "+ AiGradingCaches : DbSetOfAiGradingCache"
+  "+ AuditLogs : DbSetOfAuditLog"
+  "+ EducationLevels : DbSetOfEducationLevel"
+  "+ LearningPurposes : DbSetOfLearningPurpose"
+  "+ Occupations : DbSetOfOccupation"
+  "+ OtpVerifications : DbSetOfOtpVerification"
+  "+ RefreshTokens : DbSetOfRefreshToken"
+  "+ Regions : DbSetOfRegion"
+  "+ Roles : DbSetOfRole"
+  "+ TestAnswers : DbSetOfTestAnswer"
+  "+ TestSessions : DbSetOfTestSession"
+  --
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
+}
+
+class MySQL_Database <<database>> {
+
+}
+TopicsController ..> AdminTopicsController
+AdminTopicsController ..> AdminTopic
+AdminTopicsController ..> WordListItem
+TopicsController ..> UpdateTopicRequest
+UpdateTopicRequest ..> AdminTopicsController
+TopicAdminRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+TopicAdminRepository ..> Topic
+TopicAdminRepository ..> WordTopic
+AdminTopicsController ..> TopicSummaryResponse
+ITopicAdminService <|.. TopicAdminService
+AdminTopicsController ..> ITopicAdminService : UpdateAsync()
+ITopicAdminRepository <|.. TopicAdminRepository
+TopicAdminService ..> ITopicAdminRepository : NameExistsAsync()
+TopicAdminRepository ..> Word
+@enduml

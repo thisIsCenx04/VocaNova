@@ -12,20 +12,24 @@ import 'package:vocanova_mobile/core/network/dio_client.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/secure_storage.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
-import 'package:vocanova_mobile/features/auth/data/auth_repository.dart';
-import 'package:vocanova_mobile/features/auth/data/google_auth_service.dart';
-import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
-import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
-import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
-import 'package:vocanova_mobile/features/progress/data/progress_repository.dart';
+import 'package:vocanova_mobile/features/auth/data/services/auth_api_service.dart';
+import 'package:vocanova_mobile/features/auth/data/dtos/user_profile_dto.dart';
+import 'package:vocanova_mobile/features/auth/data/services/google_auth_service.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/auth_state.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/auth_tokens.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/user_profile.dart';
+import 'package:vocanova_mobile/features/lists/data/services/lists_api_service.dart';
+import 'package:vocanova_mobile/features/progress/data/services/progress_api_service.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'auth_notifier.g.dart';
 
 @Riverpod(keepAlive: true)
-AuthRepository authRepository(Ref ref) {
-  return AuthRepository(dio: DioClient.instance.dio);
+AuthApiService authRepository(Ref ref) {
+  return AuthApiService(dio: DioClient.instance.dio);
 }
+
+final authApiServiceProvider = authRepositoryProvider;
 
 @Riverpod(keepAlive: true)
 GoogleAuthService googleAuthService(Ref ref) => GoogleAuthService();
@@ -41,8 +45,8 @@ AppRouter appRouter(Ref ref) => AppRouter.instance;
 
 @Riverpod(keepAlive: true)
 CacheWarmingService cacheWarmingService(Ref ref) => CacheWarmingService(
-  listsRepository: ListsRepository(dio: DioClient.instance.dio),
-  progressRepository: ProgressRepository(dio: DioClient.instance.dio),
+  listsApiService: ListsApiService(dio: DioClient.instance.dio),
+  progressApiService: ProgressApiService(dio: DioClient.instance.dio),
   storage: ref.read(localStorageProvider),
 );
 
@@ -65,7 +69,7 @@ class AuthNotifier extends _$AuthNotifier {
   }) async {
     return _authenticate(
       () => ref
-          .read(authRepositoryProvider)
+          .read(authApiServiceProvider)
           .register(
             phone: phone,
             password: password,
@@ -82,14 +86,14 @@ class AuthNotifier extends _$AuthNotifier {
   Future<void> login(String phone, String password) async {
     await _authenticate(
       () => ref
-          .read(authRepositoryProvider)
+          .read(authApiServiceProvider)
           .login(phone: phone, password: password),
     );
   }
 
   Future<void> googleLogin(String idToken) async {
     await _authenticate(
-      () => ref.read(authRepositoryProvider).googleLogin(idToken),
+      () => ref.read(authApiServiceProvider).googleLogin(idToken),
     );
   }
 
@@ -98,7 +102,7 @@ class AuthNotifier extends _$AuthNotifier {
     try {
       final idToken = await ref.read(googleAuthServiceProvider).getIdToken();
       await _authenticate(
-        () => ref.read(authRepositoryProvider).googleLogin(idToken),
+        () => ref.read(authApiServiceProvider).googleLogin(idToken),
       );
     } catch (error) {
       state = AuthState(
@@ -118,7 +122,7 @@ class AuthNotifier extends _$AuthNotifier {
 
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
     try {
-      final user = await ref.read(authRepositoryProvider).getCurrentUser();
+      final user = await ref.read(authApiServiceProvider).getCurrentUser();
       await _cacheUser(user);
       state = AuthState(status: AuthStatus.authenticated, user: user);
     } catch (error) {
@@ -138,7 +142,7 @@ class AuthNotifier extends _$AuthNotifier {
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
     try {
       final user = await ref
-          .read(authRepositoryProvider)
+          .read(authApiServiceProvider)
           .updateLearningProfile(profile);
       await _cacheUser(user);
       state = AuthState(status: AuthStatus.authenticated, user: user);
@@ -160,7 +164,7 @@ class AuthNotifier extends _$AuthNotifier {
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
     try {
       final user = await ref
-          .read(authRepositoryProvider)
+          .read(authApiServiceProvider)
           .updateProfile(displayName: displayName, avatarUrl: avatarUrl);
       await _cacheUser(user);
       state = AuthState(status: AuthStatus.authenticated, user: user);
@@ -182,7 +186,7 @@ class AuthNotifier extends _$AuthNotifier {
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
     try {
       final user = await ref
-          .read(authRepositoryProvider)
+          .read(authApiServiceProvider)
           .uploadAvatar(bytes: bytes, fileName: fileName);
       await _cacheUser(user);
       state = AuthState(status: AuthStatus.authenticated, user: user);
@@ -204,7 +208,7 @@ class AuthNotifier extends _$AuthNotifier {
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
     try {
       final changed = await ref
-          .read(authRepositoryProvider)
+          .read(authApiServiceProvider)
           .changePassword(
             currentPassword: currentPassword,
             newPassword: newPassword,
@@ -226,7 +230,7 @@ class AuthNotifier extends _$AuthNotifier {
     final refreshToken = await secureStorage.getRefreshToken();
     try {
       if (refreshToken != null && refreshToken.isNotEmpty) {
-        await ref.read(authRepositoryProvider).logout(refreshToken);
+        await ref.read(authApiServiceProvider).logout(refreshToken);
       }
     } catch (_) {
       // Local logout must succeed even when the API is unavailable.
@@ -246,7 +250,7 @@ class AuthNotifier extends _$AuthNotifier {
   Future<bool> deleteAccount() async {
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
     try {
-      await ref.read(authRepositoryProvider).deleteAccount();
+      await ref.read(authApiServiceProvider).deleteAccount();
       await ref.read(secureStorageProvider).clearTokens();
       await ref.read(localStorageProvider).clearAll();
       state = const AuthState(status: AuthStatus.unauthenticated);
@@ -289,7 +293,10 @@ class AuthNotifier extends _$AuthNotifier {
   Future<void> _cacheUser(UserProfile user) {
     return ref
         .read(localStorageProvider)
-        .setWithTtl(StorageKeys.userProfileJson, jsonEncode(user.toJson()));
+        .setWithTtl(
+          StorageKeys.userProfileJson,
+          jsonEncode(UserProfileDto.fromDomain(user).toJson()),
+        );
   }
 
   Future<UserProfile?> _readCachedUser() async {
@@ -301,7 +308,9 @@ class AuthNotifier extends _$AuthNotifier {
     }
 
     try {
-      return UserProfile.fromJson(jsonDecode(cached) as Map<String, dynamic>);
+      return UserProfileDto.fromJson(
+        jsonDecode(cached) as Map<String, dynamic>,
+      ).toDomain();
     } on FormatException {
       await ref.read(localStorageProvider).remove(StorageKeys.userProfileJson);
       return null;

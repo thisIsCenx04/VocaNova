@@ -2,12 +2,26 @@ using FluentAssertions;
 using FluentValidation.TestHelper;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Admin.DTOs;
-using VocaNova.API.Features.Admin.Repositories;
-using VocaNova.API.Features.Admin.Services;
-using VocaNova.API.Features.Admin.Validators;
-using VocaNova.API.Features.Auth.DTOs;
-using VocaNova.API.Infrastructure.Caching;
+using VocaNova.API.Features.Admin.Contracts.Requests;
+using VocaNova.API.Features.Admin.Contracts.Responses;
+using VocaNova.API.Features.Admin.BLL.Models;
+using VocaNova.API.Features.Admin.BLL.Abstractions;
+using VocaNova.API.Features.Admin.BLL.Services;
+using VocaNova.API.Features.Admin.DAL.Repositories;
+using VocaNova.API.Features.Auth.Contracts.Requests;
+using VocaNova.API.Features.Auth.Contracts.Responses;
+using VocaNova.API.Features.Auth.BLL.Models;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Lists.BLL.Abstractions;
+using VocaNova.API.Features.Progress.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Infrastructure.Caching.Dictionary;
+using VocaNova.API.Infrastructure.Caching.Knn;
+using VocaNova.API.Infrastructure.Caching.Lists;
+using VocaNova.API.Infrastructure.Caching.Progress;
+using VocaNova.API.Infrastructure.Caching.Quiz;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -259,7 +273,7 @@ public class AdminUserManagementFeatureTests
     {
         var validator = new AdminUserQueryValidator();
 
-        var result = validator.TestValidate(new AdminUserQuery(Page: 0, Limit: 101, Status: "archived"));
+        var result = validator.TestValidate(new AdminUserQueryRequest(Page: 0, Limit: 101, Status: "archived"));
 
         result.ShouldHaveValidationErrorFor(query => query.Page);
         result.ShouldHaveValidationErrorFor(query => query.Limit);
@@ -308,7 +322,7 @@ public class AdminUserManagementFeatureTests
                     IsPhoneVerified = true,
                     UpdatedAt = DateTime.UtcNow.AddDays(-2),
                 },
-                UserProfile = new UserProfile
+                UserProfile = new EntityUserProfile
                 {
                     UserId = 1,
                     FullName = "Nguyen Van A",
@@ -330,7 +344,7 @@ public class AdminUserManagementFeatureTests
                     IsPhoneVerified = true,
                     UpdatedAt = DateTime.UtcNow.AddDays(-1),
                 },
-                UserProfile = new UserProfile
+                UserProfile = new EntityUserProfile
                 {
                     UserId = 2,
                     FullName = "Tran Thi B",

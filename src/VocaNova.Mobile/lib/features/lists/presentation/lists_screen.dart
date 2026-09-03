@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topic_icon.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
-import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
+import 'package:vocanova_mobile/features/lists/domain/models/user_list.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class ListsScreen extends ConsumerStatefulWidget {

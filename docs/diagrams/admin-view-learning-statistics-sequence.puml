@@ -1,0 +1,134 @@
+@startuml
+title View Learning Statistics Sequence (/statistics and /api/admin/stats/learning, demographics)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Learning Statistics UI" as StatisticsUi
+control "StatisticsController\n(FE Dashboard)" as FeController
+control "AdminStatsController\n(BE API)" as BeController
+entity "LearningStats\n(FE Response DTO)" as FeLearningStatsDto
+entity "Demographics\n(FE Response DTO)" as FeDemographicsDto
+entity "AdminLearningStatsResponse\n(BE Response DTO)" as BeLearningStatsDto
+entity "AdminDemographicsResponse\n(BE Response DTO)" as BeDemographicsDto
+control "IAdminStatsService" as IAdminStatsService
+control "AdminStatsService" as StatsService
+entity "TestAnswer" as TestAnswerEntity
+entity "Word" as WordEntity
+entity "TestSession" as TestSessionEntity
+entity "UserLearningProfile" as LearningProfileEntity
+entity "User" as UserEntity
+entity "AgeRange" as AgeRangeEntity
+entity "Occupation" as OccupationEntity
+entity "EducationLevel" as EducationLevelEntity
+control "IAdminStatsRepository" as IAdminStatsRepository
+control "AdminStatsRepository" as StatsRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over StatisticsUi, MySQL
+Checked in current code:
+Dashboard UI file exists: Views/Statistics/Index.cshtml.
+FE controller exists: StatisticsController.
+BE controller exists: AdminStatsController.
+FE response DTOs exist: LearningStats and Demographics.
+BE response DTOs exist: AdminLearningStatsResponse and AdminDemographicsResponse.
+StatisticsController.Index calls VocaNovaApiClient.GetLearningStatsAsync
+and GetDemographicsAsync.
+No request DTO body is used for these GET endpoints.
+Interfaces used in code: IAdminStatsService, IAdminStatsRepository.
+end note
+
+Admin -> StatisticsUi: Open learning statistics
+StatisticsUi -> FeController: GET /statistics
+
+FeController -> BeController: VocaNovaApiClient.GetLearningStatsAsync\nGET /api/admin/stats/learning
+BeController -> BeController: Check admin authorization
+BeController -> IAdminStatsService: GetLearningStatsAsync()
+IAdminStatsService -> StatsService: GetLearningStatsAsync()
+StatsService -> IAdminStatsService: Calculate today, tomorrow,\ntrend window and top wrong word limit
+IAdminStatsService -> StatsService: Calculate today, tomorrow,\ntrend window and top wrong word limit
+
+StatsService -> IAdminStatsRepository: GetTopWrongWordsAsync(limit)
+IAdminStatsRepository -> StatsRepository: GetTopWrongWordsAsync(limit)
+StatsRepository -> DbContext: Query wrong answers by word
+DbContext -> MySQL: SELECT test_answers\nJOIN words and test_sessions
+MySQL --> DbContext: Wrong word rows
+DbContext -> TestAnswerEntity: Group TestAnswer rows
+DbContext -> WordEntity: Read Word projection
+DbContext -> TestSessionEntity: Filter completed sessions
+TestAnswerEntity --> DbContext: TestAnswer aggregate
+WordEntity --> DbContext: Word aggregate
+TestSessionEntity --> DbContext: TestSession aggregate
+DbContext --> StatsRepository: Top wrong word rows
+StatsRepository --> StatsService: Top wrong words
+
+StatsService -> IAdminStatsRepository: GetSessionAccuracyRowsAsync(window)
+IAdminStatsRepository -> StatsRepository: GetSessionAccuracyRowsAsync(window)
+StatsRepository -> DbContext: Query completed sessions
+DbContext -> MySQL: SELECT test_sessions
+MySQL --> DbContext: Session rows
+DbContext -> TestSessionEntity: Project TestSession rows
+TestSessionEntity --> DbContext: Accuracy rows
+DbContext --> StatsRepository: Accuracy trend rows
+StatsRepository --> StatsService: Accuracy trend rows
+
+StatsService --> BeController: Learning stats result
+BeController -> BeLearningStatsDto: Create AdminLearningStatsResponse
+BeLearningStatsDto --> BeController: AdminLearningStatsResponse
+BeController -> FeLearningStatsDto: HTTP 200 OK\nAdminLearningStatsResponse JSON
+FeLearningStatsDto --> FeController: LearningStats
+
+FeController -> BeController: VocaNovaApiClient.GetDemographicsAsync\nGET /api/admin/stats/demographics
+BeController -> BeController: Check admin authorization
+BeController -> IAdminStatsService: GetDemographicsAsync()
+IAdminStatsService -> StatsService: GetDemographicsAsync()
+StatsService -> IAdminStatsRepository: GetDemographicsAsync()
+IAdminStatsRepository -> StatsRepository: GetDemographicsAsync()
+
+StatsRepository -> DbContext: Query active learning profiles\nby age range
+DbContext -> MySQL: SELECT user_learning_profiles\nJOIN users and age_ranges
+MySQL --> DbContext: Age range rows
+DbContext -> LearningProfileEntity: Group UserLearningProfile rows
+DbContext -> UserEntity: Filter active users
+DbContext -> AgeRangeEntity: Read AgeRange projection
+LearningProfileEntity --> DbContext: Learning profile aggregate
+UserEntity --> DbContext: Active users
+AgeRangeEntity --> DbContext: Age range groups
+DbContext --> StatsRepository: Age range groups
+
+StatsRepository -> DbContext: Query active learning profiles\nby occupation
+DbContext -> MySQL: SELECT user_learning_profiles\nJOIN users and occupations
+MySQL --> DbContext: Occupation rows
+DbContext -> LearningProfileEntity: Group UserLearningProfile rows
+DbContext -> UserEntity: Filter active users
+DbContext -> OccupationEntity: Read Occupation projection
+LearningProfileEntity --> DbContext: Learning profile aggregate
+UserEntity --> DbContext: Active users
+OccupationEntity --> DbContext: Occupation groups
+DbContext --> StatsRepository: Occupation groups
+
+StatsRepository -> DbContext: Query active learning profiles\nby education level
+DbContext -> MySQL: SELECT user_learning_profiles\nJOIN users and education_levels
+MySQL --> DbContext: Education level rows
+DbContext -> LearningProfileEntity: Group UserLearningProfile rows
+DbContext -> UserEntity: Filter active users
+DbContext -> EducationLevelEntity: Read EducationLevel projection
+LearningProfileEntity --> DbContext: Learning profile aggregate
+UserEntity --> DbContext: Active users
+EducationLevelEntity --> DbContext: Education level groups
+DbContext --> StatsRepository: Education level groups
+
+StatsRepository --> StatsService: Demographics groups
+StatsService --> BeController: Demographics result
+BeController -> BeDemographicsDto: Create AdminDemographicsResponse
+BeDemographicsDto --> BeController: AdminDemographicsResponse
+BeController -> FeDemographicsDto: HTTP 200 OK\nAdminDemographicsResponse JSON
+FeDemographicsDto --> FeController: Demographics
+
+FeController -> FeController: Build StatisticsViewModel
+FeController --> StatisticsUi: Render learning statistics
+
+@enduml

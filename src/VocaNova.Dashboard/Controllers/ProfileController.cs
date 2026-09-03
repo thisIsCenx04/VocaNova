@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VocaNova.Dashboard.Models.Api.Auth;
+using VocaNova.Dashboard.Data.Dtos.Auth;
 using VocaNova.Dashboard.Models.Profile;
 using VocaNova.Dashboard.Services.Api;
 

@@ -5,7 +5,7 @@ import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
-import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/auth_state.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 const appVersion = '1.0.0';

@@ -5,16 +5,35 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Options;
 using VocaNova.API.Common.Constants;
 using VocaNova.API.Common.Security;
-using VocaNova.API.Features.Auth.DTOs;
-using VocaNova.API.Features.Auth.Repositories;
-using VocaNova.API.Features.Auth.Services;
-using VocaNova.API.Features.Auth.Validators;
-using VocaNova.API.Features.Knn.DTOs;
+using VocaNova.API.Features.Auth.Contracts.Requests;
+using VocaNova.API.Features.Auth.Contracts.Responses;
+using VocaNova.API.Features.Auth.BLL.Models;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Auth.DAL.Repositories;
+using VocaNova.API.Features.Auth.BLL.Services;
+using VocaNova.API.Features.Auth.Contracts.Requests;
+using VocaNova.API.Features.Knn.Contracts.Requests;
+using VocaNova.API.Features.Knn.Contracts.Responses;
+using VocaNova.API.Features.Knn.BLL.Models;
 using VocaNova.API.Infrastructure.Authentication;
-using VocaNova.API.Infrastructure.Caching;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Lists.BLL.Abstractions;
+using VocaNova.API.Features.Progress.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Infrastructure.Caching.Dictionary;
+using VocaNova.API.Infrastructure.Caching.Knn;
+using VocaNova.API.Infrastructure.Caching.Lists;
+using VocaNova.API.Infrastructure.Caching.Progress;
+using VocaNova.API.Infrastructure.Caching.Quiz;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
 using VocaNova.API.Infrastructure.Storage;
+using AuthStoredMedia = VocaNova.API.Features.Auth.BLL.Models.StoredMedia;
+using AuthUploadedContent = VocaNova.API.Features.Auth.BLL.Models.UploadedContent;
 
 namespace VocaNova.Tests.Auth;
 
@@ -241,21 +260,13 @@ public class LogoutProfileFeatureTests
         VocaNovaDbContext dbContext,
         IUserProfileCache? userProfileCache = null,
         IKnnTopicRecommendationCache? knnTopicRecommendationCache = null,
-        IImageStorage? imageStorage = null)
+        IAvatarStorage? imageStorage = null)
     {
-        return new AuthService(
+        return AuthTestFactory.CreateService(
             dbContext,
-            new AuthRepository(dbContext),
-            CreateJwtTokenService(),
-            new FakeGoogleTokenVerifier(),
-            Options.Create(CreateJwtSettings()),
-            userProfileCache,
+            userProfileCache: userProfileCache,
             knnTopicRecommendationCache: knnTopicRecommendationCache,
-            imageStorage: imageStorage,
-            cloudinarySettings: Options.Create(new CloudinarySettings
-            {
-                AvatarFolder = "vocanova/avatars",
-            }));
+            avatarStorage: imageStorage);
     }
 
     private static JwtTokenService CreateJwtTokenService()
@@ -304,7 +315,7 @@ public class LogoutProfileFeatureTests
                 PasswordHash = PasswordHelper.Hash("Password1"),
                 UpdatedAt = DateTime.UtcNow,
             },
-            UserProfile = new UserProfile
+            UserProfile = new EntityUserProfile
             {
                 UserId = 1,
                 FullName = "Nguyen Van A",
@@ -456,7 +467,7 @@ public class LogoutProfileFeatureTests
         }
     }
 
-    private sealed class FakeImageStorage : IImageStorage
+    private sealed class FakeImageStorage : IAvatarStorage
     {
         private readonly string _url;
 
@@ -469,15 +480,13 @@ public class LogoutProfileFeatureTests
 
         public string? Folder { get; private set; }
 
-        public Task<ImageStorageResult> UploadAsync(
-            uint ownerId,
-            IFormFile file,
-            string? folder = null,
+        public Task<AuthStoredMedia> UploadAsync(
+            AuthUploadedContent content,
             CancellationToken cancellationToken = default)
         {
             UploadCount++;
-            Folder = folder;
-            return Task.FromResult(new ImageStorageResult($"{folder}/{ownerId}/avatar", _url));
+            Folder = "vocanova/avatars";
+            return Task.FromResult(new AuthStoredMedia($"vocanova/avatars/{content.OwnerId}/avatar", _url));
         }
     }
 }

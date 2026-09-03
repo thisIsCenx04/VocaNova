@@ -1,5 +1,5 @@
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
-import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
+import 'package:vocanova_mobile/features/lists/domain/models/user_list.dart';
 
 class ListsState {
   const ListsState({

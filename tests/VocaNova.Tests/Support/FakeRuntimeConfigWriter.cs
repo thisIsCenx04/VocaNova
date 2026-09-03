@@ -1,3 +1,4 @@
+using VocaNova.API.Common.Abstractions.Configuration;
 using VocaNova.API.Infrastructure.Configuration;
 
 namespace VocaNova.Tests.Support;

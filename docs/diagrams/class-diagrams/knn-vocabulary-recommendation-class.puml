@@ -1,0 +1,320 @@
+@startuml
+title KNN Vocabulary Recommendation Class Diagram (/api/recommendations/words)
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from knn-vocabulary-recommendation-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+
+class RecommendationsController <<backend_controller>> {
+  "- _knnOnboardingService : IKnnOnboardingService"
+  "- _knnLearningService : IKnnLearningService"
+  --
+  "+ GetTopics(limit: intNullable, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ GetWords(limit: intNullable, cancellationToken: CancellationToken) : TaskOfIActionResult"
+}
+
+class WordRecommendationResponse <<dto>> {
+  "+ WordId : uint"
+  "+ Word : string"
+  "+ PhoneticUk : stringNullable"
+  "+ PrimaryMeaning : stringNullable"
+  "+ ImageUrl : stringNullable"
+  "+ CefrLevel : stringNullable"
+  "+ Score : double"
+}
+
+class IKnnLearningService <<service_interface>> {
+  "+ FindKNearestAsync(userId: uint, vector: double[], k: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnNeighbor"
+  "+ GenerateWordRecommendationsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfIReadOnlyCollectionOfWordRecommendationItem"
+  "+ GetWordRecommendationsAsync(userId: uint, limit: intNullable, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfIReadOnlyCollectionOfWordRecommendation"
+}
+
+class KnnLearningService <<service>> {
+  "- _knnLearningRepository : IKnnLearningRepository"
+  "- _knnProfileRepository : IKnnProfileRepositoryNullable"
+  "- _runtimeConfig : IKnnRuntimeConfigurationServiceNullable"
+  "- _wordRecommendationCache : IKnnWordRecommendationCacheNullable"
+  "- _options : KnnOptions"
+  "- _logger : ILoggerOfKnnLearningServiceNullable"
+  --
+  "+ GetWordRecommendationsAsync(userId: uint, limit: intNullable, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfIReadOnlyCollectionOfWordRecommendation"
+}
+
+class TestSession <<entity>> {
+  "+ SessionId : uint"
+  "+ UserId : uint"
+  "+ TestType : string"
+  "+ Mode : string"
+  "+ QuestionType : int"
+  "+ ScopeType : string"
+  "+ ScopeDateFrom : DateOnlyNullable"
+  "+ ScopeDateTo : DateOnlyNullable"
+  "+ WordOrder : string"
+  "+ WordLimit : intNullable"
+  "+ TimeLimitSec : intNullable"
+  "+ Lives : intNullable"
+}
+
+class Topic <<entity>> {
+  "+ TopicId : uint"
+  "+ TopicName : string"
+  "+ TopicNameVi : stringNullable"
+  "+ Icon : stringNullable"
+  "+ Status : string"
+  "+ TestSessionTopics : ICollectionOfTestSessionTopic"
+  "+ UserTopicPreferences : ICollectionOfUserTopicPreference"
+  "+ WordTopics : ICollectionOfWordTopic"
+}
+
+class TestAnswer <<entity>> {
+  "+ AnswerId : uint"
+  "+ SessionId : uint"
+  "+ WordId : uint"
+  "+ SenseId : uintNullable"
+  "+ QuestionNumber : int"
+  "+ QuestionType : int"
+  "+ DisplayContent : string"
+  "+ ExpectedAnswer : string"
+  "+ AcceptedAnswers : stringNullable"
+  "+ UserAnswer : stringNullable"
+  "+ IsCorrect : boolNullable"
+  "+ AiScore : floatNullable"
+}
+
+class WordTopic <<entity>> {
+  "+ WordId : uint"
+  "+ TopicId : uint"
+  "+ IsPrimary : bool"
+  "+ Topic : Topic"
+  "+ Word : Word"
+}
+
+class UserWordProgress <<entity>> {
+  "+ ProgressId : uint"
+  "+ UserId : uint"
+  "+ WordId : uint"
+  "+ TestCount : int"
+  "+ CorrectCount : int"
+  "+ WrongCount : int"
+  "+ ConsecutiveCorrect : int"
+  "+ IsInWrongList : bool"
+  "+ MasteryLevel : int"
+  "+ SrsInterval : int"
+  "+ EaseFactor : float"
+  "+ LastTestedAt : DateTimeNullable"
+}
+
+class UserListWord <<entity>> {
+  "+ UserId : uint"
+  "+ ListId : uint"
+  "+ WordId : uint"
+  "+ AddMethod : string"
+  "+ Note : stringNullable"
+  "+ AddedAt : DateTime"
+  "+ Status : string"
+  "+ List : UserList"
+  "+ User : User"
+  "+ Word : Word"
+}
+
+class UserLearningProfile <<entity>> {
+  "+ UserId : uint"
+  "+ AgeRangeId : uintNullable"
+  "+ RegionId : uintNullable"
+  "+ OccupationId : uintNullable"
+  "+ EducationLevelId : uintNullable"
+  "+ LearningPurposeId : uintNullable"
+  "+ CreatedAt : DateTime"
+  "+ UpdatedAt : DateTime"
+  "+ AgeRange : AgeRangeNullable"
+  "+ EducationLevel : EducationLevelNullable"
+  "+ LearningPurpose : LearningPurposeNullable"
+  "+ Occupation : OccupationNullable"
+}
+
+class UserTopicPreference <<entity>> {
+  "+ UserId : uint"
+  "+ TopicId : uint"
+  "+ Source : string"
+  "+ Status : string"
+  "+ CreatedAt : DateTime"
+  "+ Topic : Topic"
+  "+ User : User"
+}
+
+class AgeRange <<entity>> {
+  "+ AgeRangeId : uint"
+  "+ Name : string"
+  "+ MinAge : intNullable"
+  "+ MaxAge : intNullable"
+  "+ DisplayOrder : int"
+  "+ Status : string"
+  "+ UserLearningProfiles : ICollectionOfUserLearningProfile"
+}
+
+class Region <<entity>> {
+  "+ RegionId : uint"
+  "+ Name : string"
+  "+ Code : string"
+  "+ ParentId : uintNullable"
+  "+ Status : string"
+  "+ Inverseparent : ICollectionOfRegion"
+  "+ Parent : RegionNullable"
+  "+ UserLearningProfiles : ICollectionOfUserLearningProfile"
+}
+
+class Occupation <<entity>> {
+  "+ OccupationId : uint"
+  "+ Name : string"
+  "+ Description : stringNullable"
+  "+ Status : string"
+  "+ UserLearningProfiles : ICollectionOfUserLearningProfile"
+}
+
+class EducationLevel <<entity>> {
+  "+ EducationLevelId : uint"
+  "+ Name : string"
+  "+ Description : stringNullable"
+  "+ DisplayOrder : int"
+  "+ Status : string"
+  "+ UserLearningProfiles : ICollectionOfUserLearningProfile"
+}
+
+class LearningPurpose <<entity>> {
+  "+ LearningPurposeId : uint"
+  "+ Name : string"
+  "+ Description : stringNullable"
+  "+ Status : string"
+  "+ UserLearningProfiles : ICollectionOfUserLearningProfile"
+}
+
+class Word <<entity>> {
+  "+ WordId : uint"
+  "+ Word1 : string"
+  "+ WordKey : string"
+  "+ CefrLevel : stringNullable"
+  "+ PhoneticUk : stringNullable"
+  "+ PhoneticUs : stringNullable"
+  "+ ImageUrl : stringNullable"
+  "+ IsPhrase : bool"
+  "+ Status : string"
+  "+ CreatedAt : DateTime"
+  "+ UpdatedAt : DateTime"
+  "+ AiGradingCaches : ICollectionOfAiGradingCache"
+}
+
+class WordSense <<entity>> {
+  "+ SenseId : uint"
+  "+ WordId : uint"
+  "+ SenseOrder : int"
+  "+ WordClass : string"
+  "+ EnglishDefinition : string"
+  "+ VietnameseMeaning : stringNullable"
+  "+ Status : string"
+  "+ TestAnswers : ICollectionOfTestAnswer"
+  "+ Word : Word"
+  "+ WordExamples : ICollectionOfWordExample"
+  "+ WordRelations : ICollectionOfWordRelation"
+}
+
+class IKnnLearningRepository <<repository_interface>> {
+  "+ GetSessionCountAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfint"
+  "+ GetActiveTopicIdsAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyListOfuint"
+  "+ GetTopicAnswerStatsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnTopicAnswerStatistics"
+  "+ GetEligibleUserIdsAsync(minSessions: int, excludingUserId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfuint"
+  "+ GetMasteredWordsAsync(userIds: IReadOnlyCollectionOfuint, minMasteryLevel: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnMasteredWord"
+  "+ GetNeighborStudiedWordsAsync(userIds: IReadOnlyCollectionOfuint, topicIds: IReadOnlyCollectionOfuint, cancellationToken: CancellationToken) : summaryTaskOfIReadOnlyCollectionOfKnnNeighborWord"
+  "+ GetActiveListWordIdsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfuint"
+  "+ GetWordRecommendationItemsAsync(scoresByWordId: IReadOnlyDictionaryOfuintdouble, limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfWordRecommendationItem"
+  "+ GetWordRecommendationsAsync(scoresByWordId: IReadOnlyDictionaryOfuintdouble, limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfWordRecommendation"
+}
+
+class KnnLearningRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ GetSessionCountAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfInt"
+  "+ GetActiveTopicIdsAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyListOfuint"
+  "+ GetTopicAnswerStatsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnTopicAnswerStatistics"
+  "+ GetEligibleUserIdsAsync(minSessions: int, excludingUserId: uint, cancellationToken: CancellationToken) : TaskOfListOfUint"
+  "+ GetMasteredWordsAsync(userIds: ListOfUint, minMasteryLevel: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnMasteredWord"
+  "+ GetNeighborStudiedWordsAsync(userIds: ListOfUint, topicIds: ListOfUint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnNeighborWord"
+  "+ GetActiveListWordIdsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfListOfUint"
+  "+ GetWordRecommendationsAsync(scoresByWordId: IReadOnlyDictionaryOfuint_double, limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfWordRecommendation"
+}
+
+class IKnnProfileRepository <<repository_interface>> {
+  "+ GetLearningProfileAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfKnnLearningProfileNullable"
+  "+ GetActiveTopicPreferencesAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnTopicPreference"
+  "+ GetProfileVectorSourceAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfKnnProfileVectorSourceNullable"
+  "+ GetActiveLookupDimensionsAsync(cancellationToken: CancellationToken) : TaskOfKnnLookupDimensions"
+  "+ GetActiveLookupOptionsAsync(cancellationToken: CancellationToken) : TaskOfLearningProfileOptions"
+  "+ GetCandidateProfileSourcesAsync(excludingUserId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnProfileVectorSource"
+  "+ GetActiveTopicIdsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfuint"
+  "+ GetNeighborTopicPreferencesAsync(userIds: IReadOnlyCollectionOfuint, sources: IReadOnlySetOfstring, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnTopicPreference"
+  "+ GetNeighborPersonalTopicsAsync(currentUserId: uint, neighborUserIds: IReadOnlyCollectionOfuint, wordsPerTopic: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfNeighborPersonalTopic"
+  "+ GetFallbackTopicRecommendationsAsync(excludedTopicIds: IReadOnlyCollectionOfuint, limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfTopicRecommendation"
+  "+ GetTopicRecommendationsByScoreAsync(scoresByTopicId: IReadOnlyDictionaryOfuintdouble, limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfTopicRecommendation"
+  "+ UpsertTopicPreferenceAsync(userId: uint, topicId: uint, source: string, now: DateTime, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ ReplaceOnboardingTopicPreferencesAsync(userId: uint, topicIds: IReadOnlyCollectionOfuint, now: DateTime, cancellationToken: CancellationToken) : summaryTaskOfintNullable"
+}
+
+class KnnProfileRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ GetProfileVectorSourceAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfKnnProfileVectorSource"
+  "+ GetActiveLookupDimensionsAsync(cancellationToken: CancellationToken) : TaskOfKnnLookupDimensions"
+  "+ GetCandidateProfileSourcesAsync(excludingUserId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfKnnProfileVectorSource"
+  "+ GetActiveTopicIdsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfListOfUint"
+}
+
+class VocaNovaDbContext <<dbcontext>> {
+  "+ AgeRanges : DbSetOfAgeRange"
+  "+ AiGradingCaches : DbSetOfAiGradingCache"
+  "+ AuditLogs : DbSetOfAuditLog"
+  "+ EducationLevels : DbSetOfEducationLevel"
+  "+ LearningPurposes : DbSetOfLearningPurpose"
+  "+ Occupations : DbSetOfOccupation"
+  "+ OtpVerifications : DbSetOfOtpVerification"
+  "+ RefreshTokens : DbSetOfRefreshToken"
+  "+ Regions : DbSetOfRegion"
+  "+ Roles : DbSetOfRole"
+  "+ TestAnswers : DbSetOfTestAnswer"
+  "+ TestSessions : DbSetOfTestSession"
+  --
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
+}
+
+class MySQL_Database <<database>> {
+
+}
+KnnLearningRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+KnnProfileRepository ..> VocaNovaDbContext
+RecommendationsController ..> WordRecommendationResponse
+IKnnLearningService <|.. KnnLearningService
+RecommendationsController ..> IKnnLearningService : GetWordRecommendationsAsync()
+IKnnLearningRepository <|.. KnnLearningRepository
+KnnLearningService ..> IKnnLearningRepository : GetSessionCountAsync()
+IKnnProfileRepository <|.. KnnProfileRepository
+KnnLearningService ..> IKnnProfileRepository : GetProfileVectorSourceAsync()
+KnnLearningRepository ..> TestSession
+KnnLearningRepository ..> UserLearningProfile
+KnnLearningRepository ..> UserTopicPreference
+KnnLearningRepository ..> AgeRange
+KnnLearningRepository ..> Region
+KnnLearningRepository ..> Occupation
+KnnLearningRepository ..> EducationLevel
+KnnLearningRepository ..> LearningPurpose
+KnnLearningRepository ..> Topic
+KnnLearningRepository ..> UserListWord
+KnnLearningRepository ..> TestAnswer
+KnnLearningRepository ..> UserWordProgress
+KnnLearningRepository ..> Word
+KnnLearningRepository ..> WordSense
+KnnLearningRepository ..> WordTopic
+@enduml

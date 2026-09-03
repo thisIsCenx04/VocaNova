@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
 
 namespace VocaNova.API.Infrastructure.RateLimiting;
 

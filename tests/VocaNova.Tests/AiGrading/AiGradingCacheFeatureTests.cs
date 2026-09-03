@@ -1,9 +1,13 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Extensions;
-using VocaNova.API.Features.AiGrading.Repositories;
-using VocaNova.API.Features.AiGrading.Services;
-using VocaNova.API.Features.Quiz.DTOs;
+using VocaNova.API.Features.AiGrading.BLL.Abstractions;
+using VocaNova.API.Features.AiGrading.DAL.Repositories;
+using VocaNova.API.Features.AiGrading.BLL.Services;
+using VocaNova.API.Infrastructure.ExternalServices.Gemini;
+using VocaNova.API.Features.Quiz.Contracts.Requests;
+using VocaNova.API.Features.Quiz.Contracts.Responses;
+using VocaNova.API.Features.Quiz.BLL.Models;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -196,14 +200,18 @@ public class AiGradingCacheFeatureTests
         public int CallCount { get; private set; }
 
         public Task<AiGradingResult> GradeAsync(
-            uint wordId,
-            int questionType,
-            string? userAnswer,
-            string expectedAnswer,
+            AiGradeRequest request,
             CancellationToken cancellationToken = default)
         {
             CallCount++;
             return Task.FromResult(_result);
+        }
+
+        public Task<AiGradingConnectionTest> TestConnectionAsync(
+            AiGradingSettings configuration,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new AiGradingConnectionTest(true, configuration.Model, 1, "ok"));
         }
     }
 }

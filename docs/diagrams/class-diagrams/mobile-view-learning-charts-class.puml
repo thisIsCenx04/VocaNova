@@ -1,0 +1,138 @@
+@startuml
+title View Learning Charts Class Diagram (/api/progress/chart)
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from mobile-view-learning-charts-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+
+class ProgressChartsNotifier <<service>> {
+  "+ build() : ProgressChartsState"
+  "+ changeGranularity() : FutureOfvoid"
+  "+ load()"
+}
+
+class ProgressApiService <<service>> {
+  "+ _dio : Dio"
+  --
+  "+ getChart() : FutureOfProgressChart"
+}
+
+class ProgressChartDto <<dto>> {
+  "+ granularity : String"
+  "+ points : ListOfProgressChartPointDto"
+}
+
+class ProgressChartRequest <<dto>> {
+  "+ Granularity : stringNullable"
+}
+
+class ProgressChartResponse <<dto>> {
+  "+ Granularity : string"
+  "+ Points : IReadOnlyCollectionOfProgressChartPointResponse"
+}
+
+class ProgressController <<backend_controller>> {
+  "- _progressSummaryService : IProgressSummaryService"
+  "- _progressAnalyticsService : IProgressAnalyticsService"
+  --
+  "+ GetChart(request: ProgressChartRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+}
+
+class IProgressAnalyticsService <<service_interface>> {
+  "+ GetChartAsync(userId: uint, query: ProgressChartQuery, cancellationToken: CancellationToken) : TaskOfProgressResultOfProgressChart"
+  "+ GetMasteryBreakdownAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfIReadOnlyCollectionOfMasteryBreakdown"
+  "+ GetWeakestWordsAsync(userId: uint, query: WeakestWordsQuery, cancellationToken: CancellationToken) : TaskOfProgressResultOfIReadOnlyCollectionOfWeakestWord"
+  "+ GetWordProgressAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfProgressResultOfWordProgress"
+}
+
+class ProgressAnalyticsService <<service>> {
+  "- _progressAnalyticsRepository : IProgressAnalyticsRepository"
+  --
+  "+ GetChartAsync(userId: uint, query: ProgressChartQuery, cancellationToken: CancellationToken) : TaskOfProgressResultOfProgressChart"
+}
+
+class TestSession <<entity>> {
+  "+ SessionId : uint"
+  "+ UserId : uint"
+  "+ TestType : string"
+  "+ Mode : string"
+  "+ QuestionType : int"
+  "+ ScopeType : string"
+  "+ ScopeDateFrom : DateOnlyNullable"
+  "+ ScopeDateTo : DateOnlyNullable"
+  "+ WordOrder : string"
+  "+ WordLimit : intNullable"
+  "+ TimeLimitSec : intNullable"
+  "+ Lives : intNullable"
+}
+
+class TestAnswer <<entity>> {
+  "+ AnswerId : uint"
+  "+ SessionId : uint"
+  "+ WordId : uint"
+  "+ SenseId : uintNullable"
+  "+ QuestionNumber : int"
+  "+ QuestionType : int"
+  "+ DisplayContent : string"
+  "+ ExpectedAnswer : string"
+  "+ AcceptedAnswers : stringNullable"
+  "+ UserAnswer : stringNullable"
+  "+ IsCorrect : boolNullable"
+  "+ AiScore : floatNullable"
+}
+
+class IProgressAnalyticsRepository <<repository_interface>> {
+  "+ GetSessionTimesAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfDateTime"
+  "+ GetAnswerStatisticsAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfProgressAnswerStatistics"
+  "+ GetMasteryLevelCountsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfMasteryLevelCount"
+  "+ GetWeakestWordStatisticsAsync(userId: uint, limit: int, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfWeakestWordStatistics"
+  "+ GetWordProgressStatisticsAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfWordProgressStatisticsNullable"
+}
+
+class ProgressAnalyticsRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ GetSessionTimesAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfDateTime"
+  "+ GetAnswerStatisticsAsync(userId: uint, fromInclusive: DateTime, toExclusive: DateTime, cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfProgressAnswerStatistics"
+}
+
+class VocaNovaDbContext <<dbcontext>> {
+  "+ AgeRanges : DbSetOfAgeRange"
+  "+ AiGradingCaches : DbSetOfAiGradingCache"
+  "+ AuditLogs : DbSetOfAuditLog"
+  "+ EducationLevels : DbSetOfEducationLevel"
+  "+ LearningPurposes : DbSetOfLearningPurpose"
+  "+ Occupations : DbSetOfOccupation"
+  "+ OtpVerifications : DbSetOfOtpVerification"
+  "+ RefreshTokens : DbSetOfRefreshToken"
+  "+ Regions : DbSetOfRegion"
+  "+ Roles : DbSetOfRole"
+  "+ TestAnswers : DbSetOfTestAnswer"
+  "+ TestSessions : DbSetOfTestSession"
+  --
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
+}
+
+class MySQL_Database <<database>> {
+
+}
+ProgressChartsNotifier ..> ProgressApiService : getChart()
+ProgressApiService ..> ProgressController
+ProgressController ..> ProgressChartRequest
+ProgressAnalyticsRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+ProgressController ..> ProgressChartResponse
+ProgressApiService ..> ProgressChartDto
+ProgressChartRequest ..> ProgressController
+IProgressAnalyticsService <|.. ProgressAnalyticsService
+ProgressController ..> IProgressAnalyticsService : GetChartAsync()
+IProgressAnalyticsRepository <|.. ProgressAnalyticsRepository
+ProgressAnalyticsService ..> IProgressAnalyticsRepository : GetSessionTimesAsync()
+ProgressAnalyticsRepository ..> TestSession
+ProgressAnalyticsRepository ..> TestAnswer
+@enduml

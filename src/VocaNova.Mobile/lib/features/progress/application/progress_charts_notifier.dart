@@ -13,10 +13,10 @@ class ProgressChartsNotifier extends _$ProgressChartsNotifier {
 
   Future<void> load() async {
     try {
-      final repository = ref.read(progressRepositoryProvider);
-      final chartFuture = repository.getChart(state.granularity);
-      final masteryFuture = repository.getMasteryBreakdown();
-      final weakestFuture = repository.getWeakestWords();
+      final apiService = ref.read(progressApiServiceProvider);
+      final chartFuture = apiService.getChart(state.granularity);
+      final masteryFuture = apiService.getMasteryBreakdown();
+      final weakestFuture = apiService.getWeakestWords();
       state = ProgressChartsState(
         granularity: state.granularity,
         chart: await chartFuture,
@@ -43,7 +43,7 @@ class ProgressChartsNotifier extends _$ProgressChartsNotifier {
       clearError: true,
     );
     try {
-      final chart = await ref.read(progressRepositoryProvider).getChart(value);
+      final chart = await ref.read(progressApiServiceProvider).getChart(value);
       state = state.copyWith(chart: chart, isLoadingChart: false);
     } catch (_) {
       final l10n = lookupAppLocalizations(

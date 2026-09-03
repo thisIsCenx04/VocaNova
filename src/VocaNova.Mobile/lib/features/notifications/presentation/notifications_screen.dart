@@ -5,7 +5,7 @@ import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/features/notifications/application/notifications_notifier.dart';
 import 'package:vocanova_mobile/features/notifications/application/notifications_state.dart';
-import 'package:vocanova_mobile/features/notifications/domain/app_notification.dart';
+import 'package:vocanova_mobile/features/notifications/domain/models/app_notification.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {

@@ -1,7 +1,9 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
-using VocaNova.API.Features.AiGrading;
-using VocaNova.API.Features.AiGrading.Services;
+using VocaNova.API.Features.AiGrading.BLL.Models;
+using VocaNova.API.Infrastructure.ExternalServices.Gemini;
+using VocaNova.API.Features.AiGrading.BLL.Services;
+using VocaNova.API.Infrastructure.ExternalServices.Gemini;
 
 namespace VocaNova.Tests.AiGrading;
 
@@ -16,7 +18,7 @@ public class GeminiAiGradingProviderTests
             """);
         var provider = CreateProvider(client);
 
-        var result = await provider.GradeAsync(10, 1, "nearly correct", "correct");
+        var result = await provider.GradeAsync(new AiGradeRequest(10, 1, "nearly correct", "correct"));
 
         result.IsCorrect.Should().BeTrue();
         result.Score.Should().Be(0.82f);
@@ -37,7 +39,7 @@ public class GeminiAiGradingProviderTests
             """);
         var provider = CreateProvider(client);
 
-        var result = await provider.GradeAsync(10, 1, "correct", "correct");
+        var result = await provider.GradeAsync(new AiGradeRequest(10, 1, "correct", "correct"));
 
         result.IsCorrect.Should().BeTrue();
         result.Score.Should().Be(1f);
@@ -53,7 +55,7 @@ public class GeminiAiGradingProviderTests
         var client = new FakeGeminiClient(response);
         var provider = CreateProvider(client);
 
-        var result = await provider.GradeAsync(10, 1, "answer", "expected");
+        var result = await provider.GradeAsync(new AiGradeRequest(10, 1, "answer", "expected"));
 
         result.IsCorrect.Should().BeFalse();
         result.Score.Should().Be(0f);
@@ -67,7 +69,7 @@ public class GeminiAiGradingProviderTests
         var client = new FakeGeminiClient(new InvalidOperationException("Gemini failed."));
         var provider = CreateProvider(client);
 
-        var result = await provider.GradeAsync(10, 1, "answer", "expected");
+        var result = await provider.GradeAsync(new AiGradeRequest(10, 1, "answer", "expected"));
 
         result.IsCorrect.Should().BeFalse();
         result.Score.Should().Be(0f);
@@ -81,7 +83,7 @@ public class GeminiAiGradingProviderTests
         var client = new FakeGeminiClient(new InvalidOperationException("Gemini failed."));
         var provider = CreateProvider(client);
 
-        var result = await provider.GradeAsync(10, 1, " Correct! ", "correct");
+        var result = await provider.GradeAsync(new AiGradeRequest(10, 1, " Correct! ", "correct"));
 
         result.IsCorrect.Should().BeTrue();
         result.Score.Should().Be(1f);
@@ -96,7 +98,7 @@ public class GeminiAiGradingProviderTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        var act = () => provider.GradeAsync(10, 1, "answer", "expected", cts.Token);
+        var act = () => provider.GradeAsync(new AiGradeRequest(10, 1, "answer", "expected"), cts.Token);
 
         await act.Should().ThrowAsync<OperationCanceledException>();
     }

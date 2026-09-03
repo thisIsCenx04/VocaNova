@@ -9,13 +9,14 @@ import 'package:vocanova_mobile/core/storage/storage_keys.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
-import 'package:vocanova_mobile/features/progress/data/progress_repository.dart';
-import 'package:vocanova_mobile/features/progress/domain/progress_summary.dart';
+import 'package:vocanova_mobile/features/progress/data/dtos/progress_summary_dto.dart';
+import 'package:vocanova_mobile/features/progress/data/services/progress_api_service.dart';
+import 'package:vocanova_mobile/features/progress/domain/models/progress_summary.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late MockProgressRepository repository;
+  late MockProgressApiService repository;
   late MockConnectivityService connectivity;
   late LocalStorage storage;
   late ProviderContainer container;
@@ -28,11 +29,11 @@ void main() {
       preferences: await SharedPreferences.getInstance(),
       clock: () => now,
     );
-    repository = MockProgressRepository();
+    repository = MockProgressApiService();
     connectivity = MockConnectivityService();
     container = ProviderContainer(
       overrides: [
-        progressRepositoryProvider.overrideWithValue(repository),
+        progressApiServiceProvider.overrideWithValue(repository),
         progressLocalStorageProvider.overrideWithValue(storage),
         connectivityServiceProvider.overrideWithValue(connectivity),
       ],
@@ -62,7 +63,7 @@ void main() {
     () async {
       await storage.setWithTtl(
         StorageKeys.progressSummaryJson,
-        jsonEncode(summary.toJson()),
+        jsonEncode(ProgressSummaryDto.fromDomain(summary).toJson()),
       );
       when(() => connectivity.isOnline).thenAnswer((_) async => false);
 
@@ -78,7 +79,7 @@ void main() {
   test('offline load rejects cache after 15 minutes', () async {
     await storage.setWithTtl(
       StorageKeys.progressSummaryJson,
-      jsonEncode(summary.toJson()),
+      jsonEncode(ProgressSummaryDto.fromDomain(summary).toJson()),
     );
     now = now.add(const Duration(minutes: 15));
     when(() => connectivity.isOnline).thenAnswer((_) async => false);
@@ -92,7 +93,7 @@ void main() {
   });
 }
 
-class MockProgressRepository extends Mock implements ProgressRepository {}
+class MockProgressApiService extends Mock implements ProgressApiService {}
 
 class MockConnectivityService extends Mock implements ConnectivityService {}
 

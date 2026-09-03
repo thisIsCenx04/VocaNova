@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VocaNova.API.Common.Extensions;
-using VocaNova.API.Common.Results;
-using VocaNova.API.Features.Lists.DTOs;
-using VocaNova.API.Features.Lists.Services;
+using VocaNova.API.Features.Lists.BLL.Models;
+using VocaNova.API.Features.Lists.BLL.Services;
+using VocaNova.API.Common.Responses;
+using VocaNova.API.Features.Lists.Contracts.Requests;
+using VocaNova.API.Features.Lists.Mappings;
+using VocaNova.API.Features.Lists.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Lists.Controllers;
 
@@ -12,50 +14,59 @@ namespace VocaNova.API.Features.Lists.Controllers;
 [Route("api/personal-topics")]
 public sealed class PersonalTopicsController : ControllerBase
 {
-    private readonly IPersonalTopicService _personalTopicService;
+    private readonly IPersonalTopicQueryService _queryService;
+    private readonly IPersonalTopicMutationService _mutationService;
 
-    public PersonalTopicsController(IPersonalTopicService personalTopicService)
+    public PersonalTopicsController(
+        IPersonalTopicQueryService queryService,
+        IPersonalTopicMutationService mutationService)
     {
-        _personalTopicService = personalTopicService;
+        _queryService = queryService;
+        _mutationService = mutationService;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetTopics(
-        [FromQuery] uint? wordId,
+        [FromQuery] PersonalTopicListRequest request,
         CancellationToken cancellationToken)
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(
-                Result<IReadOnlyCollection<PersonalTopicDto>>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
-        var result = await _personalTopicService.GetTopicsAsync(userId, wordId, cancellationToken);
+        var result = await _queryService.GetTopicsAsync(
+            userId,
+            request.ToBusinessQuery(),
+            cancellationToken);
         return result.IsSuccess
-            ? this.OkResult(result.Value!, "Personal topics loaded successfully.")
-            : this.ErrorResult(result);
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "Personal topics loaded successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpGet("{topicId:uint}/words")]
     public async Task<IActionResult> GetWords(
         [FromRoute] uint topicId,
-        [FromQuery] ListWordsQuery query,
+        [FromQuery] ListWordsRequest request,
         CancellationToken cancellationToken)
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(
-                Result<PagedResult<ListWordDto>>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
-        var result = await _personalTopicService.GetWordsAsync(
+        var result = await _queryService.GetWordsAsync(
             userId,
             topicId,
-            query,
+            request.ToBusinessQuery(),
             cancellationToken);
         return result.IsSuccess
-            ? this.OkResult(result.Value!, "Personal topic words loaded successfully.")
-            : this.ErrorResult(result);
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "Personal topic words loaded successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpPost("{topicId:uint}/words")]
@@ -66,17 +77,21 @@ public sealed class PersonalTopicsController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<PersonalTopicDto>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
-        var result = await _personalTopicService.AddWordAsync(
+        var result = await _mutationService.AddWordAsync(
             userId,
             topicId,
-            request,
+            request.ToBusinessCommand(),
             cancellationToken);
         return result.IsSuccess
-            ? this.CreatedResult(result.Value!, "Word added to personal topic successfully.")
-            : this.ErrorResult(result);
+            ? StatusCode(
+                StatusCodes.Status201Created,
+                ApiResponseFormatter.Created(
+                    result.Value!.ToResponse(),
+                    "Word added to personal topic successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpDelete("{topicId:uint}/words/{wordId:uint}")]
@@ -87,17 +102,39 @@ public sealed class PersonalTopicsController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<bool>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
-        var result = await _personalTopicService.RemoveWordAsync(
+        var result = await _mutationService.RemoveWordAsync(
             userId,
             topicId,
             wordId,
             cancellationToken);
         return result.IsSuccess
-            ? this.OkResult(result.Value, "Word removed from personal topic successfully.")
-            : this.ErrorResult(result);
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value,
+                "Word removed from personal topic successfully."))
+            : ErrorResponse(result);
+    }
+
+    private ObjectResult UnauthorizedResponse() =>
+        StatusCode(
+            StatusCodes.Status401Unauthorized,
+            ApiResponseFormatter.Error("Unauthorized.", new[] { "Unauthorized." }));
+
+    private ObjectResult ErrorResponse<T>(ListResult<T> result)
+    {
+        var statusCode = result.ErrorKind switch
+        {
+            ListErrorKind.Unauthorized => StatusCodes.Status401Unauthorized,
+            ListErrorKind.NotFound => StatusCodes.Status404NotFound,
+            ListErrorKind.Forbidden => StatusCodes.Status403Forbidden,
+            ListErrorKind.Conflict => StatusCodes.Status409Conflict,
+            _ => StatusCodes.Status400BadRequest,
+        };
+        return StatusCode(
+            statusCode,
+            ApiResponseFormatter.Error(result.Error!, new[] { result.Error! }));
     }
 
     private bool TryGetCurrentUserId(out uint userId)

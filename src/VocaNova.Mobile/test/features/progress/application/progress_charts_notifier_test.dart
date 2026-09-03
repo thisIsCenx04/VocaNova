@@ -3,14 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_charts_notifier.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
-import 'package:vocanova_mobile/features/progress/data/progress_repository.dart';
-import 'package:vocanova_mobile/features/progress/domain/progress_analytics.dart';
+import 'package:vocanova_mobile/features/progress/data/services/progress_api_service.dart';
+import 'package:vocanova_mobile/features/progress/domain/models/progress_analytics.dart';
 
 void main() {
   test(
     'loads analytics and only reloads chart when granularity changes',
     () async {
-      final repository = MockProgressRepository();
+      final repository = MockProgressApiService();
       when(() => repository.getChart('daily')).thenAnswer((_) async => daily);
       when(() => repository.getChart('weekly')).thenAnswer((_) async => weekly);
       when(
@@ -18,7 +18,7 @@ void main() {
       ).thenAnswer((_) async => mastery);
       when(() => repository.getWeakestWords()).thenAnswer((_) async => weakest);
       final container = ProviderContainer(
-        overrides: [progressRepositoryProvider.overrideWithValue(repository)],
+        overrides: [progressApiServiceProvider.overrideWithValue(repository)],
       );
       addTearDown(container.dispose);
       final subscription = container.listen(progressChartsProvider, (_, _) {});
@@ -39,7 +39,7 @@ void main() {
   );
 }
 
-class MockProgressRepository extends Mock implements ProgressRepository {}
+class MockProgressApiService extends Mock implements ProgressApiService {}
 
 const daily = ProgressChart(
   granularity: 'daily',

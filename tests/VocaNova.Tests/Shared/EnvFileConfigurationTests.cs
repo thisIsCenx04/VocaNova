@@ -1,6 +1,7 @@
 using System.Text;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
+using VocaNova.API.Common.Abstractions.Configuration;
 using VocaNova.API.Infrastructure.Configuration;
 
 namespace VocaNova.Tests.Shared;
@@ -159,13 +160,13 @@ public class EnvFileConfigurationTests
     {
         var lines = EnvFileRuntimeConfigWriter.ApplyValues(
             [],
-            VocaNova.API.Features.Knn.Services.KnnRuntimeConfigService.ToEnvValues(
-                new VocaNova.API.Features.Knn.DTOs.KnnVectorWeightsDto(1.5, 0.5, 1, 0.25, 2, 3)));
+            VocaNova.API.Features.Knn.BLL.Services.KnnRuntimeConfigurationService.ToEnvValues(
+                new VocaNova.API.Features.Knn.BLL.Models.KnnVectorWeights(1.5, 0.5, 1, 0.25, 2, 3)));
 
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(ToConfigurationPairs(lines))
             .Build();
-        var options = configuration.GetSection("Knn").Get<VocaNova.API.Features.Knn.KnnOptions>();
+        var options = configuration.GetSection("Knn").Get<VocaNova.API.Features.Knn.BLL.Models.KnnOptions>();
 
         // Proves the env key names line up with the options graph; a rename on either side
         // would otherwise silently fall back to defaults.

@@ -3,10 +3,12 @@ using FluentValidation.TestHelper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Admin.DTOs;
-using VocaNova.API.Features.Admin.Repositories;
-using VocaNova.API.Features.Admin.Services;
-using VocaNova.API.Features.Admin.Validators;
+using VocaNova.API.Features.Admin.Contracts.Requests;
+using VocaNova.API.Features.Admin.Contracts.Responses;
+using VocaNova.API.Features.Admin.BLL.Models;
+using VocaNova.API.Features.Admin.BLL.Abstractions;
+using VocaNova.API.Features.Admin.BLL.Services;
+using VocaNova.API.Features.Admin.DAL.Repositories;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -214,11 +216,11 @@ public class AdminStatsFeatureTests
         await using var dbContext = CreateDbContext();
         await SeedUsersAsync(dbContext); // user 1 active, 2 locked, 3 deleted
         dbContext.UserWordProgresses.AddRange(
-            new UserWordProgress { ProgressId = 1, UserId = 1, WordId = 1, MasteryLevel = 0, EaseFactor = 2.5f, UpdatedAt = DateTime.UtcNow },
-            new UserWordProgress { ProgressId = 2, UserId = 1, WordId = 2, MasteryLevel = 5, EaseFactor = 2.5f, UpdatedAt = DateTime.UtcNow },
-            new UserWordProgress { ProgressId = 3, UserId = 2, WordId = 1, MasteryLevel = 5, EaseFactor = 2.5f, UpdatedAt = DateTime.UtcNow },
+            new EntityUserWordProgress { ProgressId = 1, UserId = 1, WordId = 1, MasteryLevel = 0, EaseFactor = 2.5f, UpdatedAt = DateTime.UtcNow },
+            new EntityUserWordProgress { ProgressId = 2, UserId = 1, WordId = 2, MasteryLevel = 5, EaseFactor = 2.5f, UpdatedAt = DateTime.UtcNow },
+            new EntityUserWordProgress { ProgressId = 3, UserId = 2, WordId = 1, MasteryLevel = 5, EaseFactor = 2.5f, UpdatedAt = DateTime.UtcNow },
             // Tiến độ của user đã xoá bị loại khỏi thống kê.
-            new UserWordProgress { ProgressId = 4, UserId = 3, WordId = 1, MasteryLevel = 3, EaseFactor = 2.5f, UpdatedAt = DateTime.UtcNow });
+            new EntityUserWordProgress { ProgressId = 4, UserId = 3, WordId = 1, MasteryLevel = 3, EaseFactor = 2.5f, UpdatedAt = DateTime.UtcNow });
         await dbContext.SaveChangesAsync();
         var service = CreateService(dbContext);
 
@@ -323,7 +325,7 @@ public class AdminStatsFeatureTests
     {
         var validator = new AdminAuditLogQueryValidator();
 
-        var result = validator.TestValidate(new AdminAuditLogQuery(
+        var result = validator.TestValidate(new AdminAuditLogQueryRequest(
             Page: 0,
             Limit: 101,
             Entity: new string('a', 51)));

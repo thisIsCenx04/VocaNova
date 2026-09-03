@@ -1,0 +1,109 @@
+@startuml
+title Create Topic Sequence (/api/admin/topics)
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+actor Admin
+boundary "Create Topic UI" as CreateTopicPage
+control "TopicsController\n(FE Dashboard)" as DashboardController
+entity "AdminTopic\n(FE Response DTO)" as FeTopicDto
+entity "CreateTopicRequest\n(BE Request DTO)" as TopicRequestDto
+entity "TopicSummaryResponse\n(BE Response DTO)" as TopicResponseDto
+control "AdminTopicsController\n(BE API)" as ApiController
+control "ITopicAdminService" as ITopicAdminService
+control "TopicAdminService" as TopicService
+entity "Topic" as TopicEntity
+entity "Word" as WordEntity
+entity "WordTopic" as WordTopicEntity
+control "ITopicAdminRepository" as ITopicAdminRepository
+control "TopicAdminRepository" as TopicRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+note over CreateTopicPage, MySQL
+Checked in current code:
+Dashboard TopicsController posts create data through VocaNovaApiClient.
+API uses CreateTopicRequest and returns TopicSummaryResponse.
+FE response DTO exists: AdminTopic for duplicate topic checks.
+CreateTopicRequest can include word_ids for initial topic vocabulary.
+Interfaces used in code: ITopicAdminService, ITopicAdminRepository.
+end note
+Admin -> CreateTopicPage: Open create topic page
+Admin -> CreateTopicPage: Enter topic name,\nVietnamese name?, icon?, words?
+Admin -> CreateTopicPage: Submit form
+CreateTopicPage -> DashboardController: POST /topics/create
+DashboardController -> DashboardController: Validate form input\nand selected words
+alt Form input invalid
+DashboardController --> CreateTopicPage: Show validation message
+else Form input valid
+DashboardController -> ApiController: VocaNovaApiClient.GetAdminTopicsAsync()\nGET /api/admin/topics
+ApiController -> FeTopicDto: HTTP 200 OK\nAdminTopic JSON
+FeTopicDto --> DashboardController: Existing topics
+alt Topic name already exists
+DashboardController --> CreateTopicPage: Show duplicate topic message
+else Topic can be submitted
+DashboardController -> TopicRequestDto: VocaNovaApiClient.CreateTopicAsync(input)\nCreate request data(topic_name, topic_name_vi?,icon?, word_ids?)
+TopicRequestDto -> ApiController: POST /api/admin/topics\nCreateTopicRequest
+ApiController -> ApiController: Check admin authorization
+ApiController -> ApiController: Validate CreateTopicRequest
+alt Request validation fails
+ApiController --> DashboardController: HTTP 400 error
+DashboardController --> CreateTopicPage: Show error message
+else Request validation success
+ApiController -> ITopicAdminService: CreateAsync(create data)
+ITopicAdminService -> TopicService: CreateAsync(create data)
+TopicService -> ITopicAdminService: Normalize topic data
+ITopicAdminService -> TopicService: Normalize topic data
+TopicService -> ITopicAdminRepository: NameExistsAsync(topicName, topicNameVi)
+ITopicAdminRepository -> TopicRepository: NameExistsAsync(topicName, topicNameVi)
+TopicRepository -> DbContext: Query duplicate topic name
+DbContext -> MySQL: SELECT topics
+MySQL --> DbContext: Topic row or null
+DbContext -> TopicEntity: Materialize Topic?
+TopicEntity --> DbContext: Topic or null
+DbContext --> TopicRepository: Result
+TopicRepository --> TopicService: exists or not
+alt Topic name already exists
+TopicService --> ApiController: Conflict result
+ApiController --> DashboardController: HTTP 409 error
+DashboardController --> CreateTopicPage: Show error message
+else Topic name is available
+TopicService -> ITopicAdminRepository: WordIdsExistAsync(wordIds)
+ITopicAdminRepository -> TopicRepository: WordIdsExistAsync(wordIds)
+TopicRepository -> DbContext: Check selected vocabulary words
+DbContext -> MySQL: SELECT words
+MySQL --> DbContext: Word rows count
+DbContext -> WordEntity: Materialize Word rows
+WordEntity --> DbContext: Words
+DbContext --> TopicRepository: Result
+TopicRepository --> TopicService: valid or invalid
+alt Selected word id invalid
+TopicService --> ApiController: Validation failure
+ApiController --> DashboardController: HTTP 400 error
+DashboardController --> CreateTopicPage: Show error message
+else Selected words valid
+TopicService -> ITopicAdminRepository: CreateAsync(create data)
+ITopicAdminRepository -> TopicRepository: CreateAsync(create data)
+TopicRepository -> TopicEntity: Create or restore Topic
+TopicEntity --> TopicRepository: Topic
+TopicRepository -> DbContext: Add or track Topic
+DbContext -> MySQL: INSERT/UPDATE topics
+MySQL --> DbContext: Save result
+opt word_ids supplied
+TopicRepository -> DbContext: Add topic word links
+TopicRepository -> WordTopicEntity: Create WordTopic links
+WordTopicEntity --> TopicRepository: WordTopic links
+DbContext -> MySQL: INSERT word_topics
+MySQL --> DbContext: Save result
+end
+DbContext --> TopicRepository: Topic summary
+TopicRepository --> TopicService: Created topic
+TopicService --> ApiController: Return created topic
+ApiController -> TopicResponseDto: Create response data(TopicSummaryResponse)
+TopicResponseDto --> DashboardController: HTTP 201 Created\nTopicSummaryResponse
+DashboardController --> CreateTopicPage: Redirect to topic list
+end
+end
+end
+end
+end
+@enduml

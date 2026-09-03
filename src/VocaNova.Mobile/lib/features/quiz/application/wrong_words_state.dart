@@ -1,4 +1,4 @@
-import 'package:vocanova_mobile/features/quiz/domain/quiz_result.dart';
+import 'package:vocanova_mobile/features/quiz/domain/models/quiz_result.dart';
 
 class WrongWordsState {
   const WrongWordsState({

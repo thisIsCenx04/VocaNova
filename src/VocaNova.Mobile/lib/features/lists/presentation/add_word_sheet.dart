@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/features/lists/application/list_detail_notifier.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
@@ -113,7 +113,7 @@ class _AddWordSheetState extends ConsumerState<AddWordSheet> {
       setState(() => _loading = true);
       try {
         final results = await ref
-            .read(wordSearchRepositoryProvider)
+            .read(wordSearchApiServiceProvider)
             .search(query: query.trim());
         if (mounted) setState(() => _results = results);
       } catch (_) {

@@ -1,11 +1,14 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using VocaNova.API.Common.Extensions;
-using VocaNova.API.Common.Results;
-using VocaNova.API.Features.Auth.DTOs;
-using VocaNova.API.Features.Auth.Services;
-using VocaNova.API.Infrastructure.RateLimiting;
+using VocaNova.API.Common.Responses;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Auth.BLL.Models;
+using VocaNova.API.Features.Auth.BLL.Services;
+using VocaNova.API.Features.Auth.Contracts.Requests;
+using VocaNova.API.Features.Auth.Mappings;
+using VocaNova.API.Features.Auth.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Auth.Controllers;
 
@@ -15,16 +18,16 @@ public sealed class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IAuthRateLimiter? _authRateLimiter;
-    private readonly RateLimitSettings _rateLimitSettings;
+    private readonly AuthRateLimitOptions _rateLimitOptions;
 
     public AuthController(
         IAuthService authService,
         IAuthRateLimiter? authRateLimiter = null,
-        IOptions<RateLimitSettings>? rateLimitSettings = null)
+        IOptions<AuthRateLimitOptions>? rateLimitOptions = null)
     {
         _authService = authService;
         _authRateLimiter = authRateLimiter;
-        _rateLimitSettings = rateLimitSettings?.Value ?? new RateLimitSettings();
+        _rateLimitOptions = rateLimitOptions?.Value ?? new AuthRateLimitOptions();
     }
 
     [AllowAnonymous]
@@ -34,17 +37,13 @@ public sealed class AuthController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _authService.RegisterAsync(
-            request,
-            Request.Headers.UserAgent.ToString(),
-            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            request.ToCommand(),
+            GetSignInContext(),
             cancellationToken);
 
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.CreatedResult(result.Value!, "Registered successfully.");
+        return result.IsSuccess
+            ? StatusCode(StatusCodes.Status201Created, ApiResponseFormatter.Created(result.Value!.ToResponse(), "Registered successfully."))
+            : ErrorResponse(result);
     }
 
     [AllowAnonymous]
@@ -53,27 +52,19 @@ public sealed class AuthController : ControllerBase
         [FromBody] LoginRequest request,
         CancellationToken cancellationToken)
     {
-        var rateLimitResult = CheckRateLimit(
-            "auth:login",
-            _rateLimitSettings.LoginPerMinutePerIp);
+        var rateLimitResult = CheckRateLimit("auth:login", _rateLimitOptions.LoginPerMinutePerIp);
         if (!rateLimitResult.IsAllowed)
         {
             SetRetryAfterHeader(rateLimitResult);
-            return this.ErrorResult(Result<TokenResponse>.TooManyRequests("Login rate limit exceeded."));
+            return ErrorResponse(AuthOperationResult<AuthTokenPair>.TooManyRequests("Login rate limit exceeded."));
         }
 
         var result = await _authService.LoginAsync(
-            request,
-            Request.Headers.UserAgent.ToString(),
-            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            request.ToCommand(),
+            GetSignInContext(),
             cancellationToken);
 
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Logged in successfully.");
+        return TokenResponse(result, "Logged in successfully.");
     }
 
     [AllowAnonymous]
@@ -82,27 +73,19 @@ public sealed class AuthController : ControllerBase
         [FromBody] GoogleLoginRequest request,
         CancellationToken cancellationToken)
     {
-        var rateLimitResult = CheckRateLimit(
-            "auth:login",
-            _rateLimitSettings.LoginPerMinutePerIp);
+        var rateLimitResult = CheckRateLimit("auth:login", _rateLimitOptions.LoginPerMinutePerIp);
         if (!rateLimitResult.IsAllowed)
         {
             SetRetryAfterHeader(rateLimitResult);
-            return this.ErrorResult(Result<TokenResponse>.TooManyRequests("Login rate limit exceeded."));
+            return ErrorResponse(AuthOperationResult<AuthTokenPair>.TooManyRequests("Login rate limit exceeded."));
         }
 
         var result = await _authService.GoogleLoginAsync(
-            request,
-            Request.Headers.UserAgent.ToString(),
-            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            request.ToCommand(),
+            GetSignInContext(),
             cancellationToken);
 
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Logged in successfully.");
+        return TokenResponse(result, "Logged in successfully.");
     }
 
     [AllowAnonymous]
@@ -112,17 +95,11 @@ public sealed class AuthController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _authService.RefreshTokenAsync(
-            request,
-            Request.Headers.UserAgent.ToString(),
-            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            request.ToCommand(),
+            GetSignInContext(),
             cancellationToken);
 
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Token refreshed successfully.");
+        return TokenResponse(result, "Token refreshed successfully.");
     }
 
     [Authorize]
@@ -131,13 +108,10 @@ public sealed class AuthController : ControllerBase
         [FromBody] RefreshTokenRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _authService.LogoutAsync(request, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value, "Logged out successfully.");
+        var result = await _authService.LogoutAsync(request.ToCommand(), cancellationToken);
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(result.Value, "Logged out successfully."))
+            : ErrorResponse(result);
     }
 
     [AllowAnonymous]
@@ -146,22 +120,17 @@ public sealed class AuthController : ControllerBase
         [FromBody] OtpSendRequest request,
         CancellationToken cancellationToken)
     {
-        var rateLimitResult = CheckRateLimit(
-            "auth:otp:send",
-            _rateLimitSettings.OtpPerMinutePerIp);
+        var rateLimitResult = CheckRateLimit("auth:otp:send", _rateLimitOptions.OtpPerMinutePerIp);
         if (!rateLimitResult.IsAllowed)
         {
             SetRetryAfterHeader(rateLimitResult);
-            return this.ErrorResult(Result<OtpSendResponse>.TooManyRequests("OTP IP rate limit exceeded."));
+            return ErrorResponse(AuthOperationResult<OtpSendResult>.TooManyRequests("OTP IP rate limit exceeded."));
         }
 
-        var result = await _authService.SendOtpAsync(request, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "OTP sent successfully.");
+        var result = await _authService.SendOtpAsync(request.ToCommand(), cancellationToken);
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(result.Value!.ToResponse(), "OTP sent successfully."))
+            : ErrorResponse(result);
     }
 
     [AllowAnonymous]
@@ -170,13 +139,8 @@ public sealed class AuthController : ControllerBase
         [FromBody] OtpVerifyRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _authService.VerifyOtpAsync(request, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "OTP verified successfully.");
+        var result = await _authService.VerifyOtpAsync(request.ToCommand(), cancellationToken);
+        return OtpVerificationResponse(result, "OTP verified successfully.");
     }
 
     [AllowAnonymous]
@@ -185,13 +149,10 @@ public sealed class AuthController : ControllerBase
         [FromBody] ForgotPasswordRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _authService.ForgotPasswordAsync(request, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Password reset OTP sent successfully.");
+        var result = await _authService.ForgotPasswordAsync(request.ToCommand(), cancellationToken);
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(result.Value!.ToResponse(), "Password reset OTP sent successfully."))
+            : ErrorResponse(result);
     }
 
     [AllowAnonymous]
@@ -200,13 +161,8 @@ public sealed class AuthController : ControllerBase
         [FromBody] OtpVerifyRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _authService.VerifyResetOtpAsync(request, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Password reset OTP verified successfully.");
+        var result = await _authService.VerifyResetOtpAsync(request.ToCommand(), cancellationToken);
+        return OtpVerificationResponse(result, "Password reset OTP verified successfully.");
     }
 
     [AllowAnonymous]
@@ -215,13 +171,10 @@ public sealed class AuthController : ControllerBase
         [FromBody] ResetPasswordRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _authService.ResetPasswordAsync(request, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value, "Password reset successfully.");
+        var result = await _authService.ResetPasswordAsync(request.ToCommand(), cancellationToken);
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(result.Value, "Password reset successfully."))
+            : ErrorResponse(result);
     }
 
     [Authorize]
@@ -232,16 +185,13 @@ public sealed class AuthController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<bool>.Unauthorized("Unauthorized."));
+            return ErrorResponse(AuthOperationResult<bool>.Unauthorized("Unauthorized."));
         }
 
-        var result = await _authService.ChangePasswordAsync(userId, request, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value, "Password changed successfully.");
+        var result = await _authService.ChangePasswordAsync(userId, request.ToCommand(), cancellationToken);
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(result.Value, "Password changed successfully."))
+            : ErrorResponse(result);
     }
 
     [Authorize]
@@ -250,16 +200,11 @@ public sealed class AuthController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<UserProfileDto>.Unauthorized("Unauthorized."));
+            return ErrorResponse(AuthOperationResult<UserProfile>.Unauthorized("Unauthorized."));
         }
 
         var result = await _authService.GetProfileAsync(userId, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Profile loaded successfully.");
+        return ProfileResponse(result, "Profile loaded successfully.");
     }
 
     [Authorize]
@@ -268,16 +213,13 @@ public sealed class AuthController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<bool>.Unauthorized("Unauthorized."));
+            return ErrorResponse(AuthOperationResult<bool>.Unauthorized("Unauthorized."));
         }
 
         var result = await _authService.DeleteAccountAsync(userId, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value, "Account deleted successfully.");
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(result.Value, "Account deleted successfully."))
+            : ErrorResponse(result);
     }
 
     [Authorize]
@@ -288,16 +230,11 @@ public sealed class AuthController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<UserProfileDto>.Unauthorized("Unauthorized."));
+            return ErrorResponse(AuthOperationResult<UserProfile>.Unauthorized("Unauthorized."));
         }
 
-        var result = await _authService.UpdateProfileAsync(userId, request, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Profile updated successfully.");
+        var result = await _authService.UpdateProfileAsync(userId, request.ToCommand(), cancellationToken);
+        return ProfileResponse(result, "Profile updated successfully.");
     }
 
     [Authorize]
@@ -310,16 +247,16 @@ public sealed class AuthController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<UserProfileDto>.Unauthorized("Unauthorized."));
+            return ErrorResponse(AuthOperationResult<UserProfile>.Unauthorized("Unauthorized."));
         }
 
-        var result = await _authService.UploadAvatarAsync(userId, request, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
+        await using var stream = request.File?.OpenReadStream();
+        var result = await _authService.UploadAvatarAsync(
+            userId,
+            new UploadAvatarCommand(request.ToUploadedContent(stream, userId)),
+            cancellationToken);
 
-        return this.OkResult(result.Value!, "Avatar uploaded successfully.");
+        return ProfileResponse(result, "Avatar uploaded successfully.");
     }
 
     [Authorize]
@@ -330,16 +267,11 @@ public sealed class AuthController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<UserProfileDto>.Unauthorized("Unauthorized."));
+            return ErrorResponse(AuthOperationResult<UserProfile>.Unauthorized("Unauthorized."));
         }
 
-        var result = await _authService.UpdateLearningProfileAsync(userId, request, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Learning profile updated successfully.");
+        var result = await _authService.UpdateLearningProfileAsync(userId, request.ToCommand(), cancellationToken);
+        return ProfileResponse(result, "Learning profile updated successfully.");
     }
 
     private bool TryGetCurrentUserId(out uint userId)
@@ -348,23 +280,61 @@ public sealed class AuthController : ControllerBase
         return uint.TryParse(userIdClaim, out userId);
     }
 
-    private AuthRateLimitResult CheckRateLimit(string policyName, int permitLimit)
+    private SignInContext GetSignInContext() =>
+        new(Request.Headers.UserAgent.ToString(), HttpContext.Connection.RemoteIpAddress?.ToString());
+
+    private AuthRateLimitDecision CheckRateLimit(string policyName, int permitLimit)
     {
         if (_authRateLimiter is null)
         {
-            return new AuthRateLimitResult(true, 0);
+            return new AuthRateLimitDecision(true, 0);
         }
 
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         return _authRateLimiter.TryAcquire(
             $"{policyName}:{ipAddress}",
             permitLimit,
-            TimeSpan.FromSeconds(_rateLimitSettings.RetryAfterSeconds));
+            TimeSpan.FromSeconds(_rateLimitOptions.RetryAfterSeconds));
     }
 
-    private void SetRetryAfterHeader(AuthRateLimitResult rateLimitResult)
+    private void SetRetryAfterHeader(AuthRateLimitDecision rateLimitResult)
     {
-        Response.Headers["Retry-After"] = rateLimitResult.RetryAfterSeconds.ToString(
-            System.Globalization.CultureInfo.InvariantCulture);
+        Response.Headers["Retry-After"] = rateLimitResult.RetryAfterSeconds.ToString(CultureInfo.InvariantCulture);
     }
+
+    private IActionResult TokenResponse(AuthOperationResult<AuthTokenPair> result, string message) =>
+        result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(result.Value!.ToResponse(), message))
+            : ErrorResponse(result);
+
+    private IActionResult OtpVerificationResponse(
+        AuthOperationResult<OtpVerificationResult> result,
+        string message) =>
+        result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(result.Value!.ToResponse(), message))
+            : ErrorResponse(result);
+
+    private IActionResult ProfileResponse(AuthOperationResult<UserProfile> result, string message) =>
+        result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(result.Value!.ToResponse(), message))
+            : ErrorResponse(result);
+
+    private IActionResult ErrorResponse<T>(AuthOperationResult<T> result)
+    {
+        var message = result.Error ?? "Request failed.";
+        return StatusCode(
+            GetStatusCode(result.ErrorKind),
+            ApiResponseFormatter.Error(message, [message]));
+    }
+
+    private static int GetStatusCode(AuthErrorKind? errorKind) =>
+        errorKind switch
+        {
+            AuthErrorKind.Unauthorized => StatusCodes.Status401Unauthorized,
+            AuthErrorKind.Forbidden => StatusCodes.Status403Forbidden,
+            AuthErrorKind.NotFound => StatusCodes.Status404NotFound,
+            AuthErrorKind.Conflict => StatusCodes.Status409Conflict,
+            AuthErrorKind.TooManyRequests => StatusCodes.Status429TooManyRequests,
+            _ => StatusCodes.Status400BadRequest,
+        };
 }

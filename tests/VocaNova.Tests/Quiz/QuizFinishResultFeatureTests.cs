@@ -1,9 +1,13 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Quiz.DTOs;
-using VocaNova.API.Features.Quiz.Repositories;
-using VocaNova.API.Features.Quiz.Services;
+using VocaNova.API.Features.Quiz.Contracts.Requests;
+using VocaNova.API.Features.Quiz.Contracts.Responses;
+using VocaNova.API.Features.Quiz.BLL.Models;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.DAL.Repositories;
+using VocaNova.API.Features.Quiz.BLL.Services;
+using VocaNova.API.Features.Quiz.Mappings;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -66,7 +70,7 @@ public class QuizFinishResultFeatureTests
         var result = await service.SubmitAnswerAsync(
             1,
             200,
-            new SubmitAnswerRequest(4, "bay"));
+            new SubmitAnswerRequest(4, "bay").ToBusinessCommand());
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.NextQuestion.Should().BeNull();
@@ -240,7 +244,7 @@ public class QuizFinishResultFeatureTests
             UpdatedAt = addedAt,
             WordSenses =
             {
-                new WordSense
+                new EntityWordSense
                 {
                     SenseId = wordId,
                     WordId = wordId,
@@ -252,7 +256,7 @@ public class QuizFinishResultFeatureTests
             },
             WordTopics =
             {
-                new WordTopic
+                new EntityWordTopic
                 {
                     WordId = wordId,
                     TopicId = 7,

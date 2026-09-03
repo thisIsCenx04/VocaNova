@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using VocaNova.Dashboard.Models.Api.SuperAdmin;
-using VocaNova.Dashboard.Models.Api.Users;
+using VocaNova.Dashboard.Data.Dtos.SuperAdmin;
+using VocaNova.Dashboard.Data.Dtos.Users;
 
 namespace VocaNova.Dashboard.Models.AdminAccounts;
 

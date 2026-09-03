@@ -1,4 +1,4 @@
-using VocaNova.Dashboard.Models.Api.Dictionary;
+using VocaNova.Dashboard.Data.Dtos.Dictionary;
 
 namespace VocaNova.Dashboard.Models.Vocabulary;
 

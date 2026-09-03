@@ -1,0 +1,137 @@
+@startuml
+title Update Role Sequence (/api/superadmin/roles/{roleId})
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor SuperAdmin
+boundary "Edit Role UI" as EditRolePage
+control "RolesController\n(FE Dashboard)" as FeController
+control "RolesController\n(BE API)" as BeController
+entity "ManagedRole\n(FE Response DTO)" as FeRoleDto
+entity "SaveRoleRequest\n(BE Request DTO)" as BeRequestDto
+entity "RoleResponse\n(BE Response DTO)" as BeResponseDto
+control "IRoleManagementService" as IRoleManagementService
+control "RoleManagementService" as RoleService
+entity "Role" as RoleEntity
+control "IRoleManagementRepository" as IRoleManagementRepository
+control "RoleManagementRepository" as RoleRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over EditRolePage, MySQL
+Checked in current code:
+FE controller exists: RolesController.
+FE response DTO exists: ManagedRole.
+BE controller exists: RolesController.
+BE DTOs exist: SaveRoleRequest and RoleResponse.
+Entity exists: Role.
+System role names cannot be changed.
+Interfaces used in code: IRoleManagementService, IRoleManagementRepository.
+end note
+
+SuperAdmin -> EditRolePage: Open edit role page
+EditRolePage -> FeController: GET /roles/{roleId}/edit
+FeController -> BeController: VocaNovaApiClient.GetRolesAsync\nGET /api/superadmin/roles
+BeController -> IRoleManagementService: GetRolesAsync(query)
+IRoleManagementService -> RoleService: GetRolesAsync(query)
+RoleService -> IRoleManagementRepository: GetRolesAsync(query)
+IRoleManagementRepository -> RoleRepository: GetRolesAsync(query)
+RoleRepository -> DbContext: Query roles
+DbContext -> MySQL: SELECT roles
+MySQL --> DbContext: Role rows
+DbContext -> RoleEntity: Materialize Role rows
+RoleEntity --> DbContext: Roles
+DbContext --> RoleRepository: Result
+RoleRepository --> RoleService: Paged roles
+RoleService --> BeController: Return roles result
+BeController -> BeResponseDto: Create RoleResponse
+BeResponseDto --> BeController: Paged RoleResponse
+BeController -> FeRoleDto: HTTP 200 OK\nPaged RoleResponse JSON
+FeRoleDto --> FeController: Paged ManagedRole
+
+alt Role not found or system role
+    FeController --> EditRolePage: Show not found\nor redirect with error
+else Role can be edited
+end
+
+SuperAdmin -> EditRolePage: Enter new role name
+SuperAdmin -> EditRolePage: Submit form
+EditRolePage -> FeController: POST /roles/{roleId}/edit
+FeController -> FeController: Validate form input
+
+alt Form input invalid
+    FeController --> EditRolePage: Show validation message
+else Form input valid
+    FeController -> BeController: VocaNovaApiClient.UpdateRoleAsync\nPUT /api/superadmin/roles/{roleId}
+    BeController -> BeRequestDto: Bind JSON body
+    BeRequestDto --> BeController: SaveRoleRequest
+    BeController -> BeController: Check super admin authorization
+    BeController -> BeController: Validate SaveRoleRequest
+
+    alt Request validation fails
+        BeController --> FeController: HTTP 400 error
+        FeController --> EditRolePage: Show error message
+    else Request validation success
+        BeController -> IRoleManagementService: UpdateAsync(roleId, role data)
+        IRoleManagementService -> RoleService: UpdateAsync(roleId, role data)
+        RoleService -> RoleService: Normalize and validate role name
+
+        alt Role name invalid
+            RoleService --> BeController: Validation failure
+            BeController --> FeController: HTTP 400 error
+            FeController --> EditRolePage: Show error message
+        else Role name valid
+            RoleService -> IRoleManagementRepository: GetRoleNameAsync(roleId)
+            IRoleManagementRepository -> RoleRepository: GetRoleNameAsync(roleId)
+            RoleRepository -> DbContext: Query current role name
+            DbContext -> MySQL: SELECT roles
+            MySQL --> DbContext: Role row or null
+            DbContext -> RoleEntity: Materialize Role?
+            RoleEntity --> DbContext: Role or null
+            DbContext --> RoleRepository: Result
+            RoleRepository --> RoleService: role name or null
+
+            alt Role not found or system role name changed
+                RoleService --> BeController: NotFound/Forbidden result
+                BeController --> FeController: HTTP 404/403 error
+                FeController --> EditRolePage: Show error message
+            else Role can be updated
+                RoleService -> IRoleManagementRepository: RoleExistsExcludeAsync(roleId, roleName)
+                IRoleManagementRepository -> RoleRepository: RoleExistsExcludeAsync(roleId, roleName)
+                RoleRepository -> DbContext: Query duplicate role name
+                DbContext -> MySQL: SELECT roles
+                MySQL --> DbContext: Duplicate row or null
+                DbContext -> RoleEntity: Materialize Role?
+                RoleEntity --> DbContext: Role or null
+                DbContext --> RoleRepository: Result
+                RoleRepository --> RoleService: exists or not
+
+                alt Role name already exists
+                    RoleService --> BeController: Conflict result
+                    BeController --> FeController: HTTP 409 error
+                    FeController --> EditRolePage: Show error message
+                else Role name is available
+                    RoleService -> RoleService: Begin transaction
+                    RoleService -> IRoleManagementRepository: UpdateRoleAsync(roleId, roleName)
+                    IRoleManagementRepository -> RoleRepository: UpdateRoleAsync(roleId, roleName)
+                    RoleRepository -> RoleEntity: Update Role
+                    RoleEntity --> RoleRepository: Role
+                    RoleRepository -> DbContext: Track Role update
+                    DbContext -> MySQL: UPDATE roles
+                    MySQL --> DbContext: Update result
+                    DbContext --> RoleRepository: Save result
+                    RoleRepository --> RoleService: Updated role
+                    RoleService --> BeController: Return updated role
+                    BeController -> BeResponseDto: Create RoleResponse
+                    BeResponseDto --> BeController: RoleResponse
+                    BeController --> FeController: HTTP 200 OK\nRoleResponse
+                    FeController --> EditRolePage: Redirect to role list
+                end
+            end
+        end
+    end
+end
+
+@enduml

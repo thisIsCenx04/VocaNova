@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_state.dart';
-import 'package:vocanova_mobile/features/progress/domain/progress_summary.dart';
+import 'package:vocanova_mobile/features/progress/domain/models/progress_summary.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class ProgressOverviewScreen extends ConsumerStatefulWidget {

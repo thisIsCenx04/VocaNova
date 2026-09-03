@@ -1,0 +1,112 @@
+@startuml
+title Create Admin Account Sequence (/api/superadmin/admins)
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+actor SuperAdmin
+boundary "Create Admin Account UI" as CreatePage
+control "AdminAccountsController\n(FE Dashboard)" as FeController
+control "SuperAdminAccountsController\n(BE API)" as BeController
+entity "CreateAdminAccountRequest\n(BE Request DTO)" as BeRequestDto
+entity "AdminAccountResponse\n(BE Response DTO)" as BeResponseDto
+control "ISuperAdminAccountService" as ISuperAdminAccountService
+control "SuperAdminAccountService" as AccountService
+entity "User" as UserEntity
+entity "UserAuth" as UserAuthEntity
+entity "UserProfile" as UserProfileEntity
+entity "Role" as RoleEntity
+control "ISuperAdminAccountRepository" as ISuperAdminAccountRepository
+control "SuperAdminAccountRepository" as AccountRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+note over CreatePage, MySQL
+Checked in current code:
+Dashboard UI file exists: Views/AdminAccounts/Create.cshtml.
+FE controller exists: AdminAccountsController.
+BE controller exists: SuperAdminAccountsController.
+BE DTOs exist: CreateAdminAccountRequest and AdminAccountResponse.
+Entities exist: User, UserAuth, UserProfile and Role.
+Dashboard calls API through VocaNovaApiClient.CreateAdminAccountAsync.
+Interfaces used in code: ISuperAdminAccountService, ISuperAdminAccountRepository.
+end note
+SuperAdmin -> CreatePage: Open create admin page
+SuperAdmin -> CreatePage: Enter full name, email,\nphone, password, status
+SuperAdmin -> CreatePage: Submit form
+CreatePage -> FeController: POST /admin-accounts/create\nCreateAdminAccountViewModel
+FeController -> FeController: Validate ModelState\nand status
+alt Form input invalid
+    FeController --> CreatePage: Return Create.cshtml\nwith validation errors
+else Form input valid
+    FeController -> BeController: VocaNovaApiClient.CreateAdminAccountAsync\nPOST /api/superadmin/admins
+    BeController -> BeRequestDto: Bind JSON body
+    BeRequestDto --> BeController: CreateAdminAccountRequest
+    BeController -> BeController: Check super admin authorization
+    BeController -> BeController: Validate CreateAdminAccountRequest
+    alt Request validation fails
+        BeController --> FeController: HTTP 400 error
+        FeController --> CreatePage: Return Create.cshtml\nwith error message
+    else Request validation success
+        BeController -> ISuperAdminAccountService: CreateAsync(create data)
+        ISuperAdminAccountService -> AccountService: CreateAsync(create data)
+        AccountService -> ISuperAdminAccountService: Normalize phone/email\nand hash password
+        ISuperAdminAccountService -> AccountService: Normalize phone/email\nand hash password
+        AccountService -> ISuperAdminAccountRepository: FindDuplicateAsync(phone, email)
+        ISuperAdminAccountRepository -> AccountRepository: FindDuplicateAsync(phone, email)
+        AccountRepository -> DbContext: Query UserAuth
+        DbContext -> MySQL: SELECT user_auth
+        MySQL --> DbContext: Duplicate row or null
+        DbContext --> AccountRepository: Result
+        AccountRepository --> AccountService: Duplicate message or null
+        alt Phone or email already exists
+            AccountService --> BeController: Conflict result
+            BeController --> FeController: HTTP 409 error
+            FeController --> CreatePage: Return Create.cshtml\nwith error message
+        else Phone and email are available
+            AccountService -> ISuperAdminAccountRepository: GetAdminRoleIdAsync()
+            ISuperAdminAccountRepository -> AccountRepository: GetAdminRoleIdAsync()
+            AccountRepository -> DbContext: Query Role by name admin
+            DbContext -> MySQL: SELECT roles
+            MySQL --> DbContext: Admin role row or null
+            DbContext -> RoleEntity: Materialize Role?
+            RoleEntity --> DbContext: Role or null
+            DbContext --> AccountRepository: role_id or null
+            alt Admin role missing
+                AccountService --> BeController: Validation failure
+                BeController --> FeController: HTTP 400 error
+                FeController --> CreatePage: Return Create.cshtml\nwith error message
+            else Admin role exists
+                AccountService -> ISuperAdminAccountService: Begin transaction
+                ISuperAdminAccountService -> AccountService: Begin transaction
+                AccountService -> ISuperAdminAccountRepository: AddAccountAsync(create data,\npasswordHash, roleId)
+                ISuperAdminAccountRepository -> AccountRepository: AddAccountAsync(create data,\npasswordHash, roleId)
+                AccountRepository -> DbContext: Find Role
+                DbContext -> MySQL: SELECT roles
+                MySQL --> DbContext: Role row
+                DbContext -> RoleEntity: Materialize Role
+                RoleEntity --> DbContext: Role
+                DbContext --> AccountRepository: Role
+                AccountRepository -> UserEntity: Create User\n(role_id, status)
+                AccountRepository -> UserAuthEntity: Create UserAuth\n(phone, email, password_hash)
+                AccountRepository -> UserProfileEntity: Create UserProfile\n(full_name)
+                AccountRepository -> RoleEntity: Link Role to User
+                UserEntity --> AccountRepository: User
+                UserAuthEntity --> AccountRepository: UserAuth
+                UserProfileEntity --> AccountRepository: UserProfile
+                RoleEntity --> AccountRepository: Linked Role
+                AccountRepository -> DbContext: Add User entity graph
+                DbContext -> MySQL: INSERT users,\nuser_auth, user_profiles
+                MySQL --> DbContext: Insert result
+                DbContext --> AccountRepository: Tracking state
+                AccountRepository --> AccountService: Created admin account
+                AccountService -> ISuperAdminAccountService: Save changes\nand commit transaction
+                ISuperAdminAccountService -> AccountService: Save changes\nand commit transaction
+                AccountService --> BeController: Created admin result
+                BeController -> BeResponseDto: Create AdminAccountResponse
+                BeResponseDto --> BeController: AdminAccountResponse
+                BeController --> FeController: HTTP 201 Created\nAdminAccountResponse
+                FeController --> CreatePage: Redirect to admin account list
+            end
+        end
+    end
+end
+@enduml

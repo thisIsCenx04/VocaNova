@@ -1,4 +1,4 @@
-import 'package:vocanova_mobile/features/progress/domain/progress_summary.dart';
+import 'package:vocanova_mobile/features/progress/domain/models/progress_summary.dart';
 
 class ProgressOverviewState {
   const ProgressOverviewState({

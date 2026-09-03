@@ -9,15 +9,16 @@ import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/storage_keys.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
-import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
-import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
+import 'package:vocanova_mobile/features/lists/data/dtos/user_list_dto.dart';
+import 'package:vocanova_mobile/features/lists/data/services/lists_api_service.dart';
+import 'package:vocanova_mobile/features/lists/domain/models/user_list.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late MockListsRepository repository;
+  late MockListsApiService repository;
   late MockConnectivityService connectivity;
   late LocalStorage storage;
   late ProviderContainer container;
@@ -27,11 +28,11 @@ void main() {
     storage = LocalStorage.create(
       preferences: await SharedPreferences.getInstance(),
     );
-    repository = MockListsRepository();
+    repository = MockListsApiService();
     connectivity = MockConnectivityService();
     container = ProviderContainer(
       overrides: [
-        listsRepositoryProvider.overrideWithValue(repository),
+        listsApiServiceProvider.overrideWithValue(repository),
         listsLocalStorageProvider.overrideWithValue(storage),
         connectivityServiceProvider.overrideWithValue(connectivity),
       ],
@@ -43,7 +44,7 @@ void main() {
   test('offline load shows cached lists without API request', () async {
     await storage.set(
       StorageKeys.listsCacheJson,
-      jsonEncode([favorites.toJson()]),
+      jsonEncode([UserListDto.fromDomain(favorites).toJson()]),
     );
     when(() => connectivity.isOnline).thenAnswer((_) async => false);
 
@@ -129,7 +130,7 @@ void main() {
   });
 }
 
-class MockListsRepository extends Mock implements ListsRepository {}
+class MockListsApiService extends Mock implements ListsApiService {}
 
 class MockConnectivityService extends Mock implements ConnectivityService {}
 

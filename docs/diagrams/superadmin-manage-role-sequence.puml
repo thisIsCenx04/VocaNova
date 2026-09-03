@@ -1,0 +1,211 @@
+@startuml
+title Manage Role Sequence (/roles and /api/superadmin/roles)
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+actor SuperAdmin
+boundary "Roles UI" as RolesPage
+control "RolesController\n(FE Dashboard)" as DashboardController
+entity "ManagedRole\n(FE Response DTO)" as FeRoleDto
+entity "RoleQueryRequest\n(BE Request DTO)" as RoleQueryRequestDto
+entity "SaveRoleRequest\n(BE Request DTO)" as SaveRoleRequestDto
+entity "RoleResponse\n(BE Response DTO)" as RoleResponseDto
+control "RolesController\n(BE API)" as ApiController
+control "IRoleManagementService" as IRoleManagementService
+control "RoleManagementService" as RoleService
+entity "Role" as RoleEntity
+entity "User" as UserEntity
+control "IRoleManagementRepository" as IRoleManagementRepository
+control "RoleManagementRepository" as RoleRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+note over RolesPage, MySQL
+Checked in current code:
+Dashboard RolesController calls the API through VocaNovaApiClient for list/create/update/delete.
+API uses RoleQueryRequest, SaveRoleRequest, and RoleResponse.
+FE response DTO exists: ManagedRole for role list data.
+Delete uses route id only and returns bool in the API envelope.
+Assign/Remove role also exist in API, but Dashboard calls them from AdminAccountsController role assignment.
+Interfaces used in code: IRoleManagementService, IRoleManagementRepository.
+end note
+SuperAdmin -> RolesPage: Open role management
+RolesPage -> DashboardController: GET /roles(search, type, sort)
+DashboardController -> DashboardController: Normalize filter
+DashboardController -> RoleQueryRequestDto: VocaNovaApiClient.GetRolesAsync(search, type, sort)Create query data(page, limit, search,type, sort)
+RoleQueryRequestDto -> ApiController: GET /api/superadmin/rolesRoleQueryRequest
+ApiController -> ApiController: Check super admin authorization
+ApiController -> ApiController: Validate RoleQueryRequest
+alt Request validation fails
+ApiController --> DashboardController: HTTP 400 error
+DashboardController --> RolesPage: Show error message
+else Request validation success
+ApiController -> IRoleManagementService: GetRolesAsync(query)
+IRoleManagementService -> RoleService: GetRolesAsync(query)
+RoleService -> IRoleManagementRepository: GetRolesAsync(query)
+IRoleManagementRepository -> RoleRepository: GetRolesAsync(query)
+RoleRepository -> DbContext: Query roles
+DbContext -> MySQL: SELECT roles
+MySQL --> DbContext: Role rows
+DbContext -> RoleEntity: Materialize Roles
+RoleEntity --> DbContext: Roles
+DbContext --> RoleRepository: Result
+RoleRepository --> RoleService: Paged roles
+RoleService --> ApiController: Return roles result
+ApiController -> RoleResponseDto: Create response data(RoleResponse)
+RoleResponseDto --> ApiController: Paged RoleResponse
+ApiController -> FeRoleDto: HTTP 200 OK\nPaged RoleResponse JSON
+FeRoleDto --> DashboardController: Paged ManagedRole
+DashboardController --> RolesPage: Render role list
+end
+alt SuperAdmin creates role
+SuperAdmin -> RolesPage: Submit create role form
+RolesPage -> DashboardController: POST /roles/create
+DashboardController -> DashboardController: Validate form input
+alt Form input invalid
+DashboardController --> RolesPage: Show validation message
+else Form input valid
+DashboardController -> SaveRoleRequestDto: VocaNovaApiClient.CreateRoleAsync(roleName)\nCreate request data(role_name)
+SaveRoleRequestDto -> ApiController: POST /api/superadmin/roles\nSaveRoleRequest
+ApiController -> ApiController: Validate SaveRoleRequest
+ApiController -> IRoleManagementService: CreateAsync(role data)
+IRoleManagementService -> RoleService: CreateAsync(role data)
+RoleService -> RoleService: Normalize and validate role name
+RoleService -> IRoleManagementRepository: RoleExistsAsync(roleName)
+IRoleManagementRepository -> RoleRepository: RoleExistsAsync(roleName)
+RoleRepository -> DbContext: Query role by name
+DbContext -> MySQL: SELECT roles
+MySQL --> DbContext: Role row or null
+DbContext -> RoleEntity: Materialize Role?
+RoleEntity --> DbContext: Role or null
+DbContext --> RoleRepository: Result
+RoleRepository --> RoleService: exists or not
+alt Role name already exists
+RoleService --> ApiController: Conflict result
+ApiController --> DashboardController: HTTP 409 error
+DashboardController --> RolesPage: Show error message
+else Role can be created
+RoleService -> RoleService: Begin transaction
+RoleService -> IRoleManagementRepository: AddRoleAsync(roleName)
+IRoleManagementRepository -> RoleRepository: AddRoleAsync(roleName)
+RoleRepository -> RoleEntity: Create Role
+RoleEntity --> RoleRepository: Role
+RoleRepository -> DbContext: Add Role
+DbContext -> MySQL: INSERT roles
+MySQL --> DbContext: Insert result
+DbContext --> RoleRepository: Save result
+RoleRepository --> RoleService: Created role
+RoleService --> ApiController: Return created role
+ApiController -> RoleResponseDto: Create response data(RoleResponse)
+RoleResponseDto --> DashboardController: HTTP 201 Created\nRoleResponse
+DashboardController --> RolesPage: Show success and refresh list
+end
+end
+else SuperAdmin updates role
+SuperAdmin -> RolesPage: Submit edit role form
+RolesPage -> DashboardController: POST /roles/{roleId}/edit
+DashboardController -> DashboardController: Validate form input
+alt Form input invalid
+DashboardController --> RolesPage: Show validation message
+else Form input valid
+DashboardController -> SaveRoleRequestDto: VocaNovaApiClient.UpdateRoleAsync(roleId, roleName)\nCreate request data(role_name)
+SaveRoleRequestDto -> ApiController: PUT /api/superadmin/roles/{roleId}SaveRoleRequest
+ApiController -> ApiController: Validate SaveRoleRequest
+ApiController -> IRoleManagementService: UpdateAsync(roleId, role data)
+IRoleManagementService -> RoleService: UpdateAsync(roleId, role data)
+RoleService -> IRoleManagementRepository: GetRoleNameAsync(roleId)
+IRoleManagementRepository -> RoleRepository: GetRoleNameAsync(roleId)
+RoleRepository -> DbContext: Query current role name
+DbContext -> MySQL: SELECT roles
+MySQL --> DbContext: Role row or null
+DbContext -> RoleEntity: Materialize Role?
+RoleEntity --> DbContext: Role or null
+DbContext --> RoleRepository: Result
+RoleRepository --> RoleService: role name or null
+alt Role not found or system role name changed
+RoleService --> ApiController: NotFound/Forbidden result
+ApiController --> DashboardController: HTTP 404/403 error
+DashboardController --> RolesPage: Show error message
+else Role can be updated
+RoleService -> IRoleManagementRepository: RoleExistsExcludeAsync(roleId, roleName)
+IRoleManagementRepository -> RoleRepository: RoleExistsExcludeAsync(roleId, roleName)
+RoleRepository -> DbContext: Query duplicate role name
+DbContext -> MySQL: SELECT roles
+MySQL --> DbContext: Duplicate row or null
+DbContext -> RoleEntity: Materialize duplicate Role?
+RoleEntity --> DbContext: Role or null
+DbContext --> RoleRepository: Result
+RoleRepository --> RoleService: exists or not
+alt Role name already exists
+RoleService --> ApiController: Conflict result
+ApiController --> DashboardController: HTTP 409 error
+DashboardController --> RolesPage: Show error message
+else Role name is available
+RoleService -> RoleService: Begin transaction
+RoleService -> IRoleManagementRepository: UpdateRoleAsync(roleId, roleName)
+IRoleManagementRepository -> RoleRepository: UpdateRoleAsync(roleId, roleName)
+RoleRepository -> RoleEntity: Update role_name
+RoleEntity --> RoleRepository: Role updated
+RoleRepository -> DbContext: Track Role
+DbContext -> MySQL: UPDATE roles
+MySQL --> DbContext: Update result
+DbContext --> RoleRepository: Save result
+RoleRepository --> RoleService: Updated role
+RoleService --> ApiController: Return updated role
+ApiController -> RoleResponseDto: Create response data(RoleResponse)
+RoleResponseDto --> DashboardController: HTTP 200 OK\nRoleResponse
+DashboardController --> RolesPage: Show success and refresh list
+end
+end
+end
+else SuperAdmin deletes role
+SuperAdmin -> RolesPage: Click Delete role
+RolesPage -> DashboardController: POST /roles/{roleId}/delete
+DashboardController -> ApiController: VocaNovaApiClient.DeleteRoleAsync(roleId)\nDELETE /api/superadmin/roles/{roleId}
+ApiController -> ApiController: Check super admin authorization
+ApiController -> IRoleManagementService: DeleteAsync(roleId)
+IRoleManagementService -> RoleService: DeleteAsync(roleId)
+RoleService -> IRoleManagementRepository: GetRoleNameAsync(roleId)
+IRoleManagementRepository -> RoleRepository: GetRoleNameAsync(roleId)
+RoleRepository -> DbContext: Query role name
+DbContext -> MySQL: SELECT roles
+MySQL --> DbContext: Role row or null
+DbContext -> RoleEntity: Materialize Role?
+RoleEntity --> DbContext: Role or null
+DbContext --> RoleRepository: Result
+RoleRepository --> RoleService: role name or null
+alt Role not found or system role
+RoleService --> ApiController: NotFound/Forbidden result
+ApiController --> DashboardController: HTTP 404/403 error
+DashboardController --> RolesPage: Show error message
+else Role exists and is custom
+RoleService -> IRoleManagementRepository: HasUsersWithRoleAsync(roleId)
+IRoleManagementRepository -> RoleRepository: HasUsersWithRoleAsync(roleId)
+RoleRepository -> DbContext: Check users with role
+DbContext -> MySQL: SELECT users
+MySQL --> DbContext: User row or null
+DbContext -> UserEntity: Materialize User?
+UserEntity --> DbContext: User or null
+DbContext --> RoleRepository: Result
+RoleRepository --> RoleService: has users or not
+alt Role still assigned to users
+RoleService --> ApiController: Conflict result
+ApiController --> DashboardController: HTTP 409 error
+DashboardController --> RolesPage: Show error message
+else Role can be deleted
+RoleService -> RoleService: Begin transaction
+RoleService -> IRoleManagementRepository: DeleteRoleAsync(roleId)
+IRoleManagementRepository -> RoleRepository: DeleteRoleAsync(roleId)
+RoleRepository -> RoleEntity: Remove Role
+RoleEntity --> RoleRepository: Role removed
+RoleRepository -> DbContext: Track Role removal
+DbContext -> MySQL: DELETE roles
+MySQL --> DbContext: Delete result
+DbContext --> RoleRepository: Save result
+RoleRepository --> RoleService: Deleted
+RoleService --> ApiController: Success result
+ApiController --> DashboardController: HTTP 200 OK
+DashboardController --> RolesPage: Show success and refresh list
+end
+end
+end
+@enduml

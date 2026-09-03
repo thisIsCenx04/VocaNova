@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 
 extension TopicDisplayName on TopicSummary {
   /// Picks [name] or [nameVi] based on the current app locale, instead of

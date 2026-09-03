@@ -1,9 +1,12 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Dictionary.DTOs;
-using VocaNova.API.Features.Dictionary.Repositories;
-using VocaNova.API.Features.Dictionary.Services;
+using VocaNova.API.Features.Dictionary.Contracts.Requests;
+using VocaNova.API.Features.Dictionary.Contracts.Responses;
+using VocaNova.API.Features.Dictionary.BLL.Models;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.DAL.Repositories;
+using VocaNova.API.Features.Dictionary.BLL.Services;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -141,10 +144,10 @@ public class AdminWordListFeatureTests
                 UpdatedAt = DateTime.UtcNow,
                 WordSenses =
                 {
-                    new WordSense { SenseId = 1, WordId = 1, SenseOrder = 2, WordClass = "verb", EnglishDefinition = "move quickly", VietnameseMeaning = "chay nhanh" },
-                    new WordSense { SenseId = 2, WordId = 1, SenseOrder = 1, WordClass = "verb", EnglishDefinition = "move", VietnameseMeaning = "chay" },
+                    new EntityWordSense { SenseId = 1, WordId = 1, SenseOrder = 2, WordClass = "verb", EnglishDefinition = "move quickly", VietnameseMeaning = "chay nhanh" },
+                    new EntityWordSense { SenseId = 2, WordId = 1, SenseOrder = 1, WordClass = "verb", EnglishDefinition = "move", VietnameseMeaning = "chay" },
                 },
-                WordTopics = { new WordTopic { WordId = 1, TopicId = 1 } },
+                WordTopics = { new EntityWordTopic { WordId = 1, TopicId = 1 } },
             },
             new Word
             {
@@ -156,7 +159,7 @@ public class AdminWordListFeatureTests
                 Status = UserStatus.Active,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                WordTopics = { new WordTopic { WordId = 2, TopicId = 2 } },
+                WordTopics = { new EntityWordTopic { WordId = 2, TopicId = 2 } },
             },
             new Word
             {
@@ -189,8 +192,8 @@ public class AdminWordListFeatureTests
                 UpdatedAt = DateTime.UtcNow,
                 WordSenses =
                 {
-                    new WordSense { SenseId = 5, WordId = 5, SenseOrder = 1, WordClass = "adjective", EnglishDefinition = "abandoned", VietnameseMeaning = "hoang vang" },
-                    new WordSense { SenseId = 6, WordId = 5, SenseOrder = 2, WordClass = "noun", EnglishDefinition = "dry region", VietnameseMeaning = "sa mac" },
+                    new EntityWordSense { SenseId = 5, WordId = 5, SenseOrder = 1, WordClass = "adjective", EnglishDefinition = "abandoned", VietnameseMeaning = "hoang vang" },
+                    new EntityWordSense { SenseId = 6, WordId = 5, SenseOrder = 2, WordClass = "noun", EnglishDefinition = "dry region", VietnameseMeaning = "sa mac" },
                 },
             });
 

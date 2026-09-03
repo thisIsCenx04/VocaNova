@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using VocaNova.Dashboard.Controllers;
-using VocaNova.Dashboard.Models.Api.SuperAdmin;
+using VocaNova.Dashboard.Data.Dtos.SuperAdmin;
 using VocaNova.Dashboard.Models.Roles;
 using VocaNova.Dashboard.Services.Api;
 using VocaNova.Dashboard.Services.Localization;

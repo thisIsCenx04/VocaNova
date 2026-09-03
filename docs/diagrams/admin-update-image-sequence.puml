@@ -1,0 +1,82 @@
+@startuml
+title Update Word Image Sequence (/api/admin/words/{id}/image)
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+actor Admin
+boundary "Vocabulary UI" as VocabularyPage
+control "VocabularyController\n(FE Dashboard)" as DashboardController
+entity "UploadWordImageRequest\n(BE Request DTO)" as ImageRequestDto
+entity "WordDetail\n(FE Response DTO)" as FeWordDetailDto
+control "AdminWordsController\n(BE API)" as ApiController
+entity "WordDetailResponse\n(BE Response DTO)" as ImageResponseDto
+control "IWordAdminService" as IWordAdminService
+control "WordAdminService" as WordService
+control "IWordImageStorage" as IWordImageStorage
+entity "Word" as WordEntity
+control "IWordAdminRepository" as IWordAdminRepository
+control "WordAdminRepository" as WordRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+note over VocabularyPage, MySQL
+Checked in current code:
+Dashboard VocabularyController uploads image file through VocaNovaApiClient.
+API endpoint is POST /api/admin/words/{id}/image.
+API uses UploadWordImageRequest and returns WordDetailResponse.
+FE response DTO exists: WordDetail when Dashboard reloads word detail.
+Interfaces used in code: IWordAdminService, IWordImageStorage, IWordAdminRepository.
+end note
+Admin -> VocabularyPage: Choose image file
+Admin -> VocabularyPage: Click Upload image
+VocabularyPage -> DashboardController: POST /vocabulary/{id}/image
+DashboardController -> DashboardController: Validate file exists
+alt No image file selected
+DashboardController --> VocabularyPage: Show error message
+else Image file selected
+DashboardController -> ImageRequestDto: VocaNovaApiClient.UploadImageAsync(wordId, image file)\nCreate multipart request(file)
+ImageRequestDto -> ApiController: POST /api/admin/words/{id}/image\nUploadWordImageRequest
+ApiController -> ApiController: Check admin authorization
+ApiController -> ApiController: Bind UploadWordImageRequest
+ApiController -> IWordAdminService: UploadImageAsync(wordId, file)
+IWordAdminService -> WordService: UploadImageAsync(wordId, file)
+WordService -> IWordAdminService: Validate image file(type and size)
+IWordAdminService -> WordService: Validate image file(type and size)
+alt Image file invalid
+WordService --> ApiController: Validation failure
+ApiController --> DashboardController: HTTP 400 error
+DashboardController --> VocabularyPage: Show error message
+else Image file valid
+WordService -> IWordAdminRepository: WordExistsAsync(wordId)
+IWordAdminRepository -> WordRepository: WordExistsAsync(wordId)
+WordRepository -> DbContext: Query word
+DbContext -> MySQL: SELECT words
+MySQL --> DbContext: Word row or null
+DbContext -> WordEntity: Materialize Word?
+WordEntity --> DbContext: Word or null
+DbContext --> WordRepository: Result
+WordRepository --> WordService: exists or not
+alt Word not found
+WordService --> ApiController: NotFound result
+ApiController --> DashboardController: HTTP 404 error
+DashboardController --> VocabularyPage: Show error message
+else Word exists
+WordService -> IWordImageStorage: UploadAsync(file)
+WordService -> IWordAdminRepository: SetImageUrlAsync(wordId, imageUrl)
+IWordAdminRepository -> WordRepository: SetImageUrlAsync(wordId, imageUrl)
+WordRepository -> WordEntity: Set ImageUrl
+WordEntity --> WordRepository: Word updated
+WordRepository -> DbContext: Track word image_url
+DbContext -> MySQL: UPDATE words
+MySQL --> DbContext: Update result
+DbContext --> WordRepository: Save result
+WordRepository --> WordService: Updated word detail
+WordService --> ApiController: Return updated word
+ApiController -> ImageResponseDto: Create response data(WordDetailResponse)
+ImageResponseDto --> DashboardController: HTTP 200 OK\nWordDetailResponse
+DashboardController -> FeWordDetailDto: VocaNovaApiClient.GetWordDetailAsync(wordId)\nGET /api/words/{id}
+FeWordDetailDto --> DashboardController: WordDetail
+DashboardController --> VocabularyPage: Show uploaded image
+end
+end
+end
+@enduml

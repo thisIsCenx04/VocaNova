@@ -12,6 +12,8 @@ public sealed class WordSenseConfiguration : IEntityTypeConfiguration<WordSense>
 
         entity.ToTable("word_senses");
 
+        entity.HasIndex(e => e.Status, "idx_senses_status");
+
         entity.HasIndex(e => e.WordId, "idx_senses_word");
 
         entity.HasIndex(e => new { e.WordId, e.WordClass }, "idx_senses_word_class");
@@ -26,6 +28,11 @@ public sealed class WordSenseConfiguration : IEntityTypeConfiguration<WordSense>
             .HasColumnName("sense_order")
             .HasComment("Thứ tự nghĩa: 1, 2, 3...")
             .HasColumnType("int(11)");
+        entity.Property(e => e.Status)
+            .HasColumnName("status")
+            .HasMaxLength(20)
+            .HasDefaultValueSql("'active'")
+            .HasComment("active/deleted");
         entity.Property(e => e.VietnameseMeaning)
             .HasColumnName("vietnamese_meaning")
             .HasColumnType("text");

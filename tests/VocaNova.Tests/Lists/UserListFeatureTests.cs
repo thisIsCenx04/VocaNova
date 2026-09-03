@@ -1,11 +1,24 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Lists.DTOs;
-using VocaNova.API.Features.Lists.Repositories;
-using VocaNova.API.Features.Lists.Services;
-using VocaNova.API.Features.Lists.Validators;
-using VocaNova.API.Infrastructure.Caching;
+using VocaNova.API.Features.Lists.Contracts.Requests;
+using VocaNova.API.Features.Lists.Contracts.Responses;
+using VocaNova.API.Features.Lists.BLL.Models;
+using VocaNova.API.Features.Lists.BLL.Abstractions;
+using VocaNova.API.Features.Lists.DAL.Repositories;
+using VocaNova.API.Features.Lists.BLL.Services;
+using VocaNova.API.Features.Lists.Contracts.Requests;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Lists.BLL.Abstractions;
+using VocaNova.API.Features.Progress.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Infrastructure.Caching.Dictionary;
+using VocaNova.API.Infrastructure.Caching.Knn;
+using VocaNova.API.Infrastructure.Caching.Lists;
+using VocaNova.API.Infrastructure.Caching.Progress;
+using VocaNova.API.Infrastructure.Caching.Quiz;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -660,7 +673,7 @@ public class UserListFeatureTests
                 AddedAt = now.AddMinutes(index),
             });
 
-            dbContext.UserWordProgresses.Add(new UserWordProgress
+            dbContext.UserWordProgresses.Add(new EntityUserWordProgress
             {
                 ProgressId = (uint)index,
                 UserId = 1,
@@ -703,7 +716,7 @@ public class UserListFeatureTests
                 UpdatedAt = now,
                 WordSenses =
                 {
-                    new WordSense
+                    new EntityWordSense
                     {
                         SenseId = 1,
                         WordId = 1,
@@ -724,7 +737,7 @@ public class UserListFeatureTests
                 UpdatedAt = now,
                 WordSenses =
                 {
-                    new WordSense
+                    new EntityWordSense
                     {
                         SenseId = 2,
                         WordId = 2,
@@ -760,7 +773,7 @@ public class UserListFeatureTests
 
         // Tiến độ học của từ được kiểm tra (walk = word 2); màn danh sách phải
         // hiển thị đúng các con số này thay vì luôn 0.
-        dbContext.UserWordProgresses.Add(new UserWordProgress
+        dbContext.UserWordProgresses.Add(new EntityUserWordProgress
         {
             UserId = 1,
             WordId = 2,
@@ -804,7 +817,7 @@ public class UserListFeatureTests
             UpdatedAt = now,
             WordSenses =
             {
-                new WordSense
+                new EntityWordSense
                 {
                     SenseId = wordId,
                     WordId = wordId,
@@ -863,7 +876,7 @@ public class UserListFeatureTests
                 UpdatedAt = now,
             });
 
-            dbContext.WordTopics.Add(new WordTopic
+            dbContext.WordTopics.Add(new EntityWordTopic
             {
                 WordId = (uint)index,
                 TopicId = 7,
@@ -919,7 +932,7 @@ public class UserListFeatureTests
         }
 
         dbContext.WordRelations.AddRange(
-            new WordRelation
+            new EntityWordRelation
             {
                 RelationId = 1,
                 WordId = 1,
@@ -928,7 +941,7 @@ public class UserListFeatureTests
                 RelatedWordId = 2,
                 IsQuizEligible = true,
             },
-            new WordRelation
+            new EntityWordRelation
             {
                 RelationId = 2,
                 WordId = 1,
@@ -937,7 +950,7 @@ public class UserListFeatureTests
                 RelatedWordId = 3,
                 IsQuizEligible = false,
             },
-            new WordRelation
+            new EntityWordRelation
             {
                 RelationId = 3,
                 WordId = 1,
@@ -985,7 +998,7 @@ public class UserListFeatureTests
             AddedAt = now,
         });
 
-        dbContext.UserWordProgresses.Add(new UserWordProgress
+        dbContext.UserWordProgresses.Add(new EntityUserWordProgress
         {
             ProgressId = 1,
             UserId = 1,

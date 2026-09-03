@@ -6,16 +6,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:vocanova_mobile/core/network/app_exception.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
-import 'package:vocanova_mobile/features/auth/data/auth_repository.dart';
+import 'package:vocanova_mobile/features/auth/data/services/auth_api_service.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/auth_tokens.dart';
 import 'package:vocanova_mobile/features/auth/presentation/login_screen.dart';
 import 'package:vocanova_mobile/features/auth/presentation/register_screen.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 void main() {
-  late MockAuthRepository repository;
+  late MockAuthApiService repository;
 
   setUp(() {
-    repository = MockAuthRepository();
+    repository = MockAuthApiService();
   });
 
   testWidgets('login uses a neutral subtitle for every user type', (
@@ -164,12 +165,12 @@ void main() {
 Future<void> pumpAuthScreen(
   WidgetTester tester,
   Widget screen,
-  AuthRepository repository, {
+  AuthApiService repository, {
   Locale? locale,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [authRepositoryProvider.overrideWithValue(repository)],
+      overrides: [authApiServiceProvider.overrideWithValue(repository)],
       child: MaterialApp(
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -181,4 +182,4 @@ Future<void> pumpAuthScreen(
   await tester.pump();
 }
 
-class MockAuthRepository extends Mock implements AuthRepository {}
+class MockAuthApiService extends Mock implements AuthApiService {}

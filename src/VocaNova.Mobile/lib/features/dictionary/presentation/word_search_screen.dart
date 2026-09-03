@@ -7,7 +7,7 @@ import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_state.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topic_icon.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/word_summary_card.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';

@@ -2,11 +2,25 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Knn;
-using VocaNova.API.Features.Knn.DTOs;
-using VocaNova.API.Features.Knn.Repositories;
-using VocaNova.API.Features.Knn.Services;
-using VocaNova.API.Infrastructure.Caching;
+using VocaNova.API.Features.Knn.BLL.Models;
+using VocaNova.API.Features.Knn.Contracts.Requests;
+using VocaNova.API.Features.Knn.Contracts.Responses;
+using VocaNova.API.Features.Knn.BLL.Models;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Knn.DAL.Repositories;
+using VocaNova.API.Features.Knn.BLL.Services;
+using VocaNova.API.Infrastructure.HostedServices;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
+using VocaNova.API.Features.Dictionary.BLL.Abstractions;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Lists.BLL.Abstractions;
+using VocaNova.API.Features.Progress.BLL.Abstractions;
+using VocaNova.API.Features.Quiz.BLL.Abstractions;
+using VocaNova.API.Infrastructure.Caching.Dictionary;
+using VocaNova.API.Infrastructure.Caching.Knn;
+using VocaNova.API.Infrastructure.Caching.Lists;
+using VocaNova.API.Infrastructure.Caching.Progress;
+using VocaNova.API.Infrastructure.Caching.Quiz;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 using VocaNova.Tests.Support;
@@ -245,7 +259,7 @@ public class KnnOnboardingRecommendationTests
         await SeedRecommendationDataAsync(dbContext);
         var now = DateTime.UtcNow;
         dbContext.Words.Add(CreateWord(4));
-        dbContext.WordTopics.Add(new WordTopic { WordId = 4, TopicId = 101 });
+        dbContext.WordTopics.Add(new EntityWordTopic { WordId = 4, TopicId = 101 });
         dbContext.UserLists.AddRange(
             new UserList
             {
@@ -502,9 +516,9 @@ public class KnnOnboardingRecommendationTests
             CreateWord(2),
             CreateWord(3));
         dbContext.WordTopics.AddRange(
-            new WordTopic { WordId = 1, TopicId = 100 },
-            new WordTopic { WordId = 2, TopicId = 101 },
-            new WordTopic { WordId = 3, TopicId = 102 });
+            new EntityWordTopic { WordId = 1, TopicId = 100 },
+            new EntityWordTopic { WordId = 2, TopicId = 101 },
+            new EntityWordTopic { WordId = 3, TopicId = 102 });
         dbContext.UserTopicPreferences.AddRange(
             CreatePreference(1, 100, TopicPreferenceSource.UserSelected),
             CreatePreference(2, 100, TopicPreferenceSource.UserSelected),

@@ -1,0 +1,72 @@
+@startuml
+title Suggest Related Vocabulary Sequence (/api/words/{id})
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Learner
+boundary "Suggest Related Vocabulary UI" as RelatedUi
+entity "WordDetailDto\n(FE Response DTO)" as FeWordDetailDto
+entity "WordRelationDto\n(FE Response DTO)" as FeRelationDto
+entity "WordDetailResponse\n(BE Response DTO)" as BeWordDetailDto
+control "WordsController\n(BE API)" as BeController
+control "IWordReadService" as IWordReadService
+control "WordReadService" as WordService
+entity "Word" as WordEntity
+entity "WordSense" as WordSenseEntity
+entity "WordRelation" as WordRelationEntity
+control "IWordReadRepository" as IWordReadRepository
+control "WordReadRepository" as WordRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over RelatedUi, MySQL
+Checked in current code:
+Mobile UI file exists: word_detail_screen.dart.
+FE DTOs exist: WordDetailDto and WordRelationDto.
+BE controller exists: WordsController.
+BE response DTO exists: WordDetailResponse.
+There is no separate suggest-related endpoint in current code;
+related vocabulary is returned inside GET /api/words/{id}.
+Entities exist: Word, WordSense and WordRelation.
+Interfaces used in code: IWordReadService, IWordReadRepository.
+end note
+
+Learner -> RelatedUi: Open related vocabulary area
+RelatedUi -> BeController: GET /api/words/{id}
+BeController -> IWordReadService: GetByIdAsync(id)
+IWordReadService -> WordService: GetByIdAsync(id)
+WordService -> IWordReadRepository: FindDetailAsync(id)
+IWordReadRepository -> WordRepository: FindDetailAsync(id)
+WordRepository -> DbContext: Query word detail with relations
+DbContext -> MySQL: SELECT words with senses\nand word_relations
+MySQL --> DbContext: Word detail rows or null
+
+alt Word not found
+    DbContext --> WordRepository: null
+    WordRepository --> WordService: null
+    WordService --> BeController: NotFound result
+    BeController --> RelatedUi: HTTP 404 error
+    RelatedUi --> Learner: Show error
+else Word found
+    DbContext -> WordEntity: Read Word
+    DbContext -> WordSenseEntity: Read WordSenses
+    DbContext -> WordRelationEntity: Read WordRelations
+    WordEntity --> DbContext: Word
+    WordSenseEntity --> DbContext: Meanings
+    WordRelationEntity --> DbContext: Related vocabulary
+    DbContext --> WordRepository: Word detail graph
+    WordRepository --> WordService: Word detail
+    WordService --> BeController: Word detail result
+    BeController -> BeWordDetailDto: Create WordDetailResponse
+    BeWordDetailDto --> BeController: WordDetailResponse
+    BeController --> RelatedUi: HTTP 200 OK\nWordDetailResponse
+    RelatedUi -> FeWordDetailDto: Parse response data
+    FeWordDetailDto -> FeRelationDto: Parse relations
+    FeRelationDto --> FeWordDetailDto: WordRelation list
+    FeWordDetailDto --> RelatedUi: Word detail
+    RelatedUi --> Learner: Show related vocabulary
+end
+
+@enduml

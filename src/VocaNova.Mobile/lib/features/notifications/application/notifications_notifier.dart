@@ -4,15 +4,17 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/core/network/dio_client.dart';
 import 'package:vocanova_mobile/features/notifications/application/notifications_state.dart';
-import 'package:vocanova_mobile/features/notifications/data/notifications_repository.dart';
-import 'package:vocanova_mobile/features/notifications/domain/app_notification.dart';
+import 'package:vocanova_mobile/features/notifications/data/services/notifications_api_service.dart';
+import 'package:vocanova_mobile/features/notifications/domain/models/app_notification.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'notifications_notifier.g.dart';
 
 @Riverpod(keepAlive: true)
-NotificationsRepository notificationsRepository(Ref ref) =>
-    NotificationsRepository(dio: DioClient.instance.dio);
+NotificationsApiService notificationsRepository(Ref ref) =>
+    NotificationsApiService(dio: DioClient.instance.dio);
+
+final notificationsApiServiceProvider = notificationsRepositoryProvider;
 
 // Lightweight unread count for the home-screen bell badge.
 // Resilient by design: returns 0 (badge hidden) if the count can't be fetched
@@ -20,7 +22,7 @@ NotificationsRepository notificationsRepository(Ref ref) =>
 @riverpod
 Future<int> notificationsUnreadCount(Ref ref) async {
   try {
-    return await ref.read(notificationsRepositoryProvider).unreadCount();
+    return await ref.read(notificationsApiServiceProvider).unreadCount();
   } catch (_) {
     return 0;
   }
@@ -34,9 +36,9 @@ class NotificationsNotifier extends _$NotificationsNotifier {
   Future<void> load() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final repo = ref.read(notificationsRepositoryProvider);
-      final page = await repo.list(page: 1);
-      final unread = await repo.unreadCount();
+      final apiService = ref.read(notificationsApiServiceProvider);
+      final page = await apiService.list(page: 1);
+      final unread = await apiService.unreadCount();
       state = NotificationsState(
         items: page.items,
         page: page.page,
@@ -63,7 +65,7 @@ class NotificationsNotifier extends _$NotificationsNotifier {
     state = state.copyWith(isLoadingMore: true);
     try {
       final next = await ref
-          .read(notificationsRepositoryProvider)
+          .read(notificationsApiServiceProvider)
           .list(page: state.page + 1);
       state = state.copyWith(
         items: [...state.items, ...next.items],
@@ -95,7 +97,7 @@ class NotificationsNotifier extends _$NotificationsNotifier {
       unreadCount: state.unreadCount > 0 ? state.unreadCount - 1 : 0,
     );
     try {
-      await ref.read(notificationsRepositoryProvider).markRead(id);
+      await ref.read(notificationsApiServiceProvider).markRead(id);
     } catch (_) {
       // Best-effort; a later refresh reconciles the read state.
     }
@@ -115,7 +117,7 @@ class NotificationsNotifier extends _$NotificationsNotifier {
     );
     try {
       await ref
-          .read(notificationsRepositoryProvider)
+          .read(notificationsApiServiceProvider)
           .markAllRead(state.items.map((n) => n.id));
     } catch (_) {
       // Best-effort.

@@ -3,10 +3,11 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
+using VocaNova.API.Features.Auth.BLL.Abstractions;
 
 namespace VocaNova.API.Infrastructure.Sms;
 
-public sealed class SpeedSmsProvider : ISmsProvider
+public sealed class SpeedSmsProvider : ISmsSender
 {
     private readonly HttpClient _httpClient;
     private readonly SpeedSmsSettings _settings;

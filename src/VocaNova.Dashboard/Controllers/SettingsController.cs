@@ -1,6 +1,6 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
-using VocaNova.Dashboard.Models.Api.Settings;
+using VocaNova.Dashboard.Data.Dtos.Settings;
 using VocaNova.Dashboard.Services.Api;
 
 namespace VocaNova.Dashboard.Controllers;

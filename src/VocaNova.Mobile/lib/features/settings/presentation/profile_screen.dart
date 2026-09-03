@@ -10,11 +10,11 @@ import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_text_styles.dart';
 import 'package:vocanova_mobile/app/theme/app_theme.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
-import 'package:vocanova_mobile/features/auth/domain/auth_state.dart';
-import 'package:vocanova_mobile/features/auth/domain/user_profile.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/auth_state.dart';
+import 'package:vocanova_mobile/features/auth/domain/models/user_profile.dart';
 import 'package:vocanova_mobile/features/auth/presentation/auth_validators.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
-import 'package:vocanova_mobile/features/progress/domain/progress_summary.dart';
+import 'package:vocanova_mobile/features/progress/domain/models/progress_summary.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -517,7 +517,11 @@ class _ProfileHeader extends StatelessWidget {
                   value: summary?.currentStreakDays.toString() ?? '—',
                   label: l10n.profileStatStreak,
                 ),
-                _ProfileStat(value: '—', label: l10n.profileStatBadges, last: true),
+                _ProfileStat(
+                  value: '—',
+                  label: l10n.profileStatBadges,
+                  last: true,
+                ),
               ],
             ),
           ),
@@ -1020,7 +1024,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             _SheetFieldLabel(
               label: l10n.profileFieldPhoneNumber,
               child: TextFormField(
-                initialValue: widget.user.phone ?? l10n.profilePhoneNotLinkedShort,
+                initialValue:
+                    widget.user.phone ?? l10n.profilePhoneNotLinkedShort,
                 enabled: false,
                 decoration: const InputDecoration(),
               ),
@@ -1073,7 +1078,10 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       final bytes = await file.readAsBytes();
       if (!mounted) return;
       if (bytes.length > _maxAvatarBytes) {
-        _showMessage(context, AppLocalizations.of(context)!.profileAvatarTooLarge);
+        _showMessage(
+          context,
+          AppLocalizations.of(context)!.profileAvatarTooLarge,
+        );
         return;
       }
       setState(() {

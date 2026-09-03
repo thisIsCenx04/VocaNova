@@ -1,0 +1,288 @@
+@startuml
+title User Management Class Diagram (/users and /api/admin/users)
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from admin-user-management-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+
+class UsersController <<frontend_controller>> {
+  "- _apiClient : IVocaNovaApiClient"
+  --
+  "+ Deactivate(id: uint, returnUrl: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult"
+}
+
+class AdminUsersController <<backend_controller>> {
+  "- _adminUserService : IAdminUserService"
+  --
+  "+ GetUsers(query: AdminUserQueryRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ GetUserDetail(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ GetTestHistory(id: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ Deactivate(id: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
+}
+
+class AdminUserQueryRequest <<dto>> {
+  "+ Page : int"
+  "+ Limit : int"
+  "+ Status : stringNullable"
+  "+ Search : stringNullable"
+  "+ IncludeDeleted : bool"
+  "+ Role : stringNullable"
+  "+ SortBy : stringNullable"
+  "+ SortDirection : stringNullable"
+}
+
+class AdminUserSummaryResponse <<dto>> {
+  "+ UserId : uint"
+  "+ Phone : stringNullable"
+  "+ GoogleEmail : stringNullable"
+  "+ DisplayName : string"
+  "+ AvatarUrl : stringNullable"
+  "+ Role : string"
+  "+ Status : string"
+  "+ LastLoginAt : DateTimeNullable"
+  "+ CreatedAt : DateTime"
+}
+
+class AdminUserDetailResponse <<dto>> {
+  "+ UserId : uint"
+  "+ Phone : stringNullable"
+  "+ GoogleEmail : stringNullable"
+  "+ Username : stringNullable"
+  "+ DisplayName : string"
+  "+ AvatarUrl : stringNullable"
+  "+ Role : string"
+  "+ Status : string"
+  "+ LastLoginAt : DateTimeNullable"
+  "+ CreatedAt : DateTime"
+  "+ UpdatedAt : DateTime"
+  "+ LearningProfile : AdminUserLearningProfileResponseNullable"
+}
+
+class AdminUserTopicsResponse <<dto>> {
+  "+ Selected : IReadOnlyCollectionOfAdminTopicChipResponse"
+  "+ Suggested : IReadOnlyCollectionOfAdminTopicChipResponse"
+}
+
+class AdminUserTestSessionResponse <<dto>> {
+  "+ SessionId : uint"
+  "+ AnswerMethod : string"
+  "+ Mode : string"
+  "+ QuestionType : int"
+  "+ QuestionCount : int"
+  "+ CorrectCount : int"
+  "+ WrongCount : int"
+  "+ Accuracy : float"
+  "+ Score : float"
+  "+ MaxStreak : int"
+  "+ Status : string"
+  "+ StartedAt : DateTime"
+}
+
+class AdminUserSummary <<dto>> {
+  "+ UserId : uint"
+  "+ Phone : stringNullable"
+  "+ GoogleEmail : stringNullable"
+  "+ DisplayName : string"
+  "+ AvatarUrl : stringNullable"
+  "+ Role : string"
+  "+ Status : string"
+  "+ LastLoginAt : DateTimeNullable"
+  "+ CreatedAt : DateTime"
+}
+
+class AdminUserDetail <<dto>> {
+  "+ UserId : uint"
+  "+ Phone : stringNullable"
+  "+ GoogleEmail : stringNullable"
+  "+ Username : stringNullable"
+  "+ DisplayName : string"
+  "+ AvatarUrl : stringNullable"
+  "+ Role : string"
+  "+ Status : string"
+  "+ LastLoginAt : DateTimeNullable"
+  "+ CreatedAt : DateTime"
+  "+ UpdatedAt : DateTime"
+  "+ LearningProfile : AdminUserLearningProfileNullable"
+}
+
+class AdminUserTopics <<dto>> {
+  "+ Selected : IReadOnlyListOfAdminTopicChip"
+  "+ Suggested : IReadOnlyListOfAdminTopicChip"
+}
+
+class AdminUserTestSession <<dto>> {
+  "+ SessionId : uint"
+  "+ AnswerMethod : string"
+  "+ Mode : string"
+  "+ QuestionType : int"
+  "+ QuestionCount : int"
+  "+ CorrectCount : int"
+  "+ WrongCount : int"
+  "+ Accuracy : float"
+  "+ Score : float"
+  "+ MaxStreak : int"
+  "+ Status : string"
+  "+ StartedAt : DateTime"
+}
+
+class IAdminUserService <<service_interface>> {
+  "+ GetUsersAsync(query: AdminUserQuery, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfAdminUserSummaryModel"
+  "+ GetUserDetailAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfAdminUserDetailModel"
+  "+ GetTestHistoryAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfAdminUserTestSessionModel"
+  "+ GetUserTopicsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfAdminUserTopicsModel"
+  "+ DeactivateAsync(userId: uint, actorRole: string, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+  "+ RestoreAsync(userId: uint, actorRole: string, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+}
+
+class AdminUserService <<service>> {
+  "- _repository : IAdminUserRepository"
+  "- _userProfileCache : IUserProfileCacheNullable"
+  --
+  "+ GetUsersAsync(query: AdminUserQuery, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfAdminUserSummaryModel"
+  "+ GetUserDetailAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfAdminUserDetailModel"
+  "+ GetTestHistoryAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfResultOfPagedResultOfAdminUserTestSessionModel"
+  "+ GetUserTopicsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfResultOfAdminUserTopicsModel"
+  "+ DeactivateAsync(userId: uint, actorRole: string, cancellationToken: CancellationToken) : TaskOfResultOfbool"
+}
+
+class User <<entity>> {
+  "+ UserId : uint"
+  "+ RoleId : uint"
+  "+ Status : string"
+  "+ LastLoginAt : DateTimeNullable"
+  "+ CreatedAt : DateTime"
+  "+ UpdatedAt : DateTime"
+  "+ AuditLogs : ICollectionOfAuditLog"
+  "+ OtpVerifications : ICollectionOfOtpVerification"
+  "+ RefreshTokens : ICollectionOfRefreshToken"
+  "+ Role : Role"
+  "+ TestSessions : ICollectionOfTestSession"
+  "+ UserAuth : UserAuthNullable"
+}
+
+class UserProfile <<entity>> {
+  "+ UserId : uint"
+  "+ FullName : string"
+  "+ AvatarUrl : stringNullable"
+  "+ UpdatedAt : DateTime"
+  "+ User : User"
+}
+
+class Role <<entity>> {
+  "+ RoleId : uint"
+  "+ RoleName : string"
+  "+ Users : ICollectionOfUser"
+}
+
+class Topic <<entity>> {
+  "+ TopicId : uint"
+  "+ TopicName : string"
+  "+ TopicNameVi : stringNullable"
+  "+ Icon : stringNullable"
+  "+ Status : string"
+  "+ TestSessionTopics : ICollectionOfTestSessionTopic"
+  "+ UserTopicPreferences : ICollectionOfUserTopicPreference"
+  "+ WordTopics : ICollectionOfWordTopic"
+}
+
+class TestSession <<entity>> {
+  "+ SessionId : uint"
+  "+ UserId : uint"
+  "+ TestType : string"
+  "+ Mode : string"
+  "+ QuestionType : int"
+  "+ ScopeType : string"
+  "+ ScopeDateFrom : DateOnlyNullable"
+  "+ ScopeDateTo : DateOnlyNullable"
+  "+ WordOrder : string"
+  "+ WordLimit : intNullable"
+  "+ TimeLimitSec : intNullable"
+  "+ Lives : intNullable"
+}
+
+class RefreshToken <<entity>> {
+  "+ TokenId : uint"
+  "+ UserId : uint"
+  "+ TokenHash : string"
+  "+ DeviceInfo : stringNullable"
+  "+ IpAddress : stringNullable"
+  "+ ExpiresAt : DateTime"
+  "+ CreatedAt : DateTime"
+  "+ RevokedAt : DateTimeNullable"
+  "+ User : User"
+}
+
+class IAdminUserRepository <<repository_interface>> {
+  "+ GetUsersAsync(query: AdminUserQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfAdminUserSummaryModel"
+  "+ GetUserDetailAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserDetailModelNullable"
+  "+ UserExistsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ GetUserTopicsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserTopicsModel"
+  "+ GetTestHistoryAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedResultOfAdminUserTestSessionModel"
+  "+ GetStatusTargetAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserStatusTargetNullable"
+  "+ StageStatusAsync(userId: uint, status: string, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfbool"
+  "+ RevokeActiveRefreshTokensAsync(userId: uint, revokedAt: DateTime, cancellationToken: CancellationToken) : TaskOfint"
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : Task"
+}
+
+class AdminUserRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ GetUsersAsync(query: AdminUserQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfAdminUserSummaryModel"
+  "+ GetUserTopicsAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserTopicsModel"
+  "+ GetUserDetailAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserDetailModel"
+  "+ GetTestHistoryAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedResultOfAdminUserTestSessionModel"
+  "+ GetStatusTargetAsync(userId: uint, cancellationToken: CancellationToken) : TaskOfAdminUserStatusTarget"
+  "+ StageStatusAsync(userId: uint, status: string, updatedAt: DateTime, cancellationToken: CancellationToken) : TaskOfBool"
+  "+ RevokeActiveRefreshTokensAsync(userId: uint, revokedAt: DateTime, cancellationToken: CancellationToken) : TaskOfInt"
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : Task"
+}
+
+class VocaNovaDbContext <<dbcontext>> {
+  "+ AgeRanges : DbSetOfAgeRange"
+  "+ AiGradingCaches : DbSetOfAiGradingCache"
+  "+ AuditLogs : DbSetOfAuditLog"
+  "+ EducationLevels : DbSetOfEducationLevel"
+  "+ LearningPurposes : DbSetOfLearningPurpose"
+  "+ Occupations : DbSetOfOccupation"
+  "+ OtpVerifications : DbSetOfOtpVerification"
+  "+ RefreshTokens : DbSetOfRefreshToken"
+  "+ Regions : DbSetOfRegion"
+  "+ Roles : DbSetOfRole"
+  "+ TestAnswers : DbSetOfTestAnswer"
+  "+ TestSessions : DbSetOfTestSession"
+  --
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
+}
+
+class MySQL_Database <<database>> {
+
+}
+UsersController ..> AdminUsersController
+AdminUsersController ..> AdminUserQueryRequest
+AdminUserRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+AdminUsersController ..> AdminUserSummaryResponse
+AdminUsersController ..> AdminUserSummary
+AdminUsersController ..> AdminUserDetailResponse
+AdminUsersController ..> AdminUserDetail
+AdminUsersController ..> AdminUserTopicsResponse
+AdminUsersController ..> AdminUserTopics
+AdminUsersController ..> AdminUserTestSessionResponse
+AdminUsersController ..> AdminUserTestSession
+AdminUserRepository ..> User
+AdminUserRepository ..> RefreshToken
+AdminUserQueryRequest ..> AdminUsersController
+IAdminUserService <|.. AdminUserService
+AdminUsersController ..> IAdminUserService : GetUsersAsync()
+IAdminUserRepository <|.. AdminUserRepository
+AdminUserService ..> IAdminUserRepository : GetUsersAsync()
+AdminUserRepository ..> UserProfile
+AdminUserRepository ..> Role
+AdminUserRepository ..> Topic
+AdminUserRepository ..> TestSession
+@enduml

@@ -1,10 +1,14 @@
 using FluentAssertions;
 using FluentValidation.TestHelper;
 using Microsoft.Extensions.Options;
-using VocaNova.API.Features.Admin.Validators;
-using VocaNova.API.Features.AiGrading;
-using VocaNova.API.Features.AiGrading.DTOs;
-using VocaNova.API.Features.AiGrading.Services;
+using VocaNova.API.Features.Admin.Contracts.Requests;
+using VocaNova.API.Features.AiGrading.BLL.Models;
+using VocaNova.API.Infrastructure.ExternalServices.Gemini;
+using VocaNova.API.Features.AiGrading.Contracts.Requests;
+using VocaNova.API.Features.AiGrading.Contracts.Responses;
+using VocaNova.API.Features.AiGrading.BLL.Models;
+using VocaNova.API.Features.AiGrading.BLL.Services;
+using VocaNova.API.Infrastructure.ExternalServices.Gemini;
 using VocaNova.Tests.Support;
 
 namespace VocaNova.Tests.AiGrading;
@@ -16,7 +20,7 @@ public class AiGradingConfigServiceTests
     {
         var service = CreateService(out _);
 
-        var config = await service.GetConfigAsync();
+        var config = await GetConfigViewAsync(service);
 
         config.Storage.Should().Be("env_file");
         config.Model.Should().Be("configured-model");
@@ -29,7 +33,7 @@ public class AiGradingConfigServiceTests
     {
         var service = CreateService(out _);
 
-        var config = await service.GetConfigAsync();
+        var config = await GetConfigViewAsync(service);
 
         config.ApiKeyHint.Should().NotBe("configured-secret-key");
         config.ApiKeyHint.Should().EndWith("-key");
@@ -41,7 +45,7 @@ public class AiGradingConfigServiceTests
     {
         var service = CreateService(out var writer);
 
-        await service.UpdateConfigAsync(EmptyRequest with { Model = "new-model", ApiKey = "   " });
+        await UpdateConfigViewAsync(service, EmptyRequest with { Model = "new-model", ApiKey = "   " });
 
         writer.WrittenValues["AiGrading__Model"].Should().Be("new-model");
         writer.WrittenValues["AiGrading__ApiKey"].Should().Be("configured-secret-key");
@@ -52,7 +56,7 @@ public class AiGradingConfigServiceTests
     {
         var service = CreateService(out var writer);
 
-        await service.UpdateConfigAsync(EmptyRequest with { ApiKey = "rotated-key" });
+        await UpdateConfigViewAsync(service, EmptyRequest with { ApiKey = "rotated-key" });
 
         writer.WrittenValues["AiGrading__ApiKey"].Should().Be("rotated-key");
         writer.WrittenValues["AiGrading__Model"].Should().Be("configured-model");
@@ -63,7 +67,7 @@ public class AiGradingConfigServiceTests
     {
         var service = CreateService(out var writer);
 
-        var config = await service.UpdateConfigAsync(EmptyRequest with
+        var config = await UpdateConfigViewAsync(service, EmptyRequest with
         {
             MaxAttempts = 99,
             AttemptTimeoutSeconds = 600,
@@ -85,7 +89,7 @@ public class AiGradingConfigServiceTests
     {
         var service = CreateService(out var writer);
 
-        var config = await service.UpdateConfigAsync(EmptyRequest with
+        var config = await UpdateConfigViewAsync(service, EmptyRequest with
         {
             Endpoint = " https://example.test/v1/ ",
             FallbackModels = [" a ", "A", "", "b"],
@@ -101,9 +105,9 @@ public class AiGradingConfigServiceTests
     public async Task UpdateConfigAsync_Should_Delete_Stale_Fallback_Model_Slots()
     {
         var service = CreateService(out var writer);
-        await service.UpdateConfigAsync(EmptyRequest with { FallbackModels = ["a", "b", "c"] });
+        await UpdateConfigViewAsync(service, EmptyRequest with { FallbackModels = ["a", "b", "c"] });
 
-        await service.UpdateConfigAsync(EmptyRequest with { FallbackModels = ["a"] });
+        await UpdateConfigViewAsync(service, EmptyRequest with { FallbackModels = ["a"] });
 
         writer.WrittenValues["AiGrading__FallbackModels__0"].Should().Be("a");
         // Shrinking the list must remove the trailing entries, otherwise .env would keep
@@ -116,9 +120,9 @@ public class AiGradingConfigServiceTests
     public async Task ResetConfigAsync_Should_Restore_Defaults_But_Keep_The_Api_Key()
     {
         var service = CreateService(out var writer);
-        await service.UpdateConfigAsync(EmptyRequest with { Model = "temporary-model" });
+        await UpdateConfigViewAsync(service, EmptyRequest with { Model = "temporary-model" });
 
-        var config = await service.ResetConfigAsync();
+        var config = await ResetConfigViewAsync(service);
 
         var defaults = new AiGradingSettings();
         config.Model.Should().Be(defaults.Model);
@@ -134,14 +138,14 @@ public class AiGradingConfigServiceTests
     {
         var service = CreateService(out var writer, out _, canWriteEnvFile: false);
 
-        var config = await service.UpdateConfigAsync(EmptyRequest with { Model = "fallback-model" });
+        var config = await UpdateConfigViewAsync(service, EmptyRequest with { Model = "fallback-model" });
 
         config.Storage.Should().Be("fallback");
         config.CanWriteEnvFile.Should().BeFalse();
         writer.WrittenValues.Should().BeEmpty();
         // No file to watch, so the fallback store is what grading reads — immediately.
         (await service.GetEffectiveSettingsAsync()).Model.Should().Be("fallback-model");
-        (await service.GetConfigAsync()).Storage.Should().Be("fallback");
+        (await GetConfigViewAsync(service)).Storage.Should().Be("fallback");
     }
 
     [Fact]
@@ -149,7 +153,7 @@ public class AiGradingConfigServiceTests
     {
         var service = CreateService(out _, out var monitor, canWriteEnvFile: true);
 
-        await service.UpdateConfigAsync(EmptyRequest with { Model = "written-model" });
+        await UpdateConfigViewAsync(service, EmptyRequest with { Model = "written-model" });
 
         // The write landed in .env; the watcher has not fired yet.
         (await service.GetEffectiveSettingsAsync()).Model.Should().Be("configured-model");
@@ -198,6 +202,43 @@ public class AiGradingConfigServiceTests
         RetryBaseDelayMs: null,
         AttemptTimeoutSeconds: null,
         PassThreshold: null);
+
+    private static async Task<AiGradingConfigurationView> GetConfigViewAsync(
+        AiGradingConfigService service)
+    {
+        var result = await service.GetConfigAsync();
+        result.IsSuccess.Should().BeTrue(result.Error);
+        return result.Value!;
+    }
+
+    private static async Task<AiGradingConfigurationView> UpdateConfigViewAsync(
+        AiGradingConfigService service,
+        UpdateAiGradingConfigRequest request)
+    {
+        var result = await service.UpdateConfigAsync(ToCommand(request));
+        result.IsSuccess.Should().BeTrue(result.Error);
+        return result.Value!;
+    }
+
+    private static async Task<AiGradingConfigurationView> ResetConfigViewAsync(
+        AiGradingConfigService service)
+    {
+        var result = await service.ResetConfigAsync();
+        result.IsSuccess.Should().BeTrue(result.Error);
+        return result.Value!;
+    }
+
+    private static UpdateAiGradingConfigurationCommand ToCommand(UpdateAiGradingConfigRequest request) =>
+        new(
+            request.Provider,
+            request.Endpoint,
+            request.Model,
+            request.FallbackModels,
+            request.ApiKey,
+            request.MaxAttempts,
+            request.RetryBaseDelayMs,
+            request.AttemptTimeoutSeconds,
+            request.PassThreshold);
 
     private static AiGradingConfigService CreateService(out FakeRuntimeConfigWriter writer)
     {

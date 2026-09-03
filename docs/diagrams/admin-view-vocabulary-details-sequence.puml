@@ -1,0 +1,98 @@
+@startuml
+title View Vocabulary Details Sequence (/vocabulary/{id} and /api/words/{id})
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Vocabulary Details UI" as VocabularyDetailsUi
+control "VocabularyController\n(FE Dashboard)" as FeController
+control "WordsController\n(BE API)" as BeController
+entity "WordDetail\n(FE Response DTO)" as FeWordDetailDto
+entity "WordDetailResponse\n(BE Response DTO)" as BeWordDetailDto
+control "IWordReadService" as IWordReadService
+control "WordReadService" as WordService
+entity "Word" as WordEntity
+entity "WordSense" as WordSenseEntity
+entity "WordExample" as WordExampleEntity
+entity "WordRelation" as WordRelationEntity
+entity "WordAudioAsset" as WordAudioAssetEntity
+entity "WordDerivedForm" as WordDerivedFormEntity
+entity "WordIdiom" as WordIdiomEntity
+entity "WordTopic" as WordTopicEntity
+entity "Topic" as TopicEntity
+control "IWordReadRepository" as IWordReadRepository
+control "WordReadRepository" as WordRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over VocabularyDetailsUi, MySQL
+Checked in current code:
+Dashboard UI file exists: Views/Vocabulary/Detail.cshtml.
+FE controller exists: VocabularyController.
+BE controller exists: WordsController.
+FE response DTO exists: WordDetail.
+BE response DTO exists: WordDetailResponse.
+VocabularyController.Detail calls VocaNovaApiClient.GetWordDetailAsync.
+API endpoint is GET /api/words/{id}; no request DTO body is used.
+Entities exist: Word, WordSense, WordExample, WordRelation,
+WordAudioAsset, WordDerivedForm, WordIdiom, WordTopic and Topic.
+Interfaces used in code: IWordReadService, IWordReadRepository.
+end note
+
+Admin -> VocabularyDetailsUi: Open vocabulary details
+VocabularyDetailsUi -> FeController: GET /vocabulary/{id}
+FeController -> BeController: VocaNovaApiClient.GetWordDetailAsync\nGET /api/words/{id}
+BeController -> IWordReadService: GetByIdAsync(id)
+IWordReadService -> WordService: GetByIdAsync(id)
+
+alt Word id invalid
+    WordService --> BeController: NotFound result
+    BeController --> FeController: HTTP 404 error
+    FeController --> VocabularyDetailsUi: Show not found
+else Word id valid
+    WordService -> IWordReadRepository: FindDetailAsync(id)
+    IWordReadRepository -> WordRepository: FindDetailAsync(id)
+    WordRepository -> DbContext: Query word detail
+    DbContext -> MySQL: SELECT words with includes
+    MySQL --> DbContext: Word detail rows or null
+
+    alt Word not found
+        DbContext --> WordRepository: null
+        WordRepository --> WordService: null
+        WordService --> BeController: NotFound result
+        BeController --> FeController: HTTP 404 error
+        FeController --> VocabularyDetailsUi: Show not found
+    else Word found
+        DbContext -> WordEntity: Read Word
+        DbContext -> WordSenseEntity: Read WordSenses
+        DbContext -> WordExampleEntity: Read WordExamples
+        DbContext -> WordRelationEntity: Read WordRelations
+        DbContext -> WordAudioAssetEntity: Read playable WordAudioAssets
+        DbContext -> WordDerivedFormEntity: Read WordDerivedForms
+        DbContext -> WordIdiomEntity: Read WordIdioms
+        DbContext -> WordTopicEntity: Read WordTopics
+        DbContext -> TopicEntity: Read linked Topics
+        WordEntity --> DbContext: Word
+        WordSenseEntity --> DbContext: WordSense rows
+        WordExampleEntity --> DbContext: WordExample rows
+        WordRelationEntity --> DbContext: WordRelation rows
+        WordAudioAssetEntity --> DbContext: WordAudioAsset rows
+        WordDerivedFormEntity --> DbContext: WordDerivedForm rows
+        WordIdiomEntity --> DbContext: WordIdiom rows
+        WordTopicEntity --> DbContext: WordTopic rows
+        TopicEntity --> DbContext: Topic rows
+
+        DbContext --> WordRepository: Word detail graph
+        WordRepository --> WordService: Word detail
+        WordService --> BeController: Word detail result
+        BeController -> BeWordDetailDto: Create WordDetailResponse
+        BeWordDetailDto --> BeController: WordDetailResponse
+        BeController -> FeWordDetailDto: HTTP 200 OK\nWordDetailResponse JSON
+        FeWordDetailDto --> FeController: WordDetail
+        FeController --> VocabularyDetailsUi: Render vocabulary details
+    end
+end
+
+@enduml

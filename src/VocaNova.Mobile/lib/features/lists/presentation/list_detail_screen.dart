@@ -4,12 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
 import 'package:vocanova_mobile/features/lists/application/list_detail_notifier.dart';
 import 'package:vocanova_mobile/features/lists/application/list_detail_state.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
-import 'package:vocanova_mobile/features/lists/domain/list_word.dart';
+import 'package:vocanova_mobile/features/lists/domain/models/list_word.dart';
 import 'package:vocanova_mobile/features/lists/presentation/add_word_sheet.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
@@ -63,9 +63,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
         .map((list) => list.listName)
         .firstOrNull;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(listName ?? l10n.listsDetailTitleFallback),
-      ),
+      appBar: AppBar(title: Text(listName ?? l10n.listsDetailTitleFallback)),
       floatingActionButton: FloatingActionButton.extended(
         key: const Key('add-word-fab'),
         onPressed: state.isOffline
@@ -181,12 +179,12 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     final l10n = AppLocalizations.of(context)!;
     List<TopicSummary> topics;
     try {
-      topics = await ref.read(wordSearchRepositoryProvider).getTopics();
+      topics = await ref.read(wordSearchApiServiceProvider).getTopics();
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.listsLoadTopicsError)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.listsLoadTopicsError)));
       }
       return;
     }

@@ -3,40 +3,40 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/data/word_search_repository.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/data/services/word_search_api_service.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
-import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
-import 'package:vocanova_mobile/features/lists/domain/user_list.dart';
+import 'package:vocanova_mobile/features/lists/data/services/lists_api_service.dart';
+import 'package:vocanova_mobile/features/lists/domain/models/user_list.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_state.dart';
-import 'package:vocanova_mobile/features/quiz/data/quiz_repository.dart';
-import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
+import 'package:vocanova_mobile/features/quiz/data/services/quiz_api_service.dart';
+import 'package:vocanova_mobile/features/quiz/domain/models/quiz_config.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
 
-  late MockQuizRepository repository;
-  late MockWordSearchRepository searchRepository;
-  late MockListsRepository listsRepository;
+  late MockQuizApiService repository;
+  late MockWordSearchApiService searchRepository;
+  late MockListsApiService listsApiService;
   late ProviderContainer container;
 
   setUpAll(() => registerFallbackValue(fallbackRequest));
 
   setUp(() {
-    repository = MockQuizRepository();
-    searchRepository = MockWordSearchRepository();
-    listsRepository = MockListsRepository();
-    when(() => listsRepository.getLists()).thenAnswer((_) async => testLists);
+    repository = MockQuizApiService();
+    searchRepository = MockWordSearchApiService();
+    listsApiService = MockListsApiService();
+    when(() => listsApiService.getLists()).thenAnswer((_) async => testLists);
     when(
       () => searchRepository.getPersonalTopics(),
     ).thenAnswer((_) async => testPersonalTopics);
     container = ProviderContainer(
       overrides: [
-        quizRepositoryProvider.overrideWithValue(repository),
-        wordSearchRepositoryProvider.overrideWithValue(searchRepository),
-        listsRepositoryProvider.overrideWithValue(listsRepository),
+        quizApiServiceProvider.overrideWithValue(repository),
+        wordSearchApiServiceProvider.overrideWithValue(searchRepository),
+        listsApiServiceProvider.overrideWithValue(listsApiService),
       ],
     );
   });
@@ -141,25 +141,28 @@ void main() {
     expect(request.wordLimit, isNull);
   });
 
-  test('clamps a custom count larger than the source to the word count', () async {
-    when(
-      () => repository.createSession(any()),
-    ).thenAnswer((_) async => testSession);
-    final notifier = container.read(quizConfigProvider.notifier);
-    await notifier.loadSources();
-    notifier.setSourceType(QuizSourceType.myList);
-    notifier.selectSource(7); // 6 words
-    notifier.useCustomQuestionLimit();
-    notifier.setCustomQuestionLimit(10);
+  test(
+    'clamps a custom count larger than the source to the word count',
+    () async {
+      when(
+        () => repository.createSession(any()),
+      ).thenAnswer((_) async => testSession);
+      final notifier = container.read(quizConfigProvider.notifier);
+      await notifier.loadSources();
+      notifier.setSourceType(QuizSourceType.myList);
+      notifier.selectSource(7); // 6 words
+      notifier.useCustomQuestionLimit();
+      notifier.setCustomQuestionLimit(10);
 
-    expect(notifier.validate(), isNull);
-    final result = await notifier.createSession();
-    expect(result?.sessionId, 9);
-    final request =
-        verify(() => repository.createSession(captureAny())).captured.single
-            as QuizConfigRequest;
-    expect(request.wordLimit, 6);
-  });
+      expect(notifier.validate(), isNull);
+      final result = await notifier.createSession();
+      expect(result?.sessionId, 9);
+      final request =
+          verify(() => repository.createSession(captureAny())).captured.single
+              as QuizConfigRequest;
+      expect(request.wordLimit, 6);
+    },
+  );
 
   test('custom question count within the word count is allowed', () async {
     when(
@@ -219,11 +222,11 @@ void main() {
   });
 }
 
-class MockQuizRepository extends Mock implements QuizRepository {}
+class MockQuizApiService extends Mock implements QuizApiService {}
 
-class MockWordSearchRepository extends Mock implements WordSearchRepository {}
+class MockWordSearchApiService extends Mock implements WordSearchApiService {}
 
-class MockListsRepository extends Mock implements ListsRepository {}
+class MockListsApiService extends Mock implements ListsApiService {}
 
 final testLists = [
   UserList(

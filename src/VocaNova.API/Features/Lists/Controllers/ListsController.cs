@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VocaNova.API.Common.Extensions;
-using VocaNova.API.Common.Results;
-using VocaNova.API.Features.Lists.DTOs;
-using VocaNova.API.Features.Lists.Services;
+using VocaNova.API.Features.Lists.BLL.Models;
+using VocaNova.API.Features.Lists.BLL.Services;
+using VocaNova.API.Common.Responses;
+using VocaNova.API.Features.Lists.Contracts.Requests;
+using VocaNova.API.Features.Lists.Mappings;
+using VocaNova.API.Features.Lists.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Lists.Controllers;
 
@@ -12,11 +14,15 @@ namespace VocaNova.API.Features.Lists.Controllers;
 [Route("api/lists")]
 public sealed class ListsController : ControllerBase
 {
-    private readonly IUserListService _userListService;
+    private readonly IListQueryService _queryService;
+    private readonly IListMutationService _mutationService;
 
-    public ListsController(IUserListService userListService)
+    public ListsController(
+        IListQueryService queryService,
+        IListMutationService mutationService)
     {
-        _userListService = userListService;
+        _queryService = queryService;
+        _mutationService = mutationService;
     }
 
     [HttpGet]
@@ -24,16 +30,38 @@ public sealed class ListsController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<IReadOnlyCollection<UserListDto>>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
-        var result = await _userListService.GetByUserAsync(userId, cancellationToken);
-        if (!result.IsSuccess)
+        var result = await _queryService.GetListsAsync(userId, cancellationToken);
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "Lists loaded successfully."))
+            : ErrorResponse(result);
+    }
+
+    [HttpGet("{id:uint}/words")]
+    public async Task<IActionResult> GetWords(
+        [FromRoute] uint id,
+        [FromQuery] ListWordsRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(result);
+            return UnauthorizedResponse();
         }
 
-        return this.OkResult(result.Value!, "Lists loaded successfully.");
+        var result = await _queryService.GetWordsAsync(
+            userId,
+            id,
+            request.ToBusinessQuery(),
+            cancellationToken);
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "List words loaded successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpPost]
@@ -43,16 +71,20 @@ public sealed class ListsController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<UserListDto>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
-        var result = await _userListService.CreateAsync(userId, request, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.CreatedResult(result.Value!, "List created successfully.");
+        var result = await _mutationService.CreateAsync(
+            userId,
+            request.ToBusinessCommand(),
+            cancellationToken);
+        return result.IsSuccess
+            ? StatusCode(
+                StatusCodes.Status201Created,
+                ApiResponseFormatter.Created(
+                    result.Value!.ToResponse(),
+                    "List created successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpPut("{id:uint}")]
@@ -63,16 +95,19 @@ public sealed class ListsController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<UserListDto>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
-        var result = await _userListService.UpdateAsync(userId, id, request, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "List updated successfully.");
+        var result = await _mutationService.UpdateAsync(
+            userId,
+            id,
+            request.ToBusinessCommand(),
+            cancellationToken);
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "List updated successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpDelete("{id:uint}")]
@@ -82,36 +117,13 @@ public sealed class ListsController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<bool>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
-        var result = await _userListService.SoftDeleteAsync(userId, id, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value, "List deleted successfully.");
-    }
-
-    [HttpGet("{id:uint}/words")]
-    public async Task<IActionResult> GetWords(
-        [FromRoute] uint id,
-        [FromQuery] ListWordsQuery query,
-        CancellationToken cancellationToken)
-    {
-        if (!TryGetCurrentUserId(out var userId))
-        {
-            return this.ErrorResult(Result<PagedResult<ListWordDto>>.Unauthorized("Unauthorized."));
-        }
-
-        var result = await _userListService.GetWordsAsync(userId, id, query, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "List words loaded successfully.");
+        var result = await _mutationService.SoftDeleteAsync(userId, id, cancellationToken);
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(result.Value, "List deleted successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpPost("{id:uint}/words")]
@@ -122,16 +134,21 @@ public sealed class ListsController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<ListWordDto>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
-        var result = await _userListService.AddWordAsync(userId, id, request, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.CreatedResult(result.Value!, "Word added to list successfully.");
+        var result = await _mutationService.AddWordAsync(
+            userId,
+            id,
+            request.ToBusinessCommand(),
+            cancellationToken);
+        return result.IsSuccess
+            ? StatusCode(
+                StatusCodes.Status201Created,
+                ApiResponseFormatter.Created(
+                    result.Value!.ToResponse(),
+                    "Word added to list successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpPost("{id:uint}/words/random")]
@@ -142,16 +159,21 @@ public sealed class ListsController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<AddRandomListWordsResultDto>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
-        var result = await _userListService.AddRandomWordsAsync(userId, id, request, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.CreatedResult(result.Value!, "Random words added to list successfully.");
+        var result = await _mutationService.AddRandomWordsAsync(
+            userId,
+            id,
+            request.ToBusinessCommand(),
+            cancellationToken);
+        return result.IsSuccess
+            ? StatusCode(
+                StatusCodes.Status201Created,
+                ApiResponseFormatter.Created(
+                    result.Value!.ToResponse(),
+                    "Random words added to list successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpDelete("{id:uint}/words/{wordId:uint}")]
@@ -162,16 +184,17 @@ public sealed class ListsController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<bool>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
-        var result = await _userListService.RemoveWordAsync(userId, id, wordId, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value, "Word removed from list successfully.");
+        var result = await _mutationService.RemoveWordAsync(
+            userId,
+            id,
+            wordId,
+            cancellationToken);
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(result.Value, "Word removed from list successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpPatch("{id:uint}/words/{wordId:uint}/note")]
@@ -183,16 +206,40 @@ public sealed class ListsController : ControllerBase
     {
         if (!TryGetCurrentUserId(out var userId))
         {
-            return this.ErrorResult(Result<ListWordDto>.Unauthorized("Unauthorized."));
+            return UnauthorizedResponse();
         }
 
-        var result = await _userListService.UpdateWordNoteAsync(userId, id, wordId, request, cancellationToken);
-        if (!result.IsSuccess)
+        var result = await _mutationService.UpdateWordNoteAsync(
+            userId,
+            id,
+            wordId,
+            request.ToBusinessCommand(),
+            cancellationToken);
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "Word note updated successfully."))
+            : ErrorResponse(result);
+    }
+
+    private ObjectResult UnauthorizedResponse() =>
+        StatusCode(
+            StatusCodes.Status401Unauthorized,
+            ApiResponseFormatter.Error("Unauthorized.", new[] { "Unauthorized." }));
+
+    private ObjectResult ErrorResponse<T>(ListResult<T> result)
+    {
+        var statusCode = result.ErrorKind switch
         {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Word note updated successfully.");
+            ListErrorKind.Unauthorized => StatusCodes.Status401Unauthorized,
+            ListErrorKind.NotFound => StatusCodes.Status404NotFound,
+            ListErrorKind.Forbidden => StatusCodes.Status403Forbidden,
+            ListErrorKind.Conflict => StatusCodes.Status409Conflict,
+            _ => StatusCodes.Status400BadRequest,
+        };
+        return StatusCode(
+            statusCode,
+            ApiResponseFormatter.Error(result.Error!, new[] { result.Error! }));
     }
 
     private bool TryGetCurrentUserId(out uint userId)

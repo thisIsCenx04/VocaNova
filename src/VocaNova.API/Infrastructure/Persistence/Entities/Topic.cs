@@ -21,4 +21,3 @@ public partial class Topic
 
     public virtual ICollection<WordTopic> WordTopics { get; set; } = new List<WordTopic>();
 }
-

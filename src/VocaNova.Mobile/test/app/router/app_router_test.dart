@@ -3,24 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:riverpod/misc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vocanova_mobile/app/router/app_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
-import 'package:vocanova_mobile/core/connectivity/connectivity_provider.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
-import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/core/storage/token_storage.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
 import 'package:vocanova_mobile/features/dictionary/application/audio_playback_service.dart';
-import 'package:vocanova_mobile/features/dictionary/application/word_detail_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/data/word_detail_repository.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_detail.dart';
+import 'package:vocanova_mobile/features/dictionary/data/services/word_detail_api_service.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_detail.dart';
 import 'package:vocanova_mobile/features/home/application/home_topics_provider.dart';
-import 'package:vocanova_mobile/features/lists/application/list_detail_notifier.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
-import 'package:vocanova_mobile/features/lists/data/lists_repository.dart';
-import 'package:vocanova_mobile/features/lists/domain/list_word.dart';
+import 'package:vocanova_mobile/features/lists/data/services/lists_api_service.dart';
+import 'package:vocanova_mobile/features/lists/domain/models/list_word.dart';
 import 'package:vocanova_mobile/features/notifications/application/notifications_notifier.dart';
 import 'package:vocanova_mobile/features/progress/application/progress_overview_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/wrong_words_notifier.dart';
@@ -137,7 +132,6 @@ Future<void> pumpRouter(
   WidgetTester tester,
   GoRouter router, {
   bool settle = true,
-  List<Override> extraOverrides = const [],
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -148,7 +142,6 @@ Future<void> pumpRouter(
         progressOverviewProvider.overrideWith(FakeProgressOverviewNotifier.new),
         listsProvider.overrideWith(FakeListsNotifier.new),
         wrongWordsProvider.overrideWith(FakeWrongWordsNotifier.new),
-        ...extraOverrides,
       ],
       child: MaterialApp.router(
         routerConfig: router,
@@ -164,9 +157,9 @@ Future<void> pumpRouter(
   }
 }
 
-class MockListsRepository extends Mock implements ListsRepository {}
+class MockListsApiService extends Mock implements ListsApiService {}
 
-class MockWordDetailRepository extends Mock implements WordDetailRepository {}
+class MockWordDetailApiService extends Mock implements WordDetailApiService {}
 
 class MockConnectivityService extends Mock implements ConnectivityService {}
 

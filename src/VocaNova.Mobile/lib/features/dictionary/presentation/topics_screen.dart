@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topic_icon.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
@@ -33,13 +33,13 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
   @override
   void initState() {
     super.initState();
-    _systemTopics = ref.read(wordSearchRepositoryProvider).getTopics();
+    _systemTopics = ref.read(wordSearchApiServiceProvider).getTopics();
   }
 
   Future<List<TopicSummary>> get _currentTopics {
     if (!_showPersonal) return _systemTopics;
     return _personalTopics ??= ref
-        .read(wordSearchRepositoryProvider)
+        .read(wordSearchApiServiceProvider)
         .getPersonalTopics()
         .then<List<TopicSummary>>((topics) => topics);
   }
@@ -52,11 +52,11 @@ class _TopicsScreenState extends ConsumerState<TopicsScreen> {
   void _reload() {
     if (_showPersonal) {
       _personalTopics = ref
-          .read(wordSearchRepositoryProvider)
+          .read(wordSearchApiServiceProvider)
           .getPersonalTopics()
           .then<List<TopicSummary>>((topics) => topics);
     } else {
-      _systemTopics = ref.read(wordSearchRepositoryProvider).getTopics();
+      _systemTopics = ref.read(wordSearchApiServiceProvider).getTopics();
     }
   }
 

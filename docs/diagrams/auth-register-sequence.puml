@@ -1,0 +1,150 @@
+@startuml
+title Register Sequence (/api/auth/register)
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+actor Guest
+boundary "RegisterScreen UI" as RegisterScreen
+entity "RegisterRequest\n(BE Request DTO)" as RegisterRequestDto
+entity "TokenResponse\n(BE Response DTO)" as RegisterResponseDto
+entity "AuthTokensDto\n(FE Response DTO)" as FeTokensDto
+control "AuthController" as AuthController
+control "IAuthService" as IAuthService
+control "AuthService" as AuthService
+entity "User" as UserEntity
+entity "UserAuth" as UserAuthEntity
+entity "UserProfile" as UserProfileEntity
+entity "UserLearningProfile" as UserLearningProfileEntity
+entity "Role" as RoleEntity
+entity "OtpVerification" as OtpEntity
+entity "RefreshToken" as RefreshTokenEntity
+control "IPasswordHasher" as IPasswordHasher
+control "BcryptPasswordHasher" as PasswordHasher
+control "IAuthAccountRepository" as IAuthAccountRepository
+control "AuthAccountRepository" as AuthAccountRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+note over RegisterScreen, MySQL
+BE DTOs exist: RegisterRequest and TokenResponse.
+FE response DTO exists: AuthTokensDto.
+Interfaces used in code: IAuthService, IPasswordHasher, IAuthAccountRepository.
+end note
+Guest -> RegisterScreen: Access page
+Guest -> RegisterScreen: Enter information
+Guest -> RegisterScreen: Click Register button
+RegisterScreen -> RegisterScreen: Validate input
+alt Data input invalid
+RegisterScreen --> Guest: Show error message
+else Data input valid
+RegisterScreen -> RegisterRequestDto: Create request data(phone, password, display_name,otp_code, optional profile fields)
+RegisterScreen -> AuthController: POST /api/auth/registerRegisterRequest
+AuthController -> AuthController: Validate RegisterRequest
+alt Request validation fails
+AuthController --> RegisterScreen: HTTP 400 with validation errors
+RegisterScreen --> Guest: Show error message
+else Request validation success
+AuthController -> IAuthService: RegisterAsync(register data)
+IAuthService -> AuthService: RegisterAsync(register data)
+AuthService -> IAuthAccountRepository: FindByPhoneAsync(phone)
+IAuthAccountRepository -> AuthAccountRepository: FindByPhoneAsync(phone)
+AuthAccountRepository -> DbContext: Query user by phone
+DbContext -> MySQL: SELECT user account
+MySQL --> DbContext: User row or null
+DbContext -> UserEntity: Materialize User?
+DbContext -> UserAuthEntity: Materialize UserAuth?
+UserEntity --> DbContext: User or null
+UserAuthEntity --> DbContext: UserAuth or null
+DbContext --> AuthAccountRepository: Result
+AuthAccountRepository --> AuthService: AuthAccount or null
+alt Account exists
+AuthService --> AuthController: Conflict result
+AuthController --> RegisterScreen: HTTP 409 Phone already exists
+RegisterScreen --> Guest: Show error message
+else Phone is available
+AuthService -> IAuthAccountRepository: Check latest active OTP
+IAuthAccountRepository -> AuthAccountRepository: Check latest active OTP
+AuthAccountRepository -> DbContext: Query latest active OTP
+DbContext -> MySQL: SELECT latest OTP
+MySQL --> DbContext: OTP row or null
+DbContext -> OtpEntity: Materialize OtpVerification?
+OtpEntity --> DbContext: OtpVerification or null
+DbContext --> AuthAccountRepository: Result
+AuthAccountRepository --> AuthService: OTP result
+alt OTP invalid
+AuthService --> AuthController: Unauthorized/Conflict result
+AuthController --> RegisterScreen: HTTP error
+RegisterScreen --> Guest: Show error message
+else OTP valid
+AuthService -> IAuthAccountRepository: FindRoleByNameAsync("User")
+IAuthAccountRepository -> AuthAccountRepository: FindRoleByNameAsync("User")
+AuthAccountRepository -> DbContext: Query role
+DbContext -> MySQL: SELECT roles
+MySQL --> DbContext: Role row or null
+DbContext -> RoleEntity: Materialize Role?
+RoleEntity --> DbContext: Role or null
+DbContext --> AuthAccountRepository: Result
+AuthAccountRepository --> AuthService: AuthRole or null
+alt Default user role missing
+AuthService --> AuthController: Validation failure
+AuthController --> RegisterScreen: HTTP 400 error
+RegisterScreen --> Guest: Show error message
+else Role exists
+AuthService -> IPasswordHasher: Hash(password)
+IPasswordHasher -> PasswordHasher: Hash(password)
+PasswordHasher --> AuthService: password hash
+AuthService -> IAuthAccountRepository: StageCreateAsync(CreateAuthAccount)
+IAuthAccountRepository -> AuthAccountRepository: StageCreateAsync(CreateAuthAccount)
+AuthAccountRepository -> UserEntity: Create User
+AuthAccountRepository -> UserAuthEntity: Create UserAuth
+AuthAccountRepository -> UserProfileEntity: Create UserProfile
+AuthAccountRepository -> UserLearningProfileEntity: Create UserLearningProfile?
+UserEntity --> AuthAccountRepository: User
+UserAuthEntity --> AuthAccountRepository: UserAuth
+UserProfileEntity --> AuthAccountRepository: UserProfile
+UserLearningProfileEntity --> AuthAccountRepository: UserLearningProfile?
+AuthAccountRepository -> DbContext: Add User, UserAuth,\nUserProfile, UserLearningProfile?
+DbContext -> MySQL: INSERT account data
+MySQL --> DbContext: Insert result
+DbContext --> AuthAccountRepository: Save result
+AuthService -> IAuthAccountRepository: FindByPhoneAsync(phone)
+IAuthAccountRepository -> AuthAccountRepository: FindByPhoneAsync(phone)
+AuthAccountRepository -> DbContext: Reload created account
+DbContext -> MySQL: SELECT created user account
+MySQL --> DbContext: Created user row
+DbContext -> UserEntity: Materialize created User
+DbContext -> UserAuthEntity: Materialize created UserAuth
+DbContext -> UserProfileEntity: Materialize created UserProfile
+DbContext -> UserLearningProfileEntity: Materialize created UserLearningProfile?
+UserEntity --> DbContext: User
+UserAuthEntity --> DbContext: UserAuth
+UserProfileEntity --> DbContext: UserProfile
+UserLearningProfileEntity --> DbContext: UserLearningProfile?
+DbContext --> AuthAccountRepository: Result
+AuthAccountRepository --> AuthService: Created account
+AuthService -> IAuthAccountRepository: Mark OTP used
+IAuthAccountRepository -> AuthAccountRepository: Mark OTP used
+AuthAccountRepository -> OtpEntity: Set UsedAt
+OtpEntity --> AuthAccountRepository: OtpVerification updated
+AuthAccountRepository -> DbContext: Track OTP used
+DbContext -> MySQL: UPDATE otp_verifications
+MySQL --> DbContext: Update result
+DbContext --> AuthAccountRepository: Save result
+AuthService -> IAuthAccountRepository: Create refresh token
+IAuthAccountRepository -> AuthAccountRepository: Create refresh token
+AuthAccountRepository -> RefreshTokenEntity: Create RefreshToken
+RefreshTokenEntity --> AuthAccountRepository: RefreshToken
+AuthAccountRepository -> DbContext: Add RefreshToken
+DbContext -> MySQL: INSERT refresh_tokens
+MySQL --> DbContext: Insert result
+DbContext --> AuthAccountRepository: Save result
+AuthService --> AuthController: Return register result
+AuthController -> RegisterResponseDto: Create response data(access_token, refresh_token,\nexpires_in, token_type)
+AuthController -> FeTokensDto: HTTP 201 Created\nTokenResponse JSON
+FeTokensDto --> RegisterScreen: AuthTokens
+RegisterScreen --> Guest: Show success message
+end
+end
+end
+end
+end
+@enduml

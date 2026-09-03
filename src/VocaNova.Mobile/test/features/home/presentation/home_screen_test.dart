@@ -5,7 +5,7 @@ import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/app/theme/app_theme.dart';
 import 'package:vocanova_mobile/features/auth/application/auth_notifier.dart';
 import 'package:vocanova_mobile/features/home/application/home_topics_provider.dart';
-import 'package:vocanova_mobile/features/home/domain/personal_topic_recommendation.dart';
+import 'package:vocanova_mobile/features/home/domain/models/personal_topic_recommendation.dart';
 import 'package:vocanova_mobile/features/home/presentation/home_screen.dart';
 import 'package:vocanova_mobile/features/lists/application/lists_notifier.dart';
 import 'package:vocanova_mobile/features/notifications/application/notifications_notifier.dart';

@@ -1,0 +1,167 @@
+@startuml
+title Review Incorrect Vocabulary Class Diagram (/api/quiz/wrong-words)
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from mobile-review-incorrect-vocabulary-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+
+class WrongWordsNotifier <<service>> {
+  "+ remove() : FutureOfbool"
+}
+
+class QuizApiService <<service>> {
+  "+ _dio : Dio"
+  --
+  "+ getWrongWords() : FutureOfWrongWordsPage"
+  "+ removeWrongWord() : FutureOfvoid"
+}
+
+class WrongWordDto <<dto>> {
+  "+ wordId : int"
+  "+ word : String"
+  "+ primaryMeaning : StringNullable"
+  "+ testCount : int"
+  "+ correctCount : int"
+  "+ wrongCount : int"
+  "+ masteryLevel : int"
+}
+
+class WrongWordsRequest <<dto>> {
+  "+ Page : int"
+  "+ Limit : int"
+}
+
+class WrongWordResponse <<dto>> {
+  "+ WordId : uint"
+  "+ Word : string"
+  "+ PrimaryMeaning : stringNullable"
+  "+ TestCount : int"
+  "+ CorrectCount : int"
+  "+ WrongCount : int"
+  "+ MasteryLevel : int"
+  "+ LastWrongAt : DateTimeNullable"
+  "+ NextReviewAt : DateTimeNullable"
+}
+
+class QuizSessionsController <<backend_controller>> {
+  "- _sessionService : IQuizSessionService"
+  "- _submissionService : IQuizSubmissionService"
+  "- _resultService : IQuizResultService"
+  "- _historyService : IQuizHistoryService"
+  --
+  "+ GetWrongWords(request: WrongWordsRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ ClearWrongWord(wordId: uint, cancellationToken: CancellationToken) : TaskOfIActionResult"
+}
+
+class IQuizHistoryService <<service_interface>> {
+  "+ GetHistoryAsync(userId: uint, query: QuizHistoryQuery, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfPagedCollectionOfQuizHistoryItem"
+  "+ GetWrongWordsAsync(userId: uint, query: WrongWordsQuery, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfPagedCollectionOfWrongWord"
+  "+ ClearWrongWordAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfbool"
+}
+
+class QuizHistoryService <<service>> {
+  "- _repository : IQuizHistoryRepository"
+  --
+  "+ GetWrongWordsAsync(userId: uint, query: WrongWordsQuery, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfPagedCollectionOfWrongWord"
+  "+ ClearWrongWordAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfbool"
+}
+
+class UserWordProgress <<entity>> {
+  "+ ProgressId : uint"
+  "+ UserId : uint"
+  "+ WordId : uint"
+  "+ TestCount : int"
+  "+ CorrectCount : int"
+  "+ WrongCount : int"
+  "+ ConsecutiveCorrect : int"
+  "+ IsInWrongList : bool"
+  "+ MasteryLevel : int"
+  "+ SrsInterval : int"
+  "+ EaseFactor : float"
+  "+ LastTestedAt : DateTimeNullable"
+}
+
+class Word <<entity>> {
+  "+ WordId : uint"
+  "+ Word1 : string"
+  "+ WordKey : string"
+  "+ CefrLevel : stringNullable"
+  "+ PhoneticUk : stringNullable"
+  "+ PhoneticUs : stringNullable"
+  "+ ImageUrl : stringNullable"
+  "+ IsPhrase : bool"
+  "+ Status : string"
+  "+ CreatedAt : DateTime"
+  "+ UpdatedAt : DateTime"
+  "+ AiGradingCaches : ICollectionOfAiGradingCache"
+}
+
+class WordSense <<entity>> {
+  "+ SenseId : uint"
+  "+ WordId : uint"
+  "+ SenseOrder : int"
+  "+ WordClass : string"
+  "+ EnglishDefinition : string"
+  "+ VietnameseMeaning : stringNullable"
+  "+ Status : string"
+  "+ TestAnswers : ICollectionOfTestAnswer"
+  "+ Word : Word"
+  "+ WordExamples : ICollectionOfWordExample"
+  "+ WordRelations : ICollectionOfWordRelation"
+}
+
+class IQuizHistoryRepository <<repository_interface>> {
+  "+ GetHistoryAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfQuizHistoryItem"
+  "+ GetWrongWordsAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfWrongWord"
+  "+ ClearWrongWordAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfbool"
+}
+
+class QuizHistoryRepository <<repository>> {
+  "- _dbContext : VocaNovaDbContext"
+  --
+  "+ GetWrongWordsAsync(userId: uint, page: int, limit: int, cancellationToken: CancellationToken) : TaskOfPagedCollectionOfWrongWord"
+  "+ ClearWrongWordAsync(userId: uint, wordId: uint, cancellationToken: CancellationToken) : TaskOfBool"
+}
+
+class VocaNovaDbContext <<dbcontext>> {
+  "+ AgeRanges : DbSetOfAgeRange"
+  "+ AiGradingCaches : DbSetOfAiGradingCache"
+  "+ AuditLogs : DbSetOfAuditLog"
+  "+ EducationLevels : DbSetOfEducationLevel"
+  "+ LearningPurposes : DbSetOfLearningPurpose"
+  "+ Occupations : DbSetOfOccupation"
+  "+ OtpVerifications : DbSetOfOtpVerification"
+  "+ RefreshTokens : DbSetOfRefreshToken"
+  "+ Regions : DbSetOfRegion"
+  "+ Roles : DbSetOfRole"
+  "+ TestAnswers : DbSetOfTestAnswer"
+  "+ TestSessions : DbSetOfTestSession"
+  --
+  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
+}
+
+class MySQL_Database <<database>> {
+
+}
+WrongWordsNotifier ..> QuizApiService : getWrongWords()
+QuizApiService ..> QuizSessionsController
+QuizSessionsController ..> WrongWordsRequest
+QuizHistoryRepository ..> VocaNovaDbContext
+VocaNovaDbContext ..> MySQL_Database
+QuizSessionsController ..> WrongWordResponse
+QuizApiService ..> WrongWordDto
+WrongWordsNotifier ..> QuizApiService : removeWrongWord()
+QuizHistoryRepository ..> UserWordProgress
+WrongWordsRequest ..> QuizSessionsController
+IQuizHistoryService <|.. QuizHistoryService
+QuizSessionsController ..> IQuizHistoryService : GetWrongWordsAsync()
+IQuizHistoryRepository <|.. QuizHistoryRepository
+QuizHistoryService ..> IQuizHistoryRepository : GetWrongWordsAsync()
+QuizHistoryRepository ..> Word
+QuizHistoryRepository ..> WordSense
+@enduml

@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
+using VocaNova.API.Common.Abstractions.Configuration;
 using VocaNova.API.Infrastructure.Caching;
 
 namespace VocaNova.API.Infrastructure.Configuration;

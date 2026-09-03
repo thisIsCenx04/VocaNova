@@ -14,7 +14,7 @@ class WrongWordsNotifier extends _$WrongWordsNotifier {
   Future<void> load() async {
     try {
       final result = await ref
-          .read(quizRepositoryProvider)
+          .read(quizApiServiceProvider)
           .getWrongWords(page: 1);
       state = WrongWordsState(
         words: result.items,
@@ -38,7 +38,7 @@ class WrongWordsNotifier extends _$WrongWordsNotifier {
     state = state.copyWith(isLoadingMore: true, clearError: true);
     try {
       final result = await ref
-          .read(quizRepositoryProvider)
+          .read(quizApiServiceProvider)
           .getWrongWords(page: state.page + 1);
       state = state.copyWith(
         words: [...state.words, ...result.items],
@@ -63,7 +63,7 @@ class WrongWordsNotifier extends _$WrongWordsNotifier {
       clearError: true,
     );
     try {
-      await ref.read(quizRepositoryProvider).removeWrongWord(wordId);
+      await ref.read(quizApiServiceProvider).removeWrongWord(wordId);
       return true;
     } catch (_) {
       state = state.copyWith(

@@ -1,0 +1,30 @@
+@startuml
+title Change Language Class Diagram (Mobile local settings)
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+hide empty methods
+hide empty fields
+note top
+Generated from mobile-change-language-sequence.puml.
+Classes and members are populated from current repository source when a matching code type exists.
+end note
+
+class AppSettingsNotifier <<service>> {
+  "+ _storage : LocalStorage"
+  --
+  "+ load() : FutureOfvoid"
+  "+ setLocale() : FutureOfvoid"
+  "+ setThemeMode() : FutureOfvoid"
+  "+ setDailyReminder() : FutureOfvoid"
+}
+
+class LocalStorage <<service>> {
+  "+ _preferences : FutureOfSharedPreferences"
+  "+ _clock : Clock"
+  --
+  "+ remove() : FutureOfvoid"
+  "+ clearAll() : FutureOfvoid"
+}
+AppSettingsNotifier ..> LocalStorage
+@enduml

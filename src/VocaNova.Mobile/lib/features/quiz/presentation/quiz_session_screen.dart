@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_session_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_session_state.dart';
-import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
+import 'package:vocanova_mobile/features/quiz/domain/models/quiz_config.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'typing_answer.dart';

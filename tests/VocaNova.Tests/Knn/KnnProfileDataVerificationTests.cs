@@ -5,9 +5,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.Knn;
-using VocaNova.API.Features.Knn.DTOs;
-using VocaNova.API.Features.Knn.Repositories;
+using VocaNova.API.Features.Knn.BLL.Models;
+using VocaNova.API.Features.Knn.Contracts.Requests;
+using VocaNova.API.Features.Knn.Contracts.Responses;
+using VocaNova.API.Features.Knn.BLL.Models;
+using VocaNova.API.Features.Knn.BLL.Abstractions;
+using VocaNova.API.Features.Knn.DAL.Repositories;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
 
@@ -28,8 +31,8 @@ public class KnnProfileDataVerificationTests
         AssertTable<UserLearningProfile>(dbContext, "user_learning_profiles");
         AssertTable<UserTopicPreference>(dbContext, "user_topic_preferences");
         AssertTable<TestAnswer>(dbContext, "test_answers");
-        AssertTable<WordTopic>(dbContext, "word_topics");
-        AssertTable<UserWordProgress>(dbContext, "user_word_progress");
+        AssertTable<EntityWordTopic>(dbContext, "word_topics");
+        AssertTable<EntityUserWordProgress>(dbContext, "user_word_progress");
         AssertTable<UserListWord>(dbContext, "user_list_words");
 
         AssertColumn<UserLearningProfile>(dbContext, "user_learning_profiles", nameof(UserLearningProfile.AgeRangeId), "age_range_id");
@@ -49,13 +52,13 @@ public class KnnProfileDataVerificationTests
         AssertColumn<TestAnswer>(dbContext, "test_answers", nameof(TestAnswer.SessionId), "session_id");
         AssertColumn<TestAnswer>(dbContext, "test_answers", nameof(TestAnswer.WordId), "word_id");
         AssertColumn<TestAnswer>(dbContext, "test_answers", nameof(TestAnswer.IsCorrect), "is_correct");
-        AssertColumn<WordTopic>(dbContext, "word_topics", nameof(WordTopic.WordId), "word_id");
-        AssertColumn<WordTopic>(dbContext, "word_topics", nameof(WordTopic.TopicId), "topic_id");
-        AssertColumn<UserWordProgress>(dbContext, "user_word_progress", nameof(UserWordProgress.UserId), "user_id");
-        AssertColumn<UserWordProgress>(dbContext, "user_word_progress", nameof(UserWordProgress.WordId), "word_id");
-        AssertColumn<UserWordProgress>(dbContext, "user_word_progress", nameof(UserWordProgress.MasteryLevel), "mastery_level");
-        AssertColumn<UserWordProgress>(dbContext, "user_word_progress", nameof(UserWordProgress.SrsInterval), "srs_interval");
-        AssertColumn<UserWordProgress>(dbContext, "user_word_progress", nameof(UserWordProgress.EaseFactor), "ease_factor");
+        AssertColumn<EntityWordTopic>(dbContext, "word_topics", nameof(EntityWordTopic.WordId), "word_id");
+        AssertColumn<EntityWordTopic>(dbContext, "word_topics", nameof(EntityWordTopic.TopicId), "topic_id");
+        AssertColumn<EntityUserWordProgress>(dbContext, "user_word_progress", nameof(EntityUserWordProgress.UserId), "user_id");
+        AssertColumn<EntityUserWordProgress>(dbContext, "user_word_progress", nameof(EntityUserWordProgress.WordId), "word_id");
+        AssertColumn<EntityUserWordProgress>(dbContext, "user_word_progress", nameof(EntityUserWordProgress.MasteryLevel), "mastery_level");
+        AssertColumn<EntityUserWordProgress>(dbContext, "user_word_progress", nameof(EntityUserWordProgress.SrsInterval), "srs_interval");
+        AssertColumn<EntityUserWordProgress>(dbContext, "user_word_progress", nameof(EntityUserWordProgress.EaseFactor), "ease_factor");
         AssertColumn<UserListWord>(dbContext, "user_list_words", nameof(UserListWord.UserId), "user_id");
         AssertColumn<UserListWord>(dbContext, "user_list_words", nameof(UserListWord.ListId), "list_id");
         AssertColumn<UserListWord>(dbContext, "user_list_words", nameof(UserListWord.WordId), "word_id");

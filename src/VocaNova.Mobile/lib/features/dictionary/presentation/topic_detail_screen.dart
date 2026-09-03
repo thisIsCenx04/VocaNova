@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/theme/app_colors.dart';
 import 'package:vocanova_mobile/features/dictionary/application/word_search_notifier.dart';
-import 'package:vocanova_mobile/features/dictionary/domain/word_summary.dart';
+import 'package:vocanova_mobile/features/dictionary/domain/models/word_summary.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/add_to_list_sheet.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topic_display_name.dart';
 import 'package:vocanova_mobile/features/dictionary/presentation/topic_icon.dart';
@@ -37,10 +37,10 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
   }
 
   void _load() {
-    final repository = ref.read(wordSearchRepositoryProvider);
+    final apiService = ref.read(wordSearchApiServiceProvider);
     _words = widget.isPersonal
-        ? repository.getPersonalTopicWords(widget.topicId)
-        : repository.getTopicWords(widget.topicId);
+        ? apiService.getPersonalTopicWords(widget.topicId)
+        : apiService.getTopicWords(widget.topicId);
   }
 
   @override
@@ -167,7 +167,7 @@ class _TopicDetailScreenState extends ConsumerState<TopicDetailScreen> {
   Future<void> _removePersonalWord(int wordId) async {
     try {
       await ref
-          .read(wordSearchRepositoryProvider)
+          .read(wordSearchApiServiceProvider)
           .removePersonalTopicWord(topicId: widget.topicId, wordId: wordId);
       if (!mounted) return;
       setState(_load);

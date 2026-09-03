@@ -1,10 +1,17 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using VocaNova.API.Common.Constants;
-using VocaNova.API.Features.SuperAdmin.DTOs;
-using VocaNova.API.Features.SuperAdmin.Services;
+using VocaNova.API.Features.SuperAdmin.Contracts.Requests;
+using VocaNova.API.Features.SuperAdmin.Contracts.Responses;
+using VocaNova.API.Features.SuperAdmin.BLL.Models;
+using VocaNova.API.Features.SuperAdmin.BLL.Abstractions;
+using VocaNova.API.Features.SuperAdmin.BLL.Services;
+using VocaNova.API.Features.SuperAdmin.DAL.Repositories;
+using VocaNova.API.Features.SuperAdmin.Mappings;
 using VocaNova.API.Infrastructure.Persistence;
 using VocaNova.API.Infrastructure.Persistence.Entities;
+using VocaNova.API.Infrastructure.Persistence.Transactions;
 
 namespace VocaNova.Tests.SuperAdmin;
 
@@ -15,7 +22,7 @@ public sealed class RoleManagementFeatureTests
     {
         await using var db = CreateDbContext();
         await SeedAsync(db);
-        var service = new RoleManagementService(db);
+        var service = CreateService(db);
 
         var result = await service.GetRolesAsync(new RoleQuery());
 
@@ -29,9 +36,9 @@ public sealed class RoleManagementFeatureTests
     {
         await using var db = CreateDbContext();
         await SeedAsync(db);
-        var service = new RoleManagementService(db);
+        var service = CreateService(db);
 
-        var created = await service.CreateAsync(new SaveRoleRequest("support_agent"));
+        var created = await service.CreateAsync(new SaveRoleRequest("support_agent").ToModel());
         var assigned = await service.AssignRoleAsync(created.Value!.RoleId, 10);
 
         created.IsSuccess.Should().BeTrue();
@@ -44,8 +51,8 @@ public sealed class RoleManagementFeatureTests
     {
         await using var db = CreateDbContext();
         await SeedAsync(db);
-        var service = new RoleManagementService(db);
-        var custom = await service.CreateAsync(new SaveRoleRequest("support_agent"));
+        var service = CreateService(db);
+        var custom = await service.CreateAsync(new SaveRoleRequest("support_agent").ToModel());
         await service.AssignRoleAsync(custom.Value!.RoleId, 10);
 
         var systemResult = await service.DeleteAsync(1);
@@ -60,8 +67,8 @@ public sealed class RoleManagementFeatureTests
     {
         await using var db = CreateDbContext();
         await SeedAsync(db);
-        var service = new RoleManagementService(db);
-        var custom = await service.CreateAsync(new SaveRoleRequest("support_agent"));
+        var service = CreateService(db);
+        var custom = await service.CreateAsync(new SaveRoleRequest("support_agent").ToModel());
         await service.AssignRoleAsync(custom.Value!.RoleId, 10);
 
         var result = await service.RemoveRoleAsync(custom.Value.RoleId, 10);
@@ -75,7 +82,7 @@ public sealed class RoleManagementFeatureTests
     {
         await using var db = CreateDbContext();
         await SeedAsync(db);
-        var service = new RoleManagementService(db);
+        var service = CreateService(db);
 
         var promoted = await service.AssignRoleAsync(2, 10);
         var demoted = await service.AssignRoleAsync(1, 11);
@@ -91,7 +98,7 @@ public sealed class RoleManagementFeatureTests
     {
         await using var db = CreateDbContext();
         await SeedAsync(db);
-        var service = new RoleManagementService(db);
+        var service = CreateService(db);
 
         var result = await service.AssignRoleAsync(1, 12);
 
@@ -102,9 +109,16 @@ public sealed class RoleManagementFeatureTests
     private static VocaNovaDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<VocaNovaDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .Options;
         return new VocaNovaDbContext(options);
     }
+
+    private static RoleManagementService CreateService(VocaNovaDbContext dbContext) =>
+        new(
+            new RoleManagementRepository(dbContext),
+            new EfApplicationTransactionManager(dbContext));
 
     private static async Task SeedAsync(VocaNovaDbContext db)
     {
@@ -127,6 +141,6 @@ public sealed class RoleManagementFeatureTests
         CreatedAt = DateTime.UtcNow,
         UpdatedAt = DateTime.UtcNow,
         UserAuth = new UserAuth { UserId = id, GoogleEmail = $"{id}@example.com", UpdatedAt = DateTime.UtcNow },
-        UserProfile = new UserProfile { UserId = id, FullName = name, UpdatedAt = DateTime.UtcNow },
+        UserProfile = new EntityUserProfile { UserId = id, FullName = name, UpdatedAt = DateTime.UtcNow },
     };
 }

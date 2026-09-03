@@ -1,0 +1,97 @@
+@startuml
+title Create KNN Lookup Sequence (/knn/{slug}/save and /api/admin/knn/{slug})
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Create KNN UI" as CreateKnnUi
+control "KnnController\n(FE Dashboard)" as FeController
+control "AdminKnnController\n(BE API)" as BeController
+entity "AgeRange / Region /\nOccupation / EducationLevel /\nLearningPurpose\n(FE Response DTO)" as FeLookupDto
+entity "CreateAgeRangeRequest / CreateRegionRequest /\nCreateOccupationRequest / CreateEducationLevelRequest /\nCreateLearningPurposeRequest\n(BE Request DTO)" as BeCreateDto
+entity "AgeRangeResponse / RegionResponse /\nOccupationResponse / EducationLevelResponse /\nLearningPurposeResponse\n(BE Response DTO)" as BeLookupResponseDto
+control "IAdminKnnLookupService" as IAdminKnnLookupService
+control "AdminKnnLookupService" as LookupService
+entity "AgeRange" as AgeRangeEntity
+entity "Region" as RegionEntity
+entity "Occupation" as OccupationEntity
+entity "EducationLevel" as EducationLevelEntity
+entity "LearningPurpose" as LearningPurposeEntity
+control "IAdminKnnLookupRepository" as IAdminKnnLookupRepository
+control "AdminKnnLookupRepository" as LookupRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over CreateKnnUi, MySQL
+Checked in current code:
+Dashboard UI file exists: Views/Knn/Lookup.cshtml.
+FE controller exists: KnnController.
+FE response DTOs exist: AgeRange, Region, Occupation, EducationLevel and LearningPurpose.
+BE controller exists: AdminKnnController.
+BE create request DTOs and response DTOs exist for each KNN lookup type.
+Create KNN means creating one lookup row under age-ranges, regions, occupations,
+education-levels or learning-purposes.
+Entities exist: AgeRange, Region, Occupation, EducationLevel and LearningPurpose.
+Interfaces used in code: IAdminKnnLookupService, IAdminKnnLookupRepository.
+end note
+
+Admin -> CreateKnnUi: Enter lookup fields
+Admin -> CreateKnnUi: Save new lookup item
+CreateKnnUi -> FeController: POST /knn/{slug}/save\nid = 0, form data
+FeController -> FeController: Validate slug\nand build payload
+FeController -> BeController: VocaNovaApiClient.CreateKnnLookupAsync\nPOST /api/admin/knn/{slug}
+BeController -> BeCreateDto: Bind request body\nby slug
+BeCreateDto --> BeController: Create lookup request
+BeController -> BeController: Check admin authorization
+BeController -> BeController: Validate create request
+
+alt Request invalid
+    BeController --> FeController: HTTP 400 error
+    FeController --> CreateKnnUi: Show error message
+else Request valid
+    BeController -> IAdminKnnLookupService: Create{LookupType}Async(command)
+    IAdminKnnLookupService -> LookupService: Create{LookupType}Async(command)
+    LookupService -> IAdminKnnLookupService: Normalize and validate fields
+    IAdminKnnLookupService -> LookupService: Normalize and validate fields
+    LookupService -> IAdminKnnLookupRepository: Check duplicate name/code
+    IAdminKnnLookupRepository -> LookupRepository: Check duplicate name/code
+    LookupRepository -> DbContext: Query lookup table
+    DbContext -> MySQL: SELECT age_ranges / regions /\noccupations / education_levels /\nlearning_purposes
+    MySQL --> DbContext: Duplicate row or null
+    DbContext --> LookupRepository: Duplicate check result
+    LookupRepository --> LookupService: exists or not
+
+    alt Duplicate or invalid parent
+        LookupService --> BeController: Conflict or validation failure
+        BeController --> FeController: HTTP 400/409 error
+        FeController --> CreateKnnUi: Show error message
+    else Lookup item can be created
+        LookupService -> IAdminKnnLookupRepository: Create lookup row
+        IAdminKnnLookupRepository -> LookupRepository: Create lookup row
+        LookupRepository -> AgeRangeEntity: Create AgeRange if slug age-ranges
+        LookupRepository -> RegionEntity: Create Region if slug regions
+        LookupRepository -> OccupationEntity: Create Occupation if slug occupations
+        LookupRepository -> EducationLevelEntity: Create EducationLevel if slug education-levels
+        LookupRepository -> LearningPurposeEntity: Create LearningPurpose if slug learning-purposes
+        AgeRangeEntity --> LookupRepository: AgeRange?
+        RegionEntity --> LookupRepository: Region?
+        OccupationEntity --> LookupRepository: Occupation?
+        EducationLevelEntity --> LookupRepository: EducationLevel?
+        LearningPurposeEntity --> LookupRepository: LearningPurpose?
+        LookupRepository -> DbContext: Add lookup entity
+        DbContext -> MySQL: INSERT lookup table
+        MySQL --> DbContext: Insert result
+        DbContext --> LookupRepository: Saved lookup
+        LookupRepository --> LookupService: Created lookup item
+        LookupService --> BeController: Created lookup result
+        BeController -> BeLookupResponseDto: Create lookup response
+        BeLookupResponseDto --> BeController: Lookup response
+        BeController -> FeLookupDto: HTTP 201 Created\nlookup response JSON
+        FeLookupDto --> FeController: Lookup DTO
+        FeController --> CreateKnnUi: Show created feedback
+    end
+end
+
+@enduml

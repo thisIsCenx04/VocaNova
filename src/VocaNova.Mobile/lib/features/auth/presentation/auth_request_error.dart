@@ -13,6 +13,8 @@ String authRequestError(Object error) {
   if (error is FormatException) {
     return error.message;
   }
-  final l10n = lookupAppLocalizations(AppSettingsNotifier.instance.state.locale);
+  final l10n = lookupAppLocalizations(
+    AppSettingsNotifier.instance.state.locale,
+  );
   return l10n.authGenericError;
 }

@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using VocaNova.Dashboard.Models.Api.Stats;
+using VocaNova.Dashboard.Data.Dtos.Stats;
 using VocaNova.Dashboard.Models.Dashboard;
 using VocaNova.Dashboard.Services.Api;
 

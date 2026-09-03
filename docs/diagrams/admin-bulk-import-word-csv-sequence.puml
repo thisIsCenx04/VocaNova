@@ -1,0 +1,96 @@
+@startuml
+title Bulk Import Word CSV Sequence (/vocabulary/import and /api/admin/words/import)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Admin
+boundary "Bulk Import Word CSV UI" as ImportUi
+control "VocabularyController\n(FE Dashboard)" as FeController
+control "AdminWordsController\n(BE API)" as BeController
+entity "BulkImportResult\n(FE Response DTO)" as FeBulkImportDto
+entity "ImportWordsRequest\n(BE Request DTO)" as BeImportRequestDto
+entity "BulkImportResponse\n(BE Response DTO)" as BeBulkImportDto
+entity "BulkImportErrorResponse\n(BE Response DTO)" as BeBulkImportErrorDto
+control "IWordAdminService" as IWordAdminService
+control "WordAdminService" as WordService
+entity "Word" as WordEntity
+entity "WordSense" as WordSenseEntity
+entity "WordExample" as WordExampleEntity
+entity "Topic" as TopicEntity
+entity "WordTopic" as WordTopicEntity
+control "IWordAdminRepository" as IWordAdminRepository
+control "WordAdminRepository" as WordRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over ImportUi, MySQL
+Checked in current code:
+Dashboard UI file exists: Views/Vocabulary/Import.cshtml.
+FE controller exists: VocabularyController.
+FE response DTO exists: BulkImportResult with BulkImportError.
+BE controller exists: AdminWordsController.
+BE DTOs exist: ImportWordsRequest, BulkImportResponse and BulkImportErrorResponse.
+Endpoint is POST /api/admin/words/import with multipart CSV file.
+Entities exist: Word, WordSense, WordExample, Topic and WordTopic.
+Interfaces used in code: IWordAdminService, IWordAdminRepository.
+end note
+
+Admin -> ImportUi: Choose CSV file
+Admin -> ImportUi: Upload CSV
+ImportUi -> FeController: POST /vocabulary/import\nIFormFile
+FeController -> FeController: Validate file exists
+
+alt No CSV selected
+    FeController --> ImportUi: Return JSON error
+else CSV selected
+    FeController -> BeController: VocaNovaApiClient.ImportWordsAsync\nPOST /api/admin/words/import
+    BeController -> BeImportRequestDto: Bind multipart form
+    BeImportRequestDto --> BeController: ImportWordsRequest
+    BeController -> BeController: Check admin authorization
+    BeController -> IWordAdminService: ImportCsvAsync(uploaded content)
+    IWordAdminService -> WordService: ImportCsvAsync(uploaded content)
+    WordService -> IWordAdminService: Validate CSV file,\nheader and rows
+    IWordAdminService -> WordService: Validate CSV file,\nheader and rows
+
+    alt CSV invalid
+        WordService --> BeController: Validation failure
+        BeController --> FeController: HTTP 400 error
+        FeController --> ImportUi: Show import error
+    else CSV valid
+        loop For each CSV row
+            WordService -> IWordAdminRepository: Find or create word data
+            IWordAdminRepository -> WordRepository: Find or create word data
+            WordRepository -> DbContext: Query existing word\nand topics
+            DbContext -> MySQL: SELECT words,\nSELECT topics
+            MySQL --> DbContext: Existing rows
+            DbContext -> WordEntity: Read or create Word
+            DbContext -> TopicEntity: Read Topic rows
+            WordEntity --> DbContext: Word data
+            TopicEntity --> DbContext: Topic data
+            WordRepository -> WordSenseEntity: Create or update WordSense
+            WordRepository -> WordExampleEntity: Create WordExample?
+            WordRepository -> WordTopicEntity: Create WordTopic links?
+            WordSenseEntity --> WordRepository: WordSense
+            WordExampleEntity --> WordRepository: WordExample?
+            WordTopicEntity --> WordRepository: WordTopic links?
+            WordRepository -> DbContext: Save imported row
+            DbContext -> MySQL: INSERT/UPDATE words,\nword_senses, word_examples,\nword_topics
+            MySQL --> DbContext: Save result
+            DbContext --> WordRepository: Row result
+            WordRepository --> WordService: Imported or skipped row
+        end
+
+        WordService --> BeController: Bulk import result
+        BeController -> BeBulkImportDto: Create BulkImportResponse
+        BeController -> BeBulkImportErrorDto: Create error list
+        BeBulkImportErrorDto --> BeBulkImportDto: Errors
+        BeBulkImportDto --> BeController: BulkImportResponse
+        BeController -> FeBulkImportDto: HTTP 200 OK\nBulkImportResponse JSON
+        FeBulkImportDto --> FeController: BulkImportResult
+        FeController --> ImportUi: Show imported/skipped/errors
+    end
+end
+
+@enduml

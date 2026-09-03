@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using VocaNova.API.Common.Extensions;
-using VocaNova.API.Common.Results;
-using VocaNova.API.Features.Knn.DTOs;
-using VocaNova.API.Features.Knn.Services;
+using VocaNova.API.Common.Responses;
+using VocaNova.API.Features.Knn.BLL.Models;
+using VocaNova.API.Features.Knn.BLL.Services;
+using VocaNova.API.Features.Knn.Contracts.Requests;
+using VocaNova.API.Features.Knn.Mappings;
+using VocaNova.API.Features.Knn.BLL.Services.IServices;
 
 namespace VocaNova.API.Features.Knn.Controllers;
 
@@ -24,78 +26,47 @@ public sealed class RecommendationsController : ControllerBase
     }
 
     [HttpGet("topics")]
-    public async Task<IActionResult> GetTopics(
-        [FromQuery] int? limit,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> GetTopics([FromQuery] int? limit, CancellationToken cancellationToken)
     {
-        if (!TryGetCurrentUserId(out var userId))
-        {
-            return this.ErrorResult(Result<IReadOnlyCollection<TopicRecommendationDto>>.Unauthorized("Unauthorized."));
-        }
-
+        if (!TryGetCurrentUserId(out var userId)) return UnauthorizedResponse();
         var result = await _knnOnboardingService.RecommendTopicsAsync(userId, limit, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Topic recommendations loaded successfully.");
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(result.Value!.ToResponse(), "Topic recommendations loaded successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpGet("words")]
-    public async Task<IActionResult> GetWords(
-        [FromQuery] int? limit,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> GetWords([FromQuery] int? limit, CancellationToken cancellationToken)
     {
-        if (!TryGetCurrentUserId(out var userId))
-        {
-            return this.ErrorResult(Result<IReadOnlyCollection<WordRecommendationDto>>.Unauthorized("Unauthorized."));
-        }
-
+        if (!TryGetCurrentUserId(out var userId)) return UnauthorizedResponse();
         var result = await _knnLearningService.GetWordRecommendationsAsync(userId, limit, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Word recommendations loaded successfully.");
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(result.Value!.ToResponse(), "Word recommendations loaded successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpGet("personal-topics")]
-    public async Task<IActionResult> GetPersonalTopics(
-        [FromQuery] int? limit,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPersonalTopics([FromQuery] int? limit, CancellationToken cancellationToken)
     {
-        if (!TryGetCurrentUserId(out var userId))
-        {
-            return this.ErrorResult(
-                Result<IReadOnlyCollection<PersonalTopicRecommendationDto>>.Unauthorized("Unauthorized."));
-        }
-
-        var result = await _knnOnboardingService.RecommendPersonalTopicsAsync(
-            userId,
-            limit,
-            cancellationToken);
+        if (!TryGetCurrentUserId(out var userId)) return UnauthorizedResponse();
+        var result = await _knnOnboardingService.RecommendPersonalTopicsAsync(userId, limit, cancellationToken);
         return result.IsSuccess
-            ? this.OkResult(result.Value!, "Personal topic recommendations loaded successfully.")
-            : this.ErrorResult(result);
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "Personal topic recommendations loaded successfully."))
+            : ErrorResponse(result);
     }
 
-    /// <summary>
-    /// Lookup catalog for the sign-up form and the onboarding questions. Anonymous because the
-    /// sign-up form has to render it before an account exists.
-    /// </summary>
     [AllowAnonymous]
     [HttpGet("learning-profile-options")]
     public async Task<IActionResult> GetLearningProfileOptions(CancellationToken cancellationToken)
     {
         var result = await _knnOnboardingService.GetLearningProfileOptionsAsync(cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value!, "Learning profile options loaded successfully.");
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.ToResponse(),
+                "Learning profile options loaded successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpPut("topics/selection")]
@@ -103,45 +74,42 @@ public sealed class RecommendationsController : ControllerBase
         [FromBody] SelectOnboardingTopicsRequest request,
         CancellationToken cancellationToken)
     {
-        if (!TryGetCurrentUserId(out var userId))
-        {
-            return this.ErrorResult(Result<int>.Unauthorized("Unauthorized."));
-        }
-
+        if (!TryGetCurrentUserId(out var userId)) return UnauthorizedResponse();
         var result = await _knnOnboardingService.SelectTopicsAsync(
             userId,
             request.TopicIds ?? Array.Empty<uint>(),
             cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value, "Onboarding topics saved successfully.");
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(result.Value, "Onboarding topics saved successfully."))
+            : ErrorResponse(result);
     }
 
     [HttpPost("topics/{topicId:uint}/accept")]
-    public async Task<IActionResult> AcceptTopic(
-        [FromRoute] uint topicId,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> AcceptTopic([FromRoute] uint topicId, CancellationToken cancellationToken)
     {
-        if (!TryGetCurrentUserId(out var userId))
-        {
-            return this.ErrorResult(Result<bool>.Unauthorized("Unauthorized."));
-        }
-
+        if (!TryGetCurrentUserId(out var userId)) return UnauthorizedResponse();
         var result = await _knnOnboardingService.AcceptTopicAsync(userId, topicId, cancellationToken);
-        if (!result.IsSuccess)
-        {
-            return this.ErrorResult(result);
-        }
-
-        return this.OkResult(result.Value, "Topic recommendation accepted successfully.");
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(result.Value, "Topic recommendation accepted successfully."))
+            : ErrorResponse(result);
     }
 
-    private bool TryGetCurrentUserId(out uint userId)
+    private bool TryGetCurrentUserId(out uint userId) =>
+        uint.TryParse(User.FindFirst("user_id")?.Value, out userId);
+
+    private ObjectResult UnauthorizedResponse() =>
+        StatusCode(StatusCodes.Status401Unauthorized, ApiResponseFormatter.Error("Unauthorized.", ["Unauthorized."]));
+
+    private ObjectResult ErrorResponse<T>(KnnOperationResult<T> result)
     {
-        var userIdClaim = User.FindFirst("user_id")?.Value;
-        return uint.TryParse(userIdClaim, out userId);
+        var status = result.ErrorKind switch
+        {
+            KnnErrorKind.Unauthorized => StatusCodes.Status401Unauthorized,
+            KnnErrorKind.NotFound => StatusCodes.Status404NotFound,
+            KnnErrorKind.Conflict => StatusCodes.Status409Conflict,
+            KnnErrorKind.TooManyRequests => StatusCodes.Status429TooManyRequests,
+            _ => StatusCodes.Status400BadRequest,
+        };
+        return StatusCode(status, ApiResponseFormatter.Error(result.Error!, [result.Error!]));
     }
 }

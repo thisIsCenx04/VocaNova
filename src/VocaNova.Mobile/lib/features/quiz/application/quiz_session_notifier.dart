@@ -6,7 +6,7 @@ import 'package:vocanova_mobile/app/settings/app_settings_notifier.dart';
 import 'package:vocanova_mobile/core/network/app_exception.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_session_state.dart';
-import 'package:vocanova_mobile/features/quiz/domain/quiz_config.dart';
+import 'package:vocanova_mobile/features/quiz/domain/models/quiz_config.dart';
 import 'package:vocanova_mobile/l10n/gen/app_localizations.dart';
 
 part 'quiz_session_notifier.g.dart';
@@ -39,7 +39,7 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
     );
     try {
       final result = await ref
-          .read(quizRepositoryProvider)
+          .read(quizApiServiceProvider)
           .submitAnswer(
             sessionId: session.sessionId,
             wordId: state.question.wordId,
@@ -64,10 +64,7 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
     } catch (error) {
       state = state.copyWith(
         isSubmitting: false,
-        errorMessage: _errorMessage(
-          error,
-          _l10n.quizSessionSubmitError,
-        ),
+        errorMessage: _errorMessage(error, _l10n.quizSessionSubmitError),
       );
     }
   }
@@ -106,16 +103,13 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
     _timer?.cancel();
     state = state.copyWith(isFinishing: true, clearError: true);
     try {
-      await ref.read(quizRepositoryProvider).finishSession(session.sessionId);
+      await ref.read(quizApiServiceProvider).finishSession(session.sessionId);
       state = state.copyWith(isFinishing: false, isFinished: true);
       return true;
     } catch (error) {
       state = state.copyWith(
         isFinishing: false,
-        errorMessage: _errorMessage(
-          error,
-          _l10n.quizSessionFinishError,
-        ),
+        errorMessage: _errorMessage(error, _l10n.quizSessionFinishError),
       );
       return false;
     }

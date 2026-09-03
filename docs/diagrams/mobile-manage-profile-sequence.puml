@@ -1,0 +1,87 @@
+@startuml
+title Manage Profile Sequence (/api/auth/me)
+
+autonumber
+skinparam responseMessageBelowArrow true
+skinparam sequenceMessageAlign center
+
+actor Learner
+boundary "Manage Profile UI" as ProfileUi
+control "AuthNotifier\n(FE Mobile)" as FeController
+control "AuthApiService\n(FE Mobile)" as FeApiService
+entity "UserProfileDto\n(FE Response DTO)" as FeProfileDto
+entity "UserProfileResponse\n(BE Response DTO)" as BeProfileDto
+control "AuthController\n(BE API)" as BeController
+control "IAuthService" as IAuthService
+control "AuthService" as AuthService
+entity "User" as UserEntity
+entity "UserAuth" as UserAuthEntity
+entity "UserProfile" as UserProfileEntity
+entity "Role" as RoleEntity
+entity "UserLearningProfile" as LearningProfileEntity
+control "IAuthAccountRepository" as IAuthAccountRepository
+control "AuthAccountRepository" as AccountRepository
+database "VocaNovaDbContext" as DbContext
+database "MySQL Database" as MySQL
+
+note over ProfileUi, MySQL
+Checked in current code:
+Mobile UI file exists: profile_screen.dart.
+FE controller/service exist: AuthNotifier and AuthApiService.
+FE response DTO exists: UserProfileDto.
+BE controller exists: AuthController.
+BE response DTO exists: UserProfileResponse.
+Endpoint is GET /api/auth/me; no request DTO body is used.
+Entities exist: User, UserAuth, UserProfile, Role and UserLearningProfile.
+Interfaces used in code: IAuthService, IAuthAccountRepository.
+end note
+
+Learner -> ProfileUi: Open profile
+ProfileUi -> FeController: loadCurrentUser()
+FeController -> FeApiService: getCurrentUser()
+FeApiService -> BeController: GET /api/auth/me
+BeController -> BeController: Check authenticated user
+
+alt User id missing
+    BeController --> FeApiService: HTTP 401 error
+    FeApiService --> FeController: Action failed
+    FeController --> ProfileUi: Show profile error
+else User authenticated
+    BeController -> IAuthService: GetProfileAsync(userId)
+    IAuthService -> AuthService: GetProfileAsync(userId)
+    AuthService -> IAuthAccountRepository: GetProfileAsync(userId)
+    IAuthAccountRepository -> AccountRepository: GetProfileAsync(userId)
+    AccountRepository -> DbContext: Query user aggregate
+    DbContext -> MySQL: SELECT users with auth,\nprofile, role and learning profile
+    MySQL --> DbContext: User profile rows or null
+    DbContext -> UserEntity: Read User
+    DbContext -> UserAuthEntity: Read UserAuth
+    DbContext -> UserProfileEntity: Read UserProfile
+    DbContext -> RoleEntity: Read Role
+    DbContext -> LearningProfileEntity: Read UserLearningProfile?
+    UserEntity --> DbContext: User
+    UserAuthEntity --> DbContext: Auth data
+    UserProfileEntity --> DbContext: Profile data
+    RoleEntity --> DbContext: Role data
+    LearningProfileEntity --> DbContext: Learning profile or null
+    DbContext --> AccountRepository: User profile aggregate
+    AccountRepository --> AuthService: User profile or null
+
+    alt Profile not found or deleted
+        AuthService --> BeController: NotFound result
+        BeController --> FeApiService: HTTP 404 error
+        FeApiService --> FeController: Action failed
+        FeController --> ProfileUi: Show profile error
+    else Profile found
+        AuthService --> BeController: Profile result
+        BeController -> BeProfileDto: Create UserProfileResponse
+        BeProfileDto --> BeController: UserProfileResponse
+        BeController --> FeApiService: HTTP 200 OK\nUserProfileResponse
+        FeApiService -> FeProfileDto: Parse response data
+        FeProfileDto --> FeApiService: UserProfile
+        FeApiService --> FeController: UserProfile
+        FeController --> ProfileUi: Show profile
+    end
+end
+
+@enduml

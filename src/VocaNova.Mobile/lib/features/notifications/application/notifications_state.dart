@@ -1,4 +1,4 @@
-import 'package:vocanova_mobile/features/notifications/domain/app_notification.dart';
+import 'package:vocanova_mobile/features/notifications/domain/models/app_notification.dart';
 
 class NotificationsState {
   const NotificationsState({
