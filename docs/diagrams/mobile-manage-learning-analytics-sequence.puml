@@ -7,11 +7,7 @@ skinparam sequenceMessageAlign center
 
 actor Learner
 boundary "Learning Analytics UI" as LearningAnalyticsUi
-control "ProgressChartsNotifier\n(FE Mobile)" as FeController
-control "ProgressApiService\n(FE Mobile)" as FeApiService
-entity "ProgressChartDto\n(FE Response DTO)" as FeChartDto
-entity "MasteryBreakdownDto\n(FE Response DTO)" as FeMasteryDto
-entity "WeakestWordDto\n(FE Response DTO)" as FeWeakestWordDto
+control "ProgressChartsNotifier\n(FE Controller)" as FeController
 entity "ProgressChartRequest\n(BE Request DTO)" as BeChartRequestDto
 entity "WeakestWordsRequest\n(BE Request DTO)" as BeWeakestWordsRequestDto
 entity "ProgressChartResponse\n(BE Response DTO)" as BeChartResponseDto
@@ -33,8 +29,6 @@ database "MySQL Database" as MySQL
 note over LearningAnalyticsUi, MySQL
 Checked in current code:
 Mobile UI file exists: progress_charts_screen.dart.
-FE controller/service exist: ProgressChartsNotifier and ProgressApiService.
-FE response DTOs exist: ProgressChartDto, MasteryBreakdownDto and WeakestWordDto.
 BE controller exists: ProgressController.
 BE request DTOs exist: ProgressChartRequest and WeakestWordsRequest.
 BE response DTOs exist: ProgressChartResponse, MasteryBreakdownResponse and WeakestWordResponse.
@@ -45,21 +39,17 @@ end note
 
 Learner -> LearningAnalyticsUi: Open learning analytics
 LearningAnalyticsUi -> FeController: load()
-
-FeController -> FeApiService: getChart(granularity)
-FeApiService -> BeController: GET /api/progress/chart\ngranularity
+FeController -> BeController: GET /api/progress/chart\ngranularity, from?, to?
 BeController -> BeChartRequestDto: Bind query string
 BeChartRequestDto --> BeController: ProgressChartRequest
 BeController -> BeController: Check authenticated user
 BeController -> IProgressAnalyticsService: GetChartAsync(userId, query)
 IProgressAnalyticsService -> AnalyticsService: GetChartAsync(userId, query)
-AnalyticsService -> IProgressAnalyticsService: Validate granularity\nand build periods
-IProgressAnalyticsService -> AnalyticsService: Validate granularity\nand build periods
+AnalyticsService -> AnalyticsService: Validate granularity\nand build periods
 
 alt Granularity invalid
     AnalyticsService --> BeController: Validation failure
-    BeController --> FeApiService: HTTP 400 error
-    FeApiService --> FeController: Action failed
+    BeController --> FeController: HTTP 400 error
     FeController --> LearningAnalyticsUi: Show analytics error
 else Granularity valid
     AnalyticsService -> IProgressAnalyticsRepository: GetSessionTimesAsync(userId, window)
@@ -82,19 +72,14 @@ else Granularity valid
     TestSessionEntity --> DbContext: Session scope
     DbContext --> AnalyticsRepository: Answer statistics
     AnalyticsRepository --> AnalyticsService: Chart source rows
-    AnalyticsService -> IProgressAnalyticsService: Build chart points
-    IProgressAnalyticsService -> AnalyticsService: Build chart points
+    AnalyticsService -> AnalyticsService: Build chart points
     AnalyticsService --> BeController: Chart result
     BeController -> BeChartResponseDto: Create ProgressChartResponse
     BeChartResponseDto --> BeController: ProgressChartResponse
-    BeController --> FeApiService: HTTP 200 OK\nProgressChartResponse
-    FeApiService -> FeChartDto: Parse response data
-    FeChartDto --> FeApiService: ProgressChart
-    FeApiService --> FeController: Progress chart
+    BeController --> FeController: HTTP 200 OK\nProgressChartResponse
 end
 
-FeController -> FeApiService: getMasteryBreakdown()
-FeApiService -> BeController: GET /api/progress/mastery-breakdown
+FeController -> BeController: GET /api/progress/mastery-breakdown
 BeController -> BeController: Check authenticated user
 BeController -> IProgressAnalyticsService: GetMasteryBreakdownAsync(userId)
 IProgressAnalyticsService -> AnalyticsService: GetMasteryBreakdownAsync(userId)
@@ -107,30 +92,23 @@ DbContext -> UserWordProgressEntity: Read UserWordProgress rows
 UserWordProgressEntity --> DbContext: Mastery level counts
 DbContext --> AnalyticsRepository: Mastery counts
 AnalyticsRepository --> AnalyticsService: Mastery counts
-AnalyticsService -> IProgressAnalyticsService: Fill levels 0..5
-IProgressAnalyticsService -> AnalyticsService: Fill levels 0..5
+AnalyticsService -> AnalyticsService: Fill levels 0..5
 AnalyticsService --> BeController: Mastery breakdown result
 BeController -> BeMasteryResponseDto: Create MasteryBreakdownResponse list
 BeMasteryResponseDto --> BeController: MasteryBreakdownResponse list
-BeController --> FeApiService: HTTP 200 OK\nMasteryBreakdownResponse list
-FeApiService -> FeMasteryDto: Parse response data
-FeMasteryDto --> FeApiService: MasteryBreakdown list
-FeApiService --> FeController: Mastery breakdown
+BeController --> FeController: HTTP 200 OK\nMasteryBreakdownResponse list
 
-FeController -> FeApiService: getWeakestWords()
-FeApiService -> BeController: GET /api/progress/weakest-words\nlimit = 10
+FeController -> BeController: GET /api/progress/weakest-words\nlimit
 BeController -> BeWeakestWordsRequestDto: Bind query string
 BeWeakestWordsRequestDto --> BeController: WeakestWordsRequest
 BeController -> BeController: Check authenticated user
 BeController -> IProgressAnalyticsService: GetWeakestWordsAsync(userId, query)
 IProgressAnalyticsService -> AnalyticsService: GetWeakestWordsAsync(userId, query)
-AnalyticsService -> IProgressAnalyticsService: Validate limit
-IProgressAnalyticsService -> AnalyticsService: Validate limit
+AnalyticsService -> AnalyticsService: Validate limit
 
 alt Limit invalid
     AnalyticsService --> BeController: Validation failure
-    BeController --> FeApiService: HTTP 400 error
-    FeApiService --> FeController: Action failed
+    BeController --> FeController: HTTP 400 error
     FeController --> LearningAnalyticsUi: Show analytics error
 else Limit valid
     AnalyticsService -> IProgressAnalyticsRepository: GetWeakestWordStatisticsAsync(userId, limit)
@@ -149,10 +127,7 @@ else Limit valid
     AnalyticsService --> BeController: Weakest words result
     BeController -> BeWeakestWordResponseDto: Create WeakestWordResponse list
     BeWeakestWordResponseDto --> BeController: WeakestWordResponse list
-    BeController --> FeApiService: HTTP 200 OK\nWeakestWordResponse list
-    FeApiService -> FeWeakestWordDto: Parse response data
-    FeWeakestWordDto --> FeApiService: WeakestWord list
-    FeApiService --> FeController: Weakest words
+    BeController --> FeController: HTTP 200 OK\nWeakestWordResponse list
     FeController --> LearningAnalyticsUi: Show charts and weakest words
 end
 

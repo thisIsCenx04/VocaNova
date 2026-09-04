@@ -7,12 +7,8 @@ skinparam sequenceMessageAlign center
 
 actor Learner
 boundary "Retry Incorrect Vocabulary UI" as RetryIncorrectUi
-control "WrongWordsNotifier\n(FE Mobile)" as WrongWordsController
-control "QuizConfigNotifier\n(FE Mobile)" as QuizConfigController
-control "QuizApiService\n(FE Mobile)" as FeApiService
-entity "WrongWordDto\n(FE Response DTO)" as FeWrongWordDto
-entity "QuizConfigRequestDto\n(FE Request DTO)" as FeCreateSessionDto
-entity "QuizSessionStartDto\n(FE Response DTO)" as FeSessionStartDto
+control "WrongWordsNotifier\n(FE Controller)" as WrongWordsController
+control "QuizConfigNotifier\n(FE Controller)" as QuizConfigController
 entity "WrongWordsRequest\n(BE Request DTO)" as BeWrongWordsRequestDto
 entity "WrongWordResponse\n(BE Response DTO)" as BeWrongWordResponseDto
 entity "CreateSessionRequest\n(BE Request DTO)" as BeCreateSessionDto
@@ -45,8 +41,7 @@ database "MySQL Database" as MySQL
 note over RetryIncorrectUi, MySQL
 Checked in current code:
 Mobile UI file exists: wrong_words_screen.dart.
-FE controllers/services exist: WrongWordsNotifier, QuizConfigNotifier and QuizApiService.
-FE DTOs exist: WrongWordDto, QuizConfigRequestDto and QuizSessionStartDto.
+FE controllers exist: WrongWordsNotifier and QuizConfigNotifier.
 BE controller exists: QuizSessionsController.
 BE DTOs exist: WrongWordsRequest, WrongWordResponse,
 CreateSessionRequest, CreateSessionResponse and QuestionResponse.
@@ -60,8 +55,7 @@ end note
 
 Learner -> RetryIncorrectUi: Open incorrect vocabulary list
 RetryIncorrectUi -> WrongWordsController: loadFirstPage()
-WrongWordsController -> FeApiService: getWrongWords(page = 1)
-FeApiService -> BeController: GET /api/quiz/wrong-words\npage, limit
+WrongWordsController -> BeController: GET /api/quiz/wrong-words\npage, limit
 BeController -> BeWrongWordsRequestDto: Bind query string
 BeWrongWordsRequestDto --> BeController: WrongWordsRequest
 BeController -> BeController: Check authenticated user
@@ -83,26 +77,19 @@ HistoryRepository --> HistoryService: Paged wrong words
 HistoryService --> BeController: Wrong words result
 BeController -> BeWrongWordResponseDto: Create WrongWordResponse list
 BeWrongWordResponseDto --> BeController: WrongWordResponse list
-BeController --> FeApiService: HTTP 200 OK\nWrongWordResponse list
-FeApiService -> FeWrongWordDto: Parse response data
-FeWrongWordDto --> FeApiService: WrongWordsPage
-FeApiService --> WrongWordsController: Wrong words page
+BeController --> WrongWordsController: HTTP 200 OK\nWrongWordResponse list
 WrongWordsController --> RetryIncorrectUi: Show incorrect vocabulary
 
 Learner -> RetryIncorrectUi: Choose retry incorrect words
 RetryIncorrectUi -> QuizConfigController: setScope("wrong_words")\nand createSession()
-QuizConfigController -> FeApiService: createSession(config)
-FeApiService -> FeCreateSessionDto: Create QuizConfigRequestDto\n(scope_type = "wrong_words")
-FeCreateSessionDto --> FeApiService: Request JSON
-FeApiService -> BeController: POST /api/quiz/sessions\nCreateSessionRequest JSON
+QuizConfigController -> BeController: POST /api/quiz/sessions\nscope_type = "wrong_words"
 BeController -> BeCreateSessionDto: Bind request body
 BeCreateSessionDto --> BeController: CreateSessionRequest
 BeController -> BeController: Check authenticated user
 BeController -> BeController: Validate CreateSessionRequest
 
 alt Request invalid
-    BeController --> FeApiService: HTTP 400 error
-    FeApiService --> QuizConfigController: Action failed
+    BeController --> QuizConfigController: HTTP 400 error
     QuizConfigController --> RetryIncorrectUi: Show create quiz error
 else Request valid
     BeController -> IQuizSessionService: CreateSessionAsync(userId, command)
@@ -126,8 +113,7 @@ else Request valid
     alt No incorrect vocabulary available
         SessionBuilder --> SessionService: Validation failure
         SessionService --> BeController: Validation failure
-        BeController --> FeApiService: HTTP 400 error
-        FeApiService --> QuizConfigController: Action failed
+        BeController --> QuizConfigController: HTTP 400 error
         QuizConfigController --> RetryIncorrectUi: Show no words message
     else Candidates available
         SessionBuilder -> IQuizQuestionBuilder: Build first question
@@ -159,10 +145,7 @@ else Request valid
         BeCreateSessionResponseDto --> BeController: CreateSessionResponse
         BeController -> BeQuestionDto: Create QuestionResponse
         BeQuestionDto --> BeController: QuestionResponse
-        BeController --> FeApiService: HTTP 201 Created\nCreateSessionResponse
-        FeApiService -> FeSessionStartDto: Parse response data
-        FeSessionStartDto --> FeApiService: QuizSessionStart
-        FeApiService --> QuizConfigController: QuizSessionStart
+        BeController --> QuizConfigController: HTTP 201 Created\nCreateSessionResponse
         QuizConfigController --> RetryIncorrectUi: Open quiz session
     end
 end

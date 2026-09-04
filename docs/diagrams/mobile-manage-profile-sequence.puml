@@ -7,9 +7,7 @@ skinparam sequenceMessageAlign center
 
 actor Learner
 boundary "Manage Profile UI" as ProfileUi
-control "AuthNotifier\n(FE Mobile)" as FeController
-control "AuthApiService\n(FE Mobile)" as FeApiService
-entity "UserProfileDto\n(FE Response DTO)" as FeProfileDto
+control "AuthNotifier\n(FE Controller)" as FeController
 entity "UserProfileResponse\n(BE Response DTO)" as BeProfileDto
 control "AuthController\n(BE API)" as BeController
 control "IAuthService" as IAuthService
@@ -27,8 +25,6 @@ database "MySQL Database" as MySQL
 note over ProfileUi, MySQL
 Checked in current code:
 Mobile UI file exists: profile_screen.dart.
-FE controller/service exist: AuthNotifier and AuthApiService.
-FE response DTO exists: UserProfileDto.
 BE controller exists: AuthController.
 BE response DTO exists: UserProfileResponse.
 Endpoint is GET /api/auth/me; no request DTO body is used.
@@ -38,13 +34,11 @@ end note
 
 Learner -> ProfileUi: Open profile
 ProfileUi -> FeController: loadCurrentUser()
-FeController -> FeApiService: getCurrentUser()
-FeApiService -> BeController: GET /api/auth/me
+FeController -> BeController: GET /api/auth/me
 BeController -> BeController: Check authenticated user
 
 alt User id missing
-    BeController --> FeApiService: HTTP 401 error
-    FeApiService --> FeController: Action failed
+    BeController --> FeController: HTTP 401 error
     FeController --> ProfileUi: Show profile error
 else User authenticated
     BeController -> IAuthService: GetProfileAsync(userId)
@@ -69,17 +63,13 @@ else User authenticated
 
     alt Profile not found or deleted
         AuthService --> BeController: NotFound result
-        BeController --> FeApiService: HTTP 404 error
-        FeApiService --> FeController: Action failed
+        BeController --> FeController: HTTP 404 error
         FeController --> ProfileUi: Show profile error
     else Profile found
         AuthService --> BeController: Profile result
         BeController -> BeProfileDto: Create UserProfileResponse
         BeProfileDto --> BeController: UserProfileResponse
-        BeController --> FeApiService: HTTP 200 OK\nUserProfileResponse
-        FeApiService -> FeProfileDto: Parse response data
-        FeProfileDto --> FeApiService: UserProfile
-        FeApiService --> FeController: UserProfile
+        BeController --> FeController: HTTP 200 OK\nUserProfileResponse
         FeController --> ProfileUi: Show profile
     end
 end

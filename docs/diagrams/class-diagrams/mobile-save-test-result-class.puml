@@ -3,6 +3,7 @@ title Save Test Result Class Diagram (/api/quiz/sessions/{id}/answer and /finish
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 hide circle
+hide class circle
 hide empty methods
 hide empty fields
 note top
@@ -10,42 +11,9 @@ Generated from mobile-save-test-result-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 
-class QuizSessionNotifier <<service>> {
+class QuizSessionNotifier <<frontend_controller>> {
   "+ submitAnswer() : FutureOfvoid"
   "+ finish() : FutureOfbool"
-}
-
-class QuizApiService <<service>> {
-  "+ _dio : Dio"
-  --
-  "+ submitAnswer() : FutureOfQuizAnswerResult"
-  "+ finishSession() : FutureOfvoid"
-}
-
-class QuizAnswerResultDto <<dto>> {
-  "+ isCorrect : bool"
-  "+ expectedAnswer : String"
-  "+ correctCount : int"
-  "+ wrongCount : int"
-  "+ score : double"
-  "+ aiScore : doubleNullable"
-  "+ aiExplanation : StringNullable"
-  "+ aiSuggestion : StringNullable"
-  "+ nextQuestion : QuizQuestionDtoNullable"
-}
-
-class QuizResultDto <<dto>> {
-  "+ sessionId : int"
-  "+ status : String"
-  "+ correctCount : int"
-  "+ wrongCount : int"
-  "+ questionCount : int"
-  "+ answeredCount : int"
-  "+ accuracy : double"
-  "+ durationSec : intNullable"
-  "+ maxStreak : int"
-  "+ score : double"
-  "+ answers : ListOfQuizResultAnswerDto"
 }
 
 class SubmitAnswerRequest <<dto>> {
@@ -127,7 +95,7 @@ class IQuizQuestionBuilder <<service_interface>> {
   "+ BuildQuestionAsync(wordId: uint, questionType: int, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizQuestion"
 }
 
-class QuizQuestionBuilder <<entity>> {
+class QuizQuestionBuilder <<service>> {
   "- _quizQuestionRepository : IQuizQuestionRepository"
   --
   "+ BuildQuestionAsync(wordId: uint, questionType: int, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizQuestion"
@@ -286,8 +254,8 @@ class VocaNovaDbContext <<dbcontext>> {
 class MySQL_Database <<database>> {
 
 }
-QuizSessionNotifier ..> QuizApiService : submitAnswer()
-QuizApiService ..> QuizSessionsController
+QuizSessionNotifier ..> QuizSessionsController : submitAnswer()
+QuizSessionNotifier ..> QuizSessionsController : finish()
 QuizSessionsController ..> SubmitAnswerRequest
 QuizSubmissionRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
@@ -297,12 +265,9 @@ SrsRepository ..> UserWordProgress
 QuizSubmissionService ..> TestSession
 QuizSubmissionRepository ..> TestAnswer
 QuizSessionsController ..> AnswerResponse
-QuizApiService ..> QuizAnswerResultDto
-QuizSessionNotifier ..> QuizApiService : finishSession()
 QuizResultRepository ..> VocaNovaDbContext
 QuizResultRepository ..> TestSession
 QuizSessionsController ..> QuizResultResponse
-QuizApiService ..> QuizResultDto
 SubmitAnswerRequest ..> QuizSessionsController
 IQuizSubmissionService <|.. QuizSubmissionService
 QuizSessionsController ..> IQuizSubmissionService : SubmitAnswerAsync()

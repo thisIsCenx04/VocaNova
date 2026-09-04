@@ -3,6 +3,7 @@ title Manage Profile Class Diagram (/api/auth/me)
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 hide circle
+hide class circle
 hide empty methods
 hide empty fields
 note top
@@ -10,25 +11,9 @@ Generated from mobile-manage-profile-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 
-class AuthNotifier <<service>> {
+class AuthNotifier <<frontend_controller>> {
   "+ build() : AuthState"
   "+ login() : FutureOfvoid"
-}
-
-class AuthApiService <<service>> {
-  "+ _dio : Dio"
-  --
-  "+ getCurrentUser() : FutureOfUserProfile"
-}
-
-class UserProfileDto <<dto>> {
-  "+ userId : int"
-  "+ phone : StringNullable"
-  "+ displayName : String"
-  "+ avatarUrl : StringNullable"
-  "+ role : String"
-  "+ status : String"
-  "+ learningProfile : LearningProfileDtoNullable"
 }
 
 class UserProfileResponse <<dto>> {
@@ -204,13 +189,11 @@ class VocaNovaDbContext <<dbcontext>> {
 class MySQL_Database <<database>> {
 
 }
-AuthNotifier ..> AuthApiService : getCurrentUser()
-AuthApiService ..> AuthController
+AuthNotifier ..> AuthController : getCurrentUser()
 AuthController ..> IAuthService : GetProfileAsync()
 AuthAccountRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 AuthController ..> UserProfileResponse
-AuthApiService ..> UserProfileDto
 IAuthAccountRepository <|.. AuthAccountRepository
 AuthService ..> IAuthAccountRepository : GetProfileAsync()
 IAuthService <|.. AuthService

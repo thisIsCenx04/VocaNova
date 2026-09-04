@@ -23,7 +23,6 @@ Checked in current code:
 BE controller exists: QuizSessionsController.
 BE request/response DTOs exist: QuizHistoryRequest and QuizHistoryItemResponse.
 Endpoint is GET /api/quiz/history with page and limit query parameters.
-Mobile currently has no QuizApiService.getHistory method and no FE history DTO.
 Profile UI has a Test history entry, but no Mobile API flow is implemented for history yet.
 Entity exists: TestSession.
 Interfaces used in code: IQuizHistoryService, IQuizHistoryRepository.

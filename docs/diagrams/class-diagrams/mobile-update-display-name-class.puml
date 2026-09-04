@@ -3,6 +3,7 @@ title Update Display Name Class Diagram (/api/auth/me/profile)
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 hide circle
+hide class circle
 hide empty methods
 hide empty fields
 note top
@@ -10,24 +11,8 @@ Generated from mobile-update-display-name-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 
-class AuthNotifier <<service>> {
+class AuthNotifier <<frontend_controller>> {
   "+ updateProfile() : FutureOfbool"
-}
-
-class AuthApiService <<service>> {
-  "+ _dio : Dio"
-  --
-  "+ updateProfile() : FutureOfUserProfile"
-}
-
-class UserProfileDto <<dto>> {
-  "+ userId : int"
-  "+ phone : StringNullable"
-  "+ displayName : String"
-  "+ avatarUrl : StringNullable"
-  "+ role : String"
-  "+ status : String"
-  "+ learningProfile : LearningProfileDtoNullable"
 }
 
 class UpdateUserProfileRequest <<dto>> {
@@ -177,8 +162,7 @@ class VocaNovaDbContext <<dbcontext>> {
 class MySQL_Database <<database>> {
 
 }
-AuthNotifier ..> AuthApiService : updateProfile()
-AuthApiService ..> AuthController
+AuthNotifier ..> AuthController : updateProfile()
 AuthController ..> UpdateUserProfileRequest
 AuthController ..> IAuthService : UpdateProfileAsync()
 AuthAccountRepository ..> VocaNovaDbContext
@@ -186,7 +170,6 @@ VocaNovaDbContext ..> MySQL_Database
 AuthAccountRepository ..> UserProfile
 AuthAccountRepository ..> User
 AuthController ..> UserProfileResponse
-AuthApiService ..> UserProfileDto
 UpdateUserProfileRequest ..> AuthController
 IAuthAccountRepository <|.. AuthAccountRepository
 AuthService ..> IAuthAccountRepository : UpdateProfileAsync()

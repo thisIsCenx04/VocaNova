@@ -7,9 +7,7 @@ skinparam sequenceMessageAlign center
 
 actor Learner
 boundary "Review Incorrect Vocabulary UI" as WrongWordsUi
-control "WrongWordsNotifier\n(FE Mobile)" as FeController
-control "QuizApiService\n(FE Mobile)" as FeApiService
-entity "WrongWordDto\n(FE Response DTO)" as FeWrongWordDto
+control "WrongWordsNotifier\n(FE Controller)" as FeController
 entity "WrongWordsRequest\n(BE Request DTO)" as BeWrongWordsRequestDto
 entity "WrongWordResponse\n(BE Response DTO)" as BeWrongWordResponseDto
 control "QuizSessionsController\n(BE API)" as BeController
@@ -26,8 +24,6 @@ database "MySQL Database" as MySQL
 note over WrongWordsUi, MySQL
 Checked in current code:
 Mobile UI file exists: wrong_words_screen.dart.
-FE controller/service exist: WrongWordsNotifier and QuizApiService.
-FE response DTO exists: WrongWordDto.
 BE request/response DTOs exist: WrongWordsRequest and WrongWordResponse.
 Endpoints are GET /api/quiz/wrong-words and DELETE /api/quiz/wrong-words/{wordId}.
 Entities exist: UserWordProgress, Word and WordSense.
@@ -36,20 +32,17 @@ end note
 
 Learner -> WrongWordsUi: Open incorrect vocabulary
 WrongWordsUi -> FeController: load()
-FeController -> FeApiService: getWrongWords(page)
-FeApiService -> BeController: GET /api/quiz/wrong-words\npage, limit
+FeController -> BeController: GET /api/quiz/wrong-words\npage, limit
 BeController -> BeWrongWordsRequestDto: Bind query string
 BeWrongWordsRequestDto --> BeController: WrongWordsRequest
 BeController -> BeController: Check authenticated user
 BeController -> IQuizHistoryService: GetWrongWordsAsync(userId, query)
 IQuizHistoryService -> HistoryService: GetWrongWordsAsync(userId, query)
-HistoryService -> IQuizHistoryService: Validate page and limit
-IQuizHistoryService -> HistoryService: Validate page and limit
+HistoryService -> HistoryService: Validate page and limit
 
 alt Query validation fails
     HistoryService --> BeController: Validation failure
-    BeController --> FeApiService: HTTP 400 error
-    FeApiService --> FeController: Action failed
+    BeController --> FeController: HTTP 400 error
     FeController --> WrongWordsUi: Show load error
 else Query validation success
     HistoryService -> IQuizHistoryRepository: GetWrongWordsAsync(userId, page, limit)
@@ -68,18 +61,14 @@ else Query validation success
     HistoryService --> BeController: Wrong words result
     BeController -> BeWrongWordResponseDto: Create WrongWordResponse list
     BeWrongWordResponseDto --> BeController: WrongWordResponse list
-    BeController --> FeApiService: HTTP 200 OK\nWrongWordResponse list
-    FeApiService -> FeWrongWordDto: Parse response data
-    FeWrongWordDto --> FeApiService: WrongWord list
-    FeApiService --> FeController: WrongWordsPage
+    BeController --> FeController: HTTP 200 OK\nWrongWordResponse list
     FeController --> WrongWordsUi: Show incorrect vocabulary
 end
 
 opt Clear word from incorrect list
     Learner -> WrongWordsUi: Remove wrong word
     WrongWordsUi -> FeController: remove(wordId)
-    FeController -> FeApiService: removeWrongWord(wordId)
-    FeApiService -> BeController: DELETE /api/quiz/wrong-words/{wordId}
+    FeController -> BeController: DELETE /api/quiz/wrong-words/{wordId}
     BeController -> IQuizHistoryService: ClearWrongWordAsync(userId, wordId)
     IQuizHistoryService -> HistoryService: ClearWrongWordAsync(userId, wordId)
     HistoryService -> IQuizHistoryRepository: ClearWrongWordAsync(userId, wordId)
@@ -93,8 +82,7 @@ opt Clear word from incorrect list
     alt Wrong word not found
         HistoryRepository --> HistoryService: false
         HistoryService --> BeController: NotFound result
-        BeController --> FeApiService: HTTP 404 error
-        FeApiService --> FeController: Action failed
+        BeController --> FeController: HTTP 404 error
         FeController --> WrongWordsUi: Restore item and show error
     else Wrong word found
         HistoryRepository -> UserWordProgressEntity: Set IsInWrongList = false
@@ -104,8 +92,7 @@ opt Clear word from incorrect list
         MySQL --> DbContext: Save result
         HistoryRepository --> HistoryService: true
         HistoryService --> BeController: Success result
-        BeController --> FeApiService: HTTP 200 OK
-        FeApiService --> FeController: Action success
+        BeController --> FeController: HTTP 200 OK
         FeController --> WrongWordsUi: Remove item from list
     end
 end

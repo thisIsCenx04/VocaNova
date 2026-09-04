@@ -11,26 +11,9 @@ Generated from mobile-view-statistics-dashboard-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 
-class ProgressOverviewNotifier <<service>> {
+class ProgressOverviewNotifier <<frontend_controller>> {
   "+ build() : ProgressOverviewState"
   "+ load()"
-}
-
-class ProgressApiService <<service>> {
-  "+ _dio : Dio"
-  --
-  "+ getSummary() : FutureOfProgressSummary"
-}
-
-class ProgressSummaryDto <<dto>> {
-  "+ currentStreakDays : int"
-  "+ longestStreakDays : int"
-  "+ accuracy7Days : double"
-  "+ correct7Days : int"
-  "+ totalAnswers7Days : int"
-  "+ totalWordsInProgress : int"
-  "+ masteredWords : int"
-  "+ sessionsThisMonth : int"
 }
 
 class ProgressSummaryResponse <<dto>> {
@@ -137,12 +120,10 @@ class VocaNovaDbContext <<dbcontext>> {
 class MySQL_Database <<database>> {
 
 }
-ProgressOverviewNotifier ..> ProgressApiService : getSummary()
-ProgressApiService ..> ProgressController
+ProgressOverviewNotifier ..> ProgressController : getSummary()
 ProgressSummaryRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 ProgressController ..> ProgressSummaryResponse
-ProgressApiService ..> ProgressSummaryDto
 IProgressSummaryService <|.. ProgressSummaryService
 ProgressController ..> IProgressSummaryService : GetSummaryAsync()
 IProgressSummaryRepository <|.. ProgressSummaryRepository

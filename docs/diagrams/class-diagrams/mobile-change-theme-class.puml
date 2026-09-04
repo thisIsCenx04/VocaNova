@@ -10,7 +10,7 @@ Generated from mobile-change-theme-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 
-class AppSettingsNotifier <<service>> {
+class AppSettingsNotifier <<frontend_controller>> {
   "+ _storage : LocalStorage"
   --
   "+ load() : FutureOfvoid"

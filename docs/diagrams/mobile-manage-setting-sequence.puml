@@ -7,7 +7,7 @@ skinparam sequenceMessageAlign center
 
 actor Learner
 boundary "Manage Setting UI" as SettingUi
-control "AppSettingsNotifier\n(FE Mobile)" as SettingsController
+control "AppSettingsNotifier\n(FE Controller)" as SettingsController
 control "LocalStorage\n(Device)" as LocalStorage
 
 note over SettingUi, LocalStorage
