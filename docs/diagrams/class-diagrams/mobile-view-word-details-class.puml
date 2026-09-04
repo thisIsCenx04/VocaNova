@@ -3,6 +3,7 @@ title View Word Details Class Diagram (/api/words/{id})
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 hide circle
+hide class circle
 hide empty methods
 hide empty fields
 note top
