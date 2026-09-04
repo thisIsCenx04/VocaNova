@@ -107,16 +107,17 @@ class IQuizSessionBuilder <<service_interface>> {
   "+ BuildPoolAsync(userId: uint, command: BuildQuizPoolCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfIReadOnlyCollectionOfQuizPoolWord"
 }
 
-class QuizSessionBuilder <<entity>> {
+class QuizSessionBuilder <<service>> {
   "- _quizPoolRepository : IQuizPoolRepository"
   --
-  "+ BuildAsync(userId, command)"
+  "+ BuildPoolAsync(userId: uint, request: BuildQuizPoolCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfIReadOnlyCollectionOfQuizPoolWord"
 }
 
 class IQuizQuestionBuilder <<service_interface>> {
+  "+ BuildQuestionAsync(wordId: uint, questionType: int, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizQuestion"
 }
 
-class QuizQuestionBuilder <<entity>> {
+class QuizQuestionBuilder <<service>> {
   "- _quizQuestionRepository : IQuizQuestionRepository"
   --
   "+ BuildQuestionAsync(wordId: uint, questionType: int, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizQuestion"
@@ -221,7 +222,7 @@ class IQuizSessionRepository <<repository_interface>> {
 class QuizSessionRepository <<repository>> {
   "- _dbContext : VocaNovaDbContext"
   --
-  "+ CreateSessionAsync(session)"
+  "+ CreateAsync(userId: uint, command: CreateQuizSessionCommand, topicIds: ListOfUint, questionCount: int, cancellationToken: CancellationToken) : TaskOfQuizSession"
 }
 
 class VocaNovaDbContext <<dbcontext>> {
@@ -252,7 +253,6 @@ QuizSessionsController ..> WrongWordResponse
 QuizConfigNotifier ..> QuizSessionsController : createSession()
 QuizSessionsController ..> CreateSessionRequest
 QuizPoolRepository ..> VocaNovaDbContext
-QuizSessionBuilder ..> QuizQuestionBuilder
 QuizQuestionRepository ..> VocaNovaDbContext
 QuizSessionRepository ..> TestSession
 QuizSessionRepository ..> VocaNovaDbContext
@@ -265,7 +265,8 @@ QuizSessionsController ..> IQuizHistoryService : GetWrongWordsAsync()
 IQuizSessionService <|.. QuizSessionService
 QuizSessionsController ..> IQuizSessionService : CreateSessionAsync()
 IQuizSessionBuilder <|.. QuizSessionBuilder
-QuizSessionService ..> IQuizSessionBuilder : BuildAsync()
+QuizSessionService ..> IQuizSessionBuilder : BuildPoolAsync()
+QuizSessionService ..> IQuizQuestionBuilder : BuildQuestionAsync()
 IQuizHistoryRepository <|.. QuizHistoryRepository
 QuizHistoryService ..> IQuizHistoryRepository : GetWrongWordsAsync()
 IQuizPoolRepository <|.. QuizPoolRepository
@@ -273,10 +274,8 @@ QuizSessionBuilder ..> IQuizPoolRepository : GetCandidatesAsync()
 IQuizQuestionRepository <|.. QuizQuestionRepository
 QuizQuestionBuilder ..> IQuizQuestionRepository : FindQuestionWordAsync()
 IQuizSessionRepository <|.. QuizSessionRepository
-QuizSessionService ..> IQuizSessionRepository : CreateSessionAsync()
+QuizSessionService ..> IQuizSessionRepository : CreateAsync()
 IQuizQuestionBuilder <|.. QuizQuestionBuilder
-QuizPoolRepository ..> QuizSessionBuilder
-QuizQuestionRepository ..> QuizQuestionBuilder
 QuizHistoryRepository ..> UserWordProgress
 QuizHistoryRepository ..> Word
 QuizHistoryRepository ..> WordSense

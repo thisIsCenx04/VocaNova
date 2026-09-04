@@ -94,8 +94,8 @@ alt Request invalid
 else Request valid
     BeController -> IQuizSessionService: CreateSessionAsync(userId, command)
     IQuizSessionService -> SessionService: CreateSessionAsync(userId, command)
-    SessionService -> IQuizSessionBuilder: BuildAsync(userId, command)
-    IQuizSessionBuilder -> SessionBuilder: BuildAsync(userId, command)
+    SessionService -> IQuizSessionBuilder: BuildPoolAsync(userId, command)
+    IQuizSessionBuilder -> SessionBuilder: BuildPoolAsync(userId, command)
     SessionBuilder -> IQuizPoolRepository: GetCandidatesAsync(userId,\nscope_type = "wrong_words")
     IQuizPoolRepository -> PoolRepository: GetCandidatesAsync(userId,\nscope_type = "wrong_words")
     PoolRepository -> DbContext: Query words in wrong list
@@ -109,15 +109,16 @@ else Request valid
     WordSenseEntity --> DbContext: Candidate answers
     DbContext --> PoolRepository: Candidate words
     PoolRepository --> SessionBuilder: Candidate pool
+    SessionBuilder --> SessionService: Pool result
 
     alt No incorrect vocabulary available
-        SessionBuilder --> SessionService: Validation failure
+        SessionService -> SessionService: Check empty pool
         SessionService --> BeController: Validation failure
         BeController --> QuizConfigController: HTTP 400 error
         QuizConfigController --> RetryIncorrectUi: Show no words message
     else Candidates available
-        SessionBuilder -> IQuizQuestionBuilder: Build first question
-        IQuizQuestionBuilder -> QuestionBuilder: Build first question
+        SessionService -> IQuizQuestionBuilder: BuildQuestionAsync(wordId, questionType)
+        IQuizQuestionBuilder -> QuestionBuilder: BuildQuestionAsync(wordId, questionType)
         QuestionBuilder -> IQuizQuestionRepository: FindQuestionWordAsync(wordId)
         IQuizQuestionRepository -> QuestionRepository: FindQuestionWordAsync(wordId)
         QuestionRepository -> DbContext: Query Word with senses
@@ -129,10 +130,9 @@ else Request valid
         WordSenseEntity --> DbContext: Expected answer
         DbContext --> QuestionRepository: Question word
         QuestionRepository --> QuestionBuilder: Question data
-        QuestionBuilder --> SessionBuilder: First question
-        SessionBuilder --> SessionService: Built quiz session
-        SessionService -> IQuizSessionRepository: CreateSessionAsync(session)
-        IQuizSessionRepository -> SessionRepository: CreateSessionAsync(session)
+        QuestionBuilder --> SessionService: First question
+        SessionService -> IQuizSessionRepository: CreateAsync(userId, command, topicIds, questionCount)
+        IQuizSessionRepository -> SessionRepository: CreateAsync(userId, command, topicIds, questionCount)
         SessionRepository -> TestSessionEntity: Create TestSession
         TestSessionEntity --> SessionRepository: TestSession
         SessionRepository -> DbContext: Add TestSession
@@ -140,6 +140,7 @@ else Request valid
         MySQL --> DbContext: Insert result
         DbContext --> SessionRepository: Save result
         SessionRepository --> SessionService: Created session
+        SessionService -> SessionService: Build created session result
         SessionService --> BeController: Created session result
         BeController -> BeCreateSessionResponseDto: Create CreateSessionResponse
         BeCreateSessionResponseDto --> BeController: CreateSessionResponse
