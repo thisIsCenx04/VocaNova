@@ -7,10 +7,7 @@ skinparam sequenceMessageAlign center
 
 actor Learner
 boundary "Take Exam UI" as TakeExamUi
-control "QuizConfigNotifier\n(FE Mobile)" as FeController
-control "QuizApiService\n(FE Mobile)" as FeApiService
-entity "QuizConfigRequestDto\n(FE Request DTO)" as FeCreateSessionDto
-entity "QuizSessionStartDto\n(FE Response DTO)" as FeSessionStartDto
+control "QuizConfigNotifier\n(FE Controller)" as FeController
 entity "CreateSessionRequest\n(BE Request DTO)" as BeCreateSessionDto
 entity "CreateSessionResponse\n(BE Response DTO)" as BeCreateSessionResponseDto
 entity "QuestionResponse\n(BE Response DTO)" as BeQuestionDto
@@ -41,8 +38,7 @@ database "MySQL Database" as MySQL
 note over TakeExamUi, MySQL
 Checked in current code:
 Mobile UI file exists: quiz_config_screen.dart.
-FE controller/service exist: QuizConfigNotifier and QuizApiService.
-FE request/response DTOs exist: QuizConfigRequestDto and QuizSessionStartDto.
+FE controller exists: QuizConfigNotifier.
 BE request/response DTOs exist: CreateSessionRequest,
 CreateSessionResponse and QuestionResponse.
 Endpoint is POST /api/quiz/sessions.
@@ -60,22 +56,17 @@ FeController -> FeController: Validate source, scope,\nmode and question limit
 alt Mobile validation fails
     FeController --> TakeExamUi: Show validation error
 else Mobile validation success
-    FeController -> FeCreateSessionDto: Create QuizConfigRequestDto
-    FeCreateSessionDto --> FeController: Request JSON
-    FeController -> FeApiService: createSession(request)
-    FeApiService -> BeController: POST /api/quiz/sessions\nCreateSessionRequest JSON
+    FeController -> BeController: POST /api/quiz/sessions\nCreateSessionRequest JSON
     BeController -> BeCreateSessionDto: Bind request body
     BeCreateSessionDto --> BeController: CreateSessionRequest
     BeController -> BeController: Check authenticated user
     BeController -> IQuizSessionService: CreateSessionAsync(userId, command)
     IQuizSessionService -> SessionService: CreateSessionAsync(userId, command)
-    SessionService -> IQuizSessionService: Validate mode, question type,\nscope, order and answer method
-    IQuizSessionService -> SessionService: Validate mode, question type,\nscope, order and answer method
+    SessionService -> SessionService: Validate mode, question type,\nscope, order and answer method
 
     alt Request invalid
         SessionService --> BeController: Validation failure
-        BeController --> FeApiService: HTTP 400 error
-        FeApiService --> FeController: Action failed
+        BeController --> FeController: HTTP 400 error
         FeController --> TakeExamUi: Show create session error
     else Request valid
         SessionService -> IQuizSessionBuilder: BuildPoolAsync(userId, command)
@@ -97,14 +88,12 @@ else Mobile validation success
         UserWordProgressEntity --> DbContext: Wrong counts
         DbContext --> PoolRepository: Quiz pool words
         PoolRepository --> SessionBuilder: Candidate pool
-        SessionBuilder -> IQuizSessionBuilder: Apply word order\nand word limit
-        IQuizSessionBuilder -> SessionBuilder: Apply word order\nand word limit
+        SessionBuilder -> SessionBuilder: Apply word order\nand word limit
         SessionBuilder --> SessionService: Quiz pool
 
         alt Not enough words
             SessionService --> BeController: Validation failure
-            BeController --> FeApiService: HTTP 400 error
-            FeApiService --> FeController: Action failed
+            BeController --> FeController: HTTP 400 error
             FeController --> TakeExamUi: Show not enough words
         else Pool ready
             SessionService -> IQuizQuestionBuilder: BuildQuestionAsync(firstWordId, questionType)
@@ -151,10 +140,7 @@ else Mobile validation success
             BeController -> BeQuestionDto: Include first QuestionResponse
             BeQuestionDto --> BeCreateSessionResponseDto: QuestionResponse
             BeCreateSessionResponseDto --> BeController: CreateSessionResponse
-            BeController --> FeApiService: HTTP 201 Created\nCreateSessionResponse
-            FeApiService -> FeSessionStartDto: Parse response data
-            FeSessionStartDto --> FeApiService: QuizSessionStart
-            FeApiService --> FeController: QuizSessionStart
+            BeController --> FeController: HTTP 201 Created\nCreateSessionResponse
             FeController --> TakeExamUi: Navigate to quiz session
         end
     end

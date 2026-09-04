@@ -3,6 +3,7 @@ title Take Exam Class Diagram (/api/quiz/sessions)
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 hide circle
+hide class circle
 hide empty methods
 hide empty fields
 note top
@@ -10,40 +11,8 @@ Generated from mobile-take-exam-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 
-class QuizConfigNotifier <<service>> {
+class QuizConfigNotifier <<frontend_controller>> {
   "+ createSession() : FutureOfQuizSessionStart"
-}
-
-class QuizApiService <<service>> {
-  "+ _dio : Dio"
-  --
-  "+ createSession() : FutureOfQuizSessionStart"
-}
-
-class QuizConfigRequestDto <<dto>> {
-  "+ mode : String"
-  "+ questionType : int"
-  "+ scopeType : String"
-  "+ wordOrder : String"
-  "+ wordLimit : intNullable"
-  "+ listId : intNullable"
-  "+ scopeDateFrom : DateTimeNullable"
-  "+ scopeDateTo : DateTimeNullable"
-  "+ topicIds : ListOfint"
-  "+ timeLimitSec : intNullable"
-  "+ lives : intNullable"
-  "+ answerMethod : String"
-}
-
-class QuizSessionStartDto <<dto>> {
-  "+ sessionId : int"
-  "+ answerMethod : String"
-  "+ mode : String"
-  "+ questionCount : int"
-  "+ listId : intNullable"
-  "+ timeLimitSec : intNullable"
-  "+ lives : intNullable"
-  "+ firstQuestion : QuizQuestionDto"
 }
 
 class CreateSessionRequest <<dto>> {
@@ -101,7 +70,7 @@ class IQuizSessionBuilder <<service_interface>> {
   "+ BuildPoolAsync(userId: uint, command: BuildQuizPoolCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfIReadOnlyCollectionOfQuizPoolWord"
 }
 
-class QuizSessionBuilder <<entity>> {
+class QuizSessionBuilder <<service>> {
   "- _quizPoolRepository : IQuizPoolRepository"
   --
   "+ BuildPoolAsync(userId: uint, request: BuildQuizPoolCommand, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfIReadOnlyCollectionOfQuizPoolWord"
@@ -111,7 +80,7 @@ class IQuizQuestionBuilder <<service_interface>> {
   "+ BuildQuestionAsync(wordId: uint, questionType: int, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizQuestion"
 }
 
-class QuizQuestionBuilder <<entity>> {
+class QuizQuestionBuilder <<service>> {
   "- _quizQuestionRepository : IQuizQuestionRepository"
   --
   "+ BuildQuestionAsync(wordId: uint, questionType: int, cancellationToken: CancellationToken) : TaskOfQuizOperationResultOfQuizQuestion"
@@ -267,9 +236,7 @@ class VocaNovaDbContext <<dbcontext>> {
 class MySQL_Database <<database>> {
 
 }
-QuizConfigNotifier ..> QuizConfigRequestDto
-QuizConfigNotifier ..> QuizApiService : createSession()
-QuizApiService ..> QuizSessionsController
+QuizConfigNotifier ..> QuizSessionsController
 QuizSessionsController ..> CreateSessionRequest
 QuizPoolRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
@@ -279,8 +246,6 @@ QuizSessionRepository ..> TestSessionTopic
 QuizSessionRepository ..> VocaNovaDbContext
 QuizSessionsController ..> CreateSessionResponse
 QuizSessionsController ..> QuestionResponse
-QuizApiService ..> QuizSessionStartDto
-QuizConfigRequestDto ..> QuizSessionsController
 CreateSessionRequest ..> QuizSessionsController
 IQuizSessionService <|.. QuizSessionService
 QuizSessionsController ..> IQuizSessionService : CreateSessionAsync()
