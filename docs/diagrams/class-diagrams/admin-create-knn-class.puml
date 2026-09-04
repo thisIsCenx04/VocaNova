@@ -26,18 +26,118 @@ class AdminKnnController <<backend_controller>> {
   --
   "+ CreateAgeRange(request: CreateAgeRangeRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
   "+ CreateRegion(request: CreateRegionRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ CreateOccupation(request: CreateOccupationRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ CreateEducationLevel(request: CreateEducationLevelRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  "+ CreateLearningPurpose(request: CreateLearningPurposeRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
 }
 
-class AgeRange_Region_Occupation_EducationLevel_LearningPurpose <<dto>> {
-
+class DashboardAgeRangeDto <<dto>> {
+  "+ AgeRangeId : uint"
+  "+ Name : string"
+  "+ MinAge : intNullable"
+  "+ MaxAge : intNullable"
+  "+ DisplayOrder : int"
+  "+ Status : string"
 }
 
-class CreateAgeRangeRequest_CreateRegionRequest_CreateOccupationRequest_CreateEducationLevelRequest_CreateLearningPurposeRequest <<dto>> {
-
+class DashboardRegionDto <<dto>> {
+  "+ RegionId : uint"
+  "+ Name : string"
+  "+ Code : string"
+  "+ ParentId : uintNullable"
+  "+ ParentName : stringNullable"
+  "+ Status : string"
 }
 
-class AgeRangeResponse_RegionResponse_OccupationResponse_EducationLevelResponse_LearningPurposeResponse <<dto>> {
+class DashboardOccupationDto <<dto>> {
+  "+ OccupationId : uint"
+  "+ Name : string"
+  "+ Description : stringNullable"
+  "+ Status : string"
+}
 
+class DashboardEducationLevelDto <<dto>> {
+  "+ EducationLevelId : uint"
+  "+ Name : string"
+  "+ Description : stringNullable"
+  "+ DisplayOrder : int"
+  "+ Status : string"
+}
+
+class DashboardLearningPurposeDto <<dto>> {
+  "+ LearningPurposeId : uint"
+  "+ Name : string"
+  "+ Description : stringNullable"
+  "+ Status : string"
+}
+
+class CreateAgeRangeRequest <<dto>> {
+  "+ Name : stringNullable"
+  "+ MinAge : intNullable"
+  "+ MaxAge : intNullable"
+  "+ DisplayOrder : int"
+}
+
+class CreateRegionRequest <<dto>> {
+  "+ Name : stringNullable"
+  "+ Code : stringNullable"
+  "+ ParentId : uintNullable"
+}
+
+class CreateOccupationRequest <<dto>> {
+  "+ Name : stringNullable"
+  "+ Description : stringNullable"
+}
+
+class CreateEducationLevelRequest <<dto>> {
+  "+ Name : stringNullable"
+  "+ Description : stringNullable"
+  "+ DisplayOrder : int"
+}
+
+class CreateLearningPurposeRequest <<dto>> {
+  "+ Name : stringNullable"
+  "+ Description : stringNullable"
+}
+
+class AgeRangeResponse <<dto>> {
+  "+ AgeRangeId : uint"
+  "+ Name : string"
+  "+ MinAge : intNullable"
+  "+ MaxAge : intNullable"
+  "+ DisplayOrder : int"
+  "+ Status : string"
+}
+
+class RegionResponse <<dto>> {
+  "+ RegionId : uint"
+  "+ Name : string"
+  "+ Code : string"
+  "+ ParentId : uintNullable"
+  "+ ParentName : stringNullable"
+  "+ Status : string"
+}
+
+class OccupationResponse <<dto>> {
+  "+ OccupationId : uint"
+  "+ Name : string"
+  "+ Description : stringNullable"
+  "+ Status : string"
+}
+
+class EducationLevelResponse <<dto>> {
+  "+ EducationLevelId : uint"
+  "+ Name : string"
+  "+ Description : stringNullable"
+  "+ DisplayOrder : int"
+  "+ Status : string"
+}
+
+class LearningPurposeResponse <<dto>> {
+  "+ LearningPurposeId : uint"
+  "+ Name : string"
+  "+ Description : stringNullable"
+  "+ Status : string"
 }
 
 class IAdminKnnLookupService <<service_interface>> {
@@ -191,7 +291,11 @@ class MySQL_Database <<database>> {
 
 }
 KnnController ..> AdminKnnController
-AdminKnnController ..> CreateAgeRangeRequest_CreateRegionRequest_CreateOccupationRequest_CreateEducationLevelRequest_CreateLearningPurposeRequest
+AdminKnnController ..> CreateAgeRangeRequest
+AdminKnnController ..> CreateRegionRequest
+AdminKnnController ..> CreateOccupationRequest
+AdminKnnController ..> CreateEducationLevelRequest
+AdminKnnController ..> CreateLearningPurposeRequest
 AdminKnnLookupRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 AdminKnnLookupRepository ..> AgeRange
@@ -199,9 +303,16 @@ AdminKnnLookupRepository ..> Region
 AdminKnnLookupRepository ..> Occupation
 AdminKnnLookupRepository ..> EducationLevel
 AdminKnnLookupRepository ..> LearningPurpose
-AdminKnnController ..> AgeRangeResponse_RegionResponse_OccupationResponse_EducationLevelResponse_LearningPurposeResponse
-AdminKnnController ..> AgeRange_Region_Occupation_EducationLevel_LearningPurpose
-CreateAgeRangeRequest_CreateRegionRequest_CreateOccupationRequest_CreateEducationLevelRequest_CreateLearningPurposeRequest ..> AdminKnnController
+AdminKnnController ..> AgeRangeResponse
+AdminKnnController ..> RegionResponse
+AdminKnnController ..> OccupationResponse
+AdminKnnController ..> EducationLevelResponse
+AdminKnnController ..> LearningPurposeResponse
+KnnController ..> DashboardAgeRangeDto
+KnnController ..> DashboardRegionDto
+KnnController ..> DashboardOccupationDto
+KnnController ..> DashboardEducationLevelDto
+KnnController ..> DashboardLearningPurposeDto
 IAdminKnnLookupService <|.. AdminKnnLookupService
 AdminKnnController ..> IAdminKnnLookupService : Async()
 IAdminKnnLookupRepository <|.. AdminKnnLookupRepository
