@@ -25,7 +25,7 @@ Browser -> MVC Controller -> Dashboard workflow/API client -> HttpClient -> Voca
 ```
 
 - `VocaNovaApi:BaseUrl` selects the API endpoint (`http://localhost:5013` in Dashboard Development configuration).
-- `DashboardAuthService` handles login/logout/profile admission. Admin and SuperAdmin roles are admitted.
+- `DashboardAuthService` handles login/logout/profile admission and anonymous admin forgot/reset password UI flows. Admin and SuperAdmin roles are admitted.
 - Cookie authentication stores API access/refresh tokens in authentication properties.
 - `BearerTokenHandler` attaches the access token, performs one refresh on 401 through a separate client, updates the cookie, clones the request, and retries once.
 - Most MVC controllers call `IVocaNovaApiClient`; they translate normalized API results into views, ModelState, TempData, redirects, or status responses.

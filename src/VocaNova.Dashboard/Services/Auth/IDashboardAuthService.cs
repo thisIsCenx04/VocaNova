@@ -8,6 +8,16 @@ public interface IDashboardAuthService
         string password,
         CancellationToken cancellationToken = default);
 
+    Task<DashboardAuthActionResult> ForgotPasswordAsync(
+        string phone,
+        CancellationToken cancellationToken = default);
+
+    Task<DashboardAuthActionResult> ResetPasswordAsync(
+        string phone,
+        string otpCode,
+        string newPassword,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Thu hồi refresh token phía backend khi đăng xuất.</summary>
     Task LogoutAsync(
         string accessToken,

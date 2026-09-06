@@ -33,6 +33,82 @@ public sealed class AuthController : Controller
         return View(new LoginViewModel { ReturnUrl = returnUrl });
     }
 
+    [HttpGet("/forgot-password")]
+    [AllowAnonymous]
+    public IActionResult ForgotPassword()
+    {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectToDashboard();
+        }
+
+        return View(new ForgotPasswordViewModel());
+    }
+
+    [HttpPost("/forgot-password")]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ForgotPassword(
+        ForgotPasswordViewModel model,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var phone = model.Phone!.Trim();
+        var result = await _authService.ForgotPasswordAsync(phone, cancellationToken);
+        if (!result.IsSuccess)
+        {
+            ModelState.AddModelError(string.Empty, result.Message ?? "Unable to send password reset OTP.");
+            return View(model);
+        }
+
+        TempData["AuthSuccess"] = result.Message ?? "Password reset OTP sent successfully.";
+        return RedirectToAction(nameof(ResetPassword), new { phone });
+    }
+
+    [HttpGet("/reset-password")]
+    [AllowAnonymous]
+    public IActionResult ResetPassword(string? phone = null)
+    {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectToDashboard();
+        }
+
+        return View(new ResetPasswordViewModel { Phone = phone });
+    }
+
+    [HttpPost("/reset-password")]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(
+        ResetPasswordViewModel model,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var result = await _authService.ResetPasswordAsync(
+            model.Phone!.Trim(),
+            model.OtpCode!.Trim(),
+            model.NewPassword!,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            ModelState.AddModelError(string.Empty, result.Message ?? "Unable to reset password.");
+            return View(model);
+        }
+
+        TempData["AuthSuccess"] = result.Message ?? "Password reset successfully.";
+        return RedirectToAction(nameof(Login));
+    }
+
     [HttpPost("/login")]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]

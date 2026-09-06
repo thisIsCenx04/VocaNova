@@ -90,6 +90,40 @@ public sealed class DashboardAuthService : IDashboardAuthService
             tokenEnvelope.Data.ExpiresIn);
     }
 
+    public async Task<DashboardAuthActionResult> ForgotPasswordAsync(
+        string phone,
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await _httpClient.PostAsJsonAsync(
+            "api/auth/forgot-password",
+            new ForgotPasswordApiRequest(phone),
+            JsonOptions,
+            cancellationToken);
+
+        var envelope = await ReadEnvelopeAsync<object>(response, cancellationToken);
+        return response.IsSuccessStatusCode
+            ? DashboardAuthActionResult.Ok(envelope?.Message ?? "Password reset OTP sent successfully.")
+            : DashboardAuthActionResult.Fail(GetErrorMessage(envelope, "Unable to send password reset OTP."));
+    }
+
+    public async Task<DashboardAuthActionResult> ResetPasswordAsync(
+        string phone,
+        string otpCode,
+        string newPassword,
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await _httpClient.PostAsJsonAsync(
+            "api/auth/reset-password",
+            new ResetPasswordApiRequest(phone, otpCode, newPassword),
+            JsonOptions,
+            cancellationToken);
+
+        var envelope = await ReadEnvelopeAsync<object>(response, cancellationToken);
+        return response.IsSuccessStatusCode
+            ? DashboardAuthActionResult.Ok(envelope?.Message ?? "Password reset successfully.")
+            : DashboardAuthActionResult.Fail(GetErrorMessage(envelope, "Unable to reset password."));
+    }
+
     public async Task LogoutAsync(
         string accessToken,
         string refreshToken,
@@ -154,6 +188,14 @@ public sealed class DashboardAuthService : IDashboardAuthService
     private sealed record LoginApiRequest(
         [property: JsonPropertyName("phone")] string Phone,
         [property: JsonPropertyName("password")] string Password);
+
+    private sealed record ForgotPasswordApiRequest(
+        [property: JsonPropertyName("phone")] string Phone);
+
+    private sealed record ResetPasswordApiRequest(
+        [property: JsonPropertyName("phone")] string Phone,
+        [property: JsonPropertyName("otp_code")] string OtpCode,
+        [property: JsonPropertyName("new_password")] string NewPassword);
 
     private sealed record RefreshTokenApiRequest(
         [property: JsonPropertyName("refresh_token")] string RefreshToken);
