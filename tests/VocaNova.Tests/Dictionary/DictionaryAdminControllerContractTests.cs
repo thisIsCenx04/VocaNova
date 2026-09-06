@@ -66,6 +66,47 @@ public sealed class DictionaryAdminControllerContractTests
     }
 
     [Fact]
+    public async Task Media_Suggestions_Should_Preserve_Snake_Case_Envelope()
+    {
+        var service = new Mock<IWordAdminService>();
+        service.Setup(instance => instance.SuggestMediaAsync(
+                7,
+                new MediaSuggestionQuery("run", "image", 4),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(DictionaryResult<IReadOnlyList<MediaSuggestionResult>>.Success(
+            [
+                new MediaSuggestionResult(
+                    "image",
+                    "pexels",
+                    "123",
+                    "Runner",
+                    "https://images.pexels.com/photos/123/preview.jpeg",
+                    "https://images.pexels.com/photos/123/large.jpeg",
+                    "https://www.pexels.com/photo/runner-123/",
+                    "Sam",
+                    "https://www.pexels.com/@sam",
+                    1200,
+                    800,
+                    null),
+            ]));
+        var controller = WithHttpContext(new AdminWordsController(service.Object));
+
+        var action = await controller.SuggestMedia(
+            7,
+            new MediaSuggestionRequest { Query = "run", Type = "image", Limit = 4 },
+            CancellationToken.None);
+
+        var ok = action.Should().BeOfType<OkObjectResult>().Subject;
+        using var document = Serialize(ok.Value);
+        var item = document.RootElement.GetProperty("data")[0];
+        item.EnumerateObject().Select(property => property.Name)
+            .Should().Equal("media_type", "provider", "external_id", "title", "preview_url",
+                "full_size_url", "source_url", "creator_name", "creator_url", "width",
+                "height", "duration_seconds");
+        item.GetProperty("provider").GetString().Should().Be("pexels");
+    }
+
+    [Fact]
     public async Task Topic_Conflict_Should_Remain_409_With_Existing_Error_Envelope()
     {
         var service = new Mock<ITopicAdminService>();

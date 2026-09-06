@@ -3,6 +3,7 @@ title Review Incorrect Vocabulary Class Diagram (/api/quiz/wrong-words)
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 hide circle
+hide class circle
 hide empty methods
 hide empty fields
 note top
@@ -10,25 +11,8 @@ Generated from mobile-review-incorrect-vocabulary-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 
-class WrongWordsNotifier <<service>> {
+class WrongWordsNotifier <<frontend_controller>> {
   "+ remove() : FutureOfbool"
-}
-
-class QuizApiService <<service>> {
-  "+ _dio : Dio"
-  --
-  "+ getWrongWords() : FutureOfWrongWordsPage"
-  "+ removeWrongWord() : FutureOfvoid"
-}
-
-class WrongWordDto <<dto>> {
-  "+ wordId : int"
-  "+ word : String"
-  "+ primaryMeaning : StringNullable"
-  "+ testCount : int"
-  "+ correctCount : int"
-  "+ wrongCount : int"
-  "+ masteryLevel : int"
 }
 
 class WrongWordsRequest <<dto>> {
@@ -148,14 +132,12 @@ class VocaNovaDbContext <<dbcontext>> {
 class MySQL_Database <<database>> {
 
 }
-WrongWordsNotifier ..> QuizApiService : getWrongWords()
-QuizApiService ..> QuizSessionsController
+WrongWordsNotifier ..> QuizSessionsController : getWrongWords()
 QuizSessionsController ..> WrongWordsRequest
 QuizHistoryRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 QuizSessionsController ..> WrongWordResponse
-QuizApiService ..> WrongWordDto
-WrongWordsNotifier ..> QuizApiService : removeWrongWord()
+WrongWordsNotifier ..> QuizSessionsController : removeWrongWord()
 QuizHistoryRepository ..> UserWordProgress
 WrongWordsRequest ..> QuizSessionsController
 IQuizHistoryService <|.. QuizHistoryService

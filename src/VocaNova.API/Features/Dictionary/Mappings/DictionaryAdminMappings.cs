@@ -23,6 +23,9 @@ public static class DictionaryAdminMappings
         new(request.Word ?? string.Empty, string.Empty, request.Cefr, request.PhoneticUk,
             request.PhoneticUs, request.ImageUrl, request.IsPhrase);
 
+    public static MediaSuggestionQuery ToBusinessQuery(this MediaSuggestionRequest request) =>
+        new(request.Query, request.Type, request.Limit);
+
     public static CreateSenseCommand ToBusinessCommand(this CreateSenseRequest request) =>
         new(request.SenseOrder, request.WordClass ?? string.Empty,
             request.EnglishDefinition ?? string.Empty, request.VietnameseMeaning,
@@ -72,6 +75,11 @@ public static class DictionaryAdminMappings
 
     public static TopicSummaryResponse ToResponse(this TopicSummary topic) =>
         new(topic.TopicId, topic.Name, topic.NameVi, topic.Icon, topic.WordCount);
+
+    public static MediaSuggestionResponse ToResponse(this MediaSuggestionResult result) =>
+        new(result.MediaType, result.Provider, result.ExternalId, result.Title, result.PreviewUrl,
+            result.FullSizeUrl, result.SourceUrl, result.CreatorName, result.CreatorUrl,
+            result.Width, result.Height, result.DurationSeconds);
 
     private static AdminWordListItemResponse ToResponse(AdminWordListItem word) =>
         new(word.WordId, word.Word, word.Cefr, word.Phonetic, word.Status, word.ImageUrl,

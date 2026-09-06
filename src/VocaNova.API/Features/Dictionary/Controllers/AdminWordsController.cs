@@ -100,6 +100,17 @@ public sealed class AdminWordsController : ControllerBase
         return Ok(ApiResponseFormatter.Success(result.Value!.ToResponse(), "Word image updated successfully."));
     }
 
+    [HttpGet("{id:uint}/media-suggestions")]
+    public async Task<IActionResult> SuggestMedia(uint id, [FromQuery] MediaSuggestionRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _service.SuggestMediaAsync(id, request.ToBusinessQuery(), cancellationToken);
+        return result.IsSuccess
+            ? Ok(ApiResponseFormatter.Success(
+                result.Value!.Select(item => item.ToResponse()).ToArray(),
+                "Media suggestions loaded successfully."))
+            : ErrorResponse(result);
+    }
+
     [Authorize(Policy = JwtAuthenticationExtensions.SuperAdminPolicy)]
     [HttpDelete("{id:uint}")]
     public async Task<IActionResult> SoftDelete(uint id, CancellationToken cancellationToken)

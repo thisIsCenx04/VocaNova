@@ -3,43 +3,13 @@ title Organize by Topic Class Diagram (/api/personal-topics/*)
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 hide circle
+hide class circle
 hide empty methods
 hide empty fields
 note top
 Generated from mobile-organize-by-topic-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
-
-class WordSearchApiService <<service>> {
-  "+ _dio : Dio"
-  --
-  "+ search() : FutureOfListOfWordSummary"
-  "+ getTopics() : FutureOfListOfTopicSummary"
-}
-
-class WordDetailApiService <<service>> {
-  "+ _dio : Dio"
-  --
-  "+ getWord() : FutureOfWordDetail"
-  "+ getDailyWord() : FutureOfWordDetail"
-}
-
-class PersonalTopicSummaryDto <<dto>> {
-  "+ listId : intNullable"
-  "+ containsWord : bool"
-}
-
-class WordSummaryDto <<dto>> {
-  "+ wordId : int"
-  "+ word : String"
-  "+ phonetic : StringNullable"
-  "+ cefr : StringNullable"
-  "+ primaryMeaning : StringNullable"
-  "+ imageUrl : StringNullable"
-  "+ topicIds : SetOfint"
-  "+ learningStatus : String"
-  "+ masteryScore : double"
-}
 
 class PersonalTopicResponse <<dto>> {
   "+ TopicId : uint"
@@ -248,19 +218,14 @@ class VocaNovaDbContext <<dbcontext>> {
 class MySQL_Database <<database>> {
 
 }
-WordSearchApiService ..> PersonalTopicsController
 PersonalTopicQueryRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 PersonalTopicsController ..> PersonalTopicResponse
-WordSearchApiService ..> PersonalTopicSummaryDto
 PersonalTopicsController ..> ListWordResponse
-WordSearchApiService ..> WordSummaryDto
-WordDetailApiService ..> PersonalTopicsController
 PersonalTopicsController ..> AddPersonalTopicWordRequest
 PersonalTopicMutationRepository ..> VocaNovaDbContext
 ListMutationRepository ..> UserListWord
 ListMutationRepository ..> VocaNovaDbContext
-WordDetailApiService ..> PersonalTopicSummaryDto
 AddPersonalTopicWordRequest ..> PersonalTopicsController
 IPersonalTopicQueryService <|.. PersonalTopicQueryService
 PersonalTopicsController ..> IPersonalTopicQueryService : GetTopicsAsync()

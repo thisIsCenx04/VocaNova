@@ -9,7 +9,7 @@
 - Redis for cache/runtime settings; many API paths degrade to uncached operation if unavailable.
 - Flutter compatible with Dart `^3.10.7` for Mobile.
 - `dotnet ef` only for explicitly authorized current database scaffolding.
-- Credentials only for exercised flows: JWT, Google, Gemini, Cloudinary, and optionally SpeedSMS.
+- Credentials only for exercised flows: JWT, Google, Gemini, Cloudinary, Pexels media suggestions, and optionally SpeedSMS.
 
 ### Configuration
 
@@ -17,7 +17,7 @@
 Copy-Item .env.example .env
 ```
 
-Keep `.env` local and uncommitted. `.env.example` contains placeholders. Current API startup requires `MYSQL_CONNECTION_STRING`, `MYSQL_SERVER_VERSION`, and valid JWT settings. Redis and provider settings use ASP.NET double-underscore environment keys. Dashboard reads `VocaNovaApi:BaseUrl` from its appsettings.
+Keep `.env` local and uncommitted. `.env.example` contains placeholders. Current API startup requires `MYSQL_CONNECTION_STRING`, `MYSQL_SERVER_VERSION`, and valid JWT settings. Redis and provider settings use ASP.NET double-underscore environment keys. Configure `Pexels__ApiKey` before using admin image/video suggestions. Dashboard reads `VocaNovaApi:BaseUrl` from its appsettings.
 
 ### Restore, build, and test
 
@@ -107,5 +107,5 @@ The API and Dashboard containers listen on internal port 8080. Compose waits for
 - Dashboard cannot reach API: align `VocaNovaApi:BaseUrl` with the active API launch profile/scheme.
 - Android emulator cannot reach host `localhost`: use `10.0.2.2`; physical devices require a reachable LAN address.
 - Google login errors: use the same web client ID in Mobile and API configuration.
-- Provider failures: configure only the Gemini/Cloudinary/SpeedSMS flow being exercised.
+- Provider failures: configure only the Gemini/Cloudinary/Pexels/SpeedSMS flow being exercised.
 - Scaffold failure: verify `dotnet ef`, MySQL, `.env`, and the pre-existing schema.

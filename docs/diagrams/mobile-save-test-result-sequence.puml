@@ -7,10 +7,7 @@ skinparam sequenceMessageAlign center
 
 actor Learner
 boundary "Quiz Session UI" as QuizSessionUi
-control "QuizSessionNotifier\n(FE Mobile)" as FeController
-control "QuizApiService\n(FE Mobile)" as FeApiService
-entity "QuizAnswerResultDto\n(FE Response DTO)" as FeAnswerDto
-entity "QuizResultDto\n(FE Response DTO)" as FeResultDto
+control "QuizSessionNotifier\n(FE Controller)" as FeController
 entity "SubmitAnswerRequest\n(BE Request DTO)" as BeSubmitAnswerDto
 entity "AnswerResponse\n(BE Response DTO)" as BeAnswerDto
 entity "QuizResultResponse\n(BE Response DTO)" as BeResultDto
@@ -42,8 +39,7 @@ database "MySQL Database" as MySQL
 note over QuizSessionUi, MySQL
 Checked in current code:
 Mobile UI file exists: quiz_session_screen.dart.
-FE controller/service exist: QuizSessionNotifier and QuizApiService.
-FE response DTOs exist: QuizAnswerResultDto and QuizResultDto.
+FE controller exists: QuizSessionNotifier.
 BE request DTO exists: SubmitAnswerRequest.
 BE response DTOs exist: AnswerResponse and QuizResultResponse.
 Endpoints are POST /api/quiz/sessions/{id}/answer,
@@ -57,8 +53,7 @@ end note
 
 Learner -> QuizSessionUi: Submit answer
 QuizSessionUi -> FeController: submitAnswer(answer)
-FeController -> FeApiService: submitAnswer(sessionId, wordId,\nanswer, listId?)
-FeApiService -> BeController: POST /api/quiz/sessions/{id}/answer\nSubmitAnswerRequest JSON
+FeController -> BeController: POST /api/quiz/sessions/{id}/answer\nSubmitAnswerRequest JSON
 BeController -> BeSubmitAnswerDto: Bind request body
 BeSubmitAnswerDto --> BeController: SubmitAnswerRequest
 BeController -> BeController: Check authenticated user
@@ -78,8 +73,7 @@ SubmissionRepository --> SubmissionService: Submission state or null
 
 alt Session not found or not in progress
     SubmissionService --> BeController: NotFound or Conflict result
-    BeController --> FeApiService: HTTP 404/409 error
-    FeApiService --> FeController: Action failed
+    BeController --> FeController: HTTP 404/409 error
     FeController --> QuizSessionUi: Show submit error
 else Session in progress
     SubmissionService -> IQuizQuestionBuilder: BuildQuestionAsync(wordId, questionType)
@@ -96,8 +90,7 @@ else Session in progress
     DbContext --> QuestionRepository: Question word
     QuestionRepository --> QuestionBuilder: Question data
     QuestionBuilder --> SubmissionService: Question
-    SubmissionService -> IQuizSubmissionService: Grade answer
-    IQuizSubmissionService -> SubmissionService: Grade answer
+    SubmissionService -> SubmissionService: Grade answer
     SubmissionService -> ISrsService: UpdateProgressAsync(userId, wordId, isCorrect)
     ISrsService -> SrsService: UpdateProgressAsync(userId, wordId, isCorrect)
     SrsService -> ISrsRepository: FindAsync(userId, wordId)
@@ -135,17 +128,13 @@ else Session in progress
     SubmissionService --> BeController: Answer result
     BeController -> BeAnswerDto: Create AnswerResponse
     BeAnswerDto --> BeController: AnswerResponse
-    BeController --> FeApiService: HTTP 200 OK\nAnswerResponse
-    FeApiService -> FeAnswerDto: Parse response data
-    FeAnswerDto --> FeApiService: QuizAnswerResult
-    FeApiService --> FeController: Answer result
+    BeController --> FeController: HTTP 200 OK\nAnswerResponse
     FeController --> QuizSessionUi: Show answer feedback\nor next question
 end
 
 opt Learner finishes early or time/lives end
     QuizSessionUi -> FeController: finish()
-    FeController -> FeApiService: finishSession(sessionId)
-    FeApiService -> BeController: POST /api/quiz/sessions/{id}/finish
+    FeController -> BeController: POST /api/quiz/sessions/{id}/finish
     BeController -> IQuizResultService: FinishSessionAsync(userId, sessionId)
     IQuizResultService -> ResultService: FinishSessionAsync(userId, sessionId)
     ResultService -> IQuizResultRepository: GetSessionAsync(userId, sessionId)
@@ -155,8 +144,7 @@ opt Learner finishes early or time/lives end
     MySQL --> DbContext: Session row or null
     DbContext -> TestSessionEntity: Read TestSession?
     TestSessionEntity --> DbContext: TestSession or null
-    ResultService -> IQuizResultService: Build finish changes
-    IQuizResultService -> ResultService: Build finish changes
+    ResultService -> ResultService: Build finish changes
     ResultService -> IQuizResultRepository: SaveFinishAsync(changes)
     IQuizResultRepository -> ResultRepository: SaveFinishAsync(changes)
     ResultRepository -> TestSessionEntity: Set status abandoned\nand ended_at
@@ -167,12 +155,11 @@ opt Learner finishes early or time/lives end
     ResultService --> BeController: Quiz result
     BeController -> BeResultDto: Create QuizResultResponse
     BeResultDto --> BeController: QuizResultResponse
-    BeController --> FeApiService: HTTP 200 OK\nQuizResultResponse
+    BeController --> FeController: HTTP 200 OK\nQuizResultResponse
 end
 
 opt Learner opens result screen
-    QuizSessionUi -> FeApiService: getResult(sessionId)
-    FeApiService -> BeController: GET /api/quiz/sessions/{id}/result
+    QuizSessionUi -> BeController: GET /api/quiz/sessions/{id}/result
     BeController -> IQuizResultService: GetResultAsync(userId, sessionId)
     IQuizResultService -> ResultService: GetResultAsync(userId, sessionId)
     ResultService -> IQuizResultRepository: GetSessionAsync(userId, sessionId)
@@ -190,10 +177,7 @@ opt Learner opens result screen
     ResultService --> BeController: Quiz result
     BeController -> BeResultDto: Create QuizResultResponse
     BeResultDto --> BeController: QuizResultResponse
-    BeController --> FeApiService: HTTP 200 OK\nQuizResultResponse
-    FeApiService -> FeResultDto: Parse response data
-    FeResultDto --> FeApiService: QuizResult
-    FeApiService --> QuizSessionUi: Show saved test result
+    BeController --> QuizSessionUi: HTTP 200 OK\nQuizResultResponse
 end
 
 @enduml

@@ -3,6 +3,7 @@ title View Learning Charts Class Diagram (/api/progress/chart)
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 hide circle
+hide class circle
 hide empty methods
 hide empty fields
 note top
@@ -10,21 +11,10 @@ Generated from mobile-view-learning-charts-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 
-class ProgressChartsNotifier <<service>> {
+class ProgressChartsNotifier <<frontend_controller>> {
   "+ build() : ProgressChartsState"
   "+ changeGranularity() : FutureOfvoid"
   "+ load()"
-}
-
-class ProgressApiService <<service>> {
-  "+ _dio : Dio"
-  --
-  "+ getChart() : FutureOfProgressChart"
-}
-
-class ProgressChartDto <<dto>> {
-  "+ granularity : String"
-  "+ points : ListOfProgressChartPointDto"
 }
 
 class ProgressChartRequest <<dto>> {
@@ -121,13 +111,11 @@ class VocaNovaDbContext <<dbcontext>> {
 class MySQL_Database <<database>> {
 
 }
-ProgressChartsNotifier ..> ProgressApiService : getChart()
-ProgressApiService ..> ProgressController
+ProgressChartsNotifier ..> ProgressController : getChart()
 ProgressController ..> ProgressChartRequest
 ProgressAnalyticsRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 ProgressController ..> ProgressChartResponse
-ProgressApiService ..> ProgressChartDto
 ProgressChartRequest ..> ProgressController
 IProgressAnalyticsService <|.. ProgressAnalyticsService
 ProgressController ..> IProgressAnalyticsService : GetChartAsync()

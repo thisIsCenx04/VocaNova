@@ -85,6 +85,42 @@ public sealed class WordAdminRepository : IWordAdminRepository
         await _dbContext.Words.IgnoreQueryFilters().Where(word => word.WordKey == wordKey)
             .Select(word => (uint?)word.WordId).SingleOrDefaultAsync(cancellationToken);
 
+    public async Task<WordMediaSuggestionContext?> GetMediaSuggestionContextAsync(
+        uint wordId,
+        CancellationToken cancellationToken = default)
+    {
+        var word = await _dbContext.Words.AsNoTracking()
+            .Where(entity => entity.WordId == wordId)
+            .Select(entity => new
+            {
+                entity.WordId,
+                Text = entity.Word1,
+                PrimaryMeaning = entity.WordSenses
+                    .OrderBy(sense => sense.SenseOrder)
+                    .Select(sense => sense.EnglishDefinition)
+                    .FirstOrDefault(),
+                WordClass = entity.WordSenses
+                    .OrderBy(sense => sense.SenseOrder)
+                    .Select(sense => sense.WordClass)
+                    .FirstOrDefault(),
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+        if (word is null) return null;
+
+        var topics = await _dbContext.WordTopics.AsNoTracking()
+            .Where(link => link.WordId == wordId)
+            .OrderBy(link => link.Topic.TopicName)
+            .Select(link => link.Topic.TopicName)
+            .ToArrayAsync(cancellationToken);
+
+        return new WordMediaSuggestionContext(
+            word.WordId,
+            word.Text,
+            word.PrimaryMeaning,
+            word.WordClass,
+            topics);
+    }
+
     public async Task<WordDetail> CreateAsync(CreateWordCommand command, CancellationToken cancellationToken = default)
     {
         var now = DateTime.UtcNow;

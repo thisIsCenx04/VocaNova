@@ -7,9 +7,7 @@ skinparam sequenceMessageAlign center
 
 actor Learner
 boundary "Update Display Name UI" as DisplayNameUi
-control "AuthNotifier\n(FE Mobile)" as FeController
-control "AuthApiService\n(FE Mobile)" as FeApiService
-entity "UserProfileDto\n(FE Response DTO)" as FeProfileDto
+control "AuthNotifier\n(FE Controller)" as FeController
 entity "UpdateUserProfileRequest\n(BE Request DTO)" as BeUpdateProfileDto
 entity "UserProfileResponse\n(BE Response DTO)" as BeProfileDto
 control "AuthController\n(BE API)" as BeController
@@ -25,8 +23,6 @@ database "MySQL Database" as MySQL
 note over DisplayNameUi, MySQL
 Checked in current code:
 Mobile UI file exists: profile_screen.dart.
-FE controller/service exist: AuthNotifier and AuthApiService.
-FE response DTO exists: UserProfileDto.
 BE DTOs exist: UpdateUserProfileRequest and UserProfileResponse.
 Endpoint is PUT /api/auth/me/profile.
 Entities exist: User and UserProfile.
@@ -36,16 +32,14 @@ end note
 Learner -> DisplayNameUi: Enter new display name
 Learner -> DisplayNameUi: Save changes
 DisplayNameUi -> FeController: updateProfile(displayName, avatarUrl?)
-FeController -> FeApiService: updateProfile(displayName, avatarUrl?)
-FeApiService -> BeController: PUT /api/auth/me/profile\nJSON body
+FeController -> BeController: PUT /api/auth/me/profile\ndisplayName, avatarUrl?
 BeController -> BeUpdateProfileDto: Bind request body
 BeUpdateProfileDto --> BeController: UpdateUserProfileRequest
 BeController -> BeController: Check authenticated user
 BeController -> BeController: Validate UpdateUserProfileRequest
 
 alt Request invalid
-    BeController --> FeApiService: HTTP 400 error
-    FeApiService --> FeController: Action failed
+    BeController --> FeController: HTTP 400 error
     FeController --> DisplayNameUi: Show update error
 else Request valid
     BeController -> IAuthService: UpdateProfileAsync(userId, command)
@@ -60,8 +54,7 @@ else Request valid
         DbContext --> AccountRepository: null
         AccountRepository --> AuthService: null
         AuthService --> BeController: NotFound result
-        BeController --> FeApiService: HTTP 404 error
-        FeApiService --> FeController: Action failed
+        BeController --> FeController: HTTP 404 error
         FeController --> DisplayNameUi: Show update error
     else User found
         DbContext -> UserEntity: Read User
@@ -80,10 +73,7 @@ else Request valid
         AuthService --> BeController: Profile result
         BeController -> BeProfileDto: Create UserProfileResponse
         BeProfileDto --> BeController: UserProfileResponse
-        BeController --> FeApiService: HTTP 200 OK\nUserProfileResponse
-        FeApiService -> FeProfileDto: Parse response data
-        FeProfileDto --> FeApiService: UserProfile
-        FeApiService --> FeController: UserProfile
+        BeController --> FeController: HTTP 200 OK\nUserProfileResponse
         FeController --> DisplayNameUi: Show update success
     end
 end

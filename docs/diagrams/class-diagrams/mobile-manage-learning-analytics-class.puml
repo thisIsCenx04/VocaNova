@@ -3,6 +3,7 @@ title Manage Learning Analytics Class Diagram (/api/progress/chart, /mastery-bre
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 hide circle
+hide class circle
 hide empty methods
 hide empty fields
 note top
@@ -10,39 +11,10 @@ Generated from mobile-manage-learning-analytics-sequence.puml.
 Classes and members are populated from current repository source when a matching code type exists.
 end note
 
-class ProgressChartsNotifier <<service>> {
+class ProgressChartsNotifier <<frontend_controller>> {
   "+ build() : ProgressChartsState"
   "+ changeGranularity() : FutureOfvoid"
   "+ load()"
-}
-
-class ProgressApiService <<service>> {
-  "+ _dio : Dio"
-  --
-  "+ getChart() : FutureOfProgressChart"
-  "+ getMasteryBreakdown() : FutureOfListOfMasteryBreakdown"
-  "+ getWeakestWords() : FutureOfListOfWeakestWord"
-}
-
-class ProgressChartDto <<dto>> {
-  "+ granularity : String"
-  "+ points : ListOfProgressChartPointDto"
-}
-
-class MasteryBreakdownDto <<dto>> {
-  "+ masteryLevel : int"
-  "+ wordCount : int"
-}
-
-class WeakestWordDto <<dto>> {
-  "+ wordId : int"
-  "+ word : String"
-  "+ primaryMeaning : StringNullable"
-  "+ testCount : int"
-  "+ correctCount : int"
-  "+ wrongCount : int"
-  "+ accuracyRate : double"
-  "+ masteryLevel : int"
 }
 
 class ProgressChartRequest <<dto>> {
@@ -211,20 +183,16 @@ class VocaNovaDbContext <<dbcontext>> {
 class MySQL_Database <<database>> {
 
 }
-ProgressChartsNotifier ..> ProgressApiService : getChart()
-ProgressApiService ..> ProgressController
+ProgressChartsNotifier ..> ProgressController : getChart()
 ProgressController ..> ProgressChartRequest
 ProgressAnalyticsRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 ProgressController ..> ProgressChartResponse
-ProgressApiService ..> ProgressChartDto
-ProgressChartsNotifier ..> ProgressApiService : getMasteryBreakdown()
+ProgressChartsNotifier ..> ProgressController : getMasteryBreakdown()
 ProgressController ..> MasteryBreakdownResponse
-ProgressApiService ..> MasteryBreakdownDto
-ProgressChartsNotifier ..> ProgressApiService : getWeakestWords()
+ProgressChartsNotifier ..> ProgressController : getWeakestWords()
 ProgressController ..> WeakestWordsRequest
 ProgressController ..> WeakestWordResponse
-ProgressApiService ..> WeakestWordDto
 ProgressChartRequest ..> ProgressController
 WeakestWordsRequest ..> ProgressController
 IProgressAnalyticsService <|.. ProgressAnalyticsService

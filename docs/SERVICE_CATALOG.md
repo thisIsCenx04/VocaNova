@@ -39,15 +39,15 @@ Purpose: Registration, password and Google login, rotating refresh tokens, logou
 
 ## Dictionary and vocabulary administration (CURRENT)
 
-Purpose: Public word search/detail/daily word, public topics, and admin word/topic CRUD, CSV import, senses, examples, images, audio, deletion, and restore.
+Purpose: Public word search/detail/daily word, public topics, and admin word/topic CRUD, CSV import, senses, examples, images, audio, Pexels image/video suggestions, deletion, and restore.
 
 - Public read controllers: `Features/Dictionary/Controllers/WordsController` and `TopicsController`
 - Public read services: BLL `IWordReadService`/`WordReadService`, `ITopicReadService`/`TopicReadService`
 - Public read persistence: BLL-owned `IWordReadRepository` and `ITopicReadRepository`, implemented by DAL `WordReadRepository` and `TopicReadRepository`
 - Administration/write side: `Features/Dictionary/Controllers/AdminWordsController` and `AdminTopicsController`; BLL `IWordAdminService`/`WordAdminService` and `ITopicAdminService`/`TopicAdminService`; BLL-owned repository/storage/cache ports implemented by feature DAL repositories and shared Infrastructure providers
 - Database: `Word`, `WordSense`, `WordExample`, `WordAudioAsset`, `WordDerivedForm`, `WordIdiom`, `WordRelation`, `Topic`, `WordTopic`; list/user references are consulted for invalidation and deletion rules
-- Integrations: Redis word-search/detail/topic/list caches; Cloudinary image/audio storage
-- Important flows: public reads and administration use BLL-owned cache ports with shared Redis implementations. Word writes invalidate word-detail and affected user-list entries but do not clear word-search entries; topic mutations invalidate the topics list and only the applicable topic-word pages. Word/topic/audio/sense rows use soft-delete status. Sense delete/restore verifies the `wordId`/`senseId` pair, saves once, and invalidates word detail. Admin word deletion/restoration requires SuperAdmin. Existing CSV/example/topic-link multi-save ordering and Cloudinary-before-relational-save ordering remain unchanged.
+- Integrations: Redis word-search/detail/topic/list caches; Cloudinary image/audio storage; Pexels HTTPS API for admin media suggestions
+- Important flows: public reads and administration use BLL-owned cache ports with shared Redis implementations. Word writes invalidate word-detail and affected user-list entries but do not clear word-search entries; topic mutations invalidate the topics list and only the applicable topic-word pages. Word/topic/audio/sense rows use soft-delete status. Sense delete/restore verifies the `wordId`/`senseId` pair, saves once, and invalidates word detail. Admin word deletion/restoration requires SuperAdmin. Existing CSV/example/topic-link multi-save ordering and Cloudinary-before-relational-save ordering remain unchanged. Media suggestions are read-only Pexels lookups built from the word context or an admin query; selected images can be stored through the existing `image_url` flow, while video suggestions remain external preview/source links because there is no current video persistence schema.
 - Authorization: word/topic reads are anonymous; admin endpoints require the Admin policy, with word delete/restore additionally requiring SuperAdmin.
 
 | Endpoint | Controller | Service/use case |
@@ -65,6 +65,7 @@ Purpose: Public word search/detail/daily word, public topics, and admin word/top
 | `DELETE /api/admin/words/{id}/audio/{audioId}` | AdminWordsController | `SoftDeleteAudioAsync` |
 | `POST /api/admin/words/{id}/image` | AdminWordsController | `UploadImageAsync` |
 | `PUT /api/admin/words/{id}/image` | AdminWordsController | `UpdateImageUrlAsync` |
+| `GET /api/admin/words/{id}/media-suggestions` | AdminWordsController | `SuggestMediaAsync` |
 | `DELETE /api/admin/words/{id}` | AdminWordsController | `SoftDeleteAsync` |
 | `PATCH /api/admin/words/{id}/restore` | AdminWordsController | `RestoreAsync` |
 | `POST /api/admin/words/{id}/senses` | AdminWordsController | `CreateSenseAsync` |

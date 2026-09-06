@@ -24,7 +24,6 @@ Checked in current code:
 BE controller exists: ProgressController.
 BE response DTO exists: WordProgressResponse.
 Endpoint is GET /api/progress/words/{wordId}; no request DTO body is used.
-Mobile ProgressApiService currently has no getWordProgress method and no FE word progress DTO.
 Entities exist: UserWordProgress, Word and WordSense.
 Interfaces used in code: IProgressAnalyticsService, IProgressAnalyticsRepository.
 end note

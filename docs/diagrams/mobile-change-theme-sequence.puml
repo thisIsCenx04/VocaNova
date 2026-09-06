@@ -7,7 +7,7 @@ skinparam sequenceMessageAlign center
 
 actor Learner
 boundary "Change Theme UI" as ThemeUi
-control "AppSettingsNotifier\n(FE Mobile)" as SettingsController
+control "AppSettingsNotifier\n(FE Controller)" as SettingsController
 control "LocalStorage\n(Device)" as LocalStorage
 
 note over ThemeUi, LocalStorage

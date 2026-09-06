@@ -13,6 +13,7 @@ public interface IWordAdminService
     Task<DictionaryResult<bool>> RestoreAsync(uint wordId, CancellationToken cancellationToken = default);
     Task<DictionaryResult<WordDetail>> UploadImageAsync(uint wordId, UploadedContent? content, CancellationToken cancellationToken = default);
     Task<DictionaryResult<WordDetail>> UpdateImageUrlAsync(uint wordId, string? imageUrl, CancellationToken cancellationToken = default);
+    Task<DictionaryResult<IReadOnlyList<MediaSuggestionResult>>> SuggestMediaAsync(uint wordId, MediaSuggestionQuery query, CancellationToken cancellationToken = default);
     Task<DictionaryResult<WordAudio>> UploadAudioAsync(uint wordId, string? accent, UploadedContent? content, CancellationToken cancellationToken = default);
     Task<DictionaryResult<bool>> SoftDeleteAudioAsync(uint wordId, uint audioId, CancellationToken cancellationToken = default);
     Task<DictionaryResult<WordSense>> CreateSenseAsync(uint wordId, CreateSenseCommand command, CancellationToken cancellationToken = default);

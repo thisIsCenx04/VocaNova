@@ -11,188 +11,296 @@ Classes and members are populated from current repository source when a matching
 end note
 
 class KnnController <<frontend_controller>> {
-  "- _apiClient : IVocaNovaApiClient"
+  _apiClient : IVocaNovaApiClient
   --
-  "+ Index(cancellationToken: CancellationToken) : TaskOfIActionResult"
-  "+ TriggerRebuild(cancellationToken: CancellationToken) : TaskOfIActionResult"
+  Lookup(slug: string, q: stringNullable, status: stringNullable, includeDeleted: bool, page: int, limit: int, sortBy: stringNullable, sortDirection: stringNullable, cancellationToken: CancellationToken) : TaskOfIActionResult
+  Save(slug: string, id: uint, returnUrl: stringNullable, form: IFormCollection, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 
 class AdminKnnController <<backend_controller>> {
-  "- _lookupService : IAdminKnnLookupService"
-  "- _rebuildService : IKnnRebuildService"
-  "- _runtimeConfigService : IKnnRuntimeConfigurationService"
-  "- _triggerRateLimiter : IAdminKnnTriggerRateLimiter"
-  "- _options : KnnOptions"
+  _lookupService : IAdminKnnLookupService
+  _rebuildService : IKnnRebuildService
+  _runtimeConfigService : IKnnRuntimeConfigurationService
+  _triggerRateLimiter : IAdminKnnTriggerRateLimiter
+  _options : KnnOptions
   --
-  "+ UpdateVectorWeights(request: UpdateKnnVectorWeightsRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
-  "+ UpdateAgeRange(id: uint, request: UpdateAgeRangeRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
-  "+ UpdateRegion(id: uint, request: UpdateRegionRequest, cancellationToken: CancellationToken) : TaskOfIActionResult"
+  UpdateAgeRange(id: uint, request: UpdateAgeRangeRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  UpdateRegion(id: uint, request: UpdateRegionRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  UpdateOccupation(id: uint, request: UpdateOccupationRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  UpdateEducationLevel(id: uint, request: UpdateEducationLevelRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
+  UpdateLearningPurpose(id: uint, request: UpdateLearningPurposeRequest, cancellationToken: CancellationToken) : TaskOfIActionResult
 }
 
-class AgeRange_Region_Occupation_EducationLevel_LearningPurpose <<dto>> {
-
+class DashboardAgeRangeDto <<dto>> {
+  AgeRangeId : uint
+  Name : string
+  MinAge : intNullable
+  MaxAge : intNullable
+  DisplayOrder : int
+  Status : string
 }
 
-class UpdateAgeRangeRequest_UpdateRegionRequest_UpdateOccupationRequest_UpdateEducationLevelRequest_UpdateLearningPurposeRequest <<dto>> {
-
+class DashboardRegionDto <<dto>> {
+  RegionId : uint
+  Name : string
+  Code : string
+  ParentId : uintNullable
+  ParentName : stringNullable
+  Status : string
 }
 
-class AgeRangeResponse_RegionResponse_OccupationResponse_EducationLevelResponse_LearningPurposeResponse <<dto>> {
+class DashboardOccupationDto <<dto>> {
+  OccupationId : uint
+  Name : string
+  Description : stringNullable
+  Status : string
+}
 
+class DashboardEducationLevelDto <<dto>> {
+  EducationLevelId : uint
+  Name : string
+  Description : stringNullable
+  DisplayOrder : int
+  Status : string
+}
+
+class DashboardLearningPurposeDto <<dto>> {
+  LearningPurposeId : uint
+  Name : string
+  Description : stringNullable
+  Status : string
+}
+
+class UpdateAgeRangeRequest <<dto>> {
+  Name : stringNullable
+  MinAge : intNullable
+  MaxAge : intNullable
+  DisplayOrder : int
+}
+
+class UpdateRegionRequest <<dto>> {
+  Name : stringNullable
+  Code : stringNullable
+  ParentId : uintNullable
+}
+
+class UpdateOccupationRequest <<dto>> {
+  Name : stringNullable
+  Description : stringNullable
+}
+
+class UpdateEducationLevelRequest <<dto>> {
+  Name : stringNullable
+  Description : stringNullable
+  DisplayOrder : int
+}
+
+class UpdateLearningPurposeRequest <<dto>> {
+  Name : stringNullable
+  Description : stringNullable
+}
+
+class AgeRangeResponse <<dto>> {
+  AgeRangeId : uint
+  Name : string
+  MinAge : intNullable
+  MaxAge : intNullable
+  DisplayOrder : int
+  Status : string
+}
+
+class RegionResponse <<dto>> {
+  RegionId : uint
+  Name : string
+  Code : string
+  ParentId : uintNullable
+  ParentName : stringNullable
+  Status : string
+}
+
+class OccupationResponse <<dto>> {
+  OccupationId : uint
+  Name : string
+  Description : stringNullable
+  Status : string
+}
+
+class EducationLevelResponse <<dto>> {
+  EducationLevelId : uint
+  Name : string
+  Description : stringNullable
+  DisplayOrder : int
+  Status : string
+}
+
+class LearningPurposeResponse <<dto>> {
+  LearningPurposeId : uint
+  Name : string
+  Description : stringNullable
+  Status : string
 }
 
 class IAdminKnnLookupService <<service_interface>> {
-  "+ GetAgeRangesAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfPagedResultOfAgeRangeLookup"
-  "+ GetAgeRangeAsync(id: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfAgeRangeLookup"
-  "+ CreateAgeRangeAsync(command: SaveAgeRangeCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfAgeRangeLookup"
-  "+ UpdateAgeRangeAsync(id: uint, command: SaveAgeRangeCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfAgeRangeLookup"
-  "+ DeleteAgeRangeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool"
-  "+ RestoreAgeRangeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool"
-  "+ GetRegionsAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfPagedResultOfRegionLookup"
-  "+ GetRegionAsync(id: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfRegionLookup"
-  "+ CreateRegionAsync(command: SaveRegionCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfRegionLookup"
-  "+ UpdateRegionAsync(id: uint, command: SaveRegionCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfRegionLookup"
-  "+ DeleteRegionAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool"
-  "+ RestoreRegionAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool"
-  "+ GetOccupationsAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfPagedResultOfOccupationLookup"
-  "+ GetOccupationAsync(id: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfOccupationLookup"
-  "+ CreateOccupationAsync(command: SaveOccupationCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfOccupationLookup"
-  "+ UpdateOccupationAsync(id: uint, command: SaveOccupationCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfOccupationLookup"
-  "+ DeleteOccupationAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool"
-  "+ RestoreOccupationAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool"
-  "+ GetEducationLevelsAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfPagedResultOfEducationLevelLookup"
-  "+ GetEducationLevelAsync(id: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfEducationLevelLookup"
-  "+ CreateEducationLevelAsync(command: SaveEducationLevelCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfEducationLevelLookup"
-  "+ UpdateEducationLevelAsync(id: uint, command: SaveEducationLevelCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfEducationLevelLookup"
-  "+ DeleteEducationLevelAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool"
-  "+ RestoreEducationLevelAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool"
-  "+ GetLearningPurposesAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfPagedResultOfLearningPurposeLookup"
-  "+ GetLearningPurposeAsync(id: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfLearningPurposeLookup"
-  "+ CreateLearningPurposeAsync(command: SaveLearningPurposeCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfLearningPurposeLookup"
-  "+ UpdateLearningPurposeAsync(id: uint, command: SaveLearningPurposeCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfLearningPurposeLookup"
-  "+ DeleteLearningPurposeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool"
-  "+ RestoreLearningPurposeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool"
+  GetAgeRangesAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfPagedResultOfAgeRangeLookup
+  GetAgeRangeAsync(id: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfAgeRangeLookup
+  CreateAgeRangeAsync(command: SaveAgeRangeCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfAgeRangeLookup
+  UpdateAgeRangeAsync(id: uint, command: SaveAgeRangeCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfAgeRangeLookup
+  DeleteAgeRangeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool
+  RestoreAgeRangeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool
+  GetRegionsAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfPagedResultOfRegionLookup
+  GetRegionAsync(id: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfRegionLookup
+  CreateRegionAsync(command: SaveRegionCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfRegionLookup
+  UpdateRegionAsync(id: uint, command: SaveRegionCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfRegionLookup
+  DeleteRegionAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool
+  RestoreRegionAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool
+  GetOccupationsAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfPagedResultOfOccupationLookup
+  GetOccupationAsync(id: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfOccupationLookup
+  CreateOccupationAsync(command: SaveOccupationCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfOccupationLookup
+  UpdateOccupationAsync(id: uint, command: SaveOccupationCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfOccupationLookup
+  DeleteOccupationAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool
+  RestoreOccupationAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool
+  GetEducationLevelsAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfPagedResultOfEducationLevelLookup
+  GetEducationLevelAsync(id: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfEducationLevelLookup
+  CreateEducationLevelAsync(command: SaveEducationLevelCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfEducationLevelLookup
+  UpdateEducationLevelAsync(id: uint, command: SaveEducationLevelCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfEducationLevelLookup
+  DeleteEducationLevelAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool
+  RestoreEducationLevelAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool
+  GetLearningPurposesAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfPagedResultOfLearningPurposeLookup
+  GetLearningPurposeAsync(id: uint, includeDeleted: bool, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfLearningPurposeLookup
+  CreateLearningPurposeAsync(command: SaveLearningPurposeCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfLearningPurposeLookup
+  UpdateLearningPurposeAsync(id: uint, command: SaveLearningPurposeCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfLearningPurposeLookup
+  DeleteLearningPurposeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool
+  RestoreLearningPurposeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfbool
 }
 
 class AdminKnnLookupService <<service>> {
-  "- _repository : IAdminKnnLookupRepository"
-  "- _topicRecommendationCache : IKnnTopicRecommendationCacheNullable"
+  _repository : IAdminKnnLookupRepository
+  _topicRecommendationCache : IKnnTopicRecommendationCacheNullable
   --
-  "+ UpdateAgeRangeAsync(id: uint, command: SaveAgeRangeCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfAgeRangeLookup"
-  "+ UpdateRegionAsync(id: uint, command: SaveRegionCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfRegionLookup"
-  "+ UpdateOccupationAsync(id: uint, command: SaveOccupationCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfOccupationLookup"
+  UpdateAgeRangeAsync(id: uint, command: SaveAgeRangeCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfAgeRangeLookup
+  UpdateRegionAsync(id: uint, command: SaveRegionCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfRegionLookup
+  UpdateOccupationAsync(id: uint, command: SaveOccupationCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfOccupationLookup
+  UpdateEducationLevelAsync(id: uint, command: SaveEducationLevelCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfEducationLevelLookup
+  UpdateLearningPurposeAsync(id: uint, command: SaveLearningPurposeCommand, cancellationToken: CancellationToken) : TaskOfKnnOperationResultOfLearningPurposeLookup
 }
 
 class AgeRange <<entity>> {
-  "+ AgeRangeId : uint"
-  "+ Name : string"
-  "+ MinAge : intNullable"
-  "+ MaxAge : intNullable"
-  "+ DisplayOrder : int"
-  "+ Status : string"
-  "+ UserLearningProfiles : ICollectionOfUserLearningProfile"
+  AgeRangeId : uint
+  Name : string
+  MinAge : intNullable
+  MaxAge : intNullable
+  DisplayOrder : int
+  Status : string
+  UserLearningProfiles : ICollectionOfUserLearningProfile
 }
 
 class Region <<entity>> {
-  "+ RegionId : uint"
-  "+ Name : string"
-  "+ Code : string"
-  "+ ParentId : uintNullable"
-  "+ Status : string"
-  "+ Inverseparent : ICollectionOfRegion"
-  "+ Parent : RegionNullable"
-  "+ UserLearningProfiles : ICollectionOfUserLearningProfile"
+  RegionId : uint
+  Name : string
+  Code : string
+  ParentId : uintNullable
+  Status : string
+  Inverseparent : ICollectionOfRegion
+  Parent : RegionNullable
+  UserLearningProfiles : ICollectionOfUserLearningProfile
 }
 
 class Occupation <<entity>> {
-  "+ OccupationId : uint"
-  "+ Name : string"
-  "+ Description : stringNullable"
-  "+ Status : string"
-  "+ UserLearningProfiles : ICollectionOfUserLearningProfile"
+  OccupationId : uint
+  Name : string
+  Description : stringNullable
+  Status : string
+  UserLearningProfiles : ICollectionOfUserLearningProfile
 }
 
 class EducationLevel <<entity>> {
-  "+ EducationLevelId : uint"
-  "+ Name : string"
-  "+ Description : stringNullable"
-  "+ DisplayOrder : int"
-  "+ Status : string"
-  "+ UserLearningProfiles : ICollectionOfUserLearningProfile"
+  EducationLevelId : uint
+  Name : string
+  Description : stringNullable
+  DisplayOrder : int
+  Status : string
+  UserLearningProfiles : ICollectionOfUserLearningProfile
 }
 
 class LearningPurpose <<entity>> {
-  "+ LearningPurposeId : uint"
-  "+ Name : string"
-  "+ Description : stringNullable"
-  "+ Status : string"
-  "+ UserLearningProfiles : ICollectionOfUserLearningProfile"
+  LearningPurposeId : uint
+  Name : string
+  Description : stringNullable
+  Status : string
+  UserLearningProfiles : ICollectionOfUserLearningProfile
 }
 
 class IAdminKnnLookupRepository <<repository_interface>> {
-  "+ GetAgeRangesAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfAgeRangeLookup"
-  "+ FindAgeRangeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfAgeRangeLookupNullable"
-  "+ AgeRangeNameExistsAsync(name: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool"
-  "+ CreateAgeRangeAsync(command: SaveAgeRangeCommand, status: string, cancellationToken: CancellationToken) : TaskOfAgeRangeLookup"
-  "+ UpdateAgeRangeAsync(id: uint, command: SaveAgeRangeCommand, cancellationToken: CancellationToken) : TaskOfAgeRangeLookupNullable"
-  "+ SetAgeRangeStatusAsync(id: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool"
-  "+ GetRegionsAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfRegionLookup"
-  "+ FindRegionAsync(id: uint, cancellationToken: CancellationToken) : TaskOfRegionLookupNullable"
-  "+ RegionNameExistsAsync(name: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool"
-  "+ RegionCodeExistsAsync(code: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool"
-  "+ CreateRegionAsync(name: string, code: string, parentId: uintNullable, status: string, cancellationToken: CancellationToken) : TaskOfRegionLookup"
-  "+ UpdateRegionAsync(id: uint, name: string, code: string, parentId: uintNullable, cancellationToken: CancellationToken) : TaskOfRegionLookupNullable"
-  "+ SetRegionStatusAsync(id: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool"
-  "+ GetOccupationsAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfOccupationLookup"
-  "+ FindOccupationAsync(id: uint, cancellationToken: CancellationToken) : TaskOfOccupationLookupNullable"
-  "+ OccupationNameExistsAsync(name: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool"
-  "+ CreateOccupationAsync(name: string, description: stringNullable, status: string, cancellationToken: CancellationToken) : TaskOfOccupationLookup"
-  "+ UpdateOccupationAsync(id: uint, name: string, description: stringNullable, cancellationToken: CancellationToken) : TaskOfOccupationLookupNullable"
-  "+ SetOccupationStatusAsync(id: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool"
-  "+ GetEducationLevelsAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfEducationLevelLookup"
-  "+ FindEducationLevelAsync(id: uint, cancellationToken: CancellationToken) : TaskOfEducationLevelLookupNullable"
-  "+ EducationLevelNameExistsAsync(name: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool"
-  "+ CreateEducationLevelAsync(name: string, description: stringNullable, displayOrder: int, status: string, cancellationToken: CancellationToken) : TaskOfEducationLevelLookup"
-  "+ UpdateEducationLevelAsync(id: uint, name: string, description: stringNullable, displayOrder: int, cancellationToken: CancellationToken) : TaskOfEducationLevelLookupNullable"
-  "+ SetEducationLevelStatusAsync(id: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool"
-  "+ GetLearningPurposesAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfLearningPurposeLookup"
-  "+ FindLearningPurposeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfLearningPurposeLookupNullable"
-  "+ LearningPurposeNameExistsAsync(name: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool"
-  "+ CreateLearningPurposeAsync(name: string, description: stringNullable, status: string, cancellationToken: CancellationToken) : TaskOfLearningPurposeLookup"
-  "+ UpdateLearningPurposeAsync(id: uint, name: string, description: stringNullable, cancellationToken: CancellationToken) : TaskOfLearningPurposeLookupNullable"
-  "+ SetLearningPurposeStatusAsync(id: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool"
-  "+ GetLearningProfileUserIdsAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfuint"
+  GetAgeRangesAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfAgeRangeLookup
+  FindAgeRangeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfAgeRangeLookupNullable
+  AgeRangeNameExistsAsync(name: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool
+  CreateAgeRangeAsync(command: SaveAgeRangeCommand, status: string, cancellationToken: CancellationToken) : TaskOfAgeRangeLookup
+  UpdateAgeRangeAsync(id: uint, command: SaveAgeRangeCommand, cancellationToken: CancellationToken) : TaskOfAgeRangeLookupNullable
+  SetAgeRangeStatusAsync(id: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool
+  GetRegionsAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfRegionLookup
+  FindRegionAsync(id: uint, cancellationToken: CancellationToken) : TaskOfRegionLookupNullable
+  RegionNameExistsAsync(name: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool
+  RegionCodeExistsAsync(code: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool
+  CreateRegionAsync(name: string, code: string, parentId: uintNullable, status: string, cancellationToken: CancellationToken) : TaskOfRegionLookup
+  UpdateRegionAsync(id: uint, name: string, code: string, parentId: uintNullable, cancellationToken: CancellationToken) : TaskOfRegionLookupNullable
+  SetRegionStatusAsync(id: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool
+  GetOccupationsAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfOccupationLookup
+  FindOccupationAsync(id: uint, cancellationToken: CancellationToken) : TaskOfOccupationLookupNullable
+  OccupationNameExistsAsync(name: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool
+  CreateOccupationAsync(name: string, description: stringNullable, status: string, cancellationToken: CancellationToken) : TaskOfOccupationLookup
+  UpdateOccupationAsync(id: uint, name: string, description: stringNullable, cancellationToken: CancellationToken) : TaskOfOccupationLookupNullable
+  SetOccupationStatusAsync(id: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool
+  GetEducationLevelsAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfEducationLevelLookup
+  FindEducationLevelAsync(id: uint, cancellationToken: CancellationToken) : TaskOfEducationLevelLookupNullable
+  EducationLevelNameExistsAsync(name: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool
+  CreateEducationLevelAsync(name: string, description: stringNullable, displayOrder: int, status: string, cancellationToken: CancellationToken) : TaskOfEducationLevelLookup
+  UpdateEducationLevelAsync(id: uint, name: string, description: stringNullable, displayOrder: int, cancellationToken: CancellationToken) : TaskOfEducationLevelLookupNullable
+  SetEducationLevelStatusAsync(id: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool
+  GetLearningPurposesAsync(query: KnnLookupQuery, cancellationToken: CancellationToken) : TaskOfPagedResultOfLearningPurposeLookup
+  FindLearningPurposeAsync(id: uint, cancellationToken: CancellationToken) : TaskOfLearningPurposeLookupNullable
+  LearningPurposeNameExistsAsync(name: string, excludingId: uintNullable, cancellationToken: CancellationToken) : TaskOfbool
+  CreateLearningPurposeAsync(name: string, description: stringNullable, status: string, cancellationToken: CancellationToken) : TaskOfLearningPurposeLookup
+  UpdateLearningPurposeAsync(id: uint, name: string, description: stringNullable, cancellationToken: CancellationToken) : TaskOfLearningPurposeLookupNullable
+  SetLearningPurposeStatusAsync(id: uint, status: string, cancellationToken: CancellationToken) : TaskOfbool
+  GetLearningProfileUserIdsAsync(cancellationToken: CancellationToken) : TaskOfIReadOnlyCollectionOfuint
 }
 
 class AdminKnnLookupRepository <<repository>> {
-  "- _dbContext : VocaNovaDbContext"
+  _dbContext : VocaNovaDbContext
   --
-  "+ UpdateAgeRangeAsync(id: uint, command: SaveAgeRangeCommand, cancellationToken: CancellationToken) : TaskOfAgeRangeLookup"
-  "+ UpdateRegionAsync(id: uint, name: string, code: string, parentId: uintNullable, cancellationToken: CancellationToken) : TaskOfRegionLookup"
+  UpdateAgeRangeAsync(id: uint, command: SaveAgeRangeCommand, cancellationToken: CancellationToken) : TaskOfAgeRangeLookup
+  UpdateRegionAsync(id: uint, name: string, code: string, parentId: uintNullable, cancellationToken: CancellationToken) : TaskOfRegionLookup
+  UpdateOccupationAsync(id: uint, name: string, description: stringNullable, cancellationToken: CancellationToken) : TaskOfOccupationLookup
+  UpdateEducationLevelAsync(id: uint, name: string, description: stringNullable, displayOrder: int, cancellationToken: CancellationToken) : TaskOfEducationLevelLookup
+  UpdateLearningPurposeAsync(id: uint, name: string, description: stringNullable, cancellationToken: CancellationToken) : TaskOfLearningPurposeLookup
 }
 
 class VocaNovaDbContext <<dbcontext>> {
-  "+ AgeRanges : DbSetOfAgeRange"
-  "+ AiGradingCaches : DbSetOfAiGradingCache"
-  "+ AuditLogs : DbSetOfAuditLog"
-  "+ EducationLevels : DbSetOfEducationLevel"
-  "+ LearningPurposes : DbSetOfLearningPurpose"
-  "+ Occupations : DbSetOfOccupation"
-  "+ OtpVerifications : DbSetOfOtpVerification"
-  "+ RefreshTokens : DbSetOfRefreshToken"
-  "+ Regions : DbSetOfRegion"
-  "+ Roles : DbSetOfRole"
-  "+ TestAnswers : DbSetOfTestAnswer"
-  "+ TestSessions : DbSetOfTestSession"
+  AgeRanges : DbSetOfAgeRange
+  AiGradingCaches : DbSetOfAiGradingCache
+  AuditLogs : DbSetOfAuditLog
+  EducationLevels : DbSetOfEducationLevel
+  LearningPurposes : DbSetOfLearningPurpose
+  Occupations : DbSetOfOccupation
+  OtpVerifications : DbSetOfOtpVerification
+  RefreshTokens : DbSetOfRefreshToken
+  Regions : DbSetOfRegion
+  Roles : DbSetOfRole
+  TestAnswers : DbSetOfTestAnswer
+  TestSessions : DbSetOfTestSession
   --
-  "+ SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt"
+  SaveChangesAsync(cancellationToken: CancellationToken) : TaskOfInt
 }
 
 class MySQL_Database <<database>> {
 
 }
 KnnController ..> AdminKnnController
-AdminKnnController ..> UpdateAgeRangeRequest_UpdateRegionRequest_UpdateOccupationRequest_UpdateEducationLevelRequest_UpdateLearningPurposeRequest
+AdminKnnController ..> UpdateAgeRangeRequest
+AdminKnnController ..> UpdateRegionRequest
+AdminKnnController ..> UpdateOccupationRequest
+AdminKnnController ..> UpdateEducationLevelRequest
+AdminKnnController ..> UpdateLearningPurposeRequest
 AdminKnnLookupRepository ..> VocaNovaDbContext
 VocaNovaDbContext ..> MySQL_Database
 AdminKnnLookupRepository ..> AgeRange
@@ -200,9 +308,16 @@ AdminKnnLookupRepository ..> Region
 AdminKnnLookupRepository ..> Occupation
 AdminKnnLookupRepository ..> EducationLevel
 AdminKnnLookupRepository ..> LearningPurpose
-AdminKnnController ..> AgeRangeResponse_RegionResponse_OccupationResponse_EducationLevelResponse_LearningPurposeResponse
-AdminKnnController ..> AgeRange_Region_Occupation_EducationLevel_LearningPurpose
-UpdateAgeRangeRequest_UpdateRegionRequest_UpdateOccupationRequest_UpdateEducationLevelRequest_UpdateLearningPurposeRequest ..> AdminKnnController
+AdminKnnController ..> AgeRangeResponse
+AdminKnnController ..> RegionResponse
+AdminKnnController ..> OccupationResponse
+AdminKnnController ..> EducationLevelResponse
+AdminKnnController ..> LearningPurposeResponse
+KnnController ..> DashboardAgeRangeDto
+KnnController ..> DashboardRegionDto
+KnnController ..> DashboardOccupationDto
+KnnController ..> DashboardEducationLevelDto
+KnnController ..> DashboardLearningPurposeDto
 IAdminKnnLookupService <|.. AdminKnnLookupService
 AdminKnnController ..> IAdminKnnLookupService : Async()
 IAdminKnnLookupRepository <|.. AdminKnnLookupRepository

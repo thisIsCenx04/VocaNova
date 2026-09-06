@@ -7,12 +7,8 @@ skinparam sequenceMessageAlign center
 
 actor Learner
 boundary "Add Vocabulary from Search UI" as AddFromSearchUi
-control "WordSearchNotifier\n(FE Mobile)" as SearchController
-control "WordSearchApiService\n(FE Mobile)" as SearchApiService
-control "ListDetailNotifier\n(FE Mobile)" as ListController
-control "ListsApiService\n(FE Mobile)" as ListsApiService
-entity "WordSummaryDto\n(FE Response DTO)" as FeWordSummaryDto
-entity "ListWordDto\n(FE Response DTO)" as FeListWordDto
+control "WordSearchNotifier\n(FE Controller)" as SearchController
+control "ListDetailNotifier\n(FE Controller)" as ListController
 entity "WordSearchRequest\n(BE Request DTO)" as BeWordSearchDto
 entity "WordSummaryResponse\n(BE Response DTO)" as BeWordSummaryDto
 entity "AddListWordRequest\n(BE Request DTO)" as BeAddListWordDto
@@ -37,9 +33,6 @@ database "MySQL Database" as MySQL
 
 note over AddFromSearchUi, MySQL
 Checked in current code:
-Mobile search uses WordSearchNotifier and WordSearchApiService.
-Mobile add-to-list uses ListDetailNotifier and ListsApiService.
-FE response DTOs exist: WordSummaryDto and ListWordDto.
 BE request DTOs exist: WordSearchRequest and AddListWordRequest.
 BE response DTOs exist: WordSummaryResponse and ListWordResponse.
 Endpoints are GET /api/words and POST /api/lists/{id}/words.
@@ -50,19 +43,16 @@ end note
 
 Learner -> AddFromSearchUi: Search vocabulary
 AddFromSearchUi -> SearchController: queryChanged/search
-SearchController -> SearchApiService: search(query, cefr?, topicId?)
-SearchApiService -> WordsController: GET /api/words\nq, page, limit, cefr, topicId
+SearchController -> WordsController: GET /api/words\nquery, page, limit, cefr?
 WordsController -> BeWordSearchDto: Bind query string
 BeWordSearchDto --> WordsController: WordSearchRequest
 WordsController -> IWordReadService: SearchAsync(query)
 IWordReadService -> WordService: SearchAsync(query)
-WordService -> IWordReadService: Validate page, limit and CEFR
-IWordReadService -> WordService: Validate page, limit and CEFR
+WordService -> WordService: Validate page, limit and CEFR
 
 alt Search validation fails
     WordService --> WordsController: Validation failure
-    WordsController --> SearchApiService: HTTP 400 error
-    SearchApiService --> SearchController: Action failed
+    WordsController --> SearchController: HTTP 400 error
     SearchController --> AddFromSearchUi: Show search error
 else Search validation success
     WordService -> IWordReadRepository: SearchAsync(normalized query)
@@ -81,17 +71,13 @@ else Search validation success
     WordService --> WordsController: Search result
     WordsController -> BeWordSummaryDto: Create WordSummaryResponse list
     BeWordSummaryDto --> WordsController: WordSummaryResponse list
-    WordsController --> SearchApiService: HTTP 200 OK\nWordSummaryResponse list
-    SearchApiService -> FeWordSummaryDto: Parse response data
-    FeWordSummaryDto --> SearchApiService: WordSummary list
-    SearchApiService --> SearchController: Search results
+    WordsController --> SearchController: HTTP 200 OK\nWordSummaryResponse list
     SearchController --> AddFromSearchUi: Show word results
 end
 
 Learner -> AddFromSearchUi: Tap add on a word
 AddFromSearchUi -> ListController: addWord(wordId)
-ListController -> ListsApiService: addWord(listId, wordId)
-ListsApiService -> ListsController: POST /api/lists/{id}/words\nword_id, add_method, note
+ListController -> ListsController: POST /api/lists/{id}/words\nwordId, note?
 ListsController -> BeAddListWordDto: Bind request body
 BeAddListWordDto --> ListsController: AddListWordRequest
 ListsController -> ListsController: Check authenticated user
@@ -109,8 +95,7 @@ ListRepository --> ListService: Ownership result
 
 alt List missing or forbidden
     ListService --> ListsController: NotFound or Forbidden result
-    ListsController --> ListsApiService: HTTP 404/403 error
-    ListsApiService --> ListController: Action failed
+    ListsController --> ListController: HTTP 403/404 error
     ListController --> AddFromSearchUi: Show add error
 else List owned
     ListService -> IListMutationRepository: ActiveWordExistsAsync(wordId)
@@ -125,8 +110,7 @@ else List owned
 
     alt Word not found
         ListService --> ListsController: NotFound result
-        ListsController --> ListsApiService: HTTP 404 error
-        ListsApiService --> ListController: Action failed
+        ListsController --> ListController: HTTP 404 error
         ListController --> AddFromSearchUi: Show add error
     else Word exists
         ListService -> IListMutationRepository: FindListWordAsync(userId, listId, wordId)
@@ -141,8 +125,7 @@ else List owned
 
         alt Word already active in list
             ListService --> ListsController: Conflict result
-            ListsController --> ListsApiService: HTTP 409 error
-            ListsApiService --> ListController: Action failed
+            ListsController --> ListController: HTTP 409 error
             ListController --> AddFromSearchUi: Show duplicate error
         else New or deleted list word
             ListService -> IListMutationRepository: AddWordAsync or RestoreWordAsync
@@ -157,10 +140,7 @@ else List owned
             ListService --> ListsController: Added word result
             ListsController -> BeListWordDto: Create ListWordResponse
             BeListWordDto --> ListsController: ListWordResponse
-            ListsController --> ListsApiService: HTTP 201 Created\nListWordResponse
-            ListsApiService -> FeListWordDto: Parse response data
-            FeListWordDto --> ListsApiService: ListWord
-            ListsApiService --> ListController: Added ListWord
+            ListsController --> ListController: HTTP 201 Created\nListWordResponse
             ListController --> AddFromSearchUi: Show word added
         end
     end

@@ -7,8 +7,7 @@ skinparam sequenceMessageAlign center
 
 actor Learner
 boundary "Word Details UI" as WordDetailsUi
-control "WordDetailNotifier\n(FE Mobile)" as FeController
-control "WordDetailApiService\n(FE Mobile)" as FeApiService
+control "WordDetailNotifier\n(FE Controller)" as FeController
 entity "WordDetailDto\n(FE Response DTO)" as FeWordDetailDto
 entity "WordDetailResponse\n(BE Response DTO)" as BeWordDetailDto
 control "WordsController\n(BE API)" as BeController
@@ -31,7 +30,7 @@ database "MySQL Database" as MySQL
 note over WordDetailsUi, MySQL
 Checked in current code:
 Mobile UI file exists: word_detail_screen.dart.
-FE controller/service exist: WordDetailNotifier and WordDetailApiService.
+FE controller exists: WordDetailNotifier.
 FE response DTO exists: WordDetailDto.
 BE controller exists: WordsController.
 BE response DTO exists: WordDetailResponse.
@@ -43,15 +42,13 @@ end note
 
 Learner -> WordDetailsUi: Open word detail
 WordDetailsUi -> FeController: load(wordId)
-FeController -> FeApiService: getWord(wordId)
-FeApiService -> BeController: GET /api/words/{id}
+FeController -> BeController: GET /api/words/{id}
 BeController -> IWordReadService: GetByIdAsync(id)
 IWordReadService -> WordService: GetByIdAsync(id)
 
 alt Word id invalid
     WordService --> BeController: NotFound result
-    BeController --> FeApiService: HTTP 404 error
-    FeApiService --> FeController: Action failed
+    BeController --> FeController: HTTP 404 error
     FeController --> WordDetailsUi: Show error
 else Word id valid
     WordService -> IWordReadRepository: FindDetailAsync(id)
@@ -64,8 +61,7 @@ else Word id valid
         DbContext --> WordRepository: null
         WordRepository --> WordService: null
         WordService --> BeController: NotFound result
-        BeController --> FeApiService: HTTP 404 error
-        FeApiService --> FeController: Action failed
+        BeController --> FeController: HTTP 404 error
         FeController --> WordDetailsUi: Show error
     else Word found
         DbContext -> WordEntity: Read Word
@@ -91,10 +87,9 @@ else Word id valid
         WordService --> BeController: Word detail result
         BeController -> BeWordDetailDto: Create WordDetailResponse
         BeWordDetailDto --> BeController: WordDetailResponse
-        BeController --> FeApiService: HTTP 200 OK\nWordDetailResponse
-        FeApiService -> FeWordDetailDto: Parse response data
-        FeWordDetailDto --> FeApiService: WordDetail
-        FeApiService --> FeController: WordDetail
+        BeController --> FeController: HTTP 200 OK\nWordDetailResponse
+        FeController -> FeWordDetailDto: Parse response data
+        FeWordDetailDto --> FeController: WordDetail
         FeController --> WordDetailsUi: Show word details
     end
 end

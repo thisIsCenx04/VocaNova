@@ -7,10 +7,6 @@ skinparam sequenceMessageAlign center
 
 actor Learner
 boundary "Organize by Topic UI" as TopicUi
-control "WordSearchApiService\n(FE Mobile)" as SearchApiService
-control "WordDetailApiService\n(FE Mobile)" as DetailApiService
-entity "PersonalTopicSummaryDto\n(FE Response DTO)" as FePersonalTopicDto
-entity "WordSummaryDto\n(FE Response DTO)" as FeWordSummaryDto
 entity "PersonalTopicResponse\n(BE Response DTO)" as BePersonalTopicDto
 entity "ListWordResponse\n(BE Response DTO)" as BeListWordDto
 entity "AddPersonalTopicWordRequest\n(BE Request DTO)" as BeAddTopicWordDto
@@ -36,8 +32,6 @@ database "MySQL Database" as MySQL
 
 note over TopicUi, MySQL
 Checked in current code:
-Mobile services exist: WordSearchApiService and WordDetailApiService.
-FE response DTOs exist: PersonalTopicSummaryDto and WordSummaryDto.
 BE request DTO exists: AddPersonalTopicWordRequest.
 BE response DTOs exist: PersonalTopicResponse and ListWordResponse.
 Endpoints are GET /api/personal-topics, GET /api/personal-topics/{topicId}/words,
@@ -49,8 +43,7 @@ Interfaces used in code: IPersonalTopicQueryService, IPersonalTopicMutationServi
 end note
 
 Learner -> TopicUi: Open topic organization
-TopicUi -> SearchApiService: getPersonalTopics(wordId?)
-SearchApiService -> PersonalTopicsController: GET /api/personal-topics\nwordId?
+TopicUi -> PersonalTopicsController: GET /api/personal-topics\nwordId?
 PersonalTopicsController -> PersonalTopicsController: Check authenticated user
 PersonalTopicsController -> IPersonalTopicQueryService: GetTopicsAsync(userId, query)
 IPersonalTopicQueryService -> TopicQueryService: GetTopicsAsync(userId, query)
@@ -70,14 +63,10 @@ TopicQueryRepository --> TopicQueryService: Personal topics
 TopicQueryService --> PersonalTopicsController: Topic result
 PersonalTopicsController -> BePersonalTopicDto: Create PersonalTopicResponse list
 BePersonalTopicDto --> PersonalTopicsController: PersonalTopicResponse list
-PersonalTopicsController --> SearchApiService: HTTP 200 OK\nPersonalTopicResponse list
-SearchApiService -> FePersonalTopicDto: Parse response data
-FePersonalTopicDto --> SearchApiService: PersonalTopicSummary list
-SearchApiService --> TopicUi: Show topics
+PersonalTopicsController --> TopicUi: HTTP 200 OK\nPersonalTopicResponse list
 
 opt View words in a topic
-    TopicUi -> SearchApiService: getPersonalTopicWords(topicId)
-    SearchApiService -> PersonalTopicsController: GET /api/personal-topics/{topicId}/words\npage, limit
+    TopicUi -> PersonalTopicsController: GET /api/personal-topics/{topicId}/words\npage, limit
     PersonalTopicsController -> IPersonalTopicQueryService: GetWordsAsync(userId, topicId, query)
     IPersonalTopicQueryService -> TopicQueryService: GetWordsAsync(userId, topicId, query)
     TopicQueryService -> IPersonalTopicQueryRepository: GetTopicWordsAsync(userId, topicId, page, limit)
@@ -100,15 +89,11 @@ opt View words in a topic
     TopicQueryService --> PersonalTopicsController: Words result
     PersonalTopicsController -> BeListWordDto: Create ListWordResponse list
     BeListWordDto --> PersonalTopicsController: ListWordResponse list
-    PersonalTopicsController --> SearchApiService: HTTP 200 OK\nListWordResponse list
-    SearchApiService -> FeWordSummaryDto: Parse response data
-    FeWordSummaryDto --> SearchApiService: WordSummary list
-    SearchApiService --> TopicUi: Show topic words
+    PersonalTopicsController --> TopicUi: HTTP 200 OK\nListWordResponse list
 end
 
 opt Add word to personal topic
-    TopicUi -> DetailApiService: addWordToPersonalTopic(topicId, wordId, note?)
-    DetailApiService -> PersonalTopicsController: POST /api/personal-topics/{topicId}/words\nword_id, note
+    TopicUi -> PersonalTopicsController: POST /api/personal-topics/{topicId}/words\nword_id, note
     PersonalTopicsController -> BeAddTopicWordDto: Bind request body
     BeAddTopicWordDto --> PersonalTopicsController: AddPersonalTopicWordRequest
     PersonalTopicsController -> IPersonalTopicMutationService: AddWordAsync(userId, topicId, request)
@@ -124,8 +109,7 @@ opt Add word to personal topic
 
     alt Topic or word invalid
         TopicMutationService --> PersonalTopicsController: NotFound or validation failure
-        PersonalTopicsController --> DetailApiService: HTTP 400/404 error
-        DetailApiService --> TopicUi: Show add error
+        PersonalTopicsController --> TopicUi: HTTP 400/404 error
     else Topic and word valid
         TopicMutationService -> IPersonalTopicMutationRepository: WordBelongsToTopicAsync(topicId, wordId)
         IPersonalTopicMutationRepository -> TopicMutationRepository: WordBelongsToTopicAsync(topicId, wordId)
@@ -151,16 +135,12 @@ opt Add word to personal topic
         TopicMutationService --> PersonalTopicsController: Personal topic result
         PersonalTopicsController -> BePersonalTopicDto: Create PersonalTopicResponse
         BePersonalTopicDto --> PersonalTopicsController: PersonalTopicResponse
-        PersonalTopicsController --> DetailApiService: HTTP 201 Created\nPersonalTopicResponse
-        DetailApiService -> FePersonalTopicDto: Parse response data
-        FePersonalTopicDto --> DetailApiService: PersonalTopicSummary
-        DetailApiService --> TopicUi: Show topic updated
+        PersonalTopicsController --> TopicUi: HTTP 201 Created\nPersonalTopicResponse
     end
 end
 
 opt Remove word from personal topic
-    TopicUi -> SearchApiService: removePersonalTopicWord(topicId, wordId)
-    SearchApiService -> PersonalTopicsController: DELETE /api/personal-topics/{topicId}/words/{wordId}
+    TopicUi -> PersonalTopicsController: DELETE /api/personal-topics/{topicId}/words/{wordId}
     PersonalTopicsController -> IPersonalTopicMutationService: RemoveWordAsync(userId, topicId, wordId)
     IPersonalTopicMutationService -> TopicMutationService: RemoveWordAsync(userId, topicId, wordId)
     TopicMutationService -> IPersonalTopicMutationRepository: FindActiveListIdAsync(userId, topicId)
@@ -183,8 +163,7 @@ opt Remove word from personal topic
     DbContext -> MySQL: UPDATE user_list_words
     MySQL --> DbContext: Save result
     TopicMutationService --> PersonalTopicsController: Success result
-    PersonalTopicsController --> SearchApiService: HTTP 200 OK
-    SearchApiService --> TopicUi: Show topic updated
+    PersonalTopicsController --> TopicUi: HTTP 200 OK
 end
 
 @enduml
