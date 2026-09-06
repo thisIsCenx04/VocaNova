@@ -25,6 +25,11 @@
             <p class="auth-subtitle">@T["Sign in with your administrator account."]</p>
         </div>
 
+        @if (TempData["AuthSuccess"] is string okMsg)
+        {
+            <div class="alert alert-success">@T[okMsg]</div>
+        }
+
         <form asp-controller="Auth" asp-action="Login" method="post" novalidate>
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="ReturnUrl" />
@@ -57,6 +62,10 @@
             <button type="submit" class="btn-primary btn-block auth-submit">
                 <span>@T["Sign in"]</span>
             </button>
+
+            <p class="auth-link-row">
+                <a asp-controller="Auth" asp-action="ForgotPassword">@T["Forgot password?"]</a>
+            </p>
         </form>
     </section>
 </div>

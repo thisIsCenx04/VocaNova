@@ -643,6 +643,23 @@ h1, h2, h3, h4, .page-title, .panel-title {
     transform: translateY(-1px);
 }
 
+.auth-link-row {
+    margin: 18px 0 0;
+    color: #7d8297;
+    font-size: 14px;
+    text-align: center;
+}
+
+.auth-link-row a {
+    color: #6c5ce7;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.auth-link-row a:hover {
+    text-decoration: underline;
+}
+
 .form-group {
     margin-bottom: 18px;
 }
