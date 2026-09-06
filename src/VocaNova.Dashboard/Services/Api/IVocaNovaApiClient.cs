@@ -54,6 +54,8 @@ public interface IVocaNovaApiClient
 
     Task<ApiActionResult> UpdateImageUrlAsync(uint wordId, string? imageUrl, CancellationToken cancellationToken = default);
 
+    Task<MediaSuggestionResult> GetMediaSuggestionsAsync(uint wordId, MediaSuggestionFilter filter, CancellationToken cancellationToken = default);
+
     // F059 — CSV import. Trả về kết quả import (imported/skipped/errors) hoặc lỗi.
     Task<ImportWordsResult> ImportWordsAsync(FileUpload upload, CancellationToken cancellationToken = default);
 
@@ -225,6 +227,15 @@ public sealed record AudioUpload(string Accent, Stream Content, string FileName,
 public sealed record ImageUpload(Stream Content, string FileName, string ContentType);
 
 public sealed record FileUpload(Stream Content, string FileName, string ContentType);
+
+public sealed record MediaSuggestionFilter(string Type, string? Query, int Limit);
+
+public sealed record MediaSuggestionResult(bool IsSuccess, int StatusCode, string? Message, IReadOnlyList<MediaSuggestion> Items)
+{
+    public static MediaSuggestionResult Ok(IReadOnlyList<MediaSuggestion> items) => new(true, 200, null, items);
+
+    public static MediaSuggestionResult Fail(int statusCode, string? message) => new(false, statusCode, message, Array.Empty<MediaSuggestion>());
+}
 
 /// <summary>Kết quả import CSV: thành công kèm dữ liệu, hoặc lỗi kèm message.</summary>
 public sealed record ImportWordsResult(bool IsSuccess, int StatusCode, string? Message, VocaNova.Dashboard.Data.Dtos.Dictionary.BulkImportResult? Data)

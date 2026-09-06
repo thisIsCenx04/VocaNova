@@ -34,7 +34,15 @@
       data-label-image-preview="@T["Image preview"]" data-label-delete="@T["Delete"]"
       data-label-replace="@T["Replace"]" data-label-no-image="@T["No image."]"
       data-label-no-audio="@T["No audio."]" data-label-upload-image="@T["Upload image"]"
-      data-label-upload-audio="@T["Upload audio"]">
+      data-label-upload-audio="@T["Upload audio"]"
+      data-msg-media-empty="@T["No matching media found. Try another query."]"
+      data-msg-media-loading="@T["Searching Pexels..."]"
+      data-msg-media-ready="@T["Suggestions load when you press Suggest."]"
+      data-msg-image-applied="@T["Suggested image applied."]"
+      data-label-use-image="@T["Use image"]"
+      data-label-open-video="@T["Open video"]"
+      data-label-copy-link="@T["Copy link"]"
+      data-label-copied="@T["Copied"]">
     @Html.AntiForgeryToken()
     <input type="hidden" name="phoneticUs" value="@Model.PhoneticUs" />
     <input type="hidden" name="imageUrl" id="edit-image-url" value="@Model.ImageUrl" />
@@ -167,6 +175,36 @@
                     </div>
                 </section>
             </div>
+
+            <section class="panel edit-panel media-suggest-panel">
+                <header class="edit-panel-head media-suggest-head">
+                    <span class="edit-panel-icon">
+                        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 5a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V5Zm3-1a1 1 0 0 0-1 1v9.6l2.9-2.9a1 1 0 0 1 1.4 0l2 2 3.4-3.4a1 1 0 0 1 1.4 0l1.9 1.9V5a1 1 0 0 0-1-1H7Zm11 10.8-1.6-1.6-3.4 3.4a1 1 0 0 1-1.4 0l-2-2L6 18.2v.8a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-4.2ZM9 7.5A1.5 1.5 0 1 1 12 7.5 1.5 1.5 0 0 1 9 7.5Z" fill="currentColor"/></svg>
+                    </span>
+                    <div>
+                        <h2 class="edit-panel-title">@T["Auto suggest image/video"]</h2>
+                        <p class="media-suggest-subtitle">@T["Search Pexels using this vocabulary context. Images can be applied directly; videos are preview links."]</p>
+                    </div>
+                    <a class="media-suggest-credit" href="https://www.pexels.com" target="_blank" rel="noopener">Pexels</a>
+                </header>
+                <div class="edit-panel-body media-suggest-body">
+                    <div class="media-suggest-toolbar">
+                        <div class="media-type-toggle" role="group" aria-label="@T["Media type"]">
+                            <button type="button" class="media-type-btn active" data-media-type="image">@T["Images"]</button>
+                            <button type="button" class="media-type-btn" data-media-type="video">@T["Videos"]</button>
+                        </div>
+                        <div class="media-search-row">
+                            <input id="media-suggest-query" class="form-control" value="@Model.Word" maxlength="120"
+                                   placeholder="@T["Search keyword"]" />
+                            <button type="button" class="btn-primary" id="media-suggest-search">@T["Suggest"]</button>
+                        </div>
+                    </div>
+                    <div class="media-suggest-status text-muted" id="media-suggest-status">
+                        @T["Suggestions load when you press Suggest."]
+                    </div>
+                    <div class="media-suggest-grid" id="media-suggest-results" aria-live="polite"></div>
+                </div>
+            </section>
 
             <!-- Meaning & Examples -->
             <section class="panel edit-panel">

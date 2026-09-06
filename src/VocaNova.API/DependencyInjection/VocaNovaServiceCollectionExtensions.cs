@@ -46,6 +46,7 @@ using VocaNova.API.Infrastructure.Caching.Progress;
 using VocaNova.API.Infrastructure.Caching.Quiz;
 using VocaNova.API.Infrastructure.Configuration;
 using VocaNova.API.Infrastructure.ExternalServices.Gemini;
+using VocaNova.API.Infrastructure.ExternalServices.Pexels;
 using VocaNova.API.Infrastructure.HostedServices;
 using VocaNova.API.Infrastructure.Otp;
 using VocaNova.API.Infrastructure.Persistence;
@@ -222,6 +223,7 @@ public static class VocaNovaServiceCollectionExtensions
         services.Configure<AiGradingConfiguration>(configuration.GetSection(AiGradingConfiguration.SectionName));
         services.Configure<KnnOptions>(configuration.GetSection(KnnOptions.SectionName));
         services.Configure<CloudinarySettings>(configuration.GetSection(CloudinarySettings.SectionName));
+        services.Configure<PexelsSettings>(configuration.GetSection(PexelsSettings.SectionName));
         services.Configure<AuthTokenOptions>(configuration.GetSection(JwtSettings.SectionName));
         services.Configure<RateLimitSettings>(configuration.GetSection(RateLimitSettings.SectionName));
         services.Configure<AuthRateLimitOptions>(configuration.GetSection(RateLimitSettings.SectionName));
@@ -308,6 +310,22 @@ public static class VocaNovaServiceCollectionExtensions
         services.AddSingleton<DictionaryTopicCache, DictionaryRedisTopicCache>();
         services.AddSingleton<IWordAudioStorage, CloudinaryWordAudioStorage>();
         services.AddSingleton<IWordImageStorage, CloudinaryWordImageStorage>();
+
+        services.AddHttpClient<IMediaSuggestionProvider, PexelsMediaSuggestionProvider>((serviceProvider, client) =>
+        {
+            var settings = serviceProvider
+                .GetRequiredService<Microsoft.Extensions.Options.IOptions<PexelsSettings>>()
+                .Value;
+            var baseUrl = string.IsNullOrWhiteSpace(settings.BaseUrl)
+                ? "https://api.pexels.com"
+                : settings.BaseUrl.TrimEnd('/');
+            if (!Uri.TryCreate($"{baseUrl}/", UriKind.Absolute, out var baseAddress))
+            {
+                baseAddress = new Uri("https://api.pexels.com/");
+            }
+            client.BaseAddress = baseAddress;
+            client.Timeout = TimeSpan.FromSeconds(Math.Clamp(settings.TimeoutSeconds, 1, 30));
+        });
 
         return services;
     }

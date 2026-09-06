@@ -16,7 +16,7 @@ Dashboard and Mobile call the single `VocaNova.API` process using JSON over HTTP
 }
 ```
 
-Many feature DTO properties explicitly use snake_case; shared envelope/pagination properties follow ASP.NET web JSON defaults. Multipart form data is used for avatar, word image/audio, and CSV uploads. Neither client uses a generated OpenAPI client, so public routes, methods, authorization, envelopes, and JSON property names are manual compatibility surfaces.
+Many feature DTO properties explicitly use snake_case; shared envelope/pagination properties follow ASP.NET web JSON defaults. Multipart form data is used for avatar, word image/audio, and CSV uploads. Admin media suggestions are JSON reads. Neither client uses a generated OpenAPI client, so public routes, methods, authorization, envelopes, and JSON property names are manual compatibility surfaces.
 
 ## Dashboard -> API (CURRENT)
 
@@ -30,6 +30,7 @@ Browser -> MVC Controller -> Dashboard workflow/API client -> HttpClient -> Voca
 - `BearerTokenHandler` attaches the access token, performs one refresh on 401 through a separate client, updates the cookie, clones the request, and retries once.
 - Most MVC controllers call `IVocaNovaApiClient`; they translate normalized API results into views, ModelState, TempData, redirects, or status responses.
 - Dashboard directly consumes Dictionary administration, KNN/runtime settings, AI-grading settings, Admin users/statistics, and SuperAdmin account/role contracts through feature controllers and manually maintained DTOs under `Data/Dtos`.
+- Dashboard vocabulary edit calls `GET /api/admin/words/{id}/media-suggestions` through the API client. The browser never receives the Pexels key. Image suggestions can be applied through the existing `PUT /api/admin/words/{id}/image` path; video suggestions are external preview/source links only.
 - Dashboard has no reference to the API project and no DbContext/MySQL/Redis access.
 
 ## Mobile -> API (CURRENT)
@@ -54,6 +55,7 @@ Screen -> Riverpod Provider/Notifier -> feature data *ApiService -> Dio -> VocaN
 | API -> Redis | StackExchange.Redis | Cache and runtime-settings fallback; failures degrade to uncached behavior. |
 | API -> Gemini | HTTPS `HttpClient` | Typing-answer grading with retry/model fallback and exact-match fallback. |
 | API -> Cloudinary | Cloudinary .NET SDK over HTTPS | Word images/audio and avatars. |
+| API -> Pexels | HTTPS `HttpClient` | Admin auto-suggest image/video search for vocabulary; read-only provider, no database schema ownership. |
 | API -> SpeedSMS | HTTPS `HttpClient` | Optional OTP delivery; disabled configuration uses a console provider. |
 | API -> Google | Google authentication library | Mobile ID-token validation. |
 
@@ -99,7 +101,7 @@ Flutter Mobile (outside Docker)
 - Compose services are exactly `mysql`, `redis`, `api`, and `dashboard`.
 - Container-to-container configuration uses `mysql:3306`, `redis:6379`, and `api:8080`, never `localhost`.
 - Host-based development outside Docker may use `localhost`.
-- Gemini, Cloudinary, Google, and SpeedSMS remain external HTTPS services, not containers.
+- Gemini, Cloudinary, Pexels, Google, and SpeedSMS remain external HTTPS services, not containers.
 - Flutter runs on an emulator, simulator, physical device, or normal Flutter development host and calls the exposed API endpoint.
 - Dashboard is configured with `VocaNovaApi__BaseUrl=http://api:8080` and has no MySQL/Redis configuration.
 - CURRENT Compose wires the API container with `MYSQL_CONNECTION_STRING=Server=mysql;Port=3306;...` and keeps Dashboard configured with `VocaNovaApi__BaseUrl=http://api:8080`. It does not create VocaNova tables; database-first schema provisioning remains a separate operational step.

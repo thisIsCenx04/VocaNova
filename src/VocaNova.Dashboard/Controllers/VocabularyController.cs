@@ -507,6 +507,52 @@ public sealed class VocabularyController : Controller
         return JsonResultFor(result, "Image removed.");
     }
 
+    [HttpGet("/vocabulary/{id:uint}/media-suggestions")]
+    public async Task<IActionResult> SuggestMedia(
+        uint id,
+        [FromQuery] string? type,
+        [FromQuery] string? query,
+        [FromQuery] int limit = 8,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedType = string.Equals(type, "video", StringComparison.OrdinalIgnoreCase) ? "video" : "image";
+        var result = await _apiClient.GetMediaSuggestionsAsync(
+            id,
+            new MediaSuggestionFilter(normalizedType, string.IsNullOrWhiteSpace(query) ? null : query.Trim(), limit),
+            cancellationToken);
+        return Json(new
+        {
+            success = result.IsSuccess,
+            message = result.IsSuccess
+                ? _translator["Media suggestions loaded."]
+                : _translator[result.Message ?? "Unable to load media suggestions."],
+            items = result.Items,
+        });
+    }
+
+    [HttpPost("/vocabulary/{id:uint}/image/suggested")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UseSuggestedImage(
+        uint id,
+        [FromForm] string? imageUrl,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl))
+        {
+            return Json(new { success = false, message = _translator["Please choose an image."] });
+        }
+
+        var result = await _apiClient.UpdateImageUrlAsync(id, imageUrl.Trim(), cancellationToken);
+        return Json(new
+        {
+            success = result.IsSuccess,
+            message = result.IsSuccess
+                ? _translator["Suggested image applied."]
+                : _translator[result.Message ?? "Unable to apply suggested image."],
+            imageUrl = result.IsSuccess ? imageUrl.Trim() : null,
+        });
+    }
+
     // ---- F059: CSV import ----
 
     [HttpGet("/vocabulary/import")]

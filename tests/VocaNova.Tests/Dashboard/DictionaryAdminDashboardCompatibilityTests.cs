@@ -44,6 +44,32 @@ public sealed class DictionaryAdminDashboardCompatibilityTests
         handler.PendingCount.Should().Be(0);
     }
 
+    [Fact]
+    public async Task Dashboard_Client_Should_Consume_Media_Suggestion_Contract()
+    {
+        var handler = new QueueHttpMessageHandler(request =>
+        {
+            request.Method.Should().Be(HttpMethod.Get);
+            request.RequestUri!.PathAndQuery.Should().Be(
+                "/api/admin/words/7/media-suggestions?type=video&limit=4&query=run");
+            return JsonResponse("""
+                {"success":true,"data":[{"media_type":"video","provider":"pexels","external_id":"123","title":"Video by Sam","preview_url":"https://images.pexels.com/videos/123/preview.jpg","full_size_url":"https://videos.pexels.com/video-files/123.mp4","source_url":"https://www.pexels.com/video/123/","creator_name":"Sam","creator_url":"https://www.pexels.com/@sam","width":1920,"height":1080,"duration_seconds":12}],"message":"Media suggestions loaded successfully.","errors":[]}
+                """);
+        });
+        var client = CreateClient(handler);
+
+        var result = await client.GetMediaSuggestionsAsync(
+            7,
+            new MediaSuggestionFilter("video", "run", 4));
+
+        result.IsSuccess.Should().BeTrue();
+        var item = result.Items.Should().ContainSingle().Subject;
+        item.MediaType.Should().Be("video");
+        item.Provider.Should().Be("pexels");
+        item.FullSizeUrl.Should().EndWith(".mp4");
+        handler.PendingCount.Should().Be(0);
+    }
+
     private static VocaNovaApiClient CreateClient(HttpMessageHandler handler) => new(
         new HttpClient(handler) { BaseAddress = new Uri("http://localhost") },
         NullLogger<VocaNovaApiClient>.Instance);

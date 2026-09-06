@@ -23,6 +23,7 @@ public sealed class DictionaryAdminArchitectureTests
         AssertRoute<AdminWordsController>(nameof(AdminWordsController.List), typeof(HttpGetAttribute), null);
         AssertRoute<AdminWordsController>(nameof(AdminWordsController.Create), typeof(HttpPostAttribute), null);
         AssertRoute<AdminWordsController>(nameof(AdminWordsController.Update), typeof(HttpPutAttribute), "{id:uint}");
+        AssertRoute<AdminWordsController>(nameof(AdminWordsController.SuggestMedia), typeof(HttpGetAttribute), "{id:uint}/media-suggestions");
         AssertRoute<AdminWordsController>(nameof(AdminWordsController.SoftDelete), typeof(HttpDeleteAttribute), "{id:uint}");
         AssertRoute<AdminWordsController>(nameof(AdminWordsController.Restore), typeof(HttpPatchAttribute), "{id:uint}/restore");
         AssertRoute<AdminWordsController>(nameof(AdminWordsController.SoftDeleteSense), typeof(HttpDeleteAttribute), "{id:uint}/senses/{senseId:uint}");
@@ -42,6 +43,7 @@ public sealed class DictionaryAdminArchitectureTests
         typeof(TopicAdminRepository).Should().Implement<ITopicAdminRepository>();
         typeof(CloudinaryWordAudioStorage).Should().Implement<IWordAudioStorage>();
         typeof(CloudinaryWordImageStorage).Should().Implement<IWordImageStorage>();
+        typeof(PexelsMediaSuggestionProvider).Should().Implement<IMediaSuggestionProvider>();
     }
 
     [Fact]

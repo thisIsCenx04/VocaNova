@@ -178,6 +178,49 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> UpdateImageUrlAsync(uint wordId, string? imageUrl, CancellationToken cancellationToken = default) =>
         SendJsonActionAsync(HttpMethod.Put, $"api/admin/words/{wordId}/image", new { image_url = imageUrl }, cancellationToken);
 
+    public async Task<MediaSuggestionResult> GetMediaSuggestionsAsync(
+        uint wordId,
+        MediaSuggestionFilter filter,
+        CancellationToken cancellationToken = default)
+    {
+        var queryParams = new Dictionary<string, string?>
+        {
+            ["type"] = filter.Type,
+            ["limit"] = filter.Limit.ToString(CultureInfo.InvariantCulture),
+        };
+        if (!string.IsNullOrWhiteSpace(filter.Query)) queryParams["query"] = filter.Query;
+
+        var uri = QueryHelpers.AddQueryString($"api/admin/words/{wordId}/media-suggestions", queryParams);
+        try
+        {
+            using var response = await _httpClient.GetAsync(uri, cancellationToken);
+            var statusCode = (int)response.StatusCode;
+            ApiEnvelope<List<MediaSuggestion>>? envelope = null;
+            try
+            {
+                envelope = await response.Content
+                    .ReadFromJsonAsync<ApiEnvelope<List<MediaSuggestion>>>(ApiJson.Default, cancellationToken);
+            }
+            catch (Exception ex) when (ex is System.Text.Json.JsonException or NotSupportedException)
+            {
+                _logger.LogWarning(ex, "VocaNova.API media suggestions response could not be parsed.");
+            }
+
+            if (response.IsSuccessStatusCode)
+            {
+                return MediaSuggestionResult.Ok(envelope?.Data ?? []);
+            }
+
+            LogNonSuccess(uri, statusCode);
+            return MediaSuggestionResult.Fail(statusCode, envelope?.Message ?? envelope?.Errors.FirstOrDefault());
+        }
+        catch (Exception ex) when (ex is HttpRequestException or System.Text.Json.JsonException or NotSupportedException or TaskCanceledException)
+        {
+            _logger.LogWarning(ex, "VocaNova.API media suggestions failed.");
+            return MediaSuggestionResult.Fail(0, null);
+        }
+    }
+
     public async Task<ImportWordsResult> ImportWordsAsync(FileUpload upload, CancellationToken cancellationToken = default)
     {
         try

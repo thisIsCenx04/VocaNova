@@ -11,6 +11,7 @@ public interface IWordAdminRepository
     Task<bool> SenseExistsAsync(uint wordId, uint senseId, bool includeDeleted = false, CancellationToken cancellationToken = default);
     Task<bool> MatchingSenseExistsAsync(uint wordId, string wordClass, string englishDefinition, CancellationToken cancellationToken = default);
     Task<uint?> FindWordIdByKeyAsync(string wordKey, CancellationToken cancellationToken = default);
+    Task<WordMediaSuggestionContext?> GetMediaSuggestionContextAsync(uint wordId, CancellationToken cancellationToken = default);
     Task<WordDetail> CreateAsync(CreateWordCommand command, CancellationToken cancellationToken = default);
     Task<WordDetail> CreateWithSenseAsync(CreateWordCommand word, CreateSenseCommand sense, CancellationToken cancellationToken = default);
     Task<WordDetail?> UpdateMetadataAsync(uint wordId, UpdateWordCommand command, CancellationToken cancellationToken = default);

@@ -79,6 +79,7 @@ global using VocaNova.API.Infrastructure.Caching.Quiz;
 global using VocaNova.API.Infrastructure.Authentication;
 global using VocaNova.API.Infrastructure.Caching.Auth;
 global using VocaNova.API.Infrastructure.ExternalServices.Gemini;
+global using VocaNova.API.Infrastructure.ExternalServices.Pexels;
 global using VocaNova.API.Infrastructure.HostedServices;
 global using VocaNova.API.Infrastructure.Otp;
 global using VocaNova.API.Infrastructure.Persistence;

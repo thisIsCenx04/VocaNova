@@ -41,6 +41,7 @@ public sealed class WordAdminService : IWordAdminService
     private readonly IWordAdminRepository _repository;
     private readonly IWordAudioStorage? _audioStorage;
     private readonly IWordImageStorage? _imageStorage;
+    private readonly IMediaSuggestionProvider? _mediaSuggestionProvider;
     private readonly IWordDetailCache? _wordDetailCache;
     private readonly IUserListCache? _userListCache;
 
@@ -49,11 +50,13 @@ public sealed class WordAdminService : IWordAdminService
         IWordDetailCache? wordDetailCache = null,
         IWordAudioStorage? audioStorage = null,
         IWordImageStorage? imageStorage = null,
+        IMediaSuggestionProvider? mediaSuggestionProvider = null,
         IUserListCache? userListCache = null)
     {
         _repository = repository;
         _audioStorage = audioStorage;
         _imageStorage = imageStorage;
+        _mediaSuggestionProvider = mediaSuggestionProvider;
         _wordDetailCache = wordDetailCache;
         _userListCache = userListCache;
     }
@@ -245,6 +248,41 @@ public sealed class WordAdminService : IWordAdminService
         return SetImageUrlAsync(wordId, normalized, cancellationToken);
     }
 
+    public async Task<DictionaryResult<IReadOnlyList<MediaSuggestionResult>>> SuggestMediaAsync(
+        uint wordId,
+        MediaSuggestionQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        if (wordId == 0) return DictionaryResult<IReadOnlyList<MediaSuggestionResult>>.NotFound("Word not found.");
+        if (!MediaSuggestionTypes.IsSupported(query.MediaType))
+            return DictionaryResult<IReadOnlyList<MediaSuggestionResult>>.ValidationFailure("Media type must be image or video.");
+        if (query.Limit <= 0 || query.Limit > 20)
+            return DictionaryResult<IReadOnlyList<MediaSuggestionResult>>.ValidationFailure("Limit must be between 1 and 20.");
+        if (_mediaSuggestionProvider is null)
+            return DictionaryResult<IReadOnlyList<MediaSuggestionResult>>.ValidationFailure("Media suggestion provider is not configured.");
+
+        var context = await _repository.GetMediaSuggestionContextAsync(wordId, cancellationToken);
+        if (context is null) return DictionaryResult<IReadOnlyList<MediaSuggestionResult>>.NotFound("Word not found.");
+
+        var searchText = BuildMediaSearchText(context, query.Query);
+        if (string.IsNullOrWhiteSpace(searchText))
+            return DictionaryResult<IReadOnlyList<MediaSuggestionResult>>.ValidationFailure("Search query is required.");
+
+        try
+        {
+            var suggestions = await _mediaSuggestionProvider.SearchAsync(
+                searchText,
+                MediaSuggestionTypes.Normalize(query.MediaType),
+                query.Limit,
+                cancellationToken);
+            return DictionaryResult<IReadOnlyList<MediaSuggestionResult>>.Success(suggestions);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return DictionaryResult<IReadOnlyList<MediaSuggestionResult>>.ValidationFailure(exception.Message);
+        }
+    }
+
     public async Task<DictionaryResult<WordAudio>> UploadAudioAsync(
         uint wordId, string? accent, UploadedContent? content, CancellationToken cancellationToken = default)
     {
@@ -317,6 +355,23 @@ public sealed class WordAdminService : IWordAdminService
             foreach (var userId in await _repository.GetReferencingUserIdsAsync(wordId, cancellationToken))
                 await _userListCache.RemoveAsync(userId, cancellationToken);
         return DictionaryResult<bool>.Success(true);
+    }
+
+    private static string BuildMediaSearchText(WordMediaSuggestionContext context, string? query)
+    {
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            return query.Trim();
+        }
+
+        var parts = new[]
+        {
+            context.Word,
+            context.PrimaryMeaning,
+            context.TopicNames.FirstOrDefault(),
+        };
+        var text = string.Join(' ', parts.Where(part => !string.IsNullOrWhiteSpace(part)).Select(part => part!.Trim()));
+        return text.Length <= 120 ? text : text[..120];
     }
 
     private async Task<DictionaryResult<WordDetail>> SetImageUrlAsync(uint wordId, string? url, CancellationToken cancellationToken)
