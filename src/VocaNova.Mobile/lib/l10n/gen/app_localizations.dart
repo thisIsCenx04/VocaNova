@@ -2540,6 +2540,36 @@ abstract class AppLocalizations {
   /// **'Invalid quiz session code.'**
   String get quizResultInvalidSession;
 
+  /// No description provided for @quizHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Test history'**
+  String get quizHistoryTitle;
+
+  /// No description provided for @quizHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No test history yet.'**
+  String get quizHistoryEmpty;
+
+  /// No description provided for @quizHistoryQuestionCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} questions'**
+  String quizHistoryQuestionCount(int count);
+
+  /// No description provided for @quizHistoryLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load test history.'**
+  String get quizHistoryLoadError;
+
+  /// No description provided for @quizHistoryLoadMoreError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load more test history.'**
+  String get quizHistoryLoadMoreError;
+
   /// No description provided for @quizWrongWordsTitle.
   ///
   /// In en, this message translates to:

@@ -47,9 +47,14 @@ String _answerLabel(BuildContext context, String method) {
 }
 
 class QuizConfigScreen extends ConsumerStatefulWidget {
-  const QuizConfigScreen({this.initialListId, super.key});
+  const QuizConfigScreen({
+    this.initialListId,
+    this.initialScopeType,
+    super.key,
+  });
 
   final int? initialListId;
+  final String? initialScopeType;
 
   @override
   ConsumerState<QuizConfigScreen> createState() => _QuizConfigScreenState();
@@ -62,6 +67,9 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
     Future.microtask(() {
       final notifier = ref.read(quizConfigProvider.notifier);
       notifier.setListId(widget.initialListId);
+      if (widget.initialScopeType == 'wrong_words') {
+        notifier.setScope('wrong_words');
+      }
       notifier.loadSources();
     });
   }
@@ -71,9 +79,13 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
     super.didUpdateWidget(oldWidget);
     // Điều hướng lại vào màn này với danh sách khác (ví dụ "Bắt đầu kiểm tra"
     // từ một danh sách) thì cập nhật nguồn và tải lại số từ mới nhất.
-    if (oldWidget.initialListId != widget.initialListId) {
+    if (oldWidget.initialListId != widget.initialListId ||
+        oldWidget.initialScopeType != widget.initialScopeType) {
       final notifier = ref.read(quizConfigProvider.notifier);
       notifier.setListId(widget.initialListId);
+      if (widget.initialScopeType == 'wrong_words') {
+        notifier.setScope('wrong_words');
+      }
       notifier.loadSources();
     }
   }

@@ -167,7 +167,7 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
   }
 
   String? validate() {
-    if (state.listId == null) {
+    if (state.listId == null && state.scopeType != 'wrong_words') {
       return _l10n.quizConfigValidateNoSource;
     }
     if (state.useCustomLimit && state.questionLimit == null) {

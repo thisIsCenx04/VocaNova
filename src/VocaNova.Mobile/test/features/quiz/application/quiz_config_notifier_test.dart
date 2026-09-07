@@ -194,6 +194,25 @@ void main() {
     expect(notifier.validate(), contains('nhập số câu hỏi'));
   });
 
+  test('creates wrong words session without forcing a source', () async {
+    when(
+      () => repository.createSession(any()),
+    ).thenAnswer((_) async => testSession);
+    final notifier = container.read(quizConfigProvider.notifier);
+    notifier.setListId(null);
+    notifier.setScope('wrong_words');
+
+    expect(notifier.validate(), isNull);
+    final result = await notifier.createSession();
+
+    expect(result?.sessionId, 9);
+    final request =
+        verify(() => repository.createSession(captureAny())).captured.single
+            as QuizConfigRequest;
+    expect(request.scopeType, 'wrong_words');
+    expect(request.listId, isNull);
+  });
+
   test('creates session from the selected personal collection', () async {
     when(
       () => repository.createSession(any()),

@@ -1366,6 +1366,23 @@ class AppLocalizationsVi extends AppLocalizations {
   String get quizResultInvalidSession => 'Mã bài kiểm tra không hợp lệ.';
 
   @override
+  String get quizHistoryTitle => 'Lịch sử kiểm tra';
+
+  @override
+  String get quizHistoryEmpty => 'Bạn chưa có lịch sử kiểm tra.';
+
+  @override
+  String quizHistoryQuestionCount(int count) {
+    return '$count câu hỏi';
+  }
+
+  @override
+  String get quizHistoryLoadError => 'Không thể tải lịch sử kiểm tra.';
+
+  @override
+  String get quizHistoryLoadMoreError => 'Không thể tải thêm lịch sử kiểm tra.';
+
+  @override
   String get quizWrongWordsTitle => 'Từ trả lời sai';
 
   @override

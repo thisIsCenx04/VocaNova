@@ -1382,6 +1382,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quizResultInvalidSession => 'Invalid quiz session code.';
 
   @override
+  String get quizHistoryTitle => 'Test history';
+
+  @override
+  String get quizHistoryEmpty => 'No test history yet.';
+
+  @override
+  String quizHistoryQuestionCount(int count) {
+    return '$count questions';
+  }
+
+  @override
+  String get quizHistoryLoadError => 'Could not load test history.';
+
+  @override
+  String get quizHistoryLoadMoreError => 'Could not load more test history.';
+
+  @override
   String get quizWrongWordsTitle => 'Wrong words';
 
   @override

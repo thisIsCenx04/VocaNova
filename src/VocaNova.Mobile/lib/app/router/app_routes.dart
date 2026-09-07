@@ -15,6 +15,7 @@ abstract final class AppRoutes {
   static const quizConfig = '/quiz/config';
   static const quizActive = '/quiz/active';
   static const quizResult = '/quiz/result';
+  static const quizHistory = '/quiz/history';
   static const wrongWords = '/quiz/wrong-words';
   static const progress = '/progress';
   static const progressCharts = '/progress/charts';
@@ -35,6 +36,11 @@ abstract final class AppRoutes {
 
   static String quizConfigForList(String id) =>
       Uri(path: quizConfig, queryParameters: {'listId': id}).toString();
+
+  static String quizConfigWrongWords() => Uri(
+    path: quizConfig,
+    queryParameters: const {'scope': 'wrong_words'},
+  ).toString();
 
   static String quizSession(String id) =>
       Uri(path: quizActive, queryParameters: {'sessionId': id}).toString();
