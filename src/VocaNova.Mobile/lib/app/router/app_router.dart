@@ -23,6 +23,7 @@ import 'package:vocanova_mobile/features/progress/presentation/progress_overview
 import 'package:vocanova_mobile/features/progress/presentation/progress_charts_screen.dart';
 import 'package:vocanova_mobile/features/quiz/domain/models/quiz_config.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/quiz_config_screen.dart';
+import 'package:vocanova_mobile/features/quiz/presentation/quiz_history_screen.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/quiz_result_screen.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/quiz_session_screen.dart';
 import 'package:vocanova_mobile/features/quiz/presentation/wrong_words_screen.dart';
@@ -116,6 +117,7 @@ class AppRouter {
                   initialListId: int.tryParse(
                     state.uri.queryParameters['listId'] ?? '',
                   ),
+                  initialScopeType: state.uri.queryParameters['scope'],
                 ),
               ),
               GoRoute(
@@ -165,6 +167,10 @@ class AppRouter {
         builder: (_, state) => state.extra is QuizSessionStart
             ? QuizSessionScreen(session: state.extra! as QuizSessionStart)
             : const QuizSessionUnavailableScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.quizHistory,
+        builder: (_, _) => const QuizHistoryScreen(),
       ),
       GoRoute(
         path: AppRoutes.quizResult,

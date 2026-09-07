@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:vocanova_mobile/core/network/api_endpoints.dart';
 import 'package:vocanova_mobile/features/quiz/data/dtos/quiz_config_dto.dart';
+import 'package:vocanova_mobile/features/quiz/data/dtos/quiz_history_dto.dart';
 import 'package:vocanova_mobile/features/quiz/data/dtos/quiz_result_dto.dart';
 import 'package:vocanova_mobile/features/quiz/domain/models/quiz_config.dart';
+import 'package:vocanova_mobile/features/quiz/domain/models/quiz_history.dart';
 import 'package:vocanova_mobile/features/quiz/domain/models/quiz_result.dart';
 
 class QuizApiService {
@@ -48,6 +50,27 @@ class QuizApiService {
       ApiEndpoints.quizResult(sessionId),
     );
     return QuizResultDto.fromJson(_dataMap(response, 'quiz result')).toDomain();
+  }
+
+  Future<QuizHistoryPage> getHistory({required int page}) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ApiEndpoints.quizHistory,
+      queryParameters: {'page': page, 'limit': 20},
+    );
+    final data = _dataMap(response, 'quiz history');
+    final items = data['items'];
+    if (items is! List) {
+      throw const FormatException('Invalid quiz history response.');
+    }
+    return QuizHistoryPage(
+      items: items
+          .whereType<Map<String, dynamic>>()
+          .map(QuizHistoryItemDto.fromJson)
+          .map((dto) => dto.toDomain())
+          .toList(growable: false),
+      page: data['page'] as int,
+      totalPages: data['totalPages'] as int,
+    );
   }
 
   Future<WrongWordsPage> getWrongWords({required int page}) async {

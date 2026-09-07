@@ -187,6 +187,28 @@ void main() {
     expect(find.byTooltip('Internet connection required'), findsOneWidget);
     verifyNever(() => repository.createSession(any()));
   });
+
+  testWidgets('opens wrong words scope from route query without a source', (
+    tester,
+  ) async {
+    final router = await pumpConfig(
+      tester,
+      repository,
+      searchRepository,
+      listsApiService,
+      initialLocation: AppRoutes.quizConfigWrongWords(),
+    );
+
+    await tester.tap(find.byKey(const Key('start-quiz-button')));
+    await tester.pumpAndSettle();
+
+    expect(router.state.uri.path, AppRoutes.quizActive);
+    final request =
+        verify(() => repository.createSession(captureAny())).captured.single
+            as QuizConfigRequest;
+    expect(request.scopeType, 'wrong_words');
+    expect(request.listId, isNull);
+  });
 }
 
 Future<GoRouter> pumpConfig(
@@ -195,13 +217,14 @@ Future<GoRouter> pumpConfig(
   WordSearchApiService searchRepository,
   ListsApiService listsApiService, {
   bool isOnline = true,
+  String? initialLocation,
 }) async {
   tester.view.physicalSize = const Size(800, 2400);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   final router = GoRouter(
-    initialLocation: '${AppRoutes.quizConfig}?listId=3',
+    initialLocation: initialLocation ?? '${AppRoutes.quizConfig}?listId=3',
     routes: [
       GoRoute(
         path: AppRoutes.quizConfig,
@@ -209,6 +232,7 @@ Future<GoRouter> pumpConfig(
           initialListId: int.tryParse(
             state.uri.queryParameters['listId'] ?? '',
           ),
+          initialScopeType: state.uri.queryParameters['scope'],
         ),
       ),
       GoRoute(

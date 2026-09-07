@@ -709,6 +709,18 @@
   "quizResultLoadError": "Could not load the quiz result.",
   "quizResultRetryLoadButton": "Try again",
   "quizResultInvalidSession": "Invalid quiz session code.",
+  "quizHistoryTitle": "Test history",
+  "quizHistoryEmpty": "No test history yet.",
+  "quizHistoryQuestionCount": "{count} questions",
+  "@quizHistoryQuestionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "quizHistoryLoadError": "Could not load test history.",
+  "quizHistoryLoadMoreError": "Could not load more test history.",
   "quizWrongWordsTitle": "Wrong words",
   "quizWrongWordsRetryButton": "Retest",
   "quizWrongWordsEmpty": "You don't have any words in your wrong list yet.",

@@ -54,7 +54,7 @@ class _WrongWordsScreenState extends ConsumerState<WrongWordsScreen> {
           key: const Key('retry-wrong-words-button'),
           onPressed: state.words.isEmpty
               ? null
-              : () => context.go(AppRoutes.quizConfig),
+              : () => context.go(AppRoutes.quizConfigWrongWords()),
           icon: const Icon(Icons.quiz_outlined),
           label: Text(l10n.quizWrongWordsRetryButton),
         ),

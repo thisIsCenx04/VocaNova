@@ -138,6 +138,25 @@ void main() {
     expect(result.answers.single.userAnswer, 'orange');
   });
 
+  test('loads paged quiz history', () async {
+    final dio = Dio();
+    dio.httpClientAdapter = CallbackAdapter((options) {
+      expect(options.path, ApiEndpoints.quizHistory);
+      expect(options.queryParameters, {'page': 1, 'limit': 20});
+      return jsonResponse({
+        'items': [historyJson],
+        'page': 1,
+        'totalPages': 2,
+      });
+    });
+
+    final page = await QuizApiService(dio: dio).getHistory(page: 1);
+
+    expect(page.items.single.sessionId, 9);
+    expect(page.items.single.accuracy, 50);
+    expect(page.totalPages, 2);
+  });
+
   test('loads paged wrong words and removes one', () async {
     final dio = Dio();
     final requests = <RequestOptions>[];
@@ -222,4 +241,20 @@ const wrongWordJson = {
   'correct_count': 1,
   'wrong_count': 3,
   'mastery_level': 2,
+};
+
+const historyJson = {
+  'session_id': 9,
+  'answer_method': 'multiple_choice',
+  'mode': 'standard',
+  'question_type': 1,
+  'question_count': 2,
+  'correct_count': 1,
+  'wrong_count': 1,
+  'accuracy': 50,
+  'score': 50,
+  'max_streak': 1,
+  'status': 'completed',
+  'started_at': '2026-06-15T08:00:00Z',
+  'ended_at': '2026-06-15T08:05:00Z',
 };

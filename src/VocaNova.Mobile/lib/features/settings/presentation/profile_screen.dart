@@ -102,7 +102,7 @@ class _ProfileContent extends ConsumerWidget {
               icon: Icons.history,
               title: l10n.profileTestHistory,
               subtitle: l10n.profileTestHistorySubtitle,
-              onTap: () => context.push(AppRoutes.progressCharts),
+              onTap: () => context.push(AppRoutes.quizHistory),
             ),
             _ProfileMenuRow(
               key: const Key('edit-learning-profile'),

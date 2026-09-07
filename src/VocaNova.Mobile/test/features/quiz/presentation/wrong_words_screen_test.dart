@@ -54,6 +54,7 @@ void main() {
     await tester.tap(find.byKey(const Key('retry-wrong-words-button')));
     await tester.pumpAndSettle();
     expect(router.state.uri.path, AppRoutes.quizConfig);
+    expect(router.state.uri.queryParameters['scope'], 'wrong_words');
 
     router.go(AppRoutes.wrongWords);
     await tester.pump();
