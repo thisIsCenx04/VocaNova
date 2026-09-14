@@ -46,10 +46,12 @@ public interface IVocaNovaApiClient
 
     Task<ApiActionResult> UpdateSenseAsync(uint wordId, uint senseId, SenseInput input, CancellationToken cancellationToken = default);
 
-    Task<ApiActionResult> UploadAudioAsync(uint wordId, AudioUpload upload, CancellationToken cancellationToken = default);
+    Task<(ApiActionResult Result, WordAudio? Audio)> UploadAudioAsync(uint wordId, AudioUpload upload, CancellationToken cancellationToken = default);
 
     Task<ApiActionResult> DeleteAudioAsync(uint wordId, uint audioId, CancellationToken cancellationToken = default);
 
+    Task<(ApiActionResult Result, WordVideo? Video)> UploadVideoAsync(uint wordId, VideoUpload upload, CancellationToken cancellationToken = default);
+    Task<ApiActionResult> DeleteVideoAsync(uint wordId, CancellationToken cancellationToken = default);
     Task<ApiActionResult> UploadImageAsync(uint wordId, ImageUpload upload, CancellationToken cancellationToken = default);
 
     Task<ApiActionResult> UpdateImageUrlAsync(uint wordId, string? imageUrl, CancellationToken cancellationToken = default);

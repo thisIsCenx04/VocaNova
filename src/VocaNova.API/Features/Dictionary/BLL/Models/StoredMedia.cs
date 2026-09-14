@@ -8,3 +8,5 @@ public sealed record UploadedContent(
     uint OwnerId = 0);
 
 public sealed record StoredMedia(string ObjectKey, string Url);
+
+public sealed record AudioReplacement(WordAudio Audio, string? PreviousUrl);

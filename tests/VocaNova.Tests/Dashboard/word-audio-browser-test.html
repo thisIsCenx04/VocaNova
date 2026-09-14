@@ -1,0 +1,72 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Dashboard audio interaction test fixture</title>
+<form id="vocabulary-edit-form" data-word-id="7" data-label-replace="Replace"
+      data-label-delete="Delete" data-label-no-audio="No audio." data-label-upload-audio="Upload audio">
+    <input name="__RequestVerificationToken" value="test-token">
+    <button type="submit">Save</button>
+    <button type="button" class="audio-btn" data-audio="" disabled>Pronunciation UK</button>
+    <div id="edit-toast" hidden></div>
+</form>
+<div id="edit-media-delete-modal" hidden>
+    <p id="edit-media-delete-message"></p>
+    <button id="edit-media-delete-confirm">Delete</button>
+</div>
+<output id="result">RUNNING</output>
+<script>
+    const form = document.getElementById('vocabulary-edit-form');
+    for (const accent of ['uk', 'us']) {
+        form.insertAdjacentHTML('beforeend', `<div data-audio-section="${accent}">
+            <div id="edit-audio-preview-${accent}">No audio.</div>
+            <input type="file" id="edit-audio-file-${accent}" data-accent="${accent}">
+            <button type="button" data-file-picker="edit-audio-file-${accent}">Upload audio</button>
+        </div>`);
+    }
+    const requests = [];
+    let failUpload = false;
+    window.fetch = async (url, options) => {
+        requests.push({url, body: options.body});
+        const accent = options.body.get('accent');
+        return {ok: true, json: async () => ({success: !failUpload, message: failUpload ? 'Upload failed' : 'Saved',
+            audioId: accent === 'uk' ? 11 : 12, audioUrl: `https://example.test/${accent}.mp3`})};
+    };
+</script>
+<script src="../../../src/VocaNova.Dashboard/wwwroot/js/vocabulary-edit.js"></script>
+<script>
+    const tick = () => new Promise(resolve => setTimeout(resolve, 0));
+    const assert = (condition, message) => { if (!condition) throw new Error(message); };
+    const preview = accent => document.getElementById(`edit-audio-preview-${accent}`);
+    async function upload(accent) {
+        const input = document.getElementById(`edit-audio-file-${accent}`);
+        const transfer = new DataTransfer();
+        transfer.items.add(new File(['test'], 'word.mp3', {type: 'audio/mpeg'}));
+        input.files = transfer.files;
+        input.dispatchEvent(new Event('change'));
+        assert(form.querySelector('button[type=submit]').disabled, 'Save remains enabled during upload');
+        await tick();
+        assert(!input.disabled, 'File input remains disabled');
+    }
+    (async () => {
+        await upload('uk');
+        assert(requests[0].body.get('accent') === 'uk', 'UK accent not sent');
+        assert(requests[0].body.get('__RequestVerificationToken') === 'test-token', 'Missing antiforgery token');
+        assert(preview('uk').querySelector('audio').src.endsWith('/uk.mp3'), 'UK preview is not the persisted URL');
+        assert(!form.querySelector('.audio-btn').disabled, 'UK pronunciation not enabled');
+        await upload('us');
+        assert(requests[1].body.get('accent') === 'us', 'US accent not sent');
+        assert(preview('uk').querySelector('audio').src.endsWith('/uk.mp3'), 'US upload overwrote UK preview');
+        failUpload = true;
+        await upload('uk');
+        assert(preview('uk').querySelector('audio').src.endsWith('/uk.mp3'), 'Failed upload removed the old recording');
+        failUpload = false;
+        preview('uk').querySelector('[data-delete-media]').click();
+        document.getElementById('edit-media-delete-confirm').click();
+        await tick();
+        assert(requests.at(-1).url === '/vocabulary/7/audio/11/delete', 'Deleted wrong audio ID');
+        assert(!preview('uk').querySelector('audio'), 'Deleted UK preview remains');
+        assert(preview('us').querySelector('audio'), 'UK deletion removed US');
+        assert(form.querySelector('.audio-btn').disabled, 'Deleted pronunciation still playable');
+        assert(!form.querySelector('button[type=submit]').disabled, 'Save not re-enabled');
+        document.getElementById('result').textContent = 'PASS: UK/US upload, persisted preview, error recovery and isolated deletion';
+    })().catch(error => { document.getElementById('result').textContent = 'FAIL: ' + error.message; });
+</script>

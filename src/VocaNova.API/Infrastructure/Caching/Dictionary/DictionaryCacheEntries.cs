@@ -56,7 +56,8 @@ internal sealed record WordDetailCacheEntry(
     [property: JsonPropertyName("topics")] WordTopicCacheEntry[] Topics,
     [property: JsonPropertyName("status")] string Status,
     [property: JsonPropertyName("created_at")] DateTime CreatedAt,
-    [property: JsonPropertyName("updated_at")] DateTime UpdatedAt)
+    [property: JsonPropertyName("updated_at")] DateTime UpdatedAt,
+    [property: JsonPropertyName("video")] WordVideoCacheEntry? Video = null)
 {
     public static WordDetailCacheEntry FromBusinessModel(WordDetail word) =>
         new(
@@ -77,7 +78,8 @@ internal sealed record WordDetailCacheEntry(
             word.Topics.Select(WordTopicCacheEntry.FromBusinessModel).ToArray(),
             word.Status,
             word.CreatedAt,
-            word.UpdatedAt);
+            word.UpdatedAt,
+            word.Video is null ? null : WordVideoCacheEntry.FromBusinessModel(word.Video));
 
     public WordDetail ToBusinessModel() =>
         new(
@@ -98,7 +100,8 @@ internal sealed record WordDetailCacheEntry(
             Topics.Select(item => item.ToBusinessModel()).ToArray(),
             Status,
             CreatedAt,
-            UpdatedAt);
+            UpdatedAt,
+            Video?.ToBusinessModel());
 }
 
 internal sealed record WordSenseCacheEntry(
@@ -214,4 +217,16 @@ internal sealed record WordTopicCacheEntry(
         new(topic.TopicId, topic.Name, topic.NameVi, topic.Icon);
 
     public WordTopic ToBusinessModel() => new(TopicId, Name, NameVi, Icon);
+}
+
+internal sealed record WordVideoCacheEntry(
+    [property: JsonPropertyName("video_id")] uint VideoId,
+    [property: JsonPropertyName("source")] string Source,
+    [property: JsonPropertyName("url")] string Url,
+    [property: JsonPropertyName("thumbnail_url")] string ThumbnailUrl,
+    [property: JsonPropertyName("status")] string Status)
+{
+    public static WordVideoCacheEntry FromBusinessModel(WordVideo video) =>
+        new(video.VideoId, video.Source, video.Url, video.ThumbnailUrl, video.Status);
+    public WordVideo ToBusinessModel() => new(VideoId, Source, Url, ThumbnailUrl, Status);
 }

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8">
+<title>Dashboard video interaction test fixture</title>
+<link rel="stylesheet" href="../../../src/VocaNova.Dashboard/wwwroot/css/site.css">
+<body style="padding:24px;max-width:760px;margin:auto">
+<h1>Word video — interaction fixture</h1>
+<p>This fixture uses the production JavaScript and CSS with simulated media metadata and API responses.</p>
+<input name="__RequestVerificationToken" value="test-token" type="hidden">
+<section class="panel word-video-editor" data-word-video data-word-id="7"
+ data-invalid="Invalid MP4" data-too-large="Too large" data-duration="Use 5–15 seconds"
+ data-saving="Saving…" data-failed="Reload before retrying">
+ <div class="panel-head"><h2 class="panel-title">Illustration video</h2></div>
+ <div class="edit-media-panel-body">
+ <p>MP4, 5–15 seconds, up to 20 MB. Preview before saving.</p>
+ <div data-current-video><p>Current video</p><video controls preload="none" src="https://example.test/old.mp4"></video>
+ <button type="button" class="btn-secondary btn-sm" data-video-delete>Delete video</button></div>
+ <p data-no-video hidden>No video.</p>
+ <label class="form-group"><span>Choose video</span><input class="form-control" type="file" data-video-file></label>
+ <div data-pending-video hidden><p>Preview — not saved</p><video controls preload="metadata"></video>
+ <div class="word-video-actions"><button class="btn-primary btn-sm" data-video-save disabled>Save video</button>
+ <button class="btn-secondary btn-sm" data-video-cancel>Cancel</button></div></div>
+ <div data-video-confirm hidden><p>Delete this video?</p><button data-video-confirm-delete>Delete video</button><button data-video-keep>Cancel</button></div>
+ <p data-video-message role="status"></p></div>
+</section>
+<output id="result">RUNNING</output>
+<script>
+ HTMLMediaElement.prototype.load = function() {};
+ HTMLMediaElement.prototype.pause = function() { this.dataset.paused = 'true'; };
+ const requests = []; let failure = false; let revoked = 0;
+ URL.createObjectURL = () => 'blob:local-preview';
+ URL.revokeObjectURL = () => revoked++;
+ window.fetch = async (url, options) => {
+   requests.push({url, body: options.body});
+   return {ok: !failure, json: async () => ({success: !failure, message: failure ? 'Upload failed' : 'Saved',
+     video: {url: 'https://example.test/new.mp4', thumbnail_url: 'https://example.test/new.jpg'}})};
+ };
+</script>
+<script src="../../../src/VocaNova.Dashboard/wwwroot/js/word-video.js"></script>
+<script>
+ const get = name => document.querySelector(`[data-${name}]`);
+ const assert = (ok, message) => { if (!ok) throw Error(message); };
+ const tick = () => new Promise(resolve => setTimeout(resolve, 0));
+ const preview = get('pending-video').querySelector('video');
+ const saved = get('current-video').querySelector('video');
+ function select(name, type, duration) {
+   const transfer = new DataTransfer(); transfer.items.add(new File(['test'], name, {type}));
+   get('video-file').files = transfer.files; get('video-file').dispatchEvent(new Event('change'));
+   Object.defineProperties(preview, {duration: {value: duration, configurable: true}, videoWidth: {value: 320, configurable: true}, videoHeight: {value: 180, configurable: true}});
+   preview.dispatchEvent(new Event('loadedmetadata'));
+ }
+ (async () => {
+   select('swim.mp4', 'video/mp4', 4);
+   assert(get('video-save').disabled, 'Short clip can be saved');
+   select('swim.mp4', 'video/mp4', 6);
+   assert(!get('video-save').disabled && requests.length === 0, 'Preview triggered an upload');
+   failure = true; get('video-save').click(); await tick();
+   assert(saved.src.endsWith('/old.mp4'), 'Failed replacement lost old video');
+   failure = false; get('video-save').click(); await tick();
+   assert(saved.src.endsWith('/new.mp4') && get('pending-video').hidden, 'Saved video not displayed');
+   assert(requests[1].body.get('__RequestVerificationToken') === 'test-token', 'Missing antiforgery token');
+   assert(requests[1].body.get('file').name === 'swim.mp4', 'Wrong multipart file');
+   get('video-delete').click(); assert(!get('video-confirm').hidden, 'Missing delete confirmation');
+   get('video-keep').click(); assert(requests.length === 2, 'Cancel submitted deletion');
+   get('video-delete').click(); get('video-confirm-delete').click(); await tick();
+   assert(get('current-video').hidden && !get('no-video').hidden, 'Deleted video remains visible');
+   assert(requests[2].url.endsWith('/video/delete'), 'Wrong delete route');
+   assert(revoked >= 2, 'Object URLs leaked');
+   document.getElementById('result').textContent = 'PASS';
+ })().catch(error => { document.getElementById('result').textContent = 'FAIL: ' + error.message; });
+</script></body></html>

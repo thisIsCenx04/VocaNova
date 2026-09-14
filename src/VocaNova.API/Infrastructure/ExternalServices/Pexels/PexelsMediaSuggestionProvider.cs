@@ -136,7 +136,8 @@ public sealed class PexelsMediaSuggestionProvider : IMediaSuggestionProvider
         files?
             .Where(file => string.Equals(file.FileType, "video/mp4", StringComparison.OrdinalIgnoreCase)
                 && !string.IsNullOrWhiteSpace(file.Link))
-            .OrderByDescending(file => file.Width.GetValueOrDefault() * file.Height.GetValueOrDefault())
+            // Prefer the variant nearest 720p instead of downloading the largest (often 4K) file.
+            .OrderBy(file => Math.Abs((long)file.Width.GetValueOrDefault() * file.Height.GetValueOrDefault() - 1280 * 720))
             .Select(file => file.Link)
             .FirstOrDefault();
 

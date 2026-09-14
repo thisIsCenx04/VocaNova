@@ -61,6 +61,8 @@ public partial class VocaNovaDbContext : DbContext
 
     public virtual DbSet<WordAudioAsset> WordAudioAssets { get; set; }
 
+    public virtual DbSet<WordVideoAsset> WordVideoAssets { get; set; }
+
     public virtual DbSet<WordDerivedForm> WordDerivedForms { get; set; }
 
     public virtual DbSet<WordExample> WordExamples { get; set; }
@@ -108,6 +110,9 @@ public partial class VocaNovaDbContext : DbContext
 
         modelBuilder.Entity<WordAudioAsset>()
             .HasQueryFilter(entity => entity.Status != AudioStatus.Deleted);
+
+        modelBuilder.Entity<WordVideoAsset>()
+            .HasQueryFilter(entity => entity.Status == UserStatus.Active);
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

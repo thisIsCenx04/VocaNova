@@ -94,28 +94,44 @@
                 if (fileInput) { fileInput.focus(); }
                 return;
             }
+            var button = form.querySelector('button[type="submit"]');
+            if (button.disabled) { return; }
+            button.disabled = true;
             postForm(url, new FormData(form))
                 .then(function (data) {
                     toast(data.message, data.success);
                     if (data.success) { window.setTimeout(function () { window.location.reload(); }, 600); }
                 })
-                .catch(function () { toast(MSG_FAIL, false); });
+                .catch(function () { toast(MSG_FAIL, false); })
+                .finally(function () { button.disabled = false; });
         });
     }
     wireUpload('image-upload-form', '/vocabulary/' + wordId + '/image', MSG_IMAGE_REQUIRED);
-    wireUpload('audio-upload-form', '/vocabulary/' + wordId + '/audio', MSG_AUDIO_REQUIRED);
+    ['uk', 'us'].forEach(function (accent) {
+        wireUpload('audio-upload-form-' + accent, '/vocabulary/' + wordId + '/audio', MSG_AUDIO_REQUIRED);
+    });
 
     // ----- Phát audio phát âm (nút loa UK/US trên thẻ từ) -----
     var playerEl = null;
+    document.addEventListener("vocanova-video-play", function () { if (playerEl) { playerEl.pause(); } });
     root.querySelectorAll('.vd-audio-btn[data-audio]').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var url = btn.getAttribute('data-audio');
             if (!url) { return; }
             if (!playerEl) { playerEl = new Audio(); }
+            root.querySelectorAll("audio").forEach(function (audio) { audio.pause(); });
+            document.dispatchEvent(new Event("vocanova-audio-play"));
             playerEl.src = url;
-            playerEl.play().catch(function () { /* ignore playback errors */ });
+            playerEl.play().catch(function () { toast(MSG_FAIL, false); });
         });
     });
+
+    root.addEventListener('play', function (event) {
+        root.querySelectorAll('audio').forEach(function (audio) {
+            if (audio !== event.target) { audio.pause(); }
+        });
+        if (playerEl && playerEl !== event.target) { playerEl.pause(); }
+    }, true);
 
     // ----- Image / audio delete (custom confirm modal + AJAX) -----
     var deleteModal = document.getElementById('detail-delete-modal');

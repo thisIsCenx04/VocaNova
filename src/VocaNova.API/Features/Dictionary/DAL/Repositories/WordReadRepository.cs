@@ -72,6 +72,7 @@ public sealed class WordReadRepository : IWordReadRepository
             .Include(entity => entity.WordRelationwords)
                 .ThenInclude(relation => relation.RelatedWordNavigation)
             .Include(entity => entity.WordAudioAssets)
+            .Include(entity => entity.WordVideoAsset)
             .Include(entity => entity.WordDerivedFormwords)
                 .ThenInclude(derivedForm => derivedForm.DerivedWordNavigation)
             .Include(entity => entity.WordIdioms)

@@ -30,7 +30,8 @@ Browser -> MVC Controller -> Dashboard workflow/API client -> HttpClient -> Voca
 - `BearerTokenHandler` attaches the access token, performs one refresh on 401 through a separate client, updates the cookie, clones the request, and retries once.
 - Most MVC controllers call `IVocaNovaApiClient`; they translate normalized API results into views, ModelState, TempData, redirects, or status responses.
 - Dashboard directly consumes Dictionary administration, KNN/runtime settings, AI-grading settings, Admin users/statistics, and SuperAdmin account/role contracts through feature controllers and manually maintained DTOs under `Data/Dtos`.
-- Dashboard vocabulary edit calls `GET /api/admin/words/{id}/media-suggestions` through the API client. The browser never receives the Pexels key. Image suggestions can be applied through the existing `PUT /api/admin/words/{id}/image` path; video suggestions are external preview/source links only.
+- Dashboard vocabulary edit embeds separate Pexels suggestion controls inside the Image and Video sections, each with its own loading state and results. There is no search toolbar: requests use the backend vocabulary context, and a Retry button appears only after an error. It calls `GET /api/admin/words/{id}/media-suggestions` through the API client. The browser never receives the Pexels key. Both suggestion lists load automatically on page entry. Videos have inline players with `preload="none"`. Selecting an image/video opens an unsaved preview above its list; Save downloads only that selected public Pexels asset and uploads it through the existing image/video multipart route to Cloudinary. The browser limits streamed downloads to 5 MiB for images and 20 MiB for videos, allows only HTTPS Pexels media hosts, and sends no credentials to those hosts. API file/metadata checks still apply.
+- Dashboard vocabulary detail/edit manage UK and US recordings independently. Upload forms send `accent` (legacy omitted values default to `us` at the MVC boundary); the API remains authoritative for accent, MIME and 5 MB validation. The Dashboard client consumes the saved audio response directly for its ID and URL, without a follow-up detail GET.
 - Dashboard has no reference to the API project and no DbContext/MySQL/Redis access.
 
 ## Mobile -> API (CURRENT)
@@ -45,6 +46,7 @@ Screen -> Riverpod Provider/Notifier -> feature data *ApiService -> Dio -> VocaN
 - Feature `data/services/*_api_service.dart` classes are REST gateways. JSON is parsed through feature `data/dtos/*_dto.dart` types and mapped into `domain/models` before application/presentation state uses it.
 - Mobile directly consumes the audited Auth, Lists/personal-topic, Quiz, and KNN recommendation/onboarding contracts. Their route strings and manually mapped request/response fields are part of each refactor slice's compatibility check.
 - `SharedPreferences` stores UI settings and TTL-based client caches. `flutter_secure_storage` stores access/refresh tokens.
+- Pronunciation uses the selected accent recording when available, and falls back to device TTS (`en-GB`/`en-US`) for missing, invalid or unplayable URLs. Diagnostic test speech is removed. Playback starts are serialized; superseded requests do not start an old-word TTS fallback. If TTS also fails, the existing screen error is shown. Device voices must be installed/available for TTS.
 - Mobile never connects to MySQL or Redis and never references backend source.
 
 ## API -> infrastructure (CURRENT)
@@ -109,3 +111,15 @@ Flutter Mobile (outside Docker)
 ## Contract synchronization
 
 Until an independently accepted OpenAPI-generation decision is implemented, changes require coordinated verification of API Contracts/tests, Dashboard `Data/Dtos`/client calls, and Mobile DTO/API-service tests. Architecture refactoring must preserve existing routes and JSON schemas unless a task explicitly authorizes an API change.
+
+## Word video contract (CURRENT)
+
+- Admin `PUT /api/admin/words/{id}/video` accepts multipart `file`; `DELETE` on the same route soft-deletes the current video. Both require the existing Admin policy. The multipart request cap is 22 MiB; the file cap is 20 MiB.
+- Word detail responses add nullable `video`: `{ "video_id": 1, "source": "uploaded", "url": "https://...mp4", "thumbnail_url": "https://...jpg", "status": "active" }`. Existing fields/routes remain unchanged. Cache and client DTOs accept missing/null video from older payloads.
+- Dashboard detail/edit use antiforgery-protected MVC POST routes `/vocabulary/{id}/video` and `/vocabulary/{id}/video/delete`. Choosing a file previews it locally; only Save video sends it to the API. Failed replacement retains the displayed current clip; an uncertain response asks the admin to reload before retrying. Saving video is independent of saving vocabulary text.
+- Mobile displays a thumbnail and initializes `video_player` only when tapped. The dialog stops pronunciation audio/TTS before playback, pauses when backgrounded, disposes on close, and offers retry on initialization failure (30-second timeout).
+- Pexels search is automatic; importing an image/video requires admin selection and Save. Source/creator links remain visible. Saving a suggestion uploads file content to Cloudinary instead of persisting the external Pexels URL.
+
+Mobile word detail refreshes from the API on screen entry and pull-to-refresh, even when its two-hour local cache is fresh. This ensures admin media changes appear when reopening the word. Offline or failed requests retain cached detail; ordinary `load()` callers may still use the TTL cache.
+
+Android word video uses the native platform view to avoid a blank texture on Genymotion; other platforms retain the texture view. The updated debug APK was installed on Genymotion and word 1 was verified to display and play its saved video.

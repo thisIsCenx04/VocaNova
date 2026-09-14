@@ -1,0 +1,79 @@
+<!doctype html><meta charset="utf-8"><title>Auto media suggestion fixture</title>
+<link rel="stylesheet" href="../../../src/VocaNova.Dashboard/wwwroot/css/site.css">
+<body style="padding:24px;max-width:900px;margin:auto"><h1>Auto media suggestion fixture</h1><p>Production scripts; simulated Pexels and upload responses.</p>
+<form id="vocabulary-edit-form" data-word-id="7" data-msg-media-loading="Loading" data-msg-request-failed="Failed" data-msg-media-empty="No results" data-label-delete="Delete" data-label-replace="Replace" data-label-image-preview="Image preview">
+<input type="hidden" name="__RequestVerificationToken" value="test-token"><button type="submit">Save metadata</button><div id="edit-toast" hidden></div><input id="edit-image-url" type="hidden" value="old-image">
+<section class="panel" style="padding:24px"><h2>Image</h2><div id="edit-image-preview">Current image</div><input id="edit-image-file" type="file" hidden>
+<div data-pending-image hidden><p>Preview - not saved</p><img alt="Selected image"><div class="word-video-actions"><button type="button" data-image-save>Save image</button><button type="button" data-image-cancel>Cancel</button></div><p data-image-message></p></div><button type="button" data-file-picker="edit-image-file">Upload image</button><div id="image-suggestions"></div></section>
+<section class="panel word-video-editor" data-word-video data-word-id="7"
+ data-invalid="Invalid MP4" data-too-large="Too large" data-duration="Use 5–15 seconds"
+ data-saving="Saving…" data-failed="Reload before retrying">
+ <div class="panel-head"><h2 class="panel-title">Illustration video</h2></div>
+ <div class="edit-media-panel-body">
+ <p>MP4, 5–15 seconds, up to 20 MB. Preview before saving.</p>
+ <div data-current-video><p>Current video</p><video controls preload="none" src="https://example.test/old.mp4"></video>
+ <button type="button" class="btn-secondary btn-sm" data-video-delete>Delete video</button></div>
+ <p data-no-video hidden>No video.</p>
+ <label class="form-group"><span>Choose video</span><input class="form-control" type="file" data-video-file></label>
+ <div data-pending-video hidden><p>Preview — not saved</p><video controls preload="metadata"></video>
+ <div class="word-video-actions"><button class="btn-primary btn-sm" data-video-save disabled>Save video</button>
+ <button class="btn-secondary btn-sm" data-video-cancel>Cancel</button></div></div>
+ <div data-video-confirm hidden><p>Delete this video?</p><button data-video-confirm-delete>Delete video</button><button data-video-keep>Cancel</button></div>
+ <p data-video-message role="status"></p></div>
+</section>
+</form><output id="result">RUNNING</output>
+<script>
+const form=document.querySelector('form');
+for(const type of ['image','video']) {
+ const parent=type==='image'?document.getElementById('image-suggestions'):document.querySelector('[data-word-video]');
+ parent.insertAdjacentHTML('beforeend',`<div class="media-suggest-inline" data-media-suggestions="${type}" data-select-label="Select for preview"><h3>${type} suggestions</h3><button type="button" data-media-retry hidden>Retry</button><p data-media-status></p><div class="media-suggest-grid" data-media-results></div></div>`);
+}
+HTMLMediaElement.prototype.load=function(){};HTMLMediaElement.prototype.pause=function(){};
+Element.prototype.scrollIntoView=function(){};
+const requests=[];const pending={};let uploadFailure=false;let tooLarge=false;
+const json=data=>({ok:true,json:async()=>data});
+window.fetch=async(url,options={})=>{
+ requests.push({url,options});
+ if(url.startsWith('https://'))return new Response(new Uint8Array([1,2,3]),{headers:{'Content-Type':url.endsWith('.mp4')?'video/mp4':'image/jpeg','Content-Length':tooLarge?'99999999':'3'}});
+ if(options.method==='POST')return json({success:!uploadFailure,message:uploadFailure?'Failed':'Saved',imageUrl:'https://example.test/saved.jpg',video:{url:'https://example.test/saved.mp4',thumbnail_url:'https://example.test/saved.jpg'}});
+ const type=new URL(url,location.href).searchParams.get('type');return await new Promise(resolve=>pending[type]=resolve);
+};
+</script>
+<script src="../../../src/VocaNova.Dashboard/wwwroot/js/media-download.js"></script>
+<script src="../../../src/VocaNova.Dashboard/wwwroot/js/word-video.js"></script>
+<script src="../../../src/VocaNova.Dashboard/wwwroot/js/vocabulary-edit.js"></script>
+<script>
+const get=(type,field)=>document.querySelector(`[data-media-suggestions="${type}"] [data-media-${field}]`);
+const assert=(ok,message)=>{if(!ok)throw Error(message)};const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
+const selectedVideo=document.querySelector('[data-pending-video] video');
+(async()=>{
+ assert(requests.length===2,'Suggestions did not load automatically');
+ assert(!requests.some(r=>r.url.includes('query=')),'Search should use backend vocabulary context');
+ assert(!document.querySelector('[data-media-query]'),'Search input remains');
+ assert(requests[0].url.includes('type=image')&&requests[1].url.includes('type=video'),'Wrong automatic request types');
+ pending.image(json({success:false,message:'Failed'}));await tick();
+ assert(!get('image','retry').hidden && get('video','retry').hidden,'Retry must appear only for the failed section');
+ get('image','retry').click();assert(get('image','retry').hidden,'Retry remains visible while loading');
+ for(const type of ['image','video'])pending[type](json({success:true,items:[{media_type:type,title:type+' result',full_size_url:type==='image'?'https://images.pexels.com/fixture.jpg':'https://videos.pexels.com/fixture.mp4',preview_url:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="320" height="180"%3E%3Crect width="320" height="180" fill="%237063ee"/%3E%3C/svg%3E',source_url:'https://www.pexels.com/'+type}]}));
+ await tick();
+ assert(get('video','results').querySelector('video').preload==='none','Video suggestions do not have lazy inline players');
+ get('video','results').querySelector('button').click();
+ assert(selectedVideo.src==='https://videos.pexels.com/fixture.mp4','Video selection did not preview above');
+ assert(requests.length===3,'Selection downloaded or saved prematurely');
+ Object.defineProperties(selectedVideo,{duration:{value:6,configurable:true},videoWidth:{value:320},videoHeight:{value:180}});selectedVideo.dispatchEvent(new Event('loadedmetadata'));
+ uploadFailure=true;document.querySelector('[data-video-save]').click();await tick();await tick();
+ assert(document.querySelector('[data-current-video] video').src.endsWith('/old.mp4'),'Failed upload replaced old video');
+ uploadFailure=false;document.querySelector('[data-video-save]').click();await tick();await tick();
+ assert(document.querySelector('[data-current-video] video').src.endsWith('/saved.mp4'),'Video upload did not use saved URL');
+ const videoPost=requests.find(r=>r.url==='/vocabulary/7/video');assert(videoPost.options.body.get('file').type==='video/mp4','Video not sent as multipart file');
+ get('image','results').querySelector('button').click();assert(document.getElementById('edit-image-url').value==='old-image','Image selection changed saved data');
+ assert(!document.querySelector('[data-pending-image]').hidden,'Image preview missing');
+ document.querySelector('[data-image-save]').click();await tick();await tick();
+ assert(document.getElementById('edit-image-url').value==='https://example.test/saved.jpg','Image did not save Cloudinary response URL');
+ assert(requests.some(r=>r.url==='/vocabulary/7/image'&&r.options.body.get('file').type==='image/jpeg'),'Image not sent as multipart file');
+ assert(!requests.some(r=>r.url.endsWith('/image/suggested')),'Saved remote URL instead of uploading file');
+ tooLarge=true;let rejected=false;try{await downloadSuggestedMedia('https://videos.pexels.com/fixture.mp4','video')}catch(_){rejected=true}assert(rejected,'Oversized media accepted');
+ rejected=false;try{await downloadSuggestedMedia('https://example.test/file.mp4','video')}catch(_){rejected=true}assert(rejected,'Untrusted download source accepted');
+ document.getElementById('result').textContent='PASS';
+})().catch(error=>document.getElementById('result').textContent='FAIL: '+error.message);
+</script></body>

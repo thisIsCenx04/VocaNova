@@ -5,38 +5,49 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'audio_playback_service.g.dart';
 
 class AudioPlaybackService {
-  AudioPlaybackService()
-    : _player = AudioPlayer(),
-      _textToSpeech = FlutterTts();
+  AudioPlaybackService({AudioPlayer? player, FlutterTts? textToSpeech})
+    : _player = player ?? AudioPlayer(),
+      _textToSpeech = textToSpeech ?? FlutterTts();
 
   final AudioPlayer _player;
   final FlutterTts _textToSpeech;
 
-  /// Temporary diagnostic mode: every pronunciation button plays the same
-  /// sentence so audio output can be verified independently of dictionary data.
-  static const bool useTestVoice = true;
-  static const String testVoiceText =
-      'Hello. This is the VocaNova pronunciation test.';
+  Future<void> _pending = Future.value();
+  int _request = 0;
+  bool _disposed = false;
 
   Future<void> playPronunciation({
     required String word,
     required String accent,
     String? audioUrl,
-  }) async {
-    if (useTestVoice) {
-      await speak(testVoiceText, accent: accent);
-      return;
-    }
-    if (audioUrl?.trim().isNotEmpty == true) {
-      await play(audioUrl!);
-      return;
-    }
-    await speak(word, accent: accent);
+  }) {
+    final request = ++_request;
+    final operation = _pending.then((_) async {
+      if (_disposed || request != _request) return;
+      if (audioUrl?.trim().isNotEmpty == true) {
+        try {
+          await play(audioUrl!.trim());
+          return;
+        } on Exception {
+          // An unavailable recording must not prevent pronunciation via TTS.
+        }
+      }
+      if (_disposed || request != _request) return;
+      await speak(word.trim(), accent: accent);
+    });
+    // Keep later taps usable even if both the recording and TTS fail.
+    _pending = operation.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
+    );
+    return operation;
   }
 
   Future<void> play(String url) async {
     final uri = Uri.tryParse(url);
-    if (uri == null || !uri.hasScheme) {
+    if (uri == null ||
+        !['https', 'http'].contains(uri.scheme) ||
+        uri.host.isEmpty) {
       throw const FormatException('Invalid audio URL.');
     }
     await _textToSpeech.stop();
@@ -45,10 +56,11 @@ class AudioPlaybackService {
   }
 
   Future<void> speak(String word, {String accent = 'UK'}) async {
+    if (word.isEmpty) throw const FormatException('Word is empty.');
     await _player.stop();
     await _textToSpeech.stop();
     await _textToSpeech.setLanguage(
-      accent.toUpperCase() == 'US' ? 'en-US' : 'en-GB',
+      accent.trim().toUpperCase() == 'US' ? 'en-US' : 'en-GB',
     );
     await _textToSpeech.setSpeechRate(0.42);
     await _textToSpeech.setPitch(1);
@@ -58,7 +70,20 @@ class AudioPlaybackService {
     }
   }
 
+  Future<void> stop() async {
+    _request++;
+    await _player.stop();
+    await _textToSpeech.stop();
+    // Wait for an in-flight source preparation so it cannot start behind video.
+    await _pending;
+    await _player.stop();
+    await _textToSpeech.stop();
+  }
+
   Future<void> dispose() async {
+    _disposed = true;
+    _request++;
+    await _pending;
     await _player.dispose();
     await _textToSpeech.stop();
   }

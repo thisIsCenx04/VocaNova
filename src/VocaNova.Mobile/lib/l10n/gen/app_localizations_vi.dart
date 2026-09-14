@@ -1753,4 +1753,22 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get profileTryAgain => 'Thử lại';
+
+  @override
+  String get dictVideoTitle => 'Video minh họa';
+
+  @override
+  String get dictVideoPlay => 'Phát video';
+
+  @override
+  String get dictVideoError => 'Không thể phát video này.';
+
+  @override
+  String get dictVideoRetry => 'Thử lại';
+
+  @override
+  String get dictVideoClose => 'Đóng video';
+
+  @override
+  String get dictVideoPause => 'Tạm dừng video';
 }
