@@ -1,0 +1,47 @@
+@model VocaNova.Dashboard.Data.Dtos.Dictionary.WordDetail
+<section class="panel word-video-editor" data-word-video data-word-id="@Model.WordId"
+         data-invalid="@T["Video must be an MP4 file."]" data-too-large="@T["Video file must be 20MB or smaller."]"
+         data-duration="@T["Video must contain a picture and last between 5 and 15 seconds."]"
+         data-saving="@T["Uploading and processing video..."]"
+         data-failed="@T["Unable to save video. Reload the word before retrying."]">
+    <div class="panel-head"><h2 class="panel-title">@T["Illustration video"]</h2></div>
+    <div class="edit-media-panel-body">
+        <div data-current-video hidden="@(Model.Video is null)">
+            <div class="word-image-review">
+                <div class="word-image-preview">
+                    <video controls preload="none" src="@Model.Video?.Url" poster="@Model.Video?.ThumbnailUrl" aria-label="@T["Video preview"]"></video>
+                </div>
+                <div class="word-image-review-meta">
+                    <span>@T["Video preview"]</span>
+                    <button type="button" class="btn-icon btn-danger" data-video-delete>@T["Delete"]</button>
+                </div>
+            </div>
+        </div>
+        <p data-no-video hidden="@(Model.Video is not null)">@T["No video."]</p>
+        <div data-pending-video hidden>
+            <div class="word-image-review">
+                <div class="word-image-preview">
+                    <video controls preload="metadata" aria-label="@T["Preview — not saved"]"></video>
+                </div>
+                <div class="word-image-review-meta"><span>@T["Preview — not saved"]</span></div>
+            </div>
+            <div class="word-video-actions">
+                <button type="button" class="btn-primary btn-sm" data-video-save disabled>@T["Save video"]</button>
+                <button type="button" class="btn-secondary btn-sm" data-video-cancel>@T["Cancel"]</button>
+            </div>
+        </div>
+        <input type="file" accept=".mp4,video/mp4" data-video-file hidden />
+        <button type="button" class="btn-secondary btn-sm" data-video-picker>@T["Upload video"]</button>
+        <p class="text-muted">@T["MP4, 5–15 seconds, up to 20 MB. Preview before saving."]</p>
+        <div data-video-confirm hidden>
+            <p>@T["Delete this video?"]</p>
+            <button type="button" class="btn-danger-solid" data-video-confirm-delete>@T["Delete video"]</button>
+            <button type="button" class="btn-secondary" data-video-keep>@T["Cancel"]</button>
+        </div>
+        <p data-video-message role="status" aria-live="polite"></p>
+        @if (ViewData["ShowVideoSuggestions"] is true)
+        {
+            <partial name="_MediaSuggestions" model='@(new ValueTuple<string, string>("video", Model.Word))' />
+        }
+    </div>
+</section>

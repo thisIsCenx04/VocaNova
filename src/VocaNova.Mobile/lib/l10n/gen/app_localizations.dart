@@ -3271,6 +3271,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try again'**
   String get profileTryAgain;
+
+  /// No description provided for @dictVideoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Illustration video'**
+  String get dictVideoTitle;
+
+  /// No description provided for @dictVideoPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Play video'**
+  String get dictVideoPlay;
+
+  /// No description provided for @dictVideoError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to play this video.'**
+  String get dictVideoError;
+
+  /// No description provided for @dictVideoRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get dictVideoRetry;
+
+  /// No description provided for @dictVideoClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close video'**
+  String get dictVideoClose;
+
+  /// No description provided for @dictVideoPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause video'**
+  String get dictVideoPause;
 }
 
 class _AppLocalizationsDelegate

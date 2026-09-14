@@ -5,4 +5,5 @@ namespace VocaNova.API.Features.Dictionary.BLL.Abstractions;
 public interface IWordAudioStorage
 {
     Task<StoredMedia> UploadAsync(UploadedContent content, string? accent, CancellationToken cancellationToken = default);
+    Task DeleteOwnedAsync(string url, CancellationToken cancellationToken = default);
 }

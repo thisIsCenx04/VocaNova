@@ -10,6 +10,19 @@ namespace VocaNova.Tests.Dictionary;
 public sealed class PexelsMediaSuggestionProviderTests
 {
     [Fact]
+    public async Task Video_Suggestions_Prefer_720p_Over_4K_For_Upload()
+    {
+        var provider = CreateProvider(new StubHandler(_ => Task.FromResult(JsonResponse(HttpStatusCode.OK, """
+            {"videos":[{"id":1,"url":"https://www.pexels.com/video/1","image":"https://images.pexels.com/1.jpg","duration":6,"video_files":[
+            {"file_type":"video/mp4","width":3840,"height":2160,"link":"https://videos.pexels.com/4k.mp4"},
+            {"file_type":"video/mp4","width":1280,"height":720,"link":"https://videos.pexels.com/720.mp4"},
+            {"file_type":"video/mp4","width":640,"height":360,"link":"https://videos.pexels.com/360.mp4"}]}]}
+            """))));
+        var result = await provider.SearchAsync("swim", MediaSuggestionTypes.Video, 8);
+        result.Should().ContainSingle().Which.FullSizeUrl.Should().Be("https://videos.pexels.com/720.mp4");
+    }
+
+    [Fact]
     public async Task SearchAsync_Should_Send_Authorized_Photo_Search_And_Map_Result()
     {
         HttpRequestMessage? captured = null;

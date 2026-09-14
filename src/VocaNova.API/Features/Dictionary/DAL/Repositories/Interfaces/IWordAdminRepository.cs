@@ -19,7 +19,8 @@ public interface IWordAdminRepository
     Task<bool> SetWordStatusAsync(uint wordId, string status, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<uint>> GetReferencingUserIdsAsync(uint wordId, CancellationToken cancellationToken = default);
     Task<WordDetail?> SetImageUrlAsync(uint wordId, string? url, CancellationToken cancellationToken = default);
-    Task<WordAudio?> UpsertAudioAsync(uint wordId, StoredMedia media, string? accent, CancellationToken cancellationToken = default);
+    Task<AudioReplacement?> UpsertAudioAsync(uint wordId, StoredMedia media, string? accent, CancellationToken cancellationToken = default);
+    Task<bool> IsAudioUrlReferencedAsync(string url, CancellationToken cancellationToken = default);
     Task<bool> SetAudioStatusAsync(uint wordId, uint audioId, string status, CancellationToken cancellationToken = default);
     Task<WordSense?> CreateSenseAsync(uint wordId, CreateSenseCommand command, CancellationToken cancellationToken = default);
     Task<WordSense?> UpdateSenseAsync(uint wordId, uint senseId, UpdateSenseCommand command, CancellationToken cancellationToken = default);

@@ -152,9 +152,9 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
     public Task<ApiActionResult> DeleteAudioAsync(uint wordId, uint audioId, CancellationToken cancellationToken = default) =>
         SendActionAsync(HttpMethod.Delete, $"api/admin/words/{wordId}/audio/{audioId}", cancellationToken);
 
-    public Task<ApiActionResult> UploadAudioAsync(uint wordId, AudioUpload upload, CancellationToken cancellationToken = default)
+    public async Task<(ApiActionResult Result, WordAudio? Audio)> UploadAudioAsync(uint wordId, AudioUpload upload, CancellationToken cancellationToken = default)
     {
-        var content = new MultipartFormDataContent
+        using var content = new MultipartFormDataContent
         {
             { new StringContent(upload.Accent), "accent" },
         };
@@ -162,8 +162,46 @@ public sealed class VocaNovaApiClient : IVocaNovaApiClient
         file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(upload.ContentType);
         content.Add(file, "file", upload.FileName);
 
-        return SendMultipartActionAsync(HttpMethod.Post, $"api/admin/words/{wordId}/audio", content, cancellationToken);
+        try
+        {
+            using var response = await _httpClient.PostAsync($"api/admin/words/{wordId}/audio", content, cancellationToken);
+            var envelope = await response.Content.ReadFromJsonAsync<ApiEnvelope<WordAudio>>(ApiJson.Default, cancellationToken);
+            var statusCode = (int)response.StatusCode;
+            return response.IsSuccessStatusCode && envelope is { Success: true, Data: not null }
+                ? (ApiActionResult.Ok(statusCode, envelope.Message), envelope.Data)
+                : (ApiActionResult.Fail(statusCode, envelope?.Message), null);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
+        {
+            _logger.LogWarning(ex, "VocaNova.API audio upload failed for word {WordId}.", wordId);
+            return (ApiActionResult.Fail(0, null), null);
+        }
     }
+
+    public async Task<(ApiActionResult Result, WordVideo? Video)> UploadVideoAsync(uint wordId, VideoUpload upload, CancellationToken cancellationToken = default)
+    {
+        using var content = new MultipartFormDataContent();
+        var file = new StreamContent(upload.Content);
+        file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(upload.ContentType);
+        content.Add(file, "file", upload.FileName);
+        try
+        {
+            using var response = await _httpClient.PutAsync($"api/admin/words/{wordId}/video", content, cancellationToken);
+            var envelope = await response.Content.ReadFromJsonAsync<ApiEnvelope<WordVideo>>(ApiJson.Default, cancellationToken);
+            var status = (int)response.StatusCode;
+            return response.IsSuccessStatusCode && envelope is { Success: true, Data: not null }
+                ? (ApiActionResult.Ok(status, envelope.Message), envelope.Data)
+                : (ApiActionResult.Fail(status, envelope?.Message), null);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
+        {
+            _logger.LogWarning(ex, "Video upload response unavailable for word {WordId}.", wordId);
+            return (ApiActionResult.Fail(0, "Unable to save video. Reload the word before retrying."), null);
+        }
+    }
+
+    public Task<ApiActionResult> DeleteVideoAsync(uint wordId, CancellationToken cancellationToken = default) =>
+        SendActionAsync(HttpMethod.Delete, $"api/admin/words/{wordId}/video", cancellationToken);
 
     public Task<ApiActionResult> UploadImageAsync(uint wordId, ImageUpload upload, CancellationToken cancellationToken = default)
     {

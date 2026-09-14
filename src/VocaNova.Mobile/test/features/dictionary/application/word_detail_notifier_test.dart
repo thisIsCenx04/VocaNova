@@ -65,6 +65,51 @@ void main() {
     verifyNever(() => repository.getWord(any()));
   });
 
+  test(
+    'refresh replaces fresh cache without video with current API video',
+    () async {
+      await storage.setWithTtl(
+        StorageKeys.wordCacheJson(7),
+        jsonEncode(WordDetailDto.fromDomain(word).toJson()),
+      );
+      final current = WordDetailDto.fromJson({
+        ...WordDetailDto.fromDomain(word).toJson(),
+        'video': {
+          'video_id': 3,
+          'url': 'https://example.test/video.mp4',
+          'thumbnail_url': 'https://example.test/video.jpg',
+        },
+      }).toDomain();
+      when(() => connectivity.isOnline).thenAnswer((_) async => true);
+      when(() => repository.getWord(7)).thenAnswer((_) async => current);
+
+      await container
+          .read(wordDetailProvider(7).notifier)
+          .load(forceRefresh: true);
+
+      expect(container.read(wordDetailProvider(7)).word?.video?.videoId, 3);
+      final cached =
+          jsonDecode((await storage.get<String>(StorageKeys.wordCacheJson(7)))!)
+              as Map<String, dynamic>;
+      expect((cached['video'] as Map<String, dynamic>)['video_id'], 3);
+      verify(() => repository.getWord(7)).called(1);
+    },
+  );
+
+  test('refresh keeps cached word when offline', () async {
+    await storage.setWithTtl(
+      StorageKeys.wordCacheJson(7),
+      jsonEncode(WordDetailDto.fromDomain(word).toJson()),
+    );
+    when(() => connectivity.isOnline).thenAnswer((_) async => false);
+    await container
+        .read(wordDetailProvider(7).notifier)
+        .load(forceRefresh: true);
+    expect(container.read(wordDetailProvider(7)).word?.word, 'hello');
+    expect(container.read(wordDetailProvider(7)).isOffline, isTrue);
+    verifyNever(() => repository.getWord(any()));
+  });
+
   test('saveToWordBook persists saved word key', () async {
     when(() => connectivity.isOnline).thenAnswer((_) async => true);
     when(() => repository.getWord(7)).thenAnswer((_) async => word);

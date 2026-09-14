@@ -1766,4 +1766,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileTryAgain => 'Try again';
+
+  @override
+  String get dictVideoTitle => 'Illustration video';
+
+  @override
+  String get dictVideoPlay => 'Play video';
+
+  @override
+  String get dictVideoError => 'Unable to play this video.';
+
+  @override
+  String get dictVideoRetry => 'Try again';
+
+  @override
+  String get dictVideoClose => 'Close video';
+
+  @override
+  String get dictVideoPause => 'Pause video';
 }

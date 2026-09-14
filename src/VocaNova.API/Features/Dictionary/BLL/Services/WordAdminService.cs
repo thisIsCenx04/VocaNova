@@ -44,6 +44,7 @@ public sealed class WordAdminService : IWordAdminService
     private readonly IMediaSuggestionProvider? _mediaSuggestionProvider;
     private readonly IWordDetailCache? _wordDetailCache;
     private readonly IUserListCache? _userListCache;
+    private readonly ILogger<WordAdminService>? _logger;
 
     public WordAdminService(
         IWordAdminRepository repository,
@@ -51,7 +52,8 @@ public sealed class WordAdminService : IWordAdminService
         IWordAudioStorage? audioStorage = null,
         IWordImageStorage? imageStorage = null,
         IMediaSuggestionProvider? mediaSuggestionProvider = null,
-        IUserListCache? userListCache = null)
+        IUserListCache? userListCache = null,
+        ILogger<WordAdminService>? logger = null)
     {
         _repository = repository;
         _audioStorage = audioStorage;
@@ -59,6 +61,7 @@ public sealed class WordAdminService : IWordAdminService
         _mediaSuggestionProvider = mediaSuggestionProvider;
         _wordDetailCache = wordDetailCache;
         _userListCache = userListCache;
+        _logger = logger;
     }
 
     public async Task<DictionaryResult<PagedCollection<AdminWordListItem>>> SearchAsync(
@@ -297,10 +300,41 @@ public sealed class WordAdminService : IWordAdminService
         StoredMedia uploaded;
         try { uploaded = await _audioStorage.UploadAsync(content! with { OwnerId = wordId }, normalizedAccent, cancellationToken); }
         catch (InvalidOperationException exception) { return DictionaryResult<WordAudio>.ValidationFailure(exception.Message); }
-        var audio = await _repository.UpsertAudioAsync(wordId, uploaded, normalizedAccent, cancellationToken);
-        if (audio is null) return DictionaryResult<WordAudio>.NotFound("Word not found.");
+        AudioReplacement? replacement;
+        try
+        {
+            replacement = await _repository.UpsertAudioAsync(wordId, uploaded, normalizedAccent, cancellationToken);
+        }
+        catch
+        {
+            await CleanupUnreferencedAudioAsync(uploaded.Url);
+            throw;
+        }
+        if (replacement is null)
+        {
+            await CleanupUnreferencedAudioAsync(uploaded.Url);
+            return DictionaryResult<WordAudio>.NotFound("Word not found.");
+        }
+        await CleanupUnreferencedAudioAsync(replacement.PreviousUrl);
         await RemoveCachedWordAsync(wordId, cancellationToken);
-        return DictionaryResult<WordAudio>.Success(audio);
+        return DictionaryResult<WordAudio>.Success(replacement.Audio);
+    }
+
+    private async Task CleanupUnreferencedAudioAsync(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url) || _audioStorage is null) return;
+        // A cancelled/failed save may have committed. Check the database before deleting.
+        using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        try
+        {
+            if (!await _repository.IsAudioUrlReferencedAsync(url, cleanup.Token))
+                await _audioStorage.DeleteOwnedAsync(url, cleanup.Token);
+        }
+        catch (Exception exception)
+        {
+            // Keep the asset if its ownership/reference state cannot be verified.
+            _logger?.LogWarning(exception, "Could not clean up an unreferenced word audio asset.");
+        }
     }
 
     public async Task<DictionaryResult<bool>> SoftDeleteAudioAsync(

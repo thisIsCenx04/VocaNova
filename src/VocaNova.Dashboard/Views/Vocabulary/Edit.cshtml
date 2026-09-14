@@ -3,11 +3,10 @@
 @model WordDetail
 @{
     ViewData["Title"] = T["Update Vocabulary Metadata"];
+    ViewData["ShowVideoSuggestions"] = true;
     var senses = Model.Senses.OrderBy(s => s.Order).ToList();
     var primaryType = senses.FirstOrDefault()?.WordClass;
-    var ukAudio = Model.Audio.FirstOrDefault(a => string.Equals(a.Accent, "uk", StringComparison.OrdinalIgnoreCase))
-                  ?? Model.Audio.FirstOrDefault();
-    var usAudio = Model.Audio.FirstOrDefault(a => string.Equals(a.Accent, "us", StringComparison.OrdinalIgnoreCase));
+    var ukAudio = Model.Audio.FirstOrDefault(a => string.Equals(a.Accent, "uk", StringComparison.OrdinalIgnoreCase));
     var isActive = !string.Equals(Model.Status, "deleted", StringComparison.OrdinalIgnoreCase);
 
 }
@@ -35,12 +34,8 @@
       data-label-replace="@T["Replace"]" data-label-no-image="@T["No image."]"
       data-label-no-audio="@T["No audio."]" data-label-upload-image="@T["Upload image"]"
       data-label-upload-audio="@T["Upload audio"]"
-      data-msg-media-empty="@T["No matching media found. Try another query."]"
+      data-msg-media-empty="@T["No suitable suggestions found for this vocabulary."]"
       data-msg-media-loading="@T["Searching Pexels..."]"
-      data-msg-media-ready="@T["Suggestions load when you press Suggest."]"
-      data-msg-image-applied="@T["Suggested image applied."]"
-      data-label-use-image="@T["Use image"]"
-      data-label-open-video="@T["Open video"]"
       data-label-copy-link="@T["Copy link"]"
       data-label-copied="@T["Copied"]">
     @Html.AntiForgeryToken()
@@ -108,18 +103,9 @@
                         <label for="phoneticUk">@T["Phonetics - UK"]</label>
                         <div class="input-with-audio">
                             <input id="phoneticUk" name="phoneticUk" class="form-control" value="@Model.PhoneticUk" placeholder="/.../" />
-                            @if (ukAudio is not null)
-                            {
-                                <button type="button" class="audio-btn" title="@T["Play"]" data-audio="@ukAudio.Url" aria-label="@T["Play pronunciation"]">
-                                    <svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3Zm13.5 2a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Zm-2.5-9v2.06A7 7 0 0 1 14 21v-2.06A5 5 0 0 0 14 5Z"/></svg>
-                                </button>
-                            }
-                            else
-                            {
-                                <span class="audio-btn disabled" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3Z"/></svg>
-                                </span>
-                            }
+                            <button type="button" class="audio-btn" title="@T["Play"]" data-audio="@ukAudio?.Url" disabled="@(ukAudio is null)" aria-label="@T["Play pronunciation"]">
+                                <svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3Zm13.5 2a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Zm-2.5-9v2.06A7 7 0 0 1 14 21v-2.06A5 5 0 0 0 14 5Z"/></svg>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -148,63 +134,49 @@
                             }
                         </div>
                         <input id="edit-image-file" type="file" accept="image/png,image/jpeg,image/webp" hidden />
+                        <div data-pending-image hidden>
+                            <p>@T["Preview — not saved"]</p>
+                            <img class="word-image" alt="@Model.Word" />
+                            <div class="word-video-actions">
+                                <button type="button" class="btn-primary btn-sm" data-image-save>@T["Save image"]</button>
+                                <button type="button" class="btn-secondary btn-sm" data-image-cancel>@T["Cancel"]</button>
+                            </div>
+                            <p data-image-message role="status"></p>
+                        </div>
                         <button type="button" class="btn-secondary btn-sm" data-file-picker="edit-image-file">@T["Upload image"]</button>
+                        <partial name="_MediaSuggestions" model='@(new ValueTuple<string, string>("image", Model.Word))' />
                     </div>
                 </section>
 
                 <section class="panel vd-extra">
                     <div class="panel-head"><h2 class="panel-title">@T["Audio"]</h2></div>
-                    <div class="edit-media-panel-body">
-                        <div id="edit-audio-preview">
-                            @if (usAudio is null)
-                            {
-                                <p class="text-muted">@T["No audio."]</p>
-                            }
-                            else
-                            {
-                                <ul class="audio-list"><li class="audio-item">
-                                    <span class="badge badge-muted">US</span>
-                                    <audio controls preload="none" src="@usAudio.Url"></audio>
-                                    <button type="button" class="btn-icon btn-danger edit-media-delete"
-                                            data-delete-media="audio" data-audio-id="@usAudio.AudioId">@T["Delete"]</button>
-                                </li></ul>
-                            }
+                    @foreach (var accent in new[] { "uk", "us" })
+                    {
+                        var audio = Model.Audio.FirstOrDefault(a => string.Equals(a.Accent, accent, StringComparison.OrdinalIgnoreCase));
+                        <div class="edit-media-panel-body" data-audio-section="@accent">
+                            <h3 class="panel-title">@accent.ToUpperInvariant()</h3>
+                            <div id="edit-audio-preview-@accent">
+                                @if (audio is null)
+                                {
+                                    <p class="text-muted">@T["No audio."]</p>
+                                }
+                                else
+                                {
+                                    <ul class="audio-list"><li class="audio-item">
+                                        <audio controls preload="none" src="@audio.Url" aria-label="@accent.ToUpperInvariant()"></audio>
+                                        <button type="button" class="btn-icon btn-danger edit-media-delete"
+                                                data-delete-media="audio" data-audio-id="@audio.AudioId" data-accent="@accent">@T["Delete"]</button>
+                                    </li></ul>
+                                }
+                            </div>
+                            <input id="edit-audio-file-@accent" data-accent="@accent" type="file" accept="audio/mpeg,audio/wav,audio/ogg" hidden />
+                            <button type="button" class="btn-secondary btn-sm" data-file-picker="edit-audio-file-@accent">@(audio is null ? T["Upload audio"] : T["Replace"]) (@accent.ToUpperInvariant())</button>
                         </div>
-                        <input id="edit-audio-file" type="file" accept="audio/mpeg,audio/wav,audio/ogg" hidden />
-                        <button type="button" class="btn-secondary btn-sm" data-file-picker="edit-audio-file">@(usAudio is null ? T["Upload audio"] : T["Replace"])</button>
-                    </div>
+                    }
                 </section>
             </div>
 
-            <section class="panel edit-panel media-suggest-panel">
-                <header class="edit-panel-head media-suggest-head">
-                    <span class="edit-panel-icon">
-                        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 5a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V5Zm3-1a1 1 0 0 0-1 1v9.6l2.9-2.9a1 1 0 0 1 1.4 0l2 2 3.4-3.4a1 1 0 0 1 1.4 0l1.9 1.9V5a1 1 0 0 0-1-1H7Zm11 10.8-1.6-1.6-3.4 3.4a1 1 0 0 1-1.4 0l-2-2L6 18.2v.8a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-4.2ZM9 7.5A1.5 1.5 0 1 1 12 7.5 1.5 1.5 0 0 1 9 7.5Z" fill="currentColor"/></svg>
-                    </span>
-                    <div>
-                        <h2 class="edit-panel-title">@T["Auto suggest image/video"]</h2>
-                        <p class="media-suggest-subtitle">@T["Search Pexels using this vocabulary context. Images can be applied directly; videos are preview links."]</p>
-                    </div>
-                    <a class="media-suggest-credit" href="https://www.pexels.com" target="_blank" rel="noopener">Pexels</a>
-                </header>
-                <div class="edit-panel-body media-suggest-body">
-                    <div class="media-suggest-toolbar">
-                        <div class="media-type-toggle" role="group" aria-label="@T["Media type"]">
-                            <button type="button" class="media-type-btn active" data-media-type="image">@T["Images"]</button>
-                            <button type="button" class="media-type-btn" data-media-type="video">@T["Videos"]</button>
-                        </div>
-                        <div class="media-search-row">
-                            <input id="media-suggest-query" class="form-control" value="@Model.Word" maxlength="120"
-                                   placeholder="@T["Search keyword"]" />
-                            <button type="button" class="btn-primary" id="media-suggest-search">@T["Suggest"]</button>
-                        </div>
-                    </div>
-                    <div class="media-suggest-status text-muted" id="media-suggest-status">
-                        @T["Suggestions load when you press Suggest."]
-                    </div>
-                    <div class="media-suggest-grid" id="media-suggest-results" aria-live="polite"></div>
-                </div>
-            </section>
+            <partial name="_WordVideoEditor" model="Model" />
 
             <!-- Meaning & Examples -->
             <section class="panel edit-panel">
@@ -330,5 +302,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/media-download.js" asp-append-version="true"></script>
+    <script src="~/js/word-video.js" asp-append-version="true"></script>
     <script src="~/js/vocabulary-edit.js" asp-append-version="true"></script>
 }

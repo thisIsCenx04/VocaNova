@@ -35,6 +35,8 @@ flutter test --concurrency=1
 
 Flutter is not a solution project and must be verified separately.
 
+Audio regression checks: the .NET Dictionary tests cover UK/US replacement, cleanup/reference guards, and Dashboard multipart contracts. Mobile's `test/features/dictionary/application/audio_playback_service_test.dart` covers recording/TTS fallback and rapid taps. Open `tests/VocaNova.Tests/Dashboard/word-audio-browser-test.html` in a Chromium browser to exercise the real edit JavaScript against a labeled local fixture; its output must read `PASS`. The fixture mocks upload responses and does not replace authenticated Dashboard or device/Cloudinary testing.
+
 ### Run
 
 ```powershell
@@ -109,3 +111,13 @@ The API and Dashboard containers listen on internal port 8080. Compose waits for
 - Google login errors: use the same web client ID in Mobile and API configuration.
 - Provider failures: configure only the Gemini/Cloudinary/Pexels/SpeedSMS flow being exercised.
 - Scaffold failure: verify `dotnet ef`, MySQL, `.env`, and the pre-existing schema.
+
+## Word video setup and checks
+
+Apply `scripts/add-word-video-assets.sql` to the target MySQL database before running this version. Existing `Cloudinary__CloudName`, `Cloudinary__ApiKey`, and `Cloudinary__ApiSecret` settings are reused. Video uploads use `vocanova/words/video/{wordId}/{uniqueId}`; no additional provider secret is needed. Run `flutter pub get` and `flutter gen-l10n` after pulling the Mobile change.
+
+The .NET video lifecycle tests cover file/metadata limits, failed processing, ambiguous commits, cleanup, cache failures, and soft deletion. `WordVideoIntegrationTests` exercises the actual MySQL table inside a rolled-back transaction. Mobile `test/features/dictionary/word_video_test.dart` checks DTO cache round-trip, lazy initialization, audio stop ordering, background pause, disposal and retry using a fake native player.
+
+Open `tests/VocaNova.Tests/Dashboard/word-video-browser-test.html` in Chromium: output must be `PASS`. This uses real Dashboard JS/CSS with simulated metadata/API responses; it does not replace authenticated end-to-end or device checks. A local Cloudinary smoke check successfully uploaded a six-second public demo fixture, produced MP4/JPG variants, fetched both with HTTP 200, and deleted the test asset. No provider credentials or fixture media are committed.
+
+Auto-suggestion regression: `tests/VocaNova.Tests/Dashboard/media-suggestions-browser-test.html` exercises the production suggestion, preview, download and upload scripts with simulated provider responses. It checks automatic image/video searches, inline video players, no upload on selection, multipart save, old video preservation on failure, image persistence using the saved URL, allowed download hosts and the size cap. Chromium output must read `PASS`. Public Pexels image/video responses were also checked for browser CORS support.

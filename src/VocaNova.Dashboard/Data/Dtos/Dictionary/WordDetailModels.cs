@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace VocaNova.Dashboard.Data.Dtos.Dictionary;
 
-// Mirror WordDetailDto của VocaNova.API (GET /api/words/{id}).
+// Mirror WordDetailDto cá»§a VocaNova.API (GET /api/words/{id}).
 
 public sealed record WordDetail(
     [property: JsonPropertyName("word_id")] uint WordId,
@@ -19,7 +19,8 @@ public sealed record WordDetail(
     [property: JsonPropertyName("topics")] IReadOnlyList<WordTopic> Topics,
     [property: JsonPropertyName("status")] string Status = "active",
     [property: JsonPropertyName("created_at")] DateTime CreatedAt = default,
-    [property: JsonPropertyName("updated_at")] DateTime UpdatedAt = default);
+    [property: JsonPropertyName("updated_at")] DateTime UpdatedAt = default,
+    [property: JsonPropertyName("video")] WordVideo? Video = null);
 
 public sealed record WordSenseDetail(
     [property: JsonPropertyName("sense_id")] uint SenseId,
@@ -51,3 +52,12 @@ public sealed record WordAudio(
     [property: JsonPropertyName("source")] string Source,
     [property: JsonPropertyName("url")] string Url,
     [property: JsonPropertyName("status")] string Status);
+
+public sealed record WordVideo(
+    [property: JsonPropertyName("video_id")] uint VideoId,
+    [property: JsonPropertyName("source")] string Source,
+    [property: JsonPropertyName("url")] string Url,
+    [property: JsonPropertyName("thumbnail_url")] string ThumbnailUrl,
+    [property: JsonPropertyName("status")] string Status);
+
+public sealed record VideoUpload(Stream Content, string FileName, string ContentType);

@@ -14,6 +14,7 @@ class WordDetailDto {
     this.phoneticUk,
     this.phoneticUs,
     this.imageUrl,
+    this.video,
   });
 
   final int wordId;
@@ -23,6 +24,7 @@ class WordDetailDto {
   final String? phoneticUk;
   final String? phoneticUs;
   final String? imageUrl;
+  final WordVideoDto? video;
   final List<WordSenseDto> senses;
   final List<WordExampleDto> examples;
   final List<WordRelationDto> relations;
@@ -37,6 +39,9 @@ class WordDetailDto {
     phoneticUk: json['phonetic_uk'] as String?,
     phoneticUs: json['phonetic_us'] as String?,
     imageUrl: json['image_url'] as String?,
+    video: json['video'] is Map<String, dynamic>
+        ? WordVideoDto.fromJson(json['video'] as Map<String, dynamic>)
+        : null,
     senses: _maps(json['senses']).map(WordSenseDto.fromJson).toList(),
     examples: _maps(json['examples']).map(WordExampleDto.fromJson).toList(),
     relations: _maps(json['relations']).map(WordRelationDto.fromJson).toList(),
@@ -52,6 +57,7 @@ class WordDetailDto {
     phoneticUk: word.phoneticUk,
     phoneticUs: word.phoneticUs,
     imageUrl: word.imageUrl,
+    video: word.video == null ? null : WordVideoDto.fromDomain(word.video!),
     senses: word.senses.map(WordSenseDto.fromDomain).toList(),
     examples: word.examples.map(WordExampleDto.fromDomain).toList(),
     relations: word.relations.map(WordRelationDto.fromDomain).toList(),
@@ -67,6 +73,7 @@ class WordDetailDto {
     phoneticUk: phoneticUk,
     phoneticUs: phoneticUs,
     imageUrl: imageUrl,
+    video: video?.toDomain(),
     senses: senses.map((dto) => dto.toDomain()).toList(),
     examples: examples.map((dto) => dto.toDomain()).toList(),
     relations: relations.map((dto) => dto.toDomain()).toList(),
@@ -82,6 +89,7 @@ class WordDetailDto {
     'phonetic_uk': phoneticUk,
     'phonetic_us': phoneticUs,
     'image_url': imageUrl,
+    'video': video?.toJson(),
     'senses': senses.map((item) => item.toJson()).toList(),
     'examples': examples.map((item) => item.toJson()).toList(),
     'relations': relations.map((item) => item.toJson()).toList(),
@@ -295,3 +303,31 @@ List<Map<String, dynamic>> _maps(Object? value) =>
     (value as List<dynamic>? ?? const [])
         .whereType<Map<String, dynamic>>()
         .toList();
+
+class WordVideoDto {
+  const WordVideoDto({
+    required this.videoId,
+    required this.url,
+    required this.thumbnailUrl,
+  });
+  final int videoId;
+  final String url;
+  final String thumbnailUrl;
+  factory WordVideoDto.fromJson(Map<String, dynamic> json) => WordVideoDto(
+    videoId: json['video_id'] as int,
+    url: json['url'] as String,
+    thumbnailUrl: json['thumbnail_url'] as String,
+  );
+  factory WordVideoDto.fromDomain(WordVideo video) => WordVideoDto(
+    videoId: video.videoId,
+    url: video.url,
+    thumbnailUrl: video.thumbnailUrl,
+  );
+  WordVideo toDomain() =>
+      WordVideo(videoId: videoId, url: url, thumbnailUrl: thumbnailUrl);
+  Map<String, dynamic> toJson() => {
+    'video_id': videoId,
+    'url': url,
+    'thumbnail_url': thumbnailUrl,
+  };
+}

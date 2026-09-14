@@ -5,6 +5,7 @@ namespace VocaNova.API.Infrastructure.Persistence.Entities;
 
 public partial class Word
 {
+    public virtual WordVideoAsset? WordVideoAsset { get; set; }
     public uint WordId { get; set; }
 
     /// <summary>

@@ -533,5 +533,11 @@
   "profileClose": "Đóng",
   "profileHidePassword": "Ẩn mật khẩu",
   "profileShowPassword": "Hiện mật khẩu",
-  "profileTryAgain": "Thử lại"
+  "profileTryAgain": "Thử lại",
+  "dictVideoTitle": "Video minh họa",
+  "dictVideoPlay": "Phát video",
+  "dictVideoError": "Không thể phát video này.",
+  "dictVideoRetry": "Thử lại",
+  "dictVideoClose": "Đóng video",
+  "dictVideoPause": "Tạm dừng video"
 }

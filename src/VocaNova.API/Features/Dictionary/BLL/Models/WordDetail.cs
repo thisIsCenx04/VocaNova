@@ -18,7 +18,8 @@ public sealed record WordDetail(
     IReadOnlyCollection<WordTopic> Topics,
     string Status,
     DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt,
+    WordVideo? Video = null);
 
 public sealed record WordSense(
     uint SenseId,

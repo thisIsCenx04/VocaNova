@@ -74,7 +74,11 @@ public static class DictionaryMappings
                 topic.Icon)).ToArray(),
             word.Status,
             word.CreatedAt,
-            word.UpdatedAt);
+            word.UpdatedAt,
+            word.Video?.ToResponse());
+
+    public static WordVideoResponse ToResponse(this WordVideo video) =>
+        new(video.VideoId, video.Source, video.Url, video.ThumbnailUrl, video.Status);
 
     private static WordSummaryResponse ToResponse(WordSummary word) =>
         new(word.WordId, word.Word, word.Phonetic, word.Cefr, word.PrimaryMeaning, word.ImageUrl);

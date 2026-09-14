@@ -198,29 +198,39 @@
 
             <section class="panel vd-extra">
                 <div class="panel-head"><h2 class="panel-title">@T["Audio"]</h2></div>
-                @if (usAudio is null)
+                @foreach (var accent in new[] { "uk", "us" })
                 {
-                    <p class="text-muted">@T["No audio."]</p>
-                }
-                else
-                {
-                    <ul class="audio-list">
-                            <li class="audio-item">
-                                <span class="badge badge-muted">US</span>
-                                <audio controls preload="none" src="@usAudio.Url"></audio>
+                    var audio = Model.Audio.FirstOrDefault(a => string.Equals(a.Accent, accent, StringComparison.OrdinalIgnoreCase));
+                    <div class="edit-media-panel-body">
+                        <h3 class="panel-title">@accent.ToUpperInvariant()</h3>
+                        @if (audio is null)
+                        {
+                            <p class="text-muted">@T["No audio."]</p>
+                        }
+                        else
+                        {
+                            <ul class="audio-list"><li class="audio-item">
+                                <audio controls preload="none" src="@audio.Url" aria-label="@accent.ToUpperInvariant()"></audio>
                                 <form class="inline-form js-confirm" data-confirm="@T["Delete this audio?"]"
-                                      data-ajax="/vocabulary/@Model.WordId/audio/@usAudio.AudioId/delete">
+                                      data-ajax="/vocabulary/@Model.WordId/audio/@audio.AudioId/delete">
                                     <button type="submit" class="btn-icon btn-danger">@T["Delete"]</button>
                                 </form>
-                            </li>
-                    </ul>
+                            </li></ul>
+                        }
+                        <form class="upload-form" id="audio-upload-form-@accent" novalidate>
+                            <input type="hidden" name="accent" value="@accent" />
+                            <input type="file" name="file" accept="audio/mpeg,audio/wav,audio/ogg" class="form-control" aria-label="@accent.ToUpperInvariant()" required />
+                            <button type="submit" class="btn-secondary btn-sm">@(audio is null ? T["Upload audio"] : T["Replace"]) (@accent.ToUpperInvariant())</button>
+                        </form>
+                    </div>
                 }
-                <form class="upload-form" id="audio-upload-form" novalidate>
-                    <input type="file" name="file" accept="audio/mpeg,audio/wav,audio/ogg" class="form-control" required />
-                    <button type="submit" class="btn-secondary btn-sm">@(usAudio is null ? T["Upload audio"] : T["Replace"])</button>
-                </form>
             </section>
         </div>
+    }
+
+    @if (!string.Equals(Model.Status, "deleted", StringComparison.OrdinalIgnoreCase))
+    {
+        <partial name="_WordVideoEditor" model="Model" />
     }
 
     <div id="detail-toast" class="detail-toast" hidden></div>
@@ -242,5 +252,6 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/word-video.js" asp-append-version="true"></script>
     <script src="~/js/vocabulary-detail.js" asp-append-version="true"></script>
 }

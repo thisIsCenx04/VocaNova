@@ -439,30 +439,30 @@ public sealed class VocabularyController : Controller
     public async Task<IActionResult> UploadAudio(
         uint id,
         IFormFile? file,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string accent = "us")
     {
+        accent = accent?.Trim().ToLowerInvariant() ?? "";
+        if (accent is not ("uk" or "us"))
+        {
+            return Json(new { success = false, message = _translator["Accent must be one of: uk, us."] });
+        }
         if (file is null || file.Length == 0)
         {
             return Json(new { success = false, message = _translator["Please choose an audio file."] });
         }
 
         await using var stream = file.OpenReadStream();
-        var result = await _apiClient.UploadAudioAsync(
+        var (result, audio) = await _apiClient.UploadAudioAsync(
             id,
-            new AudioUpload("us", stream, file.FileName, file.ContentType),
+            new AudioUpload(accent, stream, file.FileName, file.ContentType),
             cancellationToken);
         if (!result.IsSuccess)
         {
             return JsonResultFor(result, "Audio uploaded.");
         }
 
-        var detail = await _apiClient.GetWordDetailAsync(id, cancellationToken);
-        var audioId = detail?.Audio
-            .Where(audio => string.Equals(audio.Accent, "us", StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(audio => audio.AudioId)
-            .Select(audio => (uint?)audio.AudioId)
-            .FirstOrDefault();
-        return Json(new { success = true, message = _translator["Audio uploaded."], audioId });
+        return Json(new { success = true, message = _translator["Audio uploaded."], audioId = audio?.AudioId, audioUrl = audio?.Url, accent });
     }
 
     [HttpPost("/vocabulary/{id:uint}/audio/{audioId:uint}/delete")]
@@ -471,6 +471,34 @@ public sealed class VocabularyController : Controller
     {
         var result = await _apiClient.DeleteAudioAsync(id, audioId, cancellationToken);
         return JsonResultFor(result, "Audio deleted.");
+    }
+
+    [HttpPost("/vocabulary/{id:uint}/video")]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(22 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 22 * 1024 * 1024)]
+    public async Task<IActionResult> UploadVideo(uint id, IFormFile? file, CancellationToken cancellationToken)
+    {
+        if (file is null || file.Length == 0)
+            return Json(new { success = false, message = _translator["Video file is required."] });
+        if (file.Length > 20 * 1024 * 1024)
+            return Json(new { success = false, message = _translator["Video file must be 20MB or smaller."] });
+        if (!string.Equals(Path.GetExtension(file.FileName), ".mp4", StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(file.ContentType, "video/mp4", StringComparison.OrdinalIgnoreCase))
+            return Json(new { success = false, message = _translator["Video must be an MP4 file."] });
+        await using var stream = file.OpenReadStream();
+        var (result, video) = await _apiClient.UploadVideoAsync(id,
+            new VocaNova.Dashboard.Data.Dtos.Dictionary.VideoUpload(stream, file.FileName, file.ContentType), cancellationToken);
+        if (!result.IsSuccess) return JsonResultFor(result, "Video saved successfully.");
+        return Json(new { success = true, message = _translator["Video saved successfully."], video });
+    }
+
+    [HttpPost("/vocabulary/{id:uint}/video/delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteVideo(uint id, CancellationToken cancellationToken)
+    {
+        var result = await _apiClient.DeleteVideoAsync(id, cancellationToken);
+        return JsonResultFor(result, "Video deleted successfully.");
     }
 
     [HttpPost("/vocabulary/{id:uint}/image")]

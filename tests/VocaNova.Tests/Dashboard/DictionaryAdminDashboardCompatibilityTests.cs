@@ -10,6 +10,55 @@ namespace VocaNova.Tests.Dashboard;
 public sealed class DictionaryAdminDashboardCompatibilityTests
 {
     [Fact]
+    public async Task Video_Upload_Uses_Multipart_Put_And_Returns_Saved_Urls_Without_Extra_Read()
+    {
+        var handler = new QueueHttpMessageHandler(request =>
+        {
+            request.Method.Should().Be(HttpMethod.Put);
+            request.RequestUri!.AbsolutePath.Should().Be("/api/admin/words/7/video");
+            var part = ((MultipartFormDataContent)request.Content!).Single();
+            part.Headers.ContentDisposition!.Name!.Trim('"').Should().Be("file");
+            part.Headers.ContentType!.MediaType.Should().Be("video/mp4");
+            return JsonResponse("""
+                {"success":true,"data":{"video_id":42,"source":"uploaded","url":"https://cdn.test/swim.mp4","thumbnail_url":"https://cdn.test/swim.jpg","status":"active"},"message":"Video saved successfully.","errors":[]}
+                """);
+        });
+        var client = CreateClient(handler);
+        var (result, video) = await client.UploadVideoAsync(7, new VideoUpload(new MemoryStream([1, 2, 3]), "swim.mp4", "video/mp4"));
+        result.IsSuccess.Should().BeTrue();
+        video!.VideoId.Should().Be(42);
+        video.ThumbnailUrl.Should().Be("https://cdn.test/swim.jpg");
+        handler.PendingCount.Should().Be(0);
+    }
+
+    [Theory]
+    [InlineData("uk")]
+    [InlineData("us")]
+    public async Task Audio_Upload_Preserves_Accent_And_Returns_Saved_Asset(string accent)
+    {
+        Task<string>? sentAccent = null;
+        var handler = new QueueHttpMessageHandler(request =>
+        {
+            request.Method.Should().Be(HttpMethod.Post);
+            request.RequestUri!.AbsolutePath.Should().Be("/api/admin/words/7/audio");
+            var content = (MultipartFormDataContent)request.Content!;
+            sentAccent = content.Single(part => part.Headers.ContentDisposition!.Name!.Trim('"') == "accent")
+                .ReadAsStringAsync();
+            return JsonResponse($$"""
+                {"success":true,"data":{"audio_id":42,"accent":"{{accent}}","source":"uploaded","url":"https://cdn.test/audio.mp3","status":"uploaded"},"message":"Audio uploaded.","errors":[]}
+                """);
+        });
+        using var stream = new MemoryStream([1, 2, 3]);
+        var (result, audio) = await CreateClient(handler).UploadAudioAsync(7, new AudioUpload(accent, stream, "run.mp3", "audio/mpeg"));
+        result.IsSuccess.Should().BeTrue();
+        (await sentAccent!).Should().Be(accent);
+        audio!.AudioId.Should().Be(42);
+        audio.Accent.Should().Be(accent);
+        audio.Url.Should().Be("https://cdn.test/audio.mp3");
+        handler.PendingCount.Should().Be(0);
+    }
+
+    [Fact]
     public async Task Dashboard_Client_Should_Consume_Unchanged_Admin_Word_And_Topic_Contracts()
     {
         var handler = new QueueHttpMessageHandler(

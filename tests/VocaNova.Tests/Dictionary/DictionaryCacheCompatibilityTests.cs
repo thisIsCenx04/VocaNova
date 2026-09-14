@@ -77,7 +77,7 @@ public class DictionaryCacheCompatibilityTests
             .Should().Equal(
                 "word_id", "word", "word_key", "cefr", "phonetic_uk", "phonetic_us",
                 "image_url", "is_phrase", "senses", "examples", "relations", "audio",
-                "derived_forms", "idioms", "topics", "status", "created_at", "updated_at");
+                "derived_forms", "idioms", "topics", "status", "created_at", "updated_at", "video");
     }
 
     private static string InvokeKey(object cache, object argument)

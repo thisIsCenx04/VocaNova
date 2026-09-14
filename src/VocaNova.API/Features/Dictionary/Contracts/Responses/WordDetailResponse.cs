@@ -20,7 +20,8 @@ public sealed record WordDetailResponse(
     [property: JsonPropertyName("topics")] IReadOnlyCollection<WordTopicResponse> Topics,
     [property: JsonPropertyName("status")] string Status,
     [property: JsonPropertyName("created_at")] DateTime CreatedAt,
-    [property: JsonPropertyName("updated_at")] DateTime UpdatedAt);
+    [property: JsonPropertyName("updated_at")] DateTime UpdatedAt,
+    [property: JsonPropertyName("video")] WordVideoResponse? Video = null);
 
 public sealed record WordSenseResponse(
     [property: JsonPropertyName("sense_id")] uint SenseId,

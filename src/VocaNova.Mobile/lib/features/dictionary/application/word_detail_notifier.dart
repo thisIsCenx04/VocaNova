@@ -30,13 +30,13 @@ class WordDetailNotifier extends _$WordDetailNotifier {
   @override
   WordDetailState build(int wordId) => const WordDetailState();
 
-  Future<void> load() async {
+  Future<void> load({bool forceRefresh = false}) async {
     final storage = ref.read(wordDetailLocalStorageProvider);
     final key = StorageKeys.wordCacheJson(wordId);
     final savedKey = StorageKeys.savedWordJson(wordId);
     final saved = await storage.get<String>(savedKey);
     final freshCache = await storage.getWithTtl<String>(key, ttl: cacheTtl);
-    if (freshCache != null) {
+    if (freshCache != null && !forceRefresh) {
       state = state.copyWith(
         word: _decode(freshCache),
         isLoading: false,

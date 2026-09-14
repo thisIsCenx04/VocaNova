@@ -132,6 +132,7 @@ public static class VocaNovaServiceCollectionExtensions
     private static IServiceCollection AddDictionaryBLL(this IServiceCollection services)
     {
         services.AddScoped<IWordAdminService, WordAdminService>();
+        services.AddScoped<IWordVideoService, WordVideoService>();
         services.AddScoped<IWordReadService, WordReadService>();
         services.AddScoped<ITopicAdminService, TopicAdminService>();
         services.AddScoped<ITopicReadService, TopicReadService>();
@@ -301,6 +302,8 @@ public static class VocaNovaServiceCollectionExtensions
     private static IServiceCollection AddDictionaryDAL(this IServiceCollection services)
     {
         services.AddScoped<IWordAdminRepository, WordAdminRepository>();
+        services.AddScoped<IWordVideoRepository, WordVideoRepository>();
+        services.AddSingleton<IWordVideoStorage, CloudinaryWordVideoStorage>();
         services.AddScoped<IWordReadRepository, WordReadRepository>();
         services.AddScoped<ITopicAdminRepository, TopicAdminRepository>();
         services.AddScoped<ITopicReadRepository, TopicReadRepository>();

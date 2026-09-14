@@ -41,7 +41,7 @@ class DioClient {
 
   static const defaultBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:5013',
+    defaultValue: 'http://10.0.3.2:5013',
   );
 
   static final DioClient instance = DioClient._(

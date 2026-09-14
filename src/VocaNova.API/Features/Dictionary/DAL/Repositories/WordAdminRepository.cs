@@ -217,7 +217,7 @@ public sealed class WordAdminRepository : IWordAdminRepository
         return await FindDetailAsync(wordId, false, cancellationToken);
     }
 
-    public async Task<AdminWordAudio?> UpsertAudioAsync(
+    public async Task<AudioReplacement?> UpsertAudioAsync(
         uint wordId, StoredMedia media, string? accent, CancellationToken cancellationToken = default)
     {
         var word = await _dbContext.Words.SingleOrDefaultAsync(entity => entity.WordId == wordId, cancellationToken);
@@ -225,6 +225,7 @@ public sealed class WordAdminRepository : IWordAdminRepository
         var now = DateTime.UtcNow;
         var audio = await _dbContext.WordAudioAssets.IgnoreQueryFilters()
             .SingleOrDefaultAsync(entity => entity.WordId == wordId && entity.Accent == accent, cancellationToken);
+        var previousUrl = audio?.StorageUrl;
         if (audio is null)
         {
             audio = new WordAudioAsset { WordId = wordId, Accent = accent, Source = AudioSource.Uploaded,
@@ -234,8 +235,12 @@ public sealed class WordAdminRepository : IWordAdminRepository
         else { audio.Source = AudioSource.Uploaded; audio.StorageUrl = media.Url; audio.Status = AudioStatus.Uploaded; audio.CreatedAt = now; }
         word.UpdatedAt = now;
         await _dbContext.SaveChangesAsync(cancellationToken);
-        return DictionaryAdminPersistenceMappings.ToWordAudio(audio);
+        return new AudioReplacement(DictionaryAdminPersistenceMappings.ToWordAudio(audio), previousUrl);
     }
+
+    public Task<bool> IsAudioUrlReferencedAsync(string url, CancellationToken cancellationToken = default) =>
+        _dbContext.WordAudioAssets.IgnoreQueryFilters().AsNoTracking()
+            .AnyAsync(audio => audio.StorageUrl == url, cancellationToken);
 
     public async Task<bool> SetAudioStatusAsync(uint wordId, uint audioId, string status, CancellationToken cancellationToken = default)
     {
@@ -338,6 +343,7 @@ public sealed class WordAdminRepository : IWordAdminRepository
             .Include(entity => entity.WordExamples)
             .Include(entity => entity.WordRelationwords).ThenInclude(relation => relation.RelatedWordNavigation)
             .Include(entity => entity.WordAudioAssets)
+            .Include(entity => entity.WordVideoAsset)
             .Include(entity => entity.WordDerivedFormwords).ThenInclude(form => form.DerivedWordNavigation)
             .Include(entity => entity.WordIdioms)
             .Include(entity => entity.WordTopics).ThenInclude(link => link.Topic)

@@ -7,7 +7,7 @@
 - `AddDAL(configuration)` registers `VocaNovaDbContext` with `UseMySql`; `Program.cs` calls the grouped BLL/DAL registration extensions.
 - MySQL model settings include `utf8mb4`, `utf8mb4_unicode_ci`, and a binary collation for a word key.
 
-`Infrastructure/Persistence/VocaNovaDbContext.cs` exposes 31 `DbSet` properties, applies configurations from the API assembly, and defines soft-delete filters for `UserList`, `UserListWord`, `Topic`, `Word`, `WordSense`, and `WordAudioAsset`.
+`Infrastructure/Persistence/VocaNovaDbContext.cs` exposes 32 `DbSet` properties, applies configurations from the API assembly, and defines soft-delete filters for `UserList`, `UserListWord`, `Topic`, `Word`, `WordSense`, `WordAudioAsset`, and `WordVideoAsset`.
 
 ## Entities and schema behavior (CURRENT)
 
@@ -15,7 +15,7 @@
 |---|---|
 | Identity/authentication | `User`, `Role`, `UserAuth`, `UserProfile`, `RefreshToken`, `OtpVerification` |
 | Learning profile/lookups | `UserLearningProfile`, `AgeRange`, `Region`, `Occupation`, `EducationLevel`, `LearningPurpose`, `UserTopicPreference` |
-| Dictionary/topics | `Word`, `WordSense`, `WordExample`, `WordAudioAsset`, `WordDerivedForm`, `WordIdiom`, `WordRelation`, `Topic`, `WordTopic` |
+| Dictionary/topics | `Word`, `WordSense`, `WordExample`, `WordAudioAsset`, `WordVideoAsset`, `WordDerivedForm`, `WordIdiom`, `WordRelation`, `Topic`, `WordTopic` |
 | Lists | `UserList`, `UserListWord`, `UserListWordStat` |
 | Quiz/progress | `TestSession`, `TestSessionTopic`, `TestAnswer`, `UserWordProgress` |
 | Support | `AiGradingCache`, `AuditLog` |
@@ -79,3 +79,11 @@ BLL use case
 - The MySQL container can create the `MYSQL_DATABASE` database name, but VocaNova still has no EF migrations or automatic schema creation. Load an existing compatible MySQL schema before using database-backed API endpoints.
 - Restarting/recreating application containers must not delete database state. Volume removal is a separate, explicit destructive action.
 - `.env` may supply local secrets, is never committed, and `.env.example` contains placeholders only. Production secret management is deployment-specific.
+
+## Word video MVP (CURRENT)
+
+`scripts/add-word-video-assets.sql` creates the database-first `word_video_assets` table: `video_id` (unsigned auto-increment PK), `word_id` (unsigned FK, unique), `source` varchar(20), `public_id` varchar(255), `storage_url` and `thumbnail_url` varchar(500), `status` varchar(20), and `created_at` timestamp. The public ID uses a case-sensitive binary collation. It is provider metadata and is not exposed in HTTP responses.
+
+A word has zero or one row, including deleted rows. Upload replacement reuses the row and retains `created_at`; deletion changes status to `deleted`. Uploading again reactivates that row. Cloudinary preparation finishes before a short MySQL transaction locks the active word with `FOR UPDATE`, serializing concurrent save/delete operations. The last successful write wins; there is no history or restore endpoint. Normal word reads return only an active video.
+
+Apply this additive SQL before starting the new API in each environment. The local schema was applied and scaffolded into a temporary context/entity directory, then the reviewed mapping was synchronized into the existing normalized entity/configuration layout. Do not replace the production context with raw full-scaffold output. Rolling back application code can leave this additive table in place; dropping populated video data requires a separately reviewed decision.

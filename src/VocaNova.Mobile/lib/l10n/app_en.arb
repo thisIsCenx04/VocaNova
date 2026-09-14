@@ -868,5 +868,11 @@
   "profileClose": "Close",
   "profileHidePassword": "Hide password",
   "profileShowPassword": "Show password",
-  "profileTryAgain": "Try again"
+  "profileTryAgain": "Try again",
+  "dictVideoTitle": "Illustration video",
+  "dictVideoPlay": "Play video",
+  "dictVideoError": "Unable to play this video.",
+  "dictVideoRetry": "Try again",
+  "dictVideoClose": "Close video",
+  "dictVideoPause": "Pause video"
 }

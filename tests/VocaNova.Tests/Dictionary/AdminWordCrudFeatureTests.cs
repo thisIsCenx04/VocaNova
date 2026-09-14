@@ -337,6 +337,29 @@ public class AdminWordCrudFeatureTests
         audio.Status.Should().Be(AudioStatus.Uploaded);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Replacing_Audio_Reuses_Accent_Row_And_Preserves_Other_Accent(bool deleted)
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedWordAsync(dbContext, "run", "run");
+        var original = CreateService(dbContext, audioStorage: new FakeAudioStorage("https://cdn.test/old.mp3"));
+        var first = await original.UploadAudioAsync(1, "uk", ToUploadedContent(CreateAudioFile("run.mp3", "audio/mpeg", 1024)));
+        var us = CreateService(dbContext, audioStorage: new FakeAudioStorage("https://cdn.test/us.mp3"));
+        await us.UploadAudioAsync(1, "us", ToUploadedContent(CreateAudioFile("run.mp3", "audio/mpeg", 1024)));
+        if (deleted) await original.SoftDeleteAudioAsync(1, first.Value!.AudioId);
+        var storage = new FakeAudioStorage("https://cdn.test/new.mp3");
+
+        var replacement = await CreateService(dbContext, audioStorage: storage)
+            .UploadAudioAsync(1, "uk", ToUploadedContent(CreateAudioFile("run.mp3", "audio/mpeg", 1024)));
+
+        replacement.Value!.AudioId.Should().Be(first.Value!.AudioId);
+        (await dbContext.WordAudioAssets.CountAsync()).Should().Be(2);
+        (await dbContext.WordAudioAssets.SingleAsync(a => a.Accent == "us")).StorageUrl.Should().Be("https://cdn.test/us.mp3");
+        storage.DeletedUrls.Should().Equal("https://cdn.test/old.mp3");
+    }
+
     [Fact]
     public async Task UploadAudioAsync_Should_Reject_Invalid_Mime_And_Size()
     {
@@ -752,6 +775,13 @@ public class AdminWordCrudFeatureTests
 
     private sealed class FakeAudioStorage : IAudioStorage
     {
+        public List<string> DeletedUrls { get; } = [];
+
+        public Task DeleteOwnedAsync(string url, CancellationToken cancellationToken = default)
+        {
+            DeletedUrls.Add(url);
+            return Task.CompletedTask;
+        }
         private readonly string _url;
 
         public FakeAudioStorage(string url)

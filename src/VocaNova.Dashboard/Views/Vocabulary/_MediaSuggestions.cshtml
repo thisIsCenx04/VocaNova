@@ -1,0 +1,11 @@
+@model (string MediaType, string Word)
+<div class="media-suggest-inline" data-media-suggestions="@Model.MediaType" data-select-label="@T["Select for preview"]">
+    <div class="media-suggest-inline-head">
+        <h3 class="panel-title">@(Model.MediaType == "image" ? T["Image suggestions"] : T["Video suggestions"])</h3>
+        <a class="media-suggest-credit" href="https://www.pexels.com" target="_blank" rel="noopener">Pexels</a>
+    </div>
+    <p class="media-suggest-subtitle">@T["Select a suggestion to preview above, then save to upload."]</p>
+    <p class="media-suggest-status text-muted" data-media-status role="status">@T["Loading suggestions..."]</p>
+    <button type="button" class="btn-secondary btn-sm" data-media-retry hidden>@T["Try again"]</button>
+    <div class="media-suggest-grid" data-media-results aria-live="polite"></div>
+</div>

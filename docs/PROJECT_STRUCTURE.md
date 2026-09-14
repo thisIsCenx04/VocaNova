@@ -215,3 +215,9 @@ Common/Models/PagedCollection.cs
 - Dashboard/Mobile remain REST clients; their client-side layers are not backend BLL/DAL. Dashboard API wire models now live under `Data/Dtos`, while Mobile feature HTTP wire models live under `lib/features/<feature>/data/dtos` and map to domain models before reaching application/presentation state.
 - Mobile feature folders use `data/dtos` for wire/cache payloads, `data/services/*ApiService` for remote HTTP, `domain/models` for app-domain types, `application` for Riverpod state/notifiers/providers, and `presentation` for widgets/screens.
 - Dockerfiles and Compose health checks/container DNS are implemented for `mysql`, `redis`, `api`, and `dashboard`; Compose uses the named `mysql_data` volume and wires the API's existing MySQL configuration to `mysql:3306`.
+
+### Dictionary video implementation (CURRENT)
+
+Word video follows the existing Dictionary feature slice: controller/contracts/mappings, BLL `WordVideoService` and models, and DAL `WordVideoRepository` with BLL-owned ports. Cloudinary video storage remains under shared `Infrastructure/Storage`; `WordVideoAsset` and its configuration remain under shared persistence. Dashboard reuses `_WordVideoEditor.cshtml` and `word-video.js` in vocabulary detail/edit. Mobile owns its video DTO/domain model and `presentation/word_video_card.dart`.
+
+Dashboard `_MediaSuggestions.cshtml` renders the image/video lists inside their respective editors. `media-download.js` reads the selected public Pexels asset with bounded browser streaming; the existing multipart gateways perform the Cloudinary upload.

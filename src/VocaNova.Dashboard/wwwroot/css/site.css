@@ -4651,3 +4651,17 @@ body.crud-modal-open {
 .is-hidden {
     display: none !important;
 }
+
+/* Word illustration video: preserve aspect ratio on both detail and edit. */
+.word-video-editor video { display: block; width: 100%; max-width: 640px; max-height: 360px; object-fit: contain; background: #111; margin-bottom: 12px; }
+.word-video-editor .form-group { display: block; margin-top: 16px; }
+.word-video-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.word-video-editor [data-video-message] { overflow-wrap: anywhere; }
+.word-video-editor .word-image-preview video { height: 100%; max-height: none; margin: 0; }
+.word-video-editor [data-pending-video] .word-video-actions { margin-bottom: 12px; }
+.media-suggest-inline { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border, #e8e8f2); }
+.media-suggest-inline-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.media-suggest-inline > label { display: block; margin: 12px 0 6px; }
+.media-search-row > button { flex: 0 0 auto; white-space: nowrap; min-width: 96px; }
+.media-suggest-preview video { width: 100%; height: 100%; object-fit: contain; margin: 0; background: #111; }
+[data-pending-image] > img { display: block; max-width: 100%; width: 400px; max-height: 320px; object-fit: contain; margin-bottom: 12px; }

@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:vocanova_mobile/features/dictionary/presentation/word_video_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,7 +31,9 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
   void initState() {
     super.initState();
     Future.microtask(
-      () => ref.read(wordDetailProvider(widget.wordId).notifier).load(),
+      () => ref
+          .read(wordDetailProvider(widget.wordId).notifier)
+          .load(forceRefresh: true),
     );
   }
 
@@ -78,40 +81,47 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
         ),
         if (state.isOffline) const _OfflineBanner(),
         Expanded(
-          child: ListView(
-            key: const Key('word-detail-content'),
-            padding: EdgeInsets.zero,
-            children: [
-              if (word.imageUrl != null) _WordImage(url: word.imageUrl!),
-              for (final sense in word.senses) ...[
-                _TextSection(
-                  label: AppLocalizations.of(context)!.dictDefinitionLabel,
-                  child: Text(
-                    sense.englishDefinition,
-                    style: _bodyStyle(context),
-                  ),
-                ),
-                if (sense.vietnameseMeaning?.trim().isNotEmpty == true)
+          child: RefreshIndicator(
+            onRefresh: () => ref
+                .read(wordDetailProvider(widget.wordId).notifier)
+                .load(forceRefresh: true),
+            child: ListView(
+              key: const Key('word-detail-content'),
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.zero,
+              children: [
+                if (word.imageUrl != null) _WordImage(url: word.imageUrl!),
+                if (word.video != null) WordVideoCard(video: word.video!),
+                for (final sense in word.senses) ...[
                   _TextSection(
-                    label: AppLocalizations.of(
-                      context,
-                    )!.dictVietnameseMeaningLabel,
+                    label: AppLocalizations.of(context)!.dictDefinitionLabel,
                     child: Text(
-                      sense.vietnameseMeaning!,
-                      style: _bodyStyle(
-                        context,
-                      ).copyWith(fontWeight: FontWeight.w500),
+                      sense.englishDefinition,
+                      style: _bodyStyle(context),
                     ),
                   ),
-                if (sense.examples.isNotEmpty)
-                  _ExamplesSection(examples: sense.examples),
+                  if (sense.vietnameseMeaning?.trim().isNotEmpty == true)
+                    _TextSection(
+                      label: AppLocalizations.of(
+                        context,
+                      )!.dictVietnameseMeaningLabel,
+                      child: Text(
+                        sense.vietnameseMeaning!,
+                        style: _bodyStyle(
+                          context,
+                        ).copyWith(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  if (sense.examples.isNotEmpty)
+                    _ExamplesSection(examples: sense.examples),
+                ],
+                if (word.examples.isNotEmpty)
+                  _ExamplesSection(examples: word.examples),
+                if (relations.isNotEmpty)
+                  _RelationsSection(relations: relations, onTap: _openRelated),
+                if (word.topics.isNotEmpty) _TopicsSection(topics: word.topics),
               ],
-              if (word.examples.isNotEmpty)
-                _ExamplesSection(examples: word.examples),
-              if (relations.isNotEmpty)
-                _RelationsSection(relations: relations, onTap: _openRelated),
-              if (word.topics.isNotEmpty) _TopicsSection(topics: word.topics),
-            ],
+            ),
           ),
         ),
         _DetailActions(

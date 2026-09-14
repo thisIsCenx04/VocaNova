@@ -79,7 +79,7 @@ The five anonymous public word/topic GET endpoints now use Presentation-owned re
 Dictionary word/topic administration now uses Presentation-owned request/response Contracts and mappings, framework-neutral BLL admin services/models/results and repository/storage/cache ports, plus DAL EF repositories/mappings and shared Cloudinary/Redis implementations.
 
 - All existing `/api/admin/words/**` and `/api/admin/topics/**` routes, Admin/SuperAdmin policies, messages, envelopes, pagination placement, JSON/form fields, CSV row outcomes, Cloudinary ordering, and Dashboard-owned DTO parsing are unchanged.
-- Word writes still invalidate word-detail and affected user-list entries without clearing the word-search cache. Topic invalidation remains operation-specific. Existing independent-save ordering for CSV, examples, topic links, and provider side effects remains unchanged.
+- Word writes still invalidate word-detail and affected user-list entries without clearing the word-search cache. Topic invalidation remains operation-specific. Existing independent-save ordering for CSV, examples, and topic links remains unchanged. Audio uploads retain provider-before-save ordering, now with unique asset IDs and best-effort cleanup of unreferenced replaced/failed-upload files through BLL-owned repository/storage ports; explicit audio deletion remains soft-delete.
 - MySQL `word_senses.status` is `varchar(20) NOT NULL DEFAULT 'active'`, indexed by `idx_senses_status`. EF applies the active/deleted global filter; sense delete/restore verifies word ownership, saves once, and invalidates the word-detail cache.
 - Architecture, controller-contract, cache-invalidation, Dashboard compatibility, feature behavior, and real-MySQL rollback tests enforce the slice boundaries and compatibility.
 
@@ -265,3 +265,5 @@ See `DATABASE.md`, `COMMUNICATION.md`, and `DEVELOPMENT.md` for persistence and 
 - FluentValidation auto-validates controller inputs.
 - Redis cache implementations degrade to uncached behavior when unavailable.
 - KNN rebuilding supports manual and hosted scheduled execution. The rebuild service is singleton and creates scopes for scoped learning work; the hosted interval is captured from startup options, while only vector weights use the runtime-settings `.env`/Redis path.
+
+Word video now follows the same Dictionary feature-first boundaries, with optional one-per-word persistence in `word_video_assets`. The API owns validation, Cloudinary processing, replacement and soft deletion; Dashboard and Mobile consume HTTP video DTOs. This is an additive database-first schema change, not an EF migration or a new service/container.

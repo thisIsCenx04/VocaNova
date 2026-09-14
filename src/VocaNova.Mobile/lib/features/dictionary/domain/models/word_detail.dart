@@ -12,6 +12,7 @@ class WordDetail {
     this.phoneticUk,
     this.phoneticUs,
     this.imageUrl,
+    this.video,
   });
 
   final int wordId;
@@ -21,6 +22,7 @@ class WordDetail {
   final String? phoneticUk;
   final String? phoneticUs;
   final String? imageUrl;
+  final WordVideo? video;
   final List<WordSense> senses;
   final List<WordExample> examples;
   final List<WordRelation> relations;
@@ -99,4 +101,15 @@ class UserListSummary {
   final int listId;
   final String listName;
   final int wordCount;
+}
+
+class WordVideo {
+  const WordVideo({
+    required this.videoId,
+    required this.url,
+    required this.thumbnailUrl,
+  });
+  final int videoId;
+  final String url;
+  final String thumbnailUrl;
 }

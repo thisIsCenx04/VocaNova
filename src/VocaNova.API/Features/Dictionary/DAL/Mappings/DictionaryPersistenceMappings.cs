@@ -112,7 +112,10 @@ internal static class DictionaryPersistenceMappings
                 .ToArray(),
             word.Status,
             word.CreatedAt,
-            word.UpdatedAt);
+            word.UpdatedAt,
+            word.WordVideoAsset is { Status: "active" } video
+                ? new WordVideo(video.VideoId, video.Source, video.StorageUrl, video.ThumbnailUrl, video.Status)
+                : null);
     }
 
     private static VocaNova.API.Features.Dictionary.BLL.Models.WordExample ToWordExample(
