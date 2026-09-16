@@ -24,7 +24,8 @@ void main() {
     tts = MockTts();
     when(() => player.stop()).thenAnswer((_) async {});
     when(() => player.dispose()).thenAnswer((_) async {});
-    when(() => player.play(any())).thenAnswer((_) async {});
+    when(() => player.setSource(any())).thenAnswer((_) async {});
+    when(() => player.resume()).thenAnswer((_) async {});
     when(() => tts.stop()).thenAnswer((_) async => 1);
     when(() => tts.setLanguage(any())).thenAnswer((_) async => 1);
     when(() => tts.setSpeechRate(any())).thenAnswer((_) async => 1);
@@ -43,11 +44,34 @@ void main() {
         audioUrl: ' https://example.test/run.mp3 ',
       );
       final source =
-          verify(() => player.play(captureAny())).captured.single as UrlSource;
+          verify(() => player.setSource(captureAny())).captured.single
+              as UrlSource;
       expect(source.url, 'https://example.test/run.mp3');
+      verify(() => player.resume()).called(1);
       verifyNever(() => tts.speak(any()));
     },
   );
+
+  test('repeated recording taps reload and restart the same URL', () async {
+    await service.playPronunciation(
+      word: 'run',
+      accent: 'UK',
+      audioUrl: 'https://example.test/run.mp3',
+    );
+    await service.playPronunciation(
+      word: 'run',
+      accent: 'UK',
+      audioUrl: 'https://example.test/run.mp3',
+    );
+
+    final sources = verify(() => player.setSource(captureAny())).captured;
+    expect(sources, hasLength(2));
+    expect(sources.cast<UrlSource>().map((source) => source.url), [
+      'https://example.test/run.mp3',
+      'https://example.test/run.mp3',
+    ]);
+    verify(() => player.resume()).called(2);
+  });
 
   test(
     'missing and invalid URLs speak the actual word in the selected accent',
@@ -61,13 +85,13 @@ void main() {
       }
       verify(() => tts.setLanguage('en-US')).called(4);
       verify(() => tts.speak('run')).called(4);
-      verifyNever(() => player.play(any()));
+      verifyNever(() => player.setSource(any()));
     },
   );
 
   test('failed recording falls back to UK TTS', () async {
     when(
-      () => player.play(any()),
+      () => player.setSource(any()),
     ).thenThrow(PlatformException(code: 'unavailable'));
     await service.playPronunciation(
       word: 'walk',
@@ -93,7 +117,7 @@ void main() {
     () async {
       final loading = Completer<void>();
       final started = Completer<void>();
-      when(() => player.play(any())).thenAnswer((_) {
+      when(() => player.setSource(any())).thenAnswer((_) {
         started.complete();
         return loading.future;
       });

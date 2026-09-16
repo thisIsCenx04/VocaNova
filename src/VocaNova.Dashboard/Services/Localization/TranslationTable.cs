@@ -9,7 +9,7 @@ public static class TranslationTable
     private static readonly (string En, string Vi)[] Entries =
     {
         ("Illustration video", "Video minh họa"),
-        ("MP4, 5–15 seconds, up to 20 MB. Preview before saving.", "MP4, dài 5–15 giây, tối đa 20 MB. Xem trước khi lưu."),
+        ("MP4, 5–20 seconds, up to 20 MB. Preview before saving.", "MP4, dài 5–20 giây, tối đa 20 MB. Xem trước khi lưu."),
         ("Current video", "Video hiện tại"),
         ("Choose video", "Chọn video"),
         ("Upload video", "Tải video lên"),
@@ -22,7 +22,7 @@ public static class TranslationTable
         ("Video file is required.", "Vui lòng chọn video."),
         ("Video file must be 20MB or smaller.", "Video phải có dung lượng tối đa 20 MB."),
         ("Video must be an MP4 file.", "Video phải là file MP4."),
-        ("Video must contain a picture and last between 5 and 15 seconds.", "Video phải có hình ảnh và dài từ 5 đến 15 giây."),
+        ("Video must contain a picture and last between 5 and 20 seconds.", "Video phải có hình ảnh và dài từ 5 đến 20 giây."),
         ("Uploading and processing video...", "Đang tải lên và xử lý video..."),
         ("Unable to save video. Reload the word before retrying.", "Không thể lưu video. Hãy tải lại từ trước khi thử lại."),
         ("Video saved successfully.", "Đã lưu video."),

@@ -6,11 +6,11 @@
 <section class="panel" style="padding:24px"><h2>Image</h2><div id="edit-image-preview">Current image</div><input id="edit-image-file" type="file" hidden>
 <div data-pending-image hidden><p>Preview - not saved</p><img alt="Selected image"><div class="word-video-actions"><button type="button" data-image-save>Save image</button><button type="button" data-image-cancel>Cancel</button></div><p data-image-message></p></div><button type="button" data-file-picker="edit-image-file">Upload image</button><div id="image-suggestions"></div></section>
 <section class="panel word-video-editor" data-word-video data-word-id="7"
- data-invalid="Invalid MP4" data-too-large="Too large" data-duration="Use 5–15 seconds"
+ data-invalid="Invalid MP4" data-too-large="Too large" data-duration="Use 5–20 seconds"
  data-saving="Saving…" data-failed="Reload before retrying">
  <div class="panel-head"><h2 class="panel-title">Illustration video</h2></div>
  <div class="edit-media-panel-body">
- <p>MP4, 5–15 seconds, up to 20 MB. Preview before saving.</p>
+ <p>MP4, 5–20 seconds, up to 20 MB. Preview before saving.</p>
  <div data-current-video><p>Current video</p><video controls preload="none" src="https://example.test/old.mp4"></video>
  <button type="button" class="btn-secondary btn-sm" data-video-delete>Delete video</button></div>
  <p data-no-video hidden>No video.</p>
@@ -60,7 +60,7 @@ const selectedVideo=document.querySelector('[data-pending-video] video');
  get('video','results').querySelector('button').click();
  assert(selectedVideo.src==='https://videos.pexels.com/fixture.mp4','Video selection did not preview above');
  assert(requests.length===3,'Selection downloaded or saved prematurely');
- Object.defineProperties(selectedVideo,{duration:{value:6,configurable:true},videoWidth:{value:320},videoHeight:{value:180}});selectedVideo.dispatchEvent(new Event('loadedmetadata'));
+ Object.defineProperties(selectedVideo,{duration:{value:6,configurable:true},videoWidth:{value:320,configurable:true},videoHeight:{value:180,configurable:true}});selectedVideo.dispatchEvent(new Event('loadedmetadata'));
  uploadFailure=true;document.querySelector('[data-video-save]').click();await tick();await tick();
  assert(document.querySelector('[data-current-video] video').src.endsWith('/old.mp4'),'Failed upload replaced old video');
  uploadFailure=false;document.querySelector('[data-video-save]').click();await tick();await tick();
@@ -72,6 +72,12 @@ const selectedVideo=document.querySelector('[data-pending-video] video');
  assert(document.getElementById('edit-image-url').value==='https://example.test/saved.jpg','Image did not save Cloudinary response URL');
  assert(requests.some(r=>r.url==='/vocabulary/7/image'&&r.options.body.get('file').type==='image/jpeg'),'Image not sent as multipart file');
  assert(!requests.some(r=>r.url.endsWith('/image/suggested')),'Saved remote URL instead of uploading file');
+ get('video','results').querySelector('button').click();
+ Object.defineProperties(selectedVideo,{duration:{value:6,configurable:true},videoWidth:{value:320,configurable:true},videoHeight:{value:180,configurable:true}});selectedVideo.dispatchEvent(new Event('loadedmetadata'));
+ get('image','results').querySelector('button').click();
+ let finalSubmits=0;form.addEventListener('submit',e=>{if(!document.querySelector('[data-pending-image]:not([hidden])')&&!document.querySelector('[data-pending-video]:not([hidden])')){finalSubmits++;e.preventDefault();}});
+ form.requestSubmit();await new Promise(resolve=>setTimeout(resolve,250));
+ assert(finalSubmits===1,'Main save did not wait for pending media before submitting metadata');
  tooLarge=true;let rejected=false;try{await downloadSuggestedMedia('https://videos.pexels.com/fixture.mp4','video')}catch(_){rejected=true}assert(rejected,'Oversized media accepted');
  rejected=false;try{await downloadSuggestedMedia('https://example.test/file.mp4','video')}catch(_){rejected=true}assert(rejected,'Untrusted download source accepted');
  document.getElementById('result').textContent='PASS';

@@ -42,7 +42,9 @@ public sealed class WordVideoLifecycleTests
     [InlineData(4.99, true, false)]
     [InlineData(5, true, true)]
     [InlineData(15, true, true)]
-    [InlineData(15.01, true, false)]
+    [InlineData(20, true, true)]
+    [InlineData(20.49, true, true)]
+    [InlineData(20.51, true, false)]
     [InlineData(double.NaN, true, false)]
     [InlineData(6, false, false)]
     public async Task Trusted_Metadata_Controls_Acceptance(double duration, bool hasVideo, bool accepted)

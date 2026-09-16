@@ -15,6 +15,7 @@
     var selectedUrl = null;
     var busy = false;
     var valid = false;
+    var maxDuration = 20.5;
     var picker = root.querySelector("[data-video-picker]");
     if (picker) { picker.addEventListener("click", function () { if (!busy) { input.click(); } }); }
 
@@ -64,7 +65,7 @@
         pending.scrollIntoView({ behavior: "smooth", block: "center" });
     });
     preview.addEventListener("loadedmetadata", function () {
-        valid = !!(selected || selectedUrl) && Number.isFinite(preview.duration) && preview.duration >= 5 && preview.duration <= 15
+        valid = !!(selected || selectedUrl) && Number.isFinite(preview.duration) && preview.duration >= 5 && preview.duration <= maxDuration
             && preview.videoWidth > 0 && preview.videoHeight > 0;
         save.disabled = busy || !valid;
         message.textContent = valid ? "" : root.dataset.duration;

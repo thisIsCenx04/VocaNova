@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:video_player/video_player.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 import 'package:vocanova_mobile/features/dictionary/application/audio_playback_service.dart';
 import 'package:vocanova_mobile/features/dictionary/data/dtos/word_detail_dto.dart';
@@ -126,13 +127,19 @@ void main() {
   });
 
   testWidgets(
-    'loads only on tap, stops audio first, pauses in background, disposes on close',
+    'loads inline on tap, stops audio first, pauses in background, disposes on unmount',
     (tester) async {
       await tester.pumpWidget(app());
       await tester.pumpAndSettle();
       expect(platform.calls, isEmpty);
       await tester.tap(find.byKey(const Key('word-video-play')));
       await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsNothing);
+      expect(find.byType(VideoPlayer), findsOneWidget);
+      expect(find.byKey(const Key('word-video-play')), findsNothing);
+      await tester.tap(find.byType(VideoPlayer));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('word-video-play')), findsOneWidget);
       expect(
         platform.calls.indexOf('stop-audio'),
         lessThan(platform.calls.indexOf('create')),
@@ -143,12 +150,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(platform.calls, contains('pause'));
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      await tester.pump();
-      await tester.tap(find.byIcon(Icons.close));
-      await tester.pumpAndSettle();
-      await tester.pump(const Duration(seconds: 1));
-      await tester.pumpAndSettle();
-      expect(find.byType(WordVideoDialog, skipOffstage: false), findsNothing);
+      await tester.pumpWidget(const SizedBox.shrink());
       await tester.runAsync(() async {
         await Future<void>.delayed(Duration.zero);
       });
@@ -177,11 +179,7 @@ void main() {
       });
       expect(platform.calls, contains('dispose'));
       expect(platform.calls, contains('play'));
-      await tester.tap(find.byIcon(Icons.close));
-      await tester.pumpAndSettle();
-      await tester.pump(const Duration(seconds: 1));
-      await tester.pumpAndSettle();
-      expect(find.byType(WordVideoDialog, skipOffstage: false), findsNothing);
+      expect(find.byType(VideoPlayer), findsOneWidget);
     },
   );
 }

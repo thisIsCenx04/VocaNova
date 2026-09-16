@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -119,6 +120,34 @@ void main() {
     await tester.scrollUntilVisible(find.byKey(const Key('word-topic-2')), 300);
     expect(find.text('Communication'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('word image scales down instead of cropping', (tester) async {
+    when(() => repository.getWord(7)).thenAnswer(
+      (_) async => WordDetail(
+        wordId: word.wordId,
+        word: word.word,
+        isPhrase: word.isPhrase,
+        cefr: word.cefr,
+        phoneticUk: word.phoneticUk,
+        phoneticUs: word.phoneticUs,
+        imageUrl: 'https://images.test/apple-tall.jpg',
+        senses: word.senses,
+        examples: word.examples,
+        relations: word.relations,
+        audio: word.audio,
+        topics: word.topics,
+      ),
+    );
+
+    await pumpDetail(tester, repository, connectivity, storage, audio);
+
+    final image = tester.widget<CachedNetworkImage>(
+      find.byType(CachedNetworkImage),
+    );
+    expect(image.fit, BoxFit.contain);
+    expect(image.height, 180);
+    expect(image.width, double.infinity);
   });
 
   testWidgets('fixed action opens Figma sheet and saves list with a note', (

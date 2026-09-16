@@ -8,6 +8,8 @@ public sealed class WordVideoService(IWordVideoRepository repository, IWordVideo
     IWordDetailCache cache, ILogger<WordVideoService> logger) : IWordVideoService
 {
     public const long MaxFileBytes = 20 * 1024 * 1024;
+    private const double MinDurationSeconds = 5;
+    private const double MaxDurationSeconds = 20.5;
 
     public async Task<DictionaryResult<WordVideo>> SaveAsync(uint wordId, UploadedContent? content, CancellationToken cancellationToken = default)
     {
@@ -24,10 +26,12 @@ public sealed class WordVideoService(IWordVideoRepository repository, IWordVideo
         {
             uploaded = await storage.UploadAsync(content with { OwnerId = wordId }, cancellationToken);
             if (!uploaded.HasVideo || uploaded.Width <= 0 || uploaded.Height <= 0 || uploaded.Format != "mp4"
-                || !double.IsFinite(uploaded.DurationSeconds) || uploaded.DurationSeconds is < 5 or > 15)
+                || !double.IsFinite(uploaded.DurationSeconds)
+                || uploaded.DurationSeconds < MinDurationSeconds
+                || uploaded.DurationSeconds > MaxDurationSeconds)
             {
                 await CleanupAsync(uploaded.PublicId);
-                return DictionaryResult<WordVideo>.ValidationFailure("Video must contain a picture and last between 5 and 15 seconds.");
+                return DictionaryResult<WordVideo>.ValidationFailure("Video must contain a picture and last between 5 and 20 seconds.");
             }
             var prepared = await storage.PrepareAsync(uploaded, cancellationToken);
             if (prepared.PublicId != uploaded.PublicId || prepared.PublicId.Length > 255
