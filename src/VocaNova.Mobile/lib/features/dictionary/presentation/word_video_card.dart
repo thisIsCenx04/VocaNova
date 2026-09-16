@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import 'package:vocanova_mobile/features/dictionary/application/audio_playback_service.dart';
@@ -24,40 +24,9 @@ class WordVideoCard extends ConsumerWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  CachedNetworkImage(
-                    imageUrl: video.thumbnailUrl,
-                    fit: BoxFit.contain,
-                    errorWidget: (_, _, _) =>
-                        const ColoredBox(color: Colors.black12),
-                  ),
-                  Center(
-                    child: IconButton.filled(
-                      key: const Key('word-video-play'),
-                      tooltip: l10n.dictVideoPlay,
-                      iconSize: 40,
-                      icon: const Icon(Icons.play_arrow),
-                      onPressed: () {
-                        final audio = ref.read(audioPlaybackServiceProvider);
-                        showDialog<void>(
-                          context: context,
-                          builder: (_) => WordVideoDialog(
-                            video: video,
-                            stopAudio: audio.stop,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          _InlineWordVideo(
+            video: video,
+            stopAudio: ref.read(audioPlaybackServiceProvider).stop,
           ),
         ],
       ),
@@ -65,31 +34,28 @@ class WordVideoCard extends ConsumerWidget {
   }
 }
 
-class WordVideoDialog extends StatefulWidget {
-  const WordVideoDialog({
-    required this.video,
-    required this.stopAudio,
-    super.key,
-  });
+class _InlineWordVideo extends StatefulWidget {
+  const _InlineWordVideo({required this.video, required this.stopAudio});
+
   final WordVideo video;
   final Future<void> Function() stopAudio;
 
   @override
-  State<WordVideoDialog> createState() => _WordVideoDialogState();
+  State<_InlineWordVideo> createState() => _InlineWordVideoState();
 }
 
-class _WordVideoDialogState extends State<WordVideoDialog>
+class _InlineWordVideoState extends State<_InlineWordVideo>
     with WidgetsBindingObserver {
   VideoPlayerController? _controller;
-  bool _loading = true;
+  bool _loading = false;
   bool _failed = false;
   bool _foreground = true;
+  bool _controlsVisible = true;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _load();
   }
 
   Future<void> _load() async {
@@ -119,7 +85,10 @@ class _WordVideoDialogState extends State<WordVideoDialog>
       await controller.initialize().timeout(const Duration(seconds: 30));
       if (!mounted || _controller != controller) return;
       setState(() => _loading = false);
-      if (_foreground) await controller.play();
+      if (_foreground) {
+        await controller.play();
+        if (mounted) setState(() => _controlsVisible = false);
+      }
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -127,6 +96,31 @@ class _WordVideoDialogState extends State<WordVideoDialog>
           _failed = true;
         });
       }
+    }
+  }
+
+  Future<void> _toggle() async {
+    try {
+      final controller = _controller;
+      if (controller == null || !controller.value.isInitialized || _failed) {
+        await _load();
+        return;
+      }
+      if (controller.value.isPlaying) {
+        await controller.pause();
+        if (mounted) setState(() => _controlsVisible = true);
+      } else {
+        await widget.stopAudio();
+        if (controller.value.isCompleted) {
+          await controller.seekTo(Duration.zero);
+        }
+        if (mounted && _foreground) {
+          await controller.play();
+          if (mounted) setState(() => _controlsVisible = false);
+        }
+      }
+    } catch (_) {
+      if (mounted) setState(() => _failed = true);
     }
   }
 
@@ -156,59 +150,73 @@ class _WordVideoDialogState extends State<WordVideoDialog>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final controller = _controller;
-    return Dialog(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+    final ready = controller != null && controller.value.isInitialized;
+    final isPlaying = ready && controller.value.isPlaying;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: AspectRatio(
+        aspectRatio: ready ? controller.value.aspectRatio : 16 / 9,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: ready && isPlaying
+              ? () => setState(() => _controlsVisible = !_controlsVisible)
+              : null,
+          child: Stack(
+            fit: StackFit.expand,
             children: [
-              Row(
-                children: [
-                  Expanded(child: Text(l10n.dictVideoTitle)),
-                  IconButton(
-                    tooltip: l10n.dictVideoClose,
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
+              if (ready)
+                VideoPlayer(controller)
+              else
+                CachedNetworkImage(
+                  imageUrl: widget.video.thumbnailUrl,
+                  fit: BoxFit.contain,
+                  errorWidget: (_, _, _) =>
+                      const ColoredBox(color: Colors.black12),
+                ),
               if (_loading)
-                const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: CircularProgressIndicator(),
+                const ColoredBox(
+                  color: Colors.black26,
+                  child: Center(child: CircularProgressIndicator()),
                 )
-              else if (_failed) ...[
-                Text(l10n.dictVideoError),
-                TextButton(onPressed: _load, child: Text(l10n.dictVideoRetry)),
-              ] else if (controller != null &&
-                  controller.value.isInitialized) ...[
-                AspectRatio(
-                  aspectRatio: controller.value.aspectRatio,
-                  child: VideoPlayer(controller),
-                ),
-                VideoProgressIndicator(controller, allowScrubbing: true),
-                IconButton(
-                  tooltip: controller.value.isPlaying
-                      ? l10n.dictVideoPause
-                      : l10n.dictVideoPlay,
-                  icon: Icon(
-                    controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+              else if (_failed)
+                ColoredBox(
+                  color: Colors.black45,
+                  child: Center(
+                    child: TextButton(
+                      onPressed: _load,
+                      child: Text(l10n.dictVideoRetry),
+                    ),
                   ),
-                  onPressed: () async {
-                    try {
-                      if (controller.value.isPlaying) {
-                        await controller.pause();
-                      } else {
-                        await widget.stopAudio();
-                        if (mounted && _foreground) await controller.play();
-                      }
-                    } catch (_) {
-                      if (mounted) setState(() => _failed = true);
-                    }
-                  },
+                )
+              else if (!isPlaying || _controlsVisible)
+                Center(
+                  child: IconButton(
+                    key: const Key('word-video-play'),
+                    tooltip: isPlaying
+                        ? l10n.dictVideoPause
+                        : l10n.dictVideoPlay,
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.9),
+                      foregroundColor: Colors.white,
+                    ),
+                    iconSize: 40,
+                    icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+                    onPressed: _toggle,
+                  ),
                 ),
-              ],
+              if (ready)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: VideoProgressIndicator(
+                    controller,
+                    allowScrubbing: true,
+                    padding: EdgeInsets.zero,
+                  ),
+                ),
             ],
           ),
         ),

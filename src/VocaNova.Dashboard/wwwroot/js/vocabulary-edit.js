@@ -28,6 +28,42 @@
             if (saveButton) { saveButton.disabled = activeUploads > 0; }
         });
 
+        var allowSubmit = false;
+        function hasPendingMedia() {
+            var videoPending = document.querySelector("[data-pending-video]:not([hidden])");
+            return (pendingImage && !pendingImage.hidden) || !!videoPending;
+        }
+
+        function waitForUploads() {
+            return new Promise(function (resolve) {
+                function check() {
+                    if (activeUploads <= 0) { resolve(); return; }
+                    window.setTimeout(check, 100);
+                }
+                check();
+            });
+        }
+
+        editForm.addEventListener("submit", async function (event) {
+            if (allowSubmit || !hasPendingMedia()) { return; }
+            event.preventDefault();
+
+            var started = false;
+            var imageSave = pendingImage && !pendingImage.hidden ? pendingImage.querySelector("[data-image-save]") : null;
+            var videoPending = document.querySelector("[data-pending-video]:not([hidden])");
+            var videoSave = videoPending ? videoPending.querySelector("[data-video-save]") : null;
+
+            if (imageSave && !imageSave.disabled) { imageSave.click(); started = true; }
+            if (videoSave && !videoSave.disabled) { videoSave.click(); started = true; }
+            if (!started) { showToast(editForm.dataset.msgRequestFailed, false); return; }
+
+            await waitForUploads();
+            if (hasPendingMedia()) { return; }
+
+            allowSubmit = true;
+            editForm.requestSubmit ? editForm.requestSubmit(saveButton) : editForm.submit();
+        });
+
         function setAudioBusy(accent, busy) {
             if (!accent) { return; }
             var section = editForm.querySelector('[data-audio-section="' + accent + '"]');

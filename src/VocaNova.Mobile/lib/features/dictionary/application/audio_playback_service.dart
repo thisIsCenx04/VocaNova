@@ -52,7 +52,8 @@ class AudioPlaybackService {
     }
     await _textToSpeech.stop();
     await _player.stop();
-    await _player.play(UrlSource(uri.toString()));
+    await _player.setSource(UrlSource(uri.toString()));
+    await _player.resume();
   }
 
   Future<void> speak(String word, {String accent = 'UK'}) async {

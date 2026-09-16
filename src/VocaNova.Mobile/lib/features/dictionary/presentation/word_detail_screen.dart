@@ -794,12 +794,15 @@ class _WordImage extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
-        child: CachedNetworkImage(
-          imageUrl: url,
-          height: 180,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          errorWidget: (_, _, _) => const SizedBox.shrink(),
+        child: ColoredBox(
+          color: _DetailPalette.of(context).input,
+          child: CachedNetworkImage(
+            imageUrl: url,
+            height: 180,
+            width: double.infinity,
+            fit: BoxFit.contain,
+            errorWidget: (_, _, _) => const SizedBox.shrink(),
+          ),
         ),
       ),
     );

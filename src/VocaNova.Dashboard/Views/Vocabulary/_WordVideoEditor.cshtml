@@ -1,7 +1,7 @@
 @model VocaNova.Dashboard.Data.Dtos.Dictionary.WordDetail
 <section class="panel word-video-editor" data-word-video data-word-id="@Model.WordId"
          data-invalid="@T["Video must be an MP4 file."]" data-too-large="@T["Video file must be 20MB or smaller."]"
-         data-duration="@T["Video must contain a picture and last between 5 and 15 seconds."]"
+         data-duration="@T["Video must contain a picture and last between 5 and 20 seconds."]"
          data-saving="@T["Uploading and processing video..."]"
          data-failed="@T["Unable to save video. Reload the word before retrying."]">
     <div class="panel-head"><h2 class="panel-title">@T["Illustration video"]</h2></div>
@@ -32,7 +32,7 @@
         </div>
         <input type="file" accept=".mp4,video/mp4" data-video-file hidden />
         <button type="button" class="btn-secondary btn-sm" data-video-picker>@T["Upload video"]</button>
-        <p class="text-muted">@T["MP4, 5–15 seconds, up to 20 MB. Preview before saving."]</p>
+        <p class="text-muted">@T["MP4, 5–20 seconds, up to 20 MB. Preview before saving."]</p>
         <div data-video-confirm hidden>
             <p>@T["Delete this video?"]</p>
             <button type="button" class="btn-danger-solid" data-video-confirm-delete>@T["Delete video"]</button>

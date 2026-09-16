@@ -277,6 +277,6 @@ Endpoint behavior remains as cataloged above. Each production API feature now us
 
 ## Dictionary word video (CURRENT)
 
-`AdminWordVideosController` depends on `IWordVideoService`. `WordVideoService` enforces MP4, maximum 20 MiB, and trusted provider metadata for an actual video track lasting 5?15 seconds. `IWordVideoStorage` is implemented by `CloudinaryWordVideoStorage`; eager processing creates H.264/AAC MP4 within 1280?720 (720?1280 for portrait), preserving aspect ratio without upscaling, plus a JPG thumbnail.
+`AdminWordVideosController` depends on `IWordVideoService`. `WordVideoService` enforces MP4, maximum 20 MiB, and trusted provider metadata for an actual video track lasting 5-20 seconds. `IWordVideoStorage` is implemented by `CloudinaryWordVideoStorage`; eager processing creates H.264/AAC MP4 within 1280?720 (720?1280 for portrait), preserving aspect ratio without upscaling, plus a JPG thumbnail.
 
 `IWordVideoRepository` is implemented by `WordVideoRepository` over the database-first table. DB replacement occurs only after processing succeeds. Word detail cache invalidation and cleanup are best effort after commit. Cleanup checks references including soft-deleted rows, so an uncertain DB commit cannot delete a referenced asset. Replaced unreferenced files are destroyed; soft deletion retains its Cloudinary file. Failed cleanup is logged and has no automatic retry worker in this MVP.
