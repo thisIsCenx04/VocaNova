@@ -28,6 +28,10 @@ class QuizSessionState {
   final String? errorMessage;
 
   bool get hasAnswered => answerResult != null;
+  bool get isTimedOut => remainingSeconds != null && remainingSeconds! <= 0;
+  bool get canSubmitAnswer =>
+      !hasAnswered && !isSubmitting && !isFinishing && !isFinished && !isTimedOut;
+  bool get canAdvanceQuestion => hasAnswered && !isFinishing && !isTimedOut;
 
   QuizSessionState copyWith({
     QuizQuestion? question,

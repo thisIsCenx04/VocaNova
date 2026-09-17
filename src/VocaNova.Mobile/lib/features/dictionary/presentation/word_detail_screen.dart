@@ -126,7 +126,7 @@ class _WordDetailScreenState extends ConsumerState<WordDetailScreen> {
         ),
         _DetailActions(
           onAddToList: () => _showAddToList(word),
-          onPractice: () => context.push(AppRoutes.quizConfig),
+          onPractice: () => context.go(AppRoutes.quizConfig),
         ),
       ],
     );

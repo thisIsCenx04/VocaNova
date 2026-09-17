@@ -47,6 +47,8 @@ public sealed class QuizSubmissionService : IQuizSubmissionService
         if (session is null) return QuizOperationResult<QuizAnswer>.NotFound("Session not found.");
         if (session.Status != TestSessionStatus.InProgress)
             return QuizOperationResult<QuizAnswer>.Conflict("Quiz session is not in progress.");
+        if (IsTimedOut(session))
+            return QuizOperationResult<QuizAnswer>.Conflict("Quiz session time has expired.");
 
         var poolResult = await BuildPoolFromSessionAsync(session, command.ListId, cancellationToken);
         if (!poolResult.IsSuccess)
@@ -93,6 +95,11 @@ public sealed class QuizSubmissionService : IQuizSubmissionService
             gradeResult.Value.AiScore, gradeResult.Value.AiExplanation,
             gradeResult.Value.AiSuggestion, nextQuestion));
     }
+
+    private static bool IsTimedOut(QuizSubmissionState session) =>
+        session.Mode == TestMode.Timed
+        && session.TimeLimitSec is > 0
+        && DateTime.UtcNow >= session.StartedAt.AddSeconds(session.TimeLimitSec.Value);
 
     private async Task<QuizOperationResult<IReadOnlyCollection<QuizPoolWord>>> BuildPoolFromSessionAsync(
         QuizSubmissionState session, uint? listId, CancellationToken cancellationToken)
