@@ -31,7 +31,7 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
   }
 
   Future<void> submitAnswer(String answer) async {
-    if (state.isSubmitting || state.hasAnswered || state.isFinished) return;
+    if (!state.canSubmitAnswer) return;
     state = state.copyWith(
       selectedAnswer: answer,
       isSubmitting: true,
@@ -89,7 +89,7 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
 
   void nextQuestion() {
     final next = state.answerResult?.nextQuestion;
-    if (next == null || state.isFinished) return;
+    if (next == null || state.isFinished || state.isTimedOut) return;
     state = state.copyWith(
       question: next,
       questionNumber: state.questionNumber + 1,
@@ -99,14 +99,18 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
   }
 
   Future<bool> finish() async {
+    if (state.isFinished) return true;
     if (state.isFinishing) return false;
-    _timer?.cancel();
+    final keepTimerOnFailure =
+        state.remainingSeconds != null && state.remainingSeconds! > 0;
     state = state.copyWith(isFinishing: true, clearError: true);
     try {
       await ref.read(quizApiServiceProvider).finishSession(session.sessionId);
+      _timer?.cancel();
       state = state.copyWith(isFinishing: false, isFinished: true);
       return true;
     } catch (error) {
+      if (!keepTimerOnFailure) _timer?.cancel();
       state = state.copyWith(
         isFinishing: false,
         errorMessage: _errorMessage(error, _l10n.quizSessionFinishError),
@@ -120,6 +124,7 @@ class QuizSessionNotifier extends _$QuizSessionNotifier {
     final seconds = (state.remainingSeconds ?? 0) - 1;
     if (seconds <= 0) {
       state = state.copyWith(remainingSeconds: 0);
+      _timer?.cancel();
       unawaited(finish());
       return;
     }

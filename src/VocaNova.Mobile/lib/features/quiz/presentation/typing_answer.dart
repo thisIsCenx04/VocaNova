@@ -30,7 +30,7 @@ class _TypingAnswerState extends State<_TypingAnswer> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final locked = widget.state.hasAnswered || widget.state.isSubmitting;
+    final locked = !widget.state.canSubmitAnswer;
     final isAi = widget.answerMethod == 'ai_typing';
     return ListView(
       children: [

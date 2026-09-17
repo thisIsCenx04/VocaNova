@@ -2,7 +2,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/core/storage/local_storage.dart';
 import 'package:vocanova_mobile/features/dictionary/application/audio_playback_service.dart';
 import 'package:vocanova_mobile/core/connectivity/connectivity_service.dart';
@@ -213,6 +215,25 @@ void main() {
       () => repository.addWordToPersonalTopic(topicId: 2, wordId: 7, note: ''),
     ).called(1);
   });
+
+  testWidgets('practice action opens quiz config without crashing', (
+    tester,
+  ) async {
+    final router = await pumpDetailRouter(
+      tester,
+      repository,
+      connectivity,
+      storage,
+      audio,
+    );
+
+    await tester.tap(find.byKey(const Key('practice-word')));
+    await tester.pumpAndSettle();
+
+    expect(router.state.uri.path, AppRoutes.quizConfig);
+    expect(find.text('Quiz setup'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Future<void> pumpDetail(
@@ -239,6 +260,47 @@ Future<void> pumpDetail(
   );
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 100));
+}
+
+Future<GoRouter> pumpDetailRouter(
+  WidgetTester tester,
+  WordDetailApiService repository,
+  ConnectivityService connectivity,
+  LocalStorage storage,
+  AudioPlaybackService audio,
+) async {
+  final router = GoRouter(
+    initialLocation: AppRoutes.wordDetail('7'),
+    routes: [
+      GoRoute(
+        path: AppRoutes.word,
+        builder: (_, state) =>
+            WordDetailScreen(wordId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: AppRoutes.quizConfig,
+        builder: (_, _) => const Scaffold(body: Text('Quiz setup')),
+      ),
+    ],
+  );
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        wordDetailApiServiceProvider.overrideWithValue(repository),
+        wordDetailLocalStorageProvider.overrideWithValue(storage),
+        connectivityServiceProvider.overrideWithValue(connectivity),
+        audioPlaybackServiceProvider.overrideWithValue(audio),
+      ],
+      child: MaterialApp.router(
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+      ),
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 100));
+  return router;
 }
 
 class MockWordDetailApiService extends Mock implements WordDetailApiService {}

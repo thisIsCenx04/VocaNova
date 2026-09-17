@@ -176,6 +176,49 @@ public class QuizSubmitAnswerFeatureTests
     }
 
     [Fact]
+    public async Task SubmitAnswerAsync_Should_Return_409_When_Timed_Session_Expired()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedQuizDataAsync(dbContext, AnswerMethod.MultipleChoice);
+        var session = await dbContext.TestSessions.SingleAsync(entity => entity.SessionId == 100);
+        session.Mode = TestMode.Timed;
+        session.TimeLimitSec = 60;
+        session.StartedAt = DateTime.UtcNow.AddMinutes(-2);
+        await dbContext.SaveChangesAsync();
+        var service = CreateService(dbContext);
+
+        var result = await service.SubmitAnswerAsync(
+            1,
+            100,
+            new SubmitAnswerRequest(4, "bay").ToBusinessCommand());
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(409);
+        result.Error.Should().Be("Quiz session time has expired.");
+        (await dbContext.TestAnswers.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task SubmitAnswerAsync_Should_Accept_Timed_Session_Before_Deadline()
+    {
+        await using var dbContext = CreateDbContext();
+        await SeedQuizDataAsync(dbContext, AnswerMethod.MultipleChoice);
+        var session = await dbContext.TestSessions.SingleAsync(entity => entity.SessionId == 100);
+        session.Mode = TestMode.Timed;
+        session.TimeLimitSec = 60;
+        session.StartedAt = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync();
+        var service = CreateService(dbContext);
+
+        var result = await service.SubmitAnswerAsync(
+            1,
+            100,
+            new SubmitAnswerRequest(4, "bay").ToBusinessCommand());
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
     public async Task SubmitAnswerAsync_Should_Build_Word_Pool_Once_And_Reuse_It_From_Cache()
     {
         await using var dbContext = CreateDbContext();

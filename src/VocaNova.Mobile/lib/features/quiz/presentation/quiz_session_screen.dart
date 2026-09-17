@@ -94,9 +94,9 @@ class QuizSessionScreen extends ConsumerWidget {
                               isLoading:
                                   state.isSubmitting &&
                                   state.selectedAnswer == answer,
-                              onPressed: state.hasAnswered || state.isSubmitting
-                                  ? null
-                                  : () => notifier.submitAnswer(answer),
+                              onPressed: state.canSubmitAnswer
+                                  ? () => notifier.submitAnswer(answer)
+                                  : null,
                             );
                           },
                         )
@@ -118,7 +118,7 @@ class QuizSessionScreen extends ConsumerWidget {
                 if (state.hasAnswered)
                   FilledButton(
                     key: const Key('next-question-button'),
-                    onPressed: state.isFinishing
+                    onPressed: !state.canAdvanceQuestion && !state.isFinished
                         ? null
                         : () {
                             if (state.isFinished) {

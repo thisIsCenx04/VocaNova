@@ -1,16 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_config_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/application/quiz_session_notifier.dart';
 import 'package:vocanova_mobile/features/quiz/data/services/quiz_api_service.dart';
 import 'package:vocanova_mobile/features/quiz/domain/models/quiz_config.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late MockQuizApiService repository;
   late ProviderContainer container;
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     repository = MockQuizApiService();
     container = ProviderContainer(
       overrides: [quizApiServiceProvider.overrideWithValue(repository)],
@@ -76,6 +80,44 @@ void main() {
     expect(container.read(provider).remainingLives, 0);
     verify(() => repository.finishSession(9)).called(1);
   });
+
+  test('does not submit answers after timed session reaches zero', () async {
+    final provider = quizSessionProvider(timedOutSession);
+    final subscription = container.listen(provider, (_, _) {});
+    addTearDown(subscription.close);
+
+    await container.read(provider.notifier).submitAnswer('orange');
+
+    verifyNever(
+      () => repository.submitAnswer(
+        sessionId: any(named: 'sessionId'),
+        wordId: any(named: 'wordId'),
+        answer: any(named: 'answer'),
+      ),
+    );
+  });
+
+  test('keeps answers locked when timed finish fails at zero', () async {
+    when(() => repository.finishSession(9)).thenThrow(Exception('offline'));
+    final provider = quizSessionProvider(timedOutSession);
+    final subscription = container.listen(provider, (_, _) {});
+    addTearDown(subscription.close);
+
+    final finished = await container.read(provider.notifier).finish();
+    await container.read(provider.notifier).submitAnswer('orange');
+
+    expect(finished, isFalse);
+    expect(container.read(provider).isFinished, isFalse);
+    expect(container.read(provider).remainingSeconds, 0);
+    verify(() => repository.finishSession(9)).called(1);
+    verifyNever(
+      () => repository.submitAnswer(
+        sessionId: any(named: 'sessionId'),
+        wordId: any(named: 'wordId'),
+        answer: any(named: 'answer'),
+      ),
+    );
+  });
 }
 
 class MockQuizApiService extends Mock implements QuizApiService {}
@@ -102,6 +144,15 @@ const eliminationSession = QuizSessionStart(
   mode: 'elimination',
   questionCount: 2,
   lives: 2,
+  firstQuestion: firstQuestion,
+);
+
+const timedOutSession = QuizSessionStart(
+  sessionId: 9,
+  answerMethod: 'multiple_choice',
+  mode: 'timed',
+  questionCount: 2,
+  timeLimitSec: 0,
   firstQuestion: firstQuestion,
 );
 

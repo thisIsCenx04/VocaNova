@@ -105,6 +105,44 @@ void main() {
     expect(router.state.uri.path, AppRoutes.quizResult);
   });
 
+  testWidgets('timed session keeps answers disabled when auto finish fails', (
+    tester,
+  ) async {
+    when(() => repository.finishSession(9)).thenThrow(Exception('offline'));
+    await pumpSession(
+      tester,
+      repository,
+      const QuizSessionStart(
+        sessionId: 9,
+        answerMethod: 'multiple_choice',
+        mode: 'timed',
+        questionCount: 2,
+        timeLimitSec: 1,
+        firstQuestion: firstQuestion,
+      ),
+    );
+
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+
+    final answerButton = tester.widget<OutlinedButton>(
+      find.descendant(
+        of: find.byKey(const Key('quiz-answer-1')),
+        matching: find.byType(OutlinedButton),
+      ),
+    );
+    expect(find.text('0:00'), findsOneWidget);
+    expect(answerButton.onPressed, isNull);
+    verify(() => repository.finishSession(9)).called(1);
+    verifyNever(
+      () => repository.submitAnswer(
+        sessionId: any(named: 'sessionId'),
+        wordId: any(named: 'wordId'),
+        answer: any(named: 'answer'),
+      ),
+    );
+  });
+
   testWidgets('exact typing autofocuses and submits from keyboard', (
     tester,
   ) async {

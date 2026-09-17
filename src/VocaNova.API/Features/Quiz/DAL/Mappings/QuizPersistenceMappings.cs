@@ -18,6 +18,7 @@ public static class QuizPersistenceMappings
         SessionId = session.SessionId,
         UserId = session.UserId,
         AnswerMethod = session.TestType,
+        Mode = session.Mode,
         QuestionType = session.QuestionType,
         ScopeType = session.ScopeType,
         ScopeDateFrom = session.ScopeDateFrom,
@@ -29,7 +30,9 @@ public static class QuizPersistenceMappings
         WrongCount = session.WrongCount,
         Score = session.Score,
         MaxStreak = session.MaxStreak,
+        StartedAt = session.StartedAt,
         EndedAt = session.EndedAt,
+        TimeLimitSec = session.TimeLimitSec,
         TopicIds = session.TestSessionTopics.Select(topic => topic.TopicId).ToArray(),
         Answers = session.TestAnswers.Select(answer => new QuizSubmissionAnswer
         {

@@ -38,6 +38,7 @@ public sealed class QuizSubmissionState
     public uint SessionId { get; init; }
     public uint UserId { get; init; }
     public string AnswerMethod { get; init; } = string.Empty;
+    public string Mode { get; init; } = string.Empty;
     public int QuestionType { get; init; }
     public string ScopeType { get; init; } = string.Empty;
     public DateOnly? ScopeDateFrom { get; init; }
@@ -49,7 +50,9 @@ public sealed class QuizSubmissionState
     public int WrongCount { get; set; }
     public float Score { get; set; }
     public int MaxStreak { get; set; }
+    public DateTime StartedAt { get; init; }
     public DateTime? EndedAt { get; set; }
+    public int? TimeLimitSec { get; init; }
     public IReadOnlyCollection<uint> TopicIds { get; init; } = Array.Empty<uint>();
     public List<QuizSubmissionAnswer> Answers { get; init; } = [];
 }
