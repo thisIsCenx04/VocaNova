@@ -59,6 +59,25 @@ void main() {
     expect(router.state.matchedLocation, AppRoutes.login);
   });
 
+  testWidgets('authenticated protected route does not flash guest prompt', (
+    tester,
+  ) async {
+    final router = createRouter(
+      initialLocation: AppRoutes.lists,
+      tokenStorage: DelayedTokenStorage(accessToken: 'access-token'),
+    );
+
+    await pumpRouter(tester, router, settle: false);
+
+    expect(find.byKey(const Key('guest-login-required-message')), findsNothing);
+
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+
+    expect(router.state.matchedLocation, AppRoutes.lists);
+    expect(find.byKey(const Key('guest-login-required-message')), findsNothing);
+  });
+
   testWidgets('bottom navigation changes shell branch', (tester) async {
     final router = createRouter(accessToken: 'access-token');
     await pumpRouter(tester, router);
@@ -118,9 +137,13 @@ void main() {
   );
 }
 
-GoRouter createRouter({String? accessToken, String? initialLocation}) {
+GoRouter createRouter({
+  String? accessToken,
+  String? initialLocation,
+  TokenStorage? tokenStorage,
+}) {
   final router = AppRouter.create(
-    tokenStorage: TestTokenStorage(accessToken: accessToken),
+    tokenStorage: tokenStorage ?? TestTokenStorage(accessToken: accessToken),
   ).router;
   if (initialLocation != null) {
     router.go(initialLocation);
@@ -185,6 +208,16 @@ class TestTokenStorage implements TokenStorage {
     required String refreshToken,
   }) async {
     this.accessToken = accessToken;
+  }
+}
+
+class DelayedTokenStorage extends TestTokenStorage {
+  DelayedTokenStorage({super.accessToken});
+
+  @override
+  Future<String?> getAccessToken() async {
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    return accessToken;
   }
 }
 

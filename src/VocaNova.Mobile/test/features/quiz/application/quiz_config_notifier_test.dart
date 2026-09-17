@@ -199,9 +199,10 @@ void main() {
       () => repository.createSession(any()),
     ).thenAnswer((_) async => testSession);
     final notifier = container.read(quizConfigProvider.notifier);
-    notifier.setListId(null);
+    notifier.setListId(3);
     notifier.setScope('wrong_words');
 
+    expect(container.read(quizConfigProvider).listId, isNull);
     expect(notifier.validate(), isNull);
     final result = await notifier.createSession();
 

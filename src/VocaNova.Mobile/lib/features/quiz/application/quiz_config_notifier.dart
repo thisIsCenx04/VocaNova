@@ -81,6 +81,7 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
   void setScope(String value) {
     state = state.copyWith(
       scopeType: value,
+      clearListId: value == 'wrong_words',
       clearDateFrom: value != 'date_range',
       clearDateTo: value != 'date_range',
       clearError: true,
@@ -161,6 +162,7 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
   int? effectiveWordLimit() {
     final requested = state.questionLimit;
     if (requested == null) return null;
+    if (state.scopeType == 'wrong_words') return requested;
     final wordCount = selectedSourceWordCount();
     if (wordCount == null) return requested;
     return requested < wordCount ? requested : wordCount;
@@ -229,7 +231,7 @@ class QuizConfigNotifier extends _$QuizConfigNotifier {
               scopeType: scopeType,
               wordOrder: state.wordOrder,
               wordLimit: effectiveWordLimit(),
-              listId: state.listId,
+              listId: scopeType == 'wrong_words' ? null : state.listId,
               scopeDateFrom: dateFrom,
               scopeDateTo: dateTo,
               topicIds: const [],

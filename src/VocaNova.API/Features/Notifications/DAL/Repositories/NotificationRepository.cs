@@ -37,6 +37,32 @@ public sealed class NotificationRepository : INotificationRepository
         return new PagedCollection<DeletedWordReference>(items, page, limit, totalItems);
     }
 
+    public async Task<PagedCollection<MasteredWrongWordReference>> ListMasteredWrongWordsAsync(
+        uint userId,
+        int page,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.UserWordProgresses
+            .AsNoTracking()
+            .Where(progress =>
+                progress.UserId == userId
+                && !progress.IsInWrongList
+                && progress.MasteryLevel >= 5
+                && progress.LastWrongAt != null
+                && progress.Word.Status == UserStatus.Active)
+            .OrderByDescending(progress => progress.UpdatedAt)
+            .ThenByDescending(progress => progress.ProgressId);
+        var totalItems = await query.CountAsync(cancellationToken);
+        var items = await query
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .Select(NotificationPersistenceMappings.ToMasteredWrongWordReference)
+            .ToListAsync(cancellationToken);
+
+        return new PagedCollection<MasteredWrongWordReference>(items, page, limit, totalItems);
+    }
+
     private IQueryable<Word> BuildDeletedWordsForUserQuery(uint userId) =>
         _dbContext.Words
             .IgnoreQueryFilters()

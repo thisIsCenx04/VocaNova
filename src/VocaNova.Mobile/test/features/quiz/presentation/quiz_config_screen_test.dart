@@ -199,6 +199,7 @@ void main() {
       initialLocation: AppRoutes.quizConfigWrongWords(),
     );
 
+    expect(find.text('Quiz source'), findsNothing);
     await tester.tap(find.byKey(const Key('start-quiz-button')));
     await tester.pumpAndSettle();
 

@@ -11,7 +11,7 @@ public sealed class SrsService : ISrsService
     private const float WrongEaseDelta = 0.32f;
     private const float MinEaseFactor = 1.3f;
     private const int MaxMasteryLevel = 5;
-    private const int MasteryStep = 5;
+    private const int MasteryStep = 1;
 
     private readonly ISrsRepository _repository;
     public SrsService(ISrsRepository repository) => _repository = repository;
@@ -51,7 +51,6 @@ public sealed class SrsService : ISrsService
     {
         progress.CorrectCount++;
         progress.ConsecutiveCorrect++;
-        progress.IsInWrongList = false;
         progress.EaseFactor = Math.Max(MinEaseFactor, progress.EaseFactor + CorrectEaseDelta);
         progress.SrsInterval = progress.ConsecutiveCorrect switch
         {
@@ -65,6 +64,7 @@ public sealed class SrsService : ISrsService
         {
             progress.MasteryLevel++;
         }
+        progress.IsInWrongList = progress.IsInWrongList && progress.MasteryLevel < MaxMasteryLevel;
         progress.NextReviewAt = now.AddDays(progress.SrsInterval);
     }
 

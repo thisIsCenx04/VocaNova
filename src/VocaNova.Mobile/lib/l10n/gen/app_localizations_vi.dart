@@ -30,6 +30,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get commonOfflineBanner => 'Bạn đang ngoại tuyến';
 
   @override
+  String get guestLoginRequiredMessage =>
+      'Vui lòng đăng nhập để sử dụng đầy đủ các chức năng của VocaNova.';
+
+  @override
   String get authBackButton => 'Quay lại';
 
   @override
@@ -40,6 +44,10 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get authGenericError => 'Đã xảy ra lỗi. Vui lòng thử lại.';
+
+  @override
+  String get authMobileUserOnly =>
+      'Ứng dụng mobile chỉ dành cho tài khoản người học.';
 
   @override
   String get authPhoneRequired => 'Vui lòng nhập số điện thoại.';

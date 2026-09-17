@@ -26,7 +26,7 @@ class AppSettingsNotifier extends ChangeNotifier {
     final locale = await _storage.get<String>(StorageKeys.appLocale);
     final theme = await _storage.get<String>(StorageKeys.appTheme);
     _state = AppSettingsState(
-      locale: Locale(locale == 'en' ? 'en' : 'vi'),
+      locale: Locale(locale == 'vi' ? 'vi' : 'en'),
       themeMode: switch (theme) {
         'dark' => ThemeMode.dark,
         'system' => ThemeMode.system,

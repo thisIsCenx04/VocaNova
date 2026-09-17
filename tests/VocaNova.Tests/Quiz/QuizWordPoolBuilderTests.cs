@@ -69,7 +69,7 @@ public class QuizWordPoolBuilderTests
     }
 
     [Fact]
-    public async Task BuildPoolAsync_Should_Return_400_When_MultipleChoice_Pool_Has_Less_Than_Four_Words()
+    public async Task BuildPoolAsync_Should_Allow_MultipleChoice_Pool_With_Less_Than_Four_Words()
     {
         await using var dbContext = CreateDbContext();
         await SeedSmallPoolAsync(dbContext);
@@ -79,9 +79,8 @@ public class QuizWordPoolBuilderTests
             1,
             CreateRequest(scopeType: ScopeType.All, answerMethod: AnswerMethod.MultipleChoice));
 
-        result.IsSuccess.Should().BeFalse();
-        result.StatusCode.Should().Be(400);
-        result.Error.Should().Be("Không đủ từ để tạo bài kiểm tra");
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Select(word => word.WordId).Should().Equal(3u, 2u, 1u);
     }
 
     [Fact]
@@ -94,10 +93,13 @@ public class QuizWordPoolBuilderTests
 
         var result = await builder.BuildPoolAsync(
             1,
-            CreateRequest(scopeType: ScopeType.WrongWords, answerMethod: AnswerMethod.ExactTyping));
+            CreateRequest(
+                scopeType: ScopeType.WrongWords,
+                wordOrder: WordOrder.ByDifficulty,
+                answerMethod: AnswerMethod.ExactTyping));
 
         result.IsSuccess.Should().BeTrue();
-        result.Value!.Select(word => word.WordId).Should().Equal(3u, 1u);
+        result.Value!.Select(word => word.WordId).Should().Equal(3u, 1u, 5u);
     }
 
     [Fact]
@@ -157,6 +159,15 @@ public class QuizWordPoolBuilderTests
                 UserId = 2,
                 WordId = 4,
                 WrongCount = 9,
+                IsInWrongList = true,
+                UpdatedAt = now,
+            },
+            new EntityUserWordProgress
+            {
+                ProgressId = 5,
+                UserId = 1,
+                WordId = 5,
+                WrongCount = 3,
                 IsInWrongList = true,
                 UpdatedAt = now,
             });

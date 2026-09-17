@@ -7,8 +7,6 @@ namespace VocaNova.API.Features.Quiz.BLL.Services;
 
 public sealed class QuizSessionBuilder : IQuizSessionBuilder
 {
-    private const string NotEnoughWordsMessage = "Không đủ từ để tạo bài kiểm tra";
-
     private readonly IQuizPoolRepository _quizPoolRepository;
 
     public QuizSessionBuilder(IQuizPoolRepository quizPoolRepository)
@@ -64,15 +62,6 @@ public sealed class QuizSessionBuilder : IQuizSessionBuilder
             cancellationToken);
 
         var orderedCandidates = ApplyWordOrder(candidates, request.WordOrder);
-
-        // Multiple choice needs at least 4 available words. Check the full
-        // candidate set BEFORE applying the question-count limit, so requesting
-        // fewer questions than the source has (e.g. 3 of 4) does not spuriously
-        // fail — word_limit caps the number of questions, not the word pool.
-        if (request.AnswerMethod == AnswerMethod.MultipleChoice && orderedCandidates.Count < 4)
-        {
-            return QuizOperationResult<IReadOnlyCollection<QuizPoolWord>>.ValidationFailure(NotEnoughWordsMessage);
-        }
 
         if (request.WordLimit.HasValue)
         {

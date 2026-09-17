@@ -38,6 +38,13 @@ void main() {
     expiresIn: 900,
     tokenType: 'Bearer',
   );
+  const adminUser = UserProfile(
+    userId: 99,
+    phone: '0909999999',
+    displayName: 'Admin',
+    role: 'admin',
+    status: 'active',
+  );
 
   late MockAuthApiService repository;
   late MockSecureStorage secureStorage;
@@ -114,6 +121,38 @@ void main() {
       verify(() => cacheWarmingService.warm()).called(1);
     },
   );
+
+  test('login rejects admin accounts on mobile and clears tokens', () async {
+    when(
+      () => repository.login(phone: '0909999999', password: 'Password1'),
+    ).thenAnswer((_) async => tokens);
+    when(
+      () => secureStorage.saveTokens(
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      ),
+    ).thenAnswer((_) async {});
+    when(
+      () => secureStorage.getAccessToken(),
+    ).thenAnswer((_) async => tokens.accessToken);
+    when(() => repository.getCurrentUser()).thenAnswer((_) async => adminUser);
+    when(() => secureStorage.clearTokens()).thenAnswer((_) async {});
+
+    await container
+        .read(authProvider.notifier)
+        .login('0909999999', 'Password1');
+
+    final state = container.read(authProvider);
+    final cachedJson = await localStorage.getWithTtl<String>(
+      StorageKeys.userProfileJson,
+      ttl: AuthNotifier.profileCacheTtl,
+    );
+    expect(state.status, AuthStatus.error);
+    expect(state.errorMessage, contains('mobile'));
+    expect(cachedJson, isNull);
+    verify(() => secureStorage.clearTokens()).called(1);
+    verifyNever(() => cacheWarmingService.warm());
+  });
 
   test('register authenticates with the backend register contract', () async {
     when(
