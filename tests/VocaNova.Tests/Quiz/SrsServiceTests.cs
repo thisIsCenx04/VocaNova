@@ -34,7 +34,7 @@ public class SrsServiceTests
     }
 
     [Fact]
-    public async Task UpdateProgressAsync_Should_Increase_Mastery_After_Five_Consecutive_Correct()
+    public async Task UpdateProgressAsync_Should_Increase_Mastery_On_Each_Consecutive_Correct()
     {
         await using var dbContext = CreateDbContext();
         var service = CreateService(dbContext);
@@ -49,7 +49,7 @@ public class SrsServiceTests
         progress.TestCount.Should().Be(5);
         progress.CorrectCount.Should().Be(5);
         progress.ConsecutiveCorrect.Should().Be(5);
-        progress.MasteryLevel.Should().Be(1);
+        progress.MasteryLevel.Should().Be(5);
         progress.NextReviewAt.Should().NotBeNull();
     }
 
@@ -76,6 +76,65 @@ public class SrsServiceTests
         progress.IsInWrongList.Should().BeTrue();
         progress.SrsInterval.Should().Be(1);
         progress.LastWrongAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task UpdateProgressAsync_Should_Keep_Word_In_Wrong_List_When_Correct_But_Not_Max_Mastery()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.UserWordProgresses.Add(new EntityUserWordProgress
+        {
+            ProgressId = 1,
+            UserId = 1,
+            WordId = 10,
+            WrongCount = 1,
+            ConsecutiveCorrect = 0,
+            IsInWrongList = true,
+            MasteryLevel = 0,
+            SrsInterval = 1,
+            EaseFactor = 2.5f,
+            UpdatedAt = DateTime.UtcNow,
+        });
+        await dbContext.SaveChangesAsync();
+        var service = CreateService(dbContext);
+
+        await service.UpdateProgressAsync(1, 10, isCorrect: true);
+        await dbContext.SaveChangesAsync();
+
+        var progress = await dbContext.UserWordProgresses.SingleAsync();
+        progress.CorrectCount.Should().Be(1);
+        progress.ConsecutiveCorrect.Should().Be(1);
+        progress.MasteryLevel.Should().Be(1);
+        progress.IsInWrongList.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task UpdateProgressAsync_Should_Remove_Word_From_Wrong_List_When_Max_Mastery_Reached()
+    {
+        await using var dbContext = CreateDbContext();
+        dbContext.UserWordProgresses.Add(new EntityUserWordProgress
+        {
+            ProgressId = 1,
+            UserId = 1,
+            WordId = 10,
+            WrongCount = 1,
+            ConsecutiveCorrect = 4,
+            IsInWrongList = true,
+            MasteryLevel = 4,
+            SrsInterval = 30,
+            EaseFactor = 2.5f,
+            UpdatedAt = DateTime.UtcNow,
+        });
+        await dbContext.SaveChangesAsync();
+        var service = CreateService(dbContext);
+
+        await service.UpdateProgressAsync(1, 10, isCorrect: true);
+        await dbContext.SaveChangesAsync();
+
+        var progress = await dbContext.UserWordProgresses.SingleAsync();
+        progress.ConsecutiveCorrect.Should().Be(5);
+        progress.MasteryLevel.Should().Be(5);
+        progress.IsInWrongList.Should().BeFalse();
     }
 
     [Fact]

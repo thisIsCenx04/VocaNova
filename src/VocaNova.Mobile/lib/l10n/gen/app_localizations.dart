@@ -140,6 +140,12 @@ abstract class AppLocalizations {
   /// **'You\'re offline'**
   String get commonOfflineBanner;
 
+  /// No description provided for @guestLoginRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in to use all VocaNova features.'**
+  String get guestLoginRequiredMessage;
+
   /// No description provided for @authBackButton.
   ///
   /// In en, this message translates to:
@@ -163,6 +169,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Something went wrong. Please try again.'**
   String get authGenericError;
+
+  /// No description provided for @authMobileUserOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'This mobile app is only available for learner accounts.'**
+  String get authMobileUserOnly;
 
   /// No description provided for @authPhoneRequired.
   ///

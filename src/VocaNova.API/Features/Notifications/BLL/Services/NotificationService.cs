@@ -8,9 +8,12 @@ namespace VocaNova.API.Features.Notifications.BLL.Services;
 public sealed class NotificationService : INotificationService
 {
     public const string WordDeletedType = "word_deleted";
+    public const string WrongListMasteredType = "wrong_list_mastered";
     public const int MaximumPageLimit = 100;
 
-    private const string WordDeletedTitle = "Từ vựng đã bị gỡ";
+    private const uint WrongListMasteredIdOffset = 2_000_000_000;
+    private const string WordDeletedTitle = "Vocabulary was removed";
+    private const string WrongListMasteredTitle = "Great progress!";
     private readonly INotificationRepository _repository;
 
     public NotificationService(INotificationRepository repository)
@@ -30,19 +33,31 @@ public sealed class NotificationService : INotificationService
                 $"Limit must be between 1 and {MaximumPageLimit}.");
         }
 
+        var fetchLimit = page * query.Limit;
         var deletedWords = await _repository.ListDeletedWordsAsync(
             userId,
-            page,
-            query.Limit,
+            1,
+            fetchLimit,
             cancellationToken);
-        var notifications = deletedWords.Items.Select(Map).ToList();
+        var masteredWrongWords = await _repository.ListMasteredWrongWordsAsync(
+            userId,
+            1,
+            fetchLimit,
+            cancellationToken);
+        var notifications = deletedWords.Items.Select(Map)
+            .Concat(masteredWrongWords.Items.Select(Map))
+            .OrderByDescending(notification => notification.CreatedAt)
+            .ThenByDescending(notification => notification.NotificationId)
+            .Skip((page - 1) * query.Limit)
+            .Take(query.Limit)
+            .ToList();
 
         return NotificationListResult.Success(
             new PagedCollection<Notification>(
                 notifications,
-                deletedWords.Page,
-                deletedWords.Limit,
-                deletedWords.TotalItems));
+                page,
+                query.Limit,
+                deletedWords.TotalItems + masteredWrongWords.TotalItems));
     }
 
     private static Notification Map(DeletedWordReference word)
@@ -50,7 +65,7 @@ public sealed class NotificationService : INotificationService
         var displayWord = string.IsNullOrWhiteSpace(word.WordText)
             ? $"#{word.WordId}"
             : word.WordText;
-        var message = $"Từ \"{displayWord}\" đã bị gỡ khỏi từ điển. Nội dung liên quan trong danh sách của bạn có thể không còn khả dụng.";
+        var message = $"\"{displayWord}\" was removed from the dictionary. Related content in your lists may no longer be available.";
 
         return new Notification(
             word.WordId,
@@ -61,6 +76,25 @@ public sealed class NotificationService : INotificationService
             word.WordId,
             false,
             word.DeletedAt,
+            null);
+    }
+
+    private static Notification Map(MasteredWrongWordReference word)
+    {
+        var displayWord = string.IsNullOrWhiteSpace(word.WordText)
+            ? $"#{word.WordId}"
+            : word.WordText;
+        var message = $"Nice work! \"{displayWord}\" reached level 5 and was removed from your recently wrong words.";
+
+        return new Notification(
+            WrongListMasteredIdOffset + (word.ProgressId % WrongListMasteredIdOffset),
+            WrongListMasteredType,
+            WrongListMasteredTitle,
+            message,
+            "word",
+            word.WordId,
+            false,
+            word.MasteredAt,
             null);
     }
 }

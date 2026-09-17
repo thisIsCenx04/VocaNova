@@ -53,6 +53,7 @@ CacheWarmingService cacheWarmingService(Ref ref) => CacheWarmingService(
 @Riverpod(keepAlive: true)
 class AuthNotifier extends _$AuthNotifier {
   static const profileCacheTtl = Duration(days: 1);
+  static const _mobileUserRole = 'user';
 
   @override
   AuthState build() => const AuthState();
@@ -123,12 +124,11 @@ class AuthNotifier extends _$AuthNotifier {
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
     try {
       final user = await ref.read(authApiServiceProvider).getCurrentUser();
-      await _cacheUser(user);
-      state = AuthState(status: AuthStatus.authenticated, user: user);
+      if (!await _acceptMobileUser(user)) return;
     } catch (error) {
       final cachedUser = await _readCachedUser();
       if (cachedUser != null) {
-        state = AuthState(status: AuthStatus.authenticated, user: cachedUser);
+        if (!await _acceptMobileUser(cachedUser)) return;
         return;
       }
       state = AuthState(
@@ -288,6 +288,29 @@ class AuthNotifier extends _$AuthNotifier {
       );
       return false;
     }
+  }
+
+  Future<bool> _acceptMobileUser(UserProfile user) async {
+    if (user.role != _mobileUserRole) {
+      await _rejectNonMobileUser();
+      return false;
+    }
+
+    await _cacheUser(user);
+    state = AuthState(status: AuthStatus.authenticated, user: user);
+    return true;
+  }
+
+  Future<void> _rejectNonMobileUser() async {
+    await ref.read(secureStorageProvider).clearTokens();
+    await ref.read(localStorageProvider).remove(StorageKeys.userProfileJson);
+    final l10n = lookupAppLocalizations(
+      AppSettingsNotifier.instance.state.locale,
+    );
+    state = AuthState(
+      status: AuthStatus.error,
+      errorMessage: l10n.authMobileUserOnly,
+    );
   }
 
   Future<void> _cacheUser(UserProfile user) {

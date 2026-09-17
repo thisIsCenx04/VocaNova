@@ -10,4 +10,10 @@ public interface INotificationRepository
         int page,
         int limit,
         CancellationToken cancellationToken = default);
+
+    Task<PagedCollection<MasteredWrongWordReference>> ListMasteredWrongWordsAsync(
+        uint userId,
+        int page,
+        int limit,
+        CancellationToken cancellationToken = default);
 }

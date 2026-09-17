@@ -14,6 +14,11 @@ public sealed class QuizPoolRepository : IQuizPoolRepository
     public async Task<IReadOnlyCollection<QuizPoolWord>> GetCandidatesAsync(
         uint userId, BuildQuizPoolCommand command, CancellationToken cancellationToken = default)
     {
+        if (command.ScopeType == ScopeType.WrongWords)
+        {
+            return await GetWrongWordCandidatesAsync(userId, command, cancellationToken);
+        }
+
         var query = _dbContext.UserListWords.AsNoTracking()
             .Where(item => item.UserId == userId && item.Status == UserStatus.Active
                 && item.List.Status == UserStatus.Active && item.Word.Status == UserStatus.Active);
@@ -25,15 +30,32 @@ public sealed class QuizPoolRepository : IQuizPoolRepository
         if (addedBefore.HasValue) query = query.Where(item => item.AddedAt < addedBefore.Value);
         if (command.TopicIds is { Count: > 0 })
             query = query.Where(item => item.Word.WordTopics.Any(topic => command.TopicIds.Contains(topic.TopicId)));
-        if (command.ScopeType == ScopeType.WrongWords)
-            query = query.Where(item => _dbContext.UserWordProgresses.Any(progress =>
-                progress.UserId == userId && progress.WordId == item.WordId && progress.IsInWrongList));
 
         return await query.GroupBy(item => item.WordId)
             .Select(group => new QuizPoolWord(group.Key, group.Max(item => item.AddedAt),
                 _dbContext.UserWordProgresses.Where(progress => progress.UserId == userId
                         && progress.WordId == group.Key)
                     .Select(progress => progress.WrongCount).FirstOrDefault()))
+            .ToListAsync(cancellationToken);
+    }
+
+    private async Task<IReadOnlyCollection<QuizPoolWord>> GetWrongWordCandidatesAsync(
+        uint userId, BuildQuizPoolCommand command, CancellationToken cancellationToken)
+    {
+        var query = _dbContext.UserWordProgresses.AsNoTracking()
+            .Where(progress => progress.UserId == userId
+                && progress.IsInWrongList
+                && progress.Word.Status == UserStatus.Active);
+
+        if (command.TopicIds is { Count: > 0 })
+            query = query.Where(progress =>
+                progress.Word.WordTopics.Any(topic => command.TopicIds.Contains(topic.TopicId)));
+
+        return await query
+            .Select(progress => new QuizPoolWord(
+                progress.WordId,
+                progress.LastWrongAt ?? progress.LastTestedAt ?? progress.UpdatedAt,
+                progress.WrongCount))
             .ToListAsync(cancellationToken);
     }
 }

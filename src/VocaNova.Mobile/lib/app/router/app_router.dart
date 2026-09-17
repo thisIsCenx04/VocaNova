@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vocanova_mobile/app/router/app_routes.dart';
 import 'package:vocanova_mobile/app/router/auth_guard.dart';
+import 'package:vocanova_mobile/app/router/guest_login_required_screen.dart';
 import 'package:vocanova_mobile/app/router/main_shell.dart';
 import 'package:vocanova_mobile/core/storage/secure_storage.dart';
 import 'package:vocanova_mobile/core/storage/token_storage.dart';
@@ -37,6 +38,21 @@ class AppRouter {
 
   final TokenStorage tokenStorage;
   late final AuthGuard _authGuard = AuthGuard(tokenStorage: tokenStorage);
+
+  Future<bool> _isAuthenticated() async {
+    final token = await tokenStorage.getAccessToken();
+    return token != null && token.isNotEmpty;
+  }
+
+  Widget _authGate(Widget child) {
+    return FutureBuilder<bool>(
+      future: _isAuthenticated(),
+      builder: (context, snapshot) => AuthGate(
+        isAuthenticated: snapshot.hasData ? snapshot.data : null,
+        child: child,
+      ),
+    );
+  }
 
   static AppRouter create({required TokenStorage tokenStorage}) {
     return AppRouter._(tokenStorage);
@@ -75,7 +91,7 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: AppRoutes.home,
-                builder: (_, _) => const HomeScreen(),
+                builder: (_, _) => _authGate(const HomeScreen()),
               ),
             ],
           ),
@@ -105,7 +121,7 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: AppRoutes.lists,
-                builder: (_, _) => const ListsScreen(),
+                builder: (_, _) => _authGate(const ListsScreen()),
               ),
             ],
           ),
@@ -113,16 +129,18 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: AppRoutes.quizConfig,
-                builder: (_, state) => QuizConfigScreen(
-                  initialListId: int.tryParse(
-                    state.uri.queryParameters['listId'] ?? '',
+                builder: (_, state) => _authGate(
+                  QuizConfigScreen(
+                    initialListId: int.tryParse(
+                      state.uri.queryParameters['listId'] ?? '',
+                    ),
+                    initialScopeType: state.uri.queryParameters['scope'],
                   ),
-                  initialScopeType: state.uri.queryParameters['scope'],
                 ),
               ),
               GoRoute(
                 path: AppRoutes.progress,
-                builder: (_, _) => const ProgressOverviewScreen(),
+                builder: (_, _) => _authGate(const ProgressOverviewScreen()),
               ),
             ],
           ),

@@ -175,14 +175,15 @@ class _QuizConfigScreenState extends ConsumerState<QuizConfigScreen> {
               ],
             ),
           ),
-          _Section(
-            title: l10n.quizConfigSourceSection,
-            child: _QuizSourcePicker(
-              state: state,
-              onTypeChanged: _notifier.setSourceType,
-              onSourceSelected: _notifier.selectSource,
+          if (state.scopeType != 'wrong_words')
+            _Section(
+              title: l10n.quizConfigSourceSection,
+              child: _QuizSourcePicker(
+                state: state,
+                onTypeChanged: _notifier.setSourceType,
+                onSourceSelected: _notifier.selectSource,
+              ),
             ),
-          ),
           _Section(title: l10n.quizConfigModeSection, child: _buildMode(state)),
           _Section(
             title: l10n.quizConfigQuestionTypeSection,

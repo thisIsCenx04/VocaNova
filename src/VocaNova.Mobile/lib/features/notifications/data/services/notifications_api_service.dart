@@ -59,7 +59,7 @@ class NotificationsApiService {
   }
 
   // Unread badge is computed locally from the newest notifications. A single page is
-  // enough — "word deleted" notifications are rare, so they fit comfortably in one page.
+  // enough because derived notifications are rare, so they fit comfortably in one page.
   Future<int> unreadCount() async {
     final page = await list(page: 1, limit: 50);
     return page.items.where((n) => !n.isRead).length;

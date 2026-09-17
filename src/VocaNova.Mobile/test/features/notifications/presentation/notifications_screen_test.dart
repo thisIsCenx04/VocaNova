@@ -46,8 +46,8 @@ void main() {
 final deletedWordNotification = AppNotification(
   id: 7,
   type: 'word_deleted',
-  title: 'Từ vựng đã bị gỡ',
-  message: 'Từ "hello" đã bị gỡ khỏi từ điển.',
+  title: 'Vocabulary was removed',
+  message: '"hello" was removed from the dictionary.',
   refType: 'word',
   refId: 7,
   isRead: false,

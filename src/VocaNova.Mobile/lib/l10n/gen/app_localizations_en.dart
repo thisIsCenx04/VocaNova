@@ -30,6 +30,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonOfflineBanner => 'You\'re offline';
 
   @override
+  String get guestLoginRequiredMessage =>
+      'Please sign in to use all VocaNova features.';
+
+  @override
   String get authBackButton => 'Back';
 
   @override
@@ -40,6 +44,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authGenericError => 'Something went wrong. Please try again.';
+
+  @override
+  String get authMobileUserOnly =>
+      'This mobile app is only available for learner accounts.';
 
   @override
   String get authPhoneRequired => 'Please enter your phone number.';

@@ -26,6 +26,13 @@ public class NotificationFeatureTests
                 1,
                 20,
                 1));
+        repository
+            .Setup(instance => instance.ListMasteredWrongWordsAsync(7, 1, 20, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PagedCollection<MasteredWrongWordReference>(
+                Array.Empty<MasteredWrongWordReference>(),
+                1,
+                20,
+                0));
         var service = new NotificationService(repository.Object);
 
         var result = await service.ListAsync(7, new NotificationListQuery(0, 20));
@@ -36,14 +43,49 @@ public class NotificationFeatureTests
         var notification = result.Value.Items.Should().ContainSingle().Subject;
         notification.NotificationId.Should().Be(42);
         notification.Type.Should().Be("word_deleted");
-        notification.Title.Should().Be("Từ vựng đã bị gỡ");
+        notification.Title.Should().Be("Vocabulary was removed");
         notification.Message.Should().Be(
-            "Từ \"orchard\" đã bị gỡ khỏi từ điển. Nội dung liên quan trong danh sách của bạn có thể không còn khả dụng.");
+            "\"orchard\" was removed from the dictionary. Related content in your lists may no longer be available.");
         notification.ReferenceType.Should().Be("word");
         notification.ReferenceId.Should().Be(42);
         notification.IsRead.Should().BeFalse();
         notification.CreatedAt.Should().Be(deletedAt);
         notification.ReadAt.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Service_Should_Map_Mastered_Wrong_Word_Notification()
+    {
+        var masteredAt = new DateTime(2026, 8, 10, 7, 30, 0, DateTimeKind.Utc);
+        var repository = new Mock<INotificationRepository>();
+        repository
+            .Setup(instance => instance.ListDeletedWordsAsync(7, 1, 20, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PagedCollection<DeletedWordReference>(
+                Array.Empty<DeletedWordReference>(),
+                1,
+                20,
+                0));
+        repository
+            .Setup(instance => instance.ListMasteredWrongWordsAsync(7, 1, 20, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PagedCollection<MasteredWrongWordReference>(
+                new[] { new MasteredWrongWordReference(9, 42, "orchard", masteredAt) },
+                1,
+                20,
+                1));
+        var service = new NotificationService(repository.Object);
+
+        var result = await service.ListAsync(7, new NotificationListQuery(1, 20));
+
+        result.IsSuccess.Should().BeTrue();
+        var notification = result.Value!.Items.Should().ContainSingle().Subject;
+        notification.NotificationId.Should().Be(2_000_000_009);
+        notification.Type.Should().Be("wrong_list_mastered");
+        notification.Title.Should().Be("Great progress!");
+        notification.Message.Should().Be(
+            "Nice work! \"orchard\" reached level 5 and was removed from your recently wrong words.");
+        notification.ReferenceType.Should().Be("word");
+        notification.ReferenceId.Should().Be(42);
+        notification.CreatedAt.Should().Be(masteredAt);
     }
 
     [Theory]
@@ -94,6 +136,33 @@ public class NotificationFeatureTests
     }
 
     [Fact]
+    public async Task Repository_Should_Return_Mastered_Wrong_Words_Newest_First()
+    {
+        await using var dbContext = CreateDbContext();
+        var older = new DateTime(2026, 8, 1, 0, 0, 0, DateTimeKind.Utc);
+        var newer = older.AddDays(1);
+        dbContext.Words.AddRange(
+            CreateWord(1, "mastered older", UserStatus.Active, older),
+            CreateWord(2, "still wrong", UserStatus.Active, newer),
+            CreateWord(3, "never wrong", UserStatus.Active, newer),
+            CreateWord(4, "mastered newer", UserStatus.Active, newer),
+            CreateWord(5, "deleted", UserStatus.Deleted, newer.AddDays(1)));
+        dbContext.UserWordProgresses.AddRange(
+            CreateProgress(1, 7, 1, older, isWrong: false, masteryLevel: 5, lastWrongAt: older.AddDays(-1)),
+            CreateProgress(2, 7, 2, newer, isWrong: true, masteryLevel: 5, lastWrongAt: newer.AddDays(-1)),
+            CreateProgress(3, 7, 3, newer, isWrong: false, masteryLevel: 5, lastWrongAt: null),
+            CreateProgress(4, 7, 4, newer, isWrong: false, masteryLevel: 5, lastWrongAt: newer.AddDays(-1)),
+            CreateProgress(5, 7, 5, newer.AddDays(1), isWrong: false, masteryLevel: 5, lastWrongAt: newer));
+        await dbContext.SaveChangesAsync();
+        var repository = new NotificationRepository(dbContext);
+
+        var result = await repository.ListMasteredWrongWordsAsync(7, 1, 20);
+
+        result.TotalItems.Should().Be(2);
+        result.Items.Select(item => item.WordId).Should().Equal(4, 1);
+    }
+
+    [Fact]
     public async Task Controller_Should_Keep_Public_Json_Contract_And_Pagination_Envelope()
     {
         var createdAt = new DateTime(2026, 8, 10, 7, 30, 0, DateTimeKind.Utc);
@@ -107,7 +176,7 @@ public class NotificationFeatureTests
                         new Notification(
                             42,
                             "word_deleted",
-                            "Từ vựng đã bị gỡ",
+                            "Vocabulary was removed",
                             "message",
                             "word",
                             42,
@@ -233,13 +302,19 @@ public class NotificationFeatureTests
         uint progressId,
         uint userId,
         uint wordId,
-        DateTime updatedAt) =>
+        DateTime updatedAt,
+        bool isWrong = false,
+        int masteryLevel = 0,
+        DateTime? lastWrongAt = null) =>
         new()
         {
             ProgressId = progressId,
             UserId = userId,
             WordId = wordId,
             EaseFactor = 2.5f,
+            IsInWrongList = isWrong,
+            MasteryLevel = masteryLevel,
+            LastWrongAt = lastWrongAt,
             UpdatedAt = updatedAt,
         };
 }

@@ -8,4 +8,11 @@ internal static class NotificationPersistenceMappings
 {
     public static readonly Expression<Func<Word, DeletedWordReference>> ToDeletedWordReference =
         word => new DeletedWordReference(word.WordId, word.Word1, word.UpdatedAt);
+
+    public static readonly Expression<Func<UserWordProgress, MasteredWrongWordReference>> ToMasteredWrongWordReference =
+        progress => new MasteredWrongWordReference(
+            progress.ProgressId,
+            progress.WordId,
+            progress.Word.Word1,
+            progress.UpdatedAt);
 }

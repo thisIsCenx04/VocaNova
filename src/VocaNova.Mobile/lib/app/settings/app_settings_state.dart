@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppSettingsState {
   const AppSettingsState({
-    this.locale = const Locale('vi'),
+    this.locale = const Locale('en'),
     this.themeMode = ThemeMode.light,
     this.dailyReminder = true,
     this.streakAlert = true,

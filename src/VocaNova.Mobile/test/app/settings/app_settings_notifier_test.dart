@@ -28,4 +28,16 @@ void main() {
     expect(preferences.getString(StorageKeys.appTheme), 'dark');
     notifier.dispose();
   });
+
+  test('defaults to English when no locale is saved', () async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    final storage = LocalStorage.create(preferences: preferences);
+    final notifier = AppSettingsNotifier.create(storage);
+
+    await notifier.load();
+
+    expect(notifier.state.locale.languageCode, 'en');
+    notifier.dispose();
+  });
 }
